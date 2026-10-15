@@ -1,0 +1,18 @@
+package versionproducer
+namespace versionproducer
+
+entity Integer id "urn:gooo:type:integer"
+
+activity Add(Integer) -> Integer id "urn:gooo:version-producer:add" computes `
+let value=input+31
+value+=5
+return value
+`
+
+activity Combine(Integer) -> Integer id "urn:gooo:version-producer:combine" computes `
+let value=Add(input)
+let second=Add(input)
+let total=value+second
+total=value
+return total
+`

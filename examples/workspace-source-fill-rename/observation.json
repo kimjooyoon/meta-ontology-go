@@ -1,0 +1,275 @@
+{
+  "schema": "gooo/source-fill-rename-development-observation/v1",
+  "producer": {
+    "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+    "overlays": [
+      {
+        "path": "internal/packageruntime/workspaceexecution/activity_rename_fill.go",
+        "original_sha256": null,
+        "sha256": "379df349551b97cb10646b2a1a0fbbd5428bff5f5904825c9add8d5924ba3f3f"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/activity_rename_fill_materialize.go",
+        "original_sha256": null,
+        "sha256": "6ed2925ab56873d60ffd2d69401772fa5e25e0de4903cdc42e0f5d0fc0c5ae01"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+        "original_sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51",
+        "sha256": "9da0e9572b4df87eadd89c12dc531b10d60287ce365265979cea2bbe03408042"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/fill_scope_rename_test.go",
+        "original_sha256": null,
+        "sha256": "1c3a02f892125c274942e35da6dc62c15428dcb1eaefd706b6bf96a0815beec7"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/fill_shadow_rename_test.go",
+        "original_sha256": null,
+        "sha256": "aaab2aeb5e222a67d7bb88ade19a5e0a6824a1d2e439ce29b0f10225a42faad0"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/fill_three_candidate_rename_test.go",
+        "original_sha256": null,
+        "sha256": "71e3575b56b1caf6cac6032574daf31a2fc56c51119b59f4ba4c996935d63942"
+      }
+    ],
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "tests": [
+      "TestThreeCandidateFillRenamePreservesTemplateAndDormantIds",
+      "TestFilledHoleRejectsLocalImportAliasAtItsActualScope"
+    ],
+    "scope": "two distinct new source-fill scopes,3candidate2hole nested calls and2candidate1hole local import shadow; no historical local source/model/test cohorts replayed;0model/program/scoring",
+    "created_at": "2026-10-13T04:50:37.787873+00:00"
+  },
+  "observations": {
+    "declared_candidates": {
+      "changed_files": 3,
+      "declared_candidates": 3,
+      "edit_kinds": {
+        "computes": 2,
+        "declaration": 1,
+        "fill:nested:base": 1,
+        "fill:nested:bias": 1,
+        "fill:offset:base": 1,
+        "fill:offset:bias": 1
+      },
+      "holes": 2,
+      "input_image_digest": "sha256:235e58011d3568af49570aa5be7d49ef9fff073c30eb806642db783761eba8ac",
+      "input_unchanged": true,
+      "model_predictions": 0,
+      "output_image_digest": "sha256:7c2a30152dff6b3a96ff4bcabfcde39468819ae57f9c3e927aa25063fe093da0",
+      "packages": 3,
+      "peer_unchanged": true,
+      "program_executions": 0,
+      "reference_total": 6,
+      "references": 6,
+      "source_files": 4
+    },
+    "local_alias": {
+      "declared_candidates": 2,
+      "error": "activity scope94/app:Total: source_fill candidate \"call\": call name \"fees\" is shadowed by a local value",
+      "holes": 1,
+      "input_unchanged": true,
+      "model_predictions": 0,
+      "outcome": "UNRESOLVED_LOCAL_ALIAS",
+      "partial_proposal_files": 0,
+      "program_executions": 0
+    }
+  },
+  "fresh_tests_passed": 2,
+  "original_execution": "72008 consumed_closed_0",
+  "program_executions": 0,
+  "model_predictions": 0,
+  "candidate_scoring": 0,
+  "historical_replays": 0,
+  "training_runs": 0,
+  "earlier_failure": {
+    "schema": "gooo/source-fill-rename-development-observation/v1",
+    "producer": {
+      "compiler_base": "6e30044f88f9ccfb1139c617f21897d156011bad",
+      "parent_pending_manifest_sha256": "6b89a4d43caee24c621e3be852ba67efe67a7e3c54fa8c9a7b16cd900be311e3",
+      "overlays": [
+        {
+          "path": "cmd/gooo/package_resolve.go",
+          "sha256": "95feea2d2789b3d73dca1b99a616c0fcd889e6178a03a15593d67e0cad425fb2"
+        },
+        {
+          "path": "cmd/gooo/usage_package.go",
+          "sha256": "42d0de2901c397b2ccaaf094b021de42da69168d3f2c056e1cdbc88849cca0f2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename.go",
+          "sha256": "2a2f3c34c0b4f5d7da8cea17ec03e50e50d1ba20d229edd7bcb95140a652b53c"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_io.go",
+          "sha256": "f2638fd5a1ea955f32960d987cc2c186cb87985a48ccebfaa0fe954ed7e9e2a2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_test.go",
+          "sha256": "b1de2a683107d7702d3904f6115c0e1b6a2cc5a58727dce008bd70bff09014d4"
+        },
+        {
+          "path": "internal/assemblyspec/observation.go",
+          "sha256": "d08d1d5e704045c86a54432d7a4f6362a82d5d260c4781be8de9c71d5a32e517"
+        },
+        {
+          "path": "internal/assemblyspec/observation_test.go",
+          "sha256": "a9e74d55d28252df38e9e015d5e7efe956c6fcfabd3119cc5732a5811123b0ff"
+        },
+        {
+          "path": "internal/bodycodegen/source_literal_range.go",
+          "sha256": "78459f5d280ed2ad82908201560dcd7aeeb973d13f36e905b8f2c75d0642db88"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename.go",
+          "sha256": "a56dc9f177bb2d5e5c4f9f64893ad382928a9f0bbc2988f6734afffe3f57dcc9"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_apply.go",
+          "sha256": "1be03df50943076fbaa8f418ce7bab0eeebb373d06fcd138d51938e69e3311a4"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_checkpoint_test.go",
+          "sha256": "a1abdbaa5fa3f1b32603d564dbcc0b504442ea544a18625cfa0a45116a9cd2fa"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill.go",
+          "sha256": "379df349551b97cb10646b2a1a0fbbd5428bff5f5904825c9add8d5924ba3f3f"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill_materialize.go",
+          "sha256": "6ed2925ab56873d60ffd2d69401772fa5e25e0de4903cdc42e0f5d0fc0c5ae01"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_index.go",
+          "sha256": "09a5e74ea28b4613e0a03b0edecb6cfd5711601a24c887522a2367271d20f94b"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_reference_forms.go",
+          "sha256": "714d411eabf8f9d37ec9a52384b38ade35b4a7141ad70a1caa60fc17daff48ee"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "sha256": "9da0e9572b4df87eadd89c12dc531b10d60287ce365265979cea2bbe03408042"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_test.go",
+          "sha256": "4b0dfcc513b96dce933acbdd3d3e8770257707f3a0da115610069d704f369808"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_types.go",
+          "sha256": "461e4917aaeaf76c869417c6e70edb4d45e8e8df414b16b3600f84785f6a6bd7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_scope_rename_test.go",
+          "sha256": "8def6fdfc2d8514230f9f0b4b3ce6fa7853112d9e322d2e6d2f0c2e8ff343b66"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/implicit_identity_entry_rename_test.go",
+          "sha256": "22a5844c63f94f6956cd666431a29157e151ac2f13b059e81db2e58feccbf728"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_holdout_test.go",
+          "sha256": "5e21f18c88407002aaadafcd7a0bff57f4a924d401085a3a37aa9a126829a0dd"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_rename_test.go",
+          "sha256": "cdf23fe3c983923accb046971a31375c8d14e38211ca41142544b20845a297d7"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "test": "TestDeclaredFillScopeRenameMapsNestedImportCalls",
+      "scope": "one new3package4file explicit source-fill rename profile2holes2candidates; no candidate scoring/model prediction/program execution/historical replays",
+      "created_at": "2026-10-13T04:48:29.369771+00:00"
+    },
+    "outcome": "FAILURE",
+    "stage": "workspace_build",
+    "reason": "PACKAGE_SOURCE_IMPORT_MISMATCH: source import absent from supplied package imports",
+    "reference_coverage": "UNOBSERVED",
+    "program_executions": 0,
+    "model_predictions": 0,
+    "historical_replays": 0,
+    "source_scoring": 0,
+    "log": "once.jsonl",
+    "original_execution": "31609 consumed_closed_1",
+    "updated_at": "2026-10-13T04:49:16.402301+00:00"
+  },
+  "actual_cli": {
+    "schema": "gooo/source-fill-rename-actual-cli-observation/v1",
+    "producer": {
+      "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+      "overlays": [
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill.go",
+          "original_sha256": null,
+          "sha256": "379df349551b97cb10646b2a1a0fbbd5428bff5f5904825c9add8d5924ba3f3f"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill_materialize.go",
+          "original_sha256": null,
+          "sha256": "6ed2925ab56873d60ffd2d69401772fa5e25e0de4903cdc42e0f5d0fc0c5ae01"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "original_sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51",
+          "sha256": "9da0e9572b4df87eadd89c12dc531b10d60287ce365265979cea2bbe03408042"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_scope_rename_test.go",
+          "original_sha256": null,
+          "sha256": "1c3a02f892125c274942e35da6dc62c15428dcb1eaefd706b6bf96a0815beec7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_shadow_rename_test.go",
+          "original_sha256": null,
+          "sha256": "aaab2aeb5e222a67d7bb88ade19a5e0a6824a1d2e439ce29b0f10225a42faad0"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_three_candidate_rename_test.go",
+          "original_sha256": null,
+          "sha256": "71e3575b56b1caf6cac6032574daf31a2fc56c51119b59f4ba4c996935d63942"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "scope": "one distinct coupons106 actualCLI JSONsource proposal; no historical source/model/test cohorts replayed;0program/model/scoring",
+      "created_at": "2026-10-13T04:53:56.112311+00:00",
+      "source_sha256": {
+        "add.gooo": "383d0ab835c6ff3d74ce2b33d70adc109a6437b102f43ae9ee95fcbd710dff0d",
+        "quote.gooo": "623f8cde45741e8e14a2cbc58659137bb768521f01fcd8399b3ad2288726197b",
+        "workspace.json": "c8a703739d13044b3a14a516bfbf6b828c6521a1270e9597dafb47f9e32cee0b"
+      },
+      "argv": [
+        "package",
+        "rename-activity",
+        "--package",
+        "coupons106/helpers",
+        "--id",
+        "urn:coupons106:add",
+        "--to",
+        "추가",
+        "--json",
+        "workspace.json"
+      ],
+      "binary_sha256": "5391abdb9321c58cfd74b90992243900e39a52b811bcaeb86256f1b975209536",
+      "binary_bytes": 25657282
+    },
+    "decision": "PROPOSED",
+    "cli_exit_code": 0,
+    "cli_processes": 1,
+    "source_program_executions": 0,
+    "model_predictions": 0,
+    "candidate_scoring": 0,
+    "references": 3,
+    "reference_total": 3,
+    "changed_source_files": 2,
+    "input_files_unchanged": true,
+    "entry_updated": false,
+    "elapsed_ns": 673132292,
+    "timing_scope": "one CLIprocess wall interval includes startup and source parsing; no comparative latency, CPU/RAM or model speed measurement",
+    "binary_removed_after_observation": true,
+    "training_runs": 0,
+    "historical_replays": 0
+  }
+}

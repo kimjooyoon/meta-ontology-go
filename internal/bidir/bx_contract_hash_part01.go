@@ -28,6 +28,10 @@ func documentCanonical(document Document) string {
 		writeMapFingerprint(&builder, declaration.Attributes)
 		writeSpan(&builder, declaration.Span)
 		writeReferences(&builder, declaration.Inputs)
+		if len(declaration.InputNames) > 0 {
+			writePart(&builder, "input-names")
+			writeReferences(&builder, declaration.InputNames)
+		}
 		writeReferences(&builder, declaration.Outputs)
 	}
 	for _, relation := range document.Relations {

@@ -1,0 +1,12 @@
+=== RUN   TestSourceCandidateBoundaries24817
+    source_fill_candidate_bounds_fresh_test.go:29: sixteen-hole boundary {gooo/source-fill-candidate-origins/v1 경계24817.gooo sha256:f62c9c1f09d2ebc27aa5e8d21ffef9a8dc3eeec72c2de1928876fef55a39b01f Choose  bad24817 {0 0}  {0 0} RESOLVED 0 [] declared source assignment and original template token locations only; no selection, type checking, case evaluation or model call} 경계24817.gooo:14:1-14:5: error parse.unexpected-token: source fill plan exceeds 8 holes
+        경계24817.gooo:4:75-40:2: error parse.unexpected-token: assembly requires 1..16 choices, 1..128 cases and 1..64 attempts
+        경계24817.gooo:41:1-41:5: error parse.unexpected-token: expected entity, activity, policy, binding, or feedback
+        경계24817.gooo:41:6-41:10: error parse.unexpected-token: expected entity, activity, policy, binding, or feedback
+        경계24817.gooo:41:11-41:13: error parse.unexpected-token: expected entity, activity, policy, binding, or feedback
+        경계24817.gooo:41:14-41:18: error parse.unexpected-token: expected entity, activity, policy, binding, or feedback
+        경계24817.gooo:42:1-42:2: error parse.unexpected-token: expected entity, activity, policy, binding, or feedback
+--- FAIL: TestSourceCandidateBoundaries24817 (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.468s
+FAIL

@@ -14,7 +14,7 @@ import (
 
 type arithmeticProjectionSite struct {
 	CompositionFaultSite
-	node *ast.BinaryExpr
+	node ast.Node
 }
 
 type arithmeticProjection struct {
@@ -44,7 +44,7 @@ func arithmeticCompositionProjection(prior Composition) (string, []CompositionFa
 	if err != nil {
 		return "", nil, err
 	}
-	info := &types.Info{Types: map[ast.Expr]types.TypeAndValue{}}
+	info := &types.Info{Types: map[ast.Expr]types.TypeAndValue{}, Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{}}
 	if _, err := new(types.Config).Check("gooo.observed.arithmetic", p.fset, []*ast.File{file}, info); err != nil {
 		return "", nil, err
 	}
@@ -76,6 +76,10 @@ func arithmeticCompositionProjection(prior Composition) (string, []CompositionFa
 
 func (p *arithmeticProjection) collect(function *ast.FuncDecl, ids [2]string, info *types.Info) {
 	ast.Inspect(function.Body, func(node ast.Node) bool {
+		if assignment, ok := node.(*ast.AssignStmt); ok {
+			p.collectFieldDivision(assignment, ids, info)
+			p.collectLocalDivision(assignment, ids, info)
+		}
 		expression, ok := node.(*ast.BinaryExpr)
 		if !ok || expression.Op != token.QUO && expression.Op != token.REM {
 			return true
@@ -103,12 +107,19 @@ func (p arithmeticProjection) render(start, end int) string {
 			continue
 		}
 		out.WriteString(p.source[cursor:site.Start])
+		if assign, ok := site.node.(*ast.AssignStmt); ok {
+			start := p.fset.Position(assign.Rhs[0].Pos()).Offset
+			out.WriteString(p.source[site.Start:start] + p.render(start, site.End))
+			cursor = site.End
+			continue
+		}
+		expression := site.node.(*ast.BinaryExpr)
 		name := p.prefix + "Quotient"
 		if site.Operator == "%" {
 			name = p.prefix + "Remainder"
 		}
-		left := p.render(p.fset.Position(site.node.X.Pos()).Offset, p.fset.Position(site.node.X.End()).Offset)
-		right := p.render(p.fset.Position(site.node.Y.Pos()).Offset, p.fset.Position(site.node.Y.End()).Offset)
+		left := p.render(p.fset.Position(expression.X.Pos()).Offset, p.fset.Position(expression.X.End()).Offset)
+		right := p.render(p.fset.Position(expression.Y.Pos()).Offset, p.fset.Position(expression.Y.End()).Offset)
 		out.WriteString(name + "(" + left + "," + right + "," + strconv.Itoa(i) + ")")
 		cursor = site.End
 	}
@@ -122,9 +133,18 @@ func observedCompositionSources(prior Composition) (string, string, error) {
 }
 
 func observedCompositionArtifacts(prior Composition) (string, string, []CompositionFaultSite, error) {
+	projection, driver, faults, _, _, _, _, err := observedCompositionReadEvidence(prior)
+	return projection, driver, faults, err
+}
+
+func observedCompositionEvidence(prior Composition) (string, string, []CompositionFaultSite, []CompositionConditionSite, error) {
+	conditions, err := compositionConditionSites(prior)
+	if err != nil {
+		return "", "", nil, nil, err
+	}
 	projection, sites, err := arithmeticCompositionProjection(prior)
 	if err != nil {
-		return "", "", nil, err
+		return "", "", nil, nil, err
 	}
 	instrumented := prior
 	instrumented.Source = projection
@@ -136,5 +156,12 @@ func observedCompositionArtifacts(prior Composition) (string, string, []Composit
 	if err == nil && len(sites) != 0 {
 		driver, err = arithmeticCompositionDriver(prior)
 	}
-	return projection, driver, sites, err
+	if err == nil && len(conditions) != 0 {
+		prefix := conditionObservationPrefix(prior.Source)
+		projection, err = observedConditionProjection(projection, prefix+"Observe", conditions)
+		if err == nil {
+			driver, err = observedConditionDriver(driver, prefix)
+		}
+	}
+	return projection, driver, sites, conditions, err
 }

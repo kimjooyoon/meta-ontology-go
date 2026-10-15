@@ -1,0 +1,25 @@
+[
+  {
+    "original_pr": 1545,
+    "head": "26fce2a46f4cc66d972b246b1d6cc7970ca111e1",
+    "job_id": 115572903035,
+    "log_name": "original-go-test-failure.log",
+    "original_log_sha256": "e4f702e676b9a03f7390f7242bacc51f5bc05b1a72bc1c631a41e2e910f8a17d",
+    "selection": "original lines with terminal control sequences removed for readability",
+    "selected_original_lines": [
+      "2026-10-13T22:32:30.5091727Z     evaluate_test.go:58: report summary: decision=\"FAIL_CLOSED\" resolution=\"EXACT\" reason=\"SYNTAX_ROUNDTRIP_MISMATCH\" gooo_lines=2524 gooo_files=106 unregistered=[examples/native-origin-reader/constructions/constructions.gooo examples/native-origin-reader/elements/elements.gooo examples/native-origin-reader/links/links.gooo examples/native-origin-reader/reads/reads.gooo] missing=[] satisfied=84 valid=81 invalid=3 invalid_ids=\"unknown-keyword,unterminated-string,source-execution-invalid\" expected_invalid_ids=\"unknown-keyword,unterminated-string,source-execution-invalid\" unresolved=0 package_units=4"
+    ]
+  },
+  {
+    "original_pr": 1545,
+    "head": "26fce2a46f4cc66d972b246b1d6cc7970ca111e1",
+    "job_id": 115572902165,
+    "log_name": "original-syntax-scope-failure.log",
+    "original_log_sha256": "8edc75c71dfc1aca3a71bfa43687618807dc77dc2ca227572a0a1424c14d2f7b",
+    "selection": "original lines with terminal control sequences removed for readability",
+    "selected_original_lines": [
+      "2026-10-13T22:29:51.4341114Z   printf 'scope partition observation failed: stage=%s step=%s command=%s exit=%s\\n' \\",
+      "2026-10-13T22:30:03.0183890Z scope partition observation failed: stage=execute step=produce-language-syntax-first-and-replay command=\"$syntax_bin\" --root \"$GITHUB_WORKSPACE\" --head \"$HEAD_SHA\" --registry \"$syntax_registry\" --concept-artifact \"$concept_first/artifact.json\" --output \"$target/artifact.json\" exit=1"
+    ]
+  }
+]

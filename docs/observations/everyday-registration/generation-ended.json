@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-14T19:24:48.790973+00:00",
+  "exit": 0,
+  "candidate_roles": 9,
+  "candidate_members": 9,
+  "repository_writes": 0,
+  "applied_to": "private pending source only",
+  "version": 73,
+  "cases": 111,
+  "capabilities": 109,
+  "invalid_cases": 3,
+  "governance_cases": 2,
+  "all_previous_cases_retained": true,
+  "old_finite_native_rows_rerun": 0
+}

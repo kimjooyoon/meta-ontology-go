@@ -1,0 +1,6 @@
+package app
+namespace bounded_search_app
+
+import search "gooo/std/search"
+
+activity Main(Query) -> Integer id "gooo://bounded-search/app/main" computes `return search.IndexByte(input.text, input.needle)`

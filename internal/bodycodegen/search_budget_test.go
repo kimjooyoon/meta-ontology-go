@@ -57,6 +57,8 @@ func TestSourceSearchBudgetAcceptsLegacyAndRejectsMismatches(t *testing.T) {
 		})
 	}
 	prior.Report.BodySearch.AttemptBudget = nil
+	// That historical producer also predates the nested retained candidate pool.
+	prior.Report.BodySearch.CandidateSet = nil
 	populateCompletenessReceipt(&prior.Report, "")
 	before, _ := json.Marshal(prior)
 	if strings.Contains(string(before), `"attempt_budget"`) {

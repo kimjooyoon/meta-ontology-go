@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "origin/recordeduse",
+    "activity": "IsSHA256"
+  },
+  "packages": [
+    {
+      "path": "origin/recordeduse",
+      "sources": [
+        "inspect.gooo"
+      ]
+    }
+  ]
+}

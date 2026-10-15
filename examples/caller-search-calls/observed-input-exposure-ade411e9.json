@@ -1,0 +1,93 @@
+{
+  "schema": "gooo/local-input-exposure-observation/v1",
+  "producer": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.29-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.14-dev.0.20261011061204-ade411e91d27",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261011061204-ade411e91d27"
+    },
+    "compiler_source_sha": "ade411e91d277444aec6a0d67b8eeaea7c9c509e",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "ade411e91d277444aec6a0d67b8eeaea7c9c509e",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "scope": "One original construction and one saved replay on the synthetic caller-search fixture. Positive evidence of previously used inputs; incomplete history and model-training exposure remain unknown.",
+  "original": {
+    "decision": "COMPLETE_FINITE",
+    "failed_local_evaluation": {
+      "schema": "gooo/local-call-inputs/v1",
+      "generated_sha256": "sha256:d4c8bb063824b166e36d0d91ef4858444832fd44298306b44f98f3daa958bb6c",
+      "activity_id": "localhistory://activity/divide",
+      "suite_sha256": "sha256:4f93e12bbc8a870f01c999a9557f56e9ef5431d613e793b787ca431cd1490069",
+      "phase": "candidate",
+      "candidate_id": "generated_c96c6d5be8d0",
+      "status": "RECORDED",
+      "evaluation_completed": false,
+      "evaluation_error": "inputs [0]: zero divisor for integer operator /",
+      "cases_started": 2,
+      "cases_completed": 1,
+      "calls": [
+        {
+          "case_index": 0,
+          "activity_id": "localhistory://activity/seed",
+          "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+          "inputs": [
+            2
+          ]
+        },
+        {
+          "case_index": 1,
+          "activity_id": "localhistory://activity/seed",
+          "program_sha256": "sha256:52694af1f8e7273ba43d8dc72b81284b634dc0ece03921929623b2e10e32def7",
+          "inputs": [
+            0
+          ]
+        }
+      ]
+    },
+    "finite_passed": 3,
+    "finite_total": 3,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 2,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 1,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "new_model_calls": 0
+  },
+  "replay": {
+    "generated_now": false,
+    "construction_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 2,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 1,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "new_model_calls": 0
+  }
+}

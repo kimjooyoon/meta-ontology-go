@@ -1,0 +1,131 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "access8887:TakeWindow": {
+          "readings": [
+            193,
+            197,
+            199,
+            211
+          ],
+          "lower": 1,
+          "upper": 4,
+          "pick": 1
+        }
+      },
+      "expected": {
+        "access8887:TakeWindow": {
+          "readings": [
+            197,
+            199,
+            211
+          ],
+          "pick": 1
+        },
+        "access8887:Read": 199
+      }
+    },
+    {
+      "inputs": {
+        "access8887:TakeWindow": {
+          "readings": [
+            223,
+            227,
+            229,
+            233
+          ],
+          "lower": 0,
+          "upper": 3,
+          "pick": 0
+        }
+      },
+      "expected": {
+        "access8887:TakeWindow": {
+          "readings": [
+            223,
+            227,
+            229
+          ],
+          "pick": 0
+        },
+        "access8887:Read": 223
+      }
+    },
+    {
+      "inputs": {
+        "access8887:TakeWindow": {
+          "readings": [
+            -41,
+            23,
+            31,
+            61,
+            71
+          ],
+          "lower": 1,
+          "upper": 5,
+          "pick": 3
+        }
+      },
+      "expected": {
+        "access8887:TakeWindow": {
+          "readings": [
+            23,
+            31,
+            61,
+            71
+          ],
+          "pick": 3
+        },
+        "access8887:Read": 71
+      }
+    },
+    {
+      "inputs": {
+        "access8887:TakeWindow": {
+          "readings": [
+            79,
+            79,
+            79
+          ],
+          "lower": 0,
+          "upper": 3,
+          "pick": 2
+        }
+      },
+      "expected": {
+        "access8887:TakeWindow": {
+          "readings": [
+            79,
+            79,
+            79
+          ],
+          "pick": 2
+        },
+        "access8887:Read": 79
+      }
+    },
+    {
+      "inputs": {
+        "access8887:TakeWindow": {
+          "readings": [
+            101,
+            103,
+            107
+          ],
+          "lower": 2,
+          "upper": 2,
+          "pick": 0
+        }
+      },
+      "expected": {
+        "access8887:TakeWindow": {
+          "readings": [],
+          "pick": 0
+        },
+        "access8887:Read": -1
+      }
+    }
+  ]
+}

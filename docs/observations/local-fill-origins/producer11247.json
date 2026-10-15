@@ -1,0 +1,38 @@
+[
+  {
+    "path": "internal/bodycodegen/body_local_source.go",
+    "sha256": "44f608e2898b03631a579fbd81612b319e86715bb2577a17f8daeec9a55ba7e4"
+  },
+  {
+    "path": "internal/bodycodegen/source_fill_local_fresh_test.go",
+    "sha256": "5fa77535e4fb0cda7578ea059bc40cf77036874a8f664136988792f401b6a72b"
+  },
+  {
+    "path": "internal/bodycodegen/source_fill_local_origin.go",
+    "sha256": "1d400fc41310a14c17e1ed5e9f6a0eb9fe6d5292a2e532241ab92bd87054174a"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_fill_fresh_test.go",
+    "sha256": "74164195f5c30c99b07763d143a6e7a7ee84af1ca02602870882aeb1fe3120a2"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_fill_source.go",
+    "sha256": "e3edd9877ec20f7676b043908127ae3f90dd8a2ba2488e9737a4c6074cade907"
+  },
+  {
+    "path": "internal/bodyexecution/composition_local_sites.go",
+    "sha256": "4fe78c0d8ca442fe57e7eb831b0976ef8d2023e4b14579a39416b1e822745ec1"
+  },
+  {
+    "path": "internal/bodyexecution/native_local_facts.go",
+    "sha256": "ff42d2c692a2fbde707980679881458e7180c17714fac53fb80cb6f2f372146f"
+  },
+  {
+    "path": "internal/bodyexecution/native_local_fill_facts.go",
+    "sha256": "4f4d456748d1ec974f243745bc4eeeea98f2b5ccf6379424b0a432b6318183dc"
+  },
+  {
+    "path": "internal/bodyexecution/native_origin_input.go",
+    "sha256": "2767be379fc2101b1264010640b595e69c78e591c654df4198e9f739239b8c7b"
+  }
+]

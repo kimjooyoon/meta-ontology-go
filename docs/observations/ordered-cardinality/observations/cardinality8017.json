@@ -1,0 +1,1316 @@
+{
+  "cases": [
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[]}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":9007199254741107}",
+      "output": {
+        "value": 9007199254741107
+      },
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[9007199254741107]}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[9007199254741107,-43]}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":true}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[true]}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "integer/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/one\" fields {\n field value id \"urn:cardinality8017:integer/required/one:value\" type integer required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "5df3fc1a75f628d01ac826d322e2d6178f887b5815bd1596238470319bf8b80e"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{}",
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[]}",
+      "output": {
+        "value": []
+      },
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":9007199254741107}",
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[9007199254741107]}",
+      "output": {
+        "value": [
+          9007199254741107
+        ]
+      },
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[9007199254741107,-43]}",
+      "output": {
+        "value": [
+          9007199254741107,
+          -43
+        ]
+      },
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":true}",
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[true]}",
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "integer/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/required/many\" fields {\n field value id \"urn:cardinality8017:integer/required/many:value\" type integer required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "10ed7132390d0eeeec2d51769d230e52f9b4f5a583a699253d80419948b7e75e"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{}",
+      "output": {},
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[]}",
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":9007199254741107}",
+      "output": {
+        "value": 9007199254741107
+      },
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[9007199254741107]}",
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[9007199254741107,-43]}",
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":true}",
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[true]}",
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "integer/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/one\" fields {\n field value id \"urn:cardinality8017:integer/optional/one:value\" type integer optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c67d41a21684da70a2af48c07642ba3e7664abd78e4b498b633b6dd69b10e3b7"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{}",
+      "output": {},
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[]}",
+      "output": {
+        "value": []
+      },
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":9007199254741107}",
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[9007199254741107]}",
+      "output": {
+        "value": [
+          9007199254741107
+        ]
+      },
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[9007199254741107,-43]}",
+      "output": {
+        "value": [
+          9007199254741107,
+          -43
+        ]
+      },
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":true}",
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[true]}",
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "integer/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:integer/optional/many\" fields {\n field value id \"urn:cardinality8017:integer/optional/many:value\" type integer optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:integer/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "62917483b6db6fc10664732d75ed3f45a9ea86ca65ca69e921f81df58e3b7a17"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[]}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":\"기원8017\"}",
+      "output": {
+        "value": "기원8017"
+      },
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[\"기원8017\"]}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[\"기원8017\",\"tail\"]}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":81}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[81]}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "string/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/one\" fields {\n field value id \"urn:cardinality8017:string/required/one:value\" type string required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "6e6d376f909291933a0af5fc62537b532865947b94287c20da07b3914f32bc48"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{}",
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[]}",
+      "output": {
+        "value": []
+      },
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":\"기원8017\"}",
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[\"기원8017\"]}",
+      "output": {
+        "value": [
+          "기원8017"
+        ]
+      },
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[\"기원8017\",\"tail\"]}",
+      "output": {
+        "value": [
+          "기원8017",
+          "tail"
+        ]
+      },
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":81}",
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[81]}",
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "string/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/required/many\" fields {\n field value id \"urn:cardinality8017:string/required/many:value\" type string required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c48c576117a1f940d01a0b07c2a94c0c549baf0c1a359e03d30a255498e980b1"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{}",
+      "output": {},
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[]}",
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":\"기원8017\"}",
+      "output": {
+        "value": "기원8017"
+      },
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[\"기원8017\"]}",
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[\"기원8017\",\"tail\"]}",
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":81}",
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[81]}",
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "string/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/one\" fields {\n field value id \"urn:cardinality8017:string/optional/one:value\" type string optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "f47ca4bbc3fe444ac971829d25d81b8c1f12ea29da6f50d05e3b98c1d86b7803"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{}",
+      "output": {},
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[]}",
+      "output": {
+        "value": []
+      },
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":\"기원8017\"}",
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[\"기원8017\"]}",
+      "output": {
+        "value": [
+          "기원8017"
+        ]
+      },
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[\"기원8017\",\"tail\"]}",
+      "output": {
+        "value": [
+          "기원8017",
+          "tail"
+        ]
+      },
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":81}",
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[81]}",
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "string/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:string/optional/many\" fields {\n field value id \"urn:cardinality8017:string/optional/many:value\" type string optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:string/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "9a5c76cd8a249a746b372787f48b68990a600307d774748332c08c37174173a2"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[]}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":false}",
+      "output": {
+        "value": false
+      },
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[false]}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[false,true]}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":\"false\"}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[\"false\"]}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "boolean/required/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/one\" fields {\n field value id \"urn:cardinality8017:boolean/required/one:value\" type boolean required one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "c580201dd9e0fb53fcf2d5c7f5b815b9a7d8066187c2c7b331516d78ce60fe50"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{}",
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[]}",
+      "output": {
+        "value": []
+      },
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":false}",
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[false]}",
+      "output": {
+        "value": [
+          false
+        ]
+      },
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[false,true]}",
+      "output": {
+        "value": [
+          false,
+          true
+        ]
+      },
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":\"false\"}",
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[\"false\"]}",
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "boolean/required/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/required/many\" fields {\n field value id \"urn:cardinality8017:boolean/required/many:value\" type boolean required many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/required/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bf74174d4758f7f1582983639a70c2e2fe3e2ebe4f2115e049d1973de4f83986"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{}",
+      "output": {},
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[]}",
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":false}",
+      "output": {
+        "value": false
+      },
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[false]}",
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[false,true]}",
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":\"false\"}",
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[\"false\"]}",
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "boolean/optional/one",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/one\" fields {\n field value id \"urn:cardinality8017:boolean/optional/one:value\" type boolean optional one\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/one:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "bc558c54324471213b93c5bfa494f732273c67f533337a9180a96f74bb269e98"
+    },
+    {
+      "case": "absent",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{}",
+      "output": {},
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "empty",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[]}",
+      "output": {
+        "value": []
+      },
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":false}",
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "single",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[false]}",
+      "output": {
+        "value": [
+          false
+        ]
+      },
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "ordered",
+      "decoded": true,
+      "executed": true,
+      "expected_execution": true,
+      "input": "{\"value\":[false,true]}",
+      "output": {
+        "value": [
+          false,
+          true
+        ]
+      },
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "wrong-scalar",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":\"false\"}",
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "wrong-list",
+      "decoded": true,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[\"false\"]}",
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "null",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":null}",
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "nested",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":[[]]}",
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    },
+    {
+      "case": "object",
+      "decoded": false,
+      "executed": false,
+      "expected_execution": false,
+      "input": "{\"value\":{}}",
+      "profile": "boolean/optional/many",
+      "source": "package cardinality8017\nnamespace cardinality8017\nentity Packet id \"urn:cardinality8017:boolean/optional/many\" fields {\n field value id \"urn:cardinality8017:boolean/optional/many:value\" type boolean optional many\n}\nactivity Transfer(Packet) -\u003e Packet id \"urn:cardinality8017:boolean/optional/many:transfer\" computes \"record.forward:v1\"\n",
+      "source_sha256": "e65fc165e54e79c9459c34db7e98e7149a455f0b8b3bce10fb333b0d4ca70f91"
+    }
+  ],
+  "decoded": 84,
+  "executed": 30,
+  "expected_decisions_matched": 120,
+  "model_calls": 0
+}

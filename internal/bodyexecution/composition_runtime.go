@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -36,47 +37,90 @@ type CompositionPortDelivery struct {
 }
 
 type CompositionTrace struct {
-	CaseIndex            int                    `json:"case_index"`
-	Deliveries           []CompositionDelivery  `json:"deliveries"`
-	CalledInputsObserved bool                   `json:"called_inputs_observed,omitempty"`
-	Calls                []CompositionCallInput `json:"calls,omitempty"`
+	Bridge                  *CompositionBridgeTrace           `json:"field_local_bridge,omitempty"`
+	FieldWrites             []CompositionFieldWrite           `json:"field_writes,omitempty"`
+	FieldUses               []CompositionFieldUse             `json:"field_uses,omitempty"`
+	FieldFrames             int                               `json:"field_frames,omitempty"`
+	FieldFrameDropped       int                               `json:"field_frame_dropped,omitempty"`
+	FieldWriteDropped       int                               `json:"field_write_dropped,omitempty"`
+	FieldUseDropped         int                               `json:"field_use_dropped,omitempty"`
+	CaseIndex               int                               `json:"case_index"`
+	Deliveries              []CompositionDelivery             `json:"deliveries"`
+	CalledInputsObserved    bool                              `json:"called_inputs_observed,omitempty"`
+	Calls                   []CompositionCallInput            `json:"calls,omitempty"`
+	ConditionsObserved      bool                              `json:"conditions_observed,omitempty"`
+	Conditions              []CompositionConditionObservation `json:"conditions,omitempty"`
+	ConditionsDropped       int                               `json:"conditions_dropped,omitempty"`
+	Constructions           []CompositionConstruction         `json:"constructions,omitempty"`
+	ConstructionsDropped    int                               `json:"constructions_dropped,omitempty"`
+	LocalWrites             []CompositionLocalWrite           `json:"local_writes,omitempty"`
+	LocalUses               []CompositionLocalUse             `json:"local_uses,omitempty"`
+	LocalElements           []CompositionLocalElementWindow   `json:"local_elements,omitempty"`
+	LocalFrames             int                               `json:"local_frames,omitempty"`
+	LocalFrameDropped       int                               `json:"local_frame_dropped,omitempty"`
+	LocalWriteDropped       int                               `json:"local_write_dropped,omitempty"`
+	LocalUseDropped         int                               `json:"local_use_dropped,omitempty"`
+	ReadsObserved           bool                              `json:"reads_observed,omitempty"`
+	Reads                   []CompositionReadObservation      `json:"reads,omitempty"`
+	ReadsDropped            int                               `json:"reads_dropped,omitempty"`
+	ReadRegistrationDropped int                               `json:"read_registration_dropped,omitempty"`
 }
 
 type CompositionRuntime struct {
-	Schema                   string                     `json:"schema"`
-	Stage                    string                     `json:"stage"`
-	Failure                  string                     `json:"failure,omitempty"`
-	CompositionSHA256        string                     `json:"composition_sha256"`
-	OriginalSourceSHA256     string                     `json:"original_source_sha256"`
-	SelectedSourceSHA256     string                     `json:"selected_source_sha256"`
-	TypedPlanSHA256          string                     `json:"typed_plan_sha256"`
-	GeneratedSHA256          string                     `json:"generated_sha256"`
-	DriverSHA256             string                     `json:"driver_sha256"`
-	ObservedProjectionSHA256 string                     `json:"observed_projection_sha256,omitempty"`
-	ObservedDriverSHA256     string                     `json:"observed_driver_sha256,omitempty"`
-	RuntimeSuiteSHA256       string                     `json:"runtime_suite_sha256"`
-	ExecutableSHA256         string                     `json:"executable_sha256"`
-	GoToolSHA256             string                     `json:"go_tool_sha256"`
-	GoToolSelection          string                     `json:"go_tool_selection"`
-	GoVersion                string                     `json:"go_version"`
-	ProducerSourceSHA        string                     `json:"producer_source_sha"`
-	ProducerModule           *buildidentity.Module      `json:"producer_module,omitempty"`
-	Toolchain                ProcessObservation         `json:"toolchain"`
-	Build                    ProcessObservation         `json:"build"`
-	Runs                     []ProcessObservation       `json:"runs"`
-	Traces                   []CompositionTrace         `json:"traces"`
-	ProjectionReplayed       bool                       `json:"projection_replayed"`
-	RuntimeReplayed          bool                       `json:"runtime_replayed"`
-	FinitePassed             int                        `json:"finite_passed"`
-	FiniteTotal              int                        `json:"finite_total"`
-	FaultSites               []CompositionFaultSite     `json:"fault_sites,omitempty"`
-	Outcomes                 *CompositionOutcomes       `json:"outcomes,omitempty"`
-	InputSeparation          CompositionInputSeparation `json:"input_separation"`
-	ModelCalls               int                        `json:"model_calls"`
-	ElapsedNS                int64                      `json:"elapsed_ns"`
-	Scope                    string                     `json:"scope"`
-	Artifact                 *ArtifactObservation       `json:"artifact,omitempty"`
-	ToolchainReference       *ToolchainObservation      `json:"toolchain_reference,omitempty"`
+	Schema                         string                        `json:"schema"`
+	Stage                          string                        `json:"stage"`
+	Failure                        string                        `json:"failure,omitempty"`
+	CompositionSHA256              string                        `json:"composition_sha256"`
+	OriginalSourceSHA256           string                        `json:"original_source_sha256"`
+	SelectedSourceSHA256           string                        `json:"selected_source_sha256"`
+	TypedPlanSHA256                string                        `json:"typed_plan_sha256"`
+	GeneratedSHA256                string                        `json:"generated_sha256"`
+	DriverSHA256                   string                        `json:"driver_sha256"`
+	ObservedProjectionSHA256       string                        `json:"observed_projection_sha256,omitempty"`
+	ObservedDriverSHA256           string                        `json:"observed_driver_sha256,omitempty"`
+	CallContextSHA256              string                        `json:"call_context_sha256,omitempty"`
+	ConstructionInputHistorySHA256 string                        `json:"construction_input_history_sha256,omitempty"`
+	RuntimeSuiteSHA256             string                        `json:"runtime_suite_sha256"`
+	ExecutableSHA256               string                        `json:"executable_sha256"`
+	GoToolSHA256                   string                        `json:"go_tool_sha256"`
+	GoToolSelection                string                        `json:"go_tool_selection"`
+	GoVersion                      string                        `json:"go_version"`
+	ProducerSourceSHA              string                        `json:"producer_source_sha"`
+	ProducerModule                 *buildidentity.Module         `json:"producer_module,omitempty"`
+	Toolchain                      ProcessObservation            `json:"toolchain"`
+	Build                          ProcessObservation            `json:"build"`
+	Runs                           []ProcessObservation          `json:"runs"`
+	Traces                         []CompositionTrace            `json:"traces"`
+	ProjectionReplayed             bool                          `json:"projection_replayed"`
+	RuntimeReplayed                bool                          `json:"runtime_replayed"`
+	FinitePassed                   int                           `json:"finite_passed"`
+	FiniteTotal                    int                           `json:"finite_total"`
+	FaultSites                     []CompositionFaultSite        `json:"fault_sites,omitempty"`
+	ConditionSites                 []CompositionConditionSite    `json:"condition_sites,omitempty"`
+	ConditionObservation           *CompositionConditionSummary  `json:"condition_observation,omitempty"`
+	ConstructionSites              []CompositionConstructionSite `json:"construction_sites,omitempty"`
+	FieldBindings                  []CompositionFieldBinding     `json:"field_bindings,omitempty"`
+	FieldSites                     []CompositionFieldSite        `json:"field_sites,omitempty"`
+	FieldUseSites                  []CompositionFieldSite        `json:"field_use_sites,omitempty"`
+	FieldProjectionSHA256          string                        `json:"field_projection_sha256,omitempty"`
+	FieldObservation               *CompositionFieldSummary      `json:"field_observation,omitempty"`
+	FieldSources                   *CompositionFieldSources      `json:"field_sources,omitempty"`
+	FieldFileSources               *CompositionFieldFileSources  `json:"field_file_sources,omitempty"`
+	BridgeObservation              *CompositionBridgeSummary     `json:"field_local_bridge_observation,omitempty"`
+	LocalSites                     []CompositionLocalSite        `json:"local_sites,omitempty"`
+	LocalUseSites                  []CompositionLocalUseSite     `json:"local_use_sites,omitempty"`
+	LocalObservation               *CompositionLocalSummary      `json:"local_observation,omitempty"`
+	LocalFileSources               *CompositionLocalFileSources  `json:"local_file_sources,omitempty"`
+	ReadSites                      []CompositionReadSite         `json:"read_sites,omitempty"`
+	ReadInputs                     []CompositionReadInput        `json:"read_inputs,omitempty"`
+	ReadObservation                *CompositionReadSummary       `json:"read_observation,omitempty"`
+	Outcomes                       *CompositionOutcomes          `json:"outcomes,omitempty"`
+	InputSeparation                CompositionInputSeparation    `json:"input_separation"`
+	ModelCalls                     int                           `json:"model_calls"`
+	ElapsedNS                      int64                         `json:"elapsed_ns"`
+	Scope                          string                        `json:"scope"`
+	Artifact                       *ArtifactObservation          `json:"artifact,omitempty"`
+	ToolchainReference             *ToolchainObservation         `json:"toolchain_reference,omitempty"`
 }
 
 // ExecuteComposition rebuilds a source-replayed graph and immediately runs it
@@ -84,7 +128,7 @@ type CompositionRuntime struct {
 // Generation-time model observations are retained separately, never re-attested.
 func ExecuteComposition(ctx context.Context, filename string, source []byte, prior Composition,
 	suite CompositionCases, goBinary string) (CompositionRuntime, error) {
-	return executeComposition(ctx, filename, source, prior, suite, goBinary, nil)
+	return executeComposition(ctx, filename, source, prior, suite, goBinary, nil, nil)
 }
 
 func initialCompositionRuntime(source []byte, prior Composition, suite CompositionCases) CompositionRuntime {
@@ -99,7 +143,7 @@ func initialCompositionRuntime(source []byte, prior Composition, suite Compositi
 }
 
 func executeComposition(ctx context.Context, filename string, source []byte, prior Composition,
-	suite CompositionCases, goBinary string, owner *Executor) (CompositionRuntime, error) {
+	suite CompositionCases, goBinary string, owner *Executor, calls *jointCallContext) (CompositionRuntime, error) {
 	start := time.Now()
 	r := initialCompositionRuntime(source, prior, suite)
 	if owner != nil {
@@ -121,7 +165,15 @@ func executeComposition(ctx context.Context, filename string, source []byte, pri
 	if err != nil {
 		return finish(err)
 	}
-	err = executeCompositionNative(ctx, graph, prior, suite, goBinary, &r, owner)
+	observed := prior
+	if calls != nil {
+		graph, observed, err = calls.bind(graph, prior)
+		if err != nil {
+			return finish(err)
+		}
+		r.CallContextSHA256 = calls.digest
+	}
+	err = executeCompositionNative(ctx, graph, observed, suite, goBinary, &r, owner)
 	if err == nil {
 		r.InputSeparation = graph.measureInputSeparation(ctx, filename, source, prior, suite, r.Traces)
 	}
@@ -194,33 +246,42 @@ func buildCompositionExecutable(ctx context.Context, root, projection, driver st
 func observeCompositionRuns(ctx context.Context, root, executable string, rows [][]json.RawMessage,
 	graph compositionGraph, suite CompositionCases, r *CompositionRuntime) error {
 	input, _ := json.Marshal(rows)
-	var first []byte
-	var outcomes *CompositionOutcomes
-	for run := range 2 {
-		r.Stage = fmt.Sprintf("EXECUTE_%d", run+1)
-		output, observation, runErr := runCompositionProcess(ctx, root, executable, input)
-		r.Runs = append(r.Runs, observation)
-		if runErr != nil {
-			return runErr
+	var observations compositionNativeObservation
+	for attempt := range 2 {
+		r.Stage = fmt.Sprintf("EXECUTE_%d", attempt+1)
+		if err := observations.reset(root, r); err != nil {
+			return err
 		}
-		if run == 0 {
-			first = output
-			traces, passed, observed, err := graph.nativeOutcomeTraces(output, suite, r.FaultSites)
-			if err != nil {
-				return err
-			}
-			r.Traces, r.FinitePassed = traces, passed
-			outcomes = observed
-		} else if !bytes.Equal(first, output) {
-			return fmt.Errorf("compiled composition replay outputs differ")
+		output, observation, err := runCompositionProcess(ctx, root, executable, input)
+		r.Runs = append(r.Runs, observation)
+		if err != nil {
+			return err
+		}
+		if err := observations.observe(attempt, root, output, graph, suite, r); err != nil {
+			return err
 		}
 	}
 	r.RuntimeReplayed, r.Stage = true, "COMPLETE"
-	r.Outcomes = outcomes
 	if hasCompositionFault(*r) {
 		r.Schema = compositionFaultRuntimeSchema
 	}
 	return nil
+}
+
+func readNativeConditionFile(path string) ([]byte, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	raw, err := io.ReadAll(io.LimitReader(file, (8<<20)+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) > 8<<20 {
+		return nil, fmt.Errorf("native if observation file exceeds 8 MiB")
+	}
+	return raw, nil
 }
 
 func (graph compositionGraph) nativeOutcomeTraces(output []byte, suite CompositionCases,

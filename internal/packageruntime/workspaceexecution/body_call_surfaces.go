@@ -17,6 +17,17 @@ func (c workspaceCalls) rewriteActivityCalls(key string, d workspaceCallDeclarat
 		return sites, nil
 	}
 	spec := &d.activity.Assembly.Spec
+	observations, err := c.rewriteObservationReference(key, d)
+	if err != nil {
+		return nil, err
+	}
+	sites = append(sites, observations...)
+	criteria, err := c.rewriteCriteriaReferences(key, d)
+	if err != nil {
+		return nil, err
+	}
+	sites = append(sites, criteria...)
+
 	if err := rewrite(&spec.Baseline, "baseline", true); err != nil {
 		return nil, err
 	}

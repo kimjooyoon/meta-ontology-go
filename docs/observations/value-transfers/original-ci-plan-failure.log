@@ -1,0 +1,49 @@
+Gooo CI plan use case	Conform, execute, measure, and replay	﻿2026-10-13T13:43:58.0260428Z ##[group]Run bash scripts/ci-plan-usecase/main.sh
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:43:58.0260887Z ^[[36;1mbash scripts/ci-plan-usecase/main.sh^[[0m
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:43:58.0527141Z shell: /usr/bin/bash -e {0}
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:43:58.0527486Z env:
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:43:58.0527750Z   GOTOOLCHAIN: local
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:43:58.0528058Z ##[endgroup]
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:43:58.7387985Z go: downloading github.com/kimjooyoon/gooo-decision-runtime v0.2.51-experimental
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:43:58.7560100Z go: downloading github.com/kimjooyoon/gooo-jev v0.0.0-20260928032625-e146e6dbb34a
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3149544Z diff --git a/internal/bodycodegen/body_value_origin_bounds_test.go b/internal/bodycodegen/body_value_origin_bounds_test.go
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3150684Z index 0587015..7c9c7cc 100644
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3151333Z --- a/internal/bodycodegen/body_value_origin_bounds_test.go
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3152128Z +++ b/internal/bodycodegen/body_value_origin_bounds_test.go
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3152744Z @@ -8,7 +8,7 @@ import (
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3153485Z  
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3154063Z  func TestValueOriginsNodeBudgetAndControlLinks5297(t *testing.T) {
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3154533Z  	var source strings.Builder
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3154818Z -	for i := 0; i < 320; i++ {
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3155079Z +	for i := range 320 {
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3155448Z  		fmt.Fprintf(&source, "let v%d = input + %d; ", i, 197+i)
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3155781Z  	}
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3156022Z  	source.WriteString("return v319")
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3157403Z diff --git a/internal/bodycodegen/body_value_origin_statements.go b/internal/bodycodegen/body_value_origin_statements.go
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3158480Z index 5ba5d46..489a1ee 100644
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3159093Z --- a/internal/bodycodegen/body_value_origin_statements.go
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3159844Z +++ b/internal/bodycodegen/body_value_origin_statements.go
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3160817Z @@ -140,7 +140,7 @@ func (r *valueOriginReader) loop(loop *ast.ForStmt, env valueOriginEnv, controls
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3161615Z  	}
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3162114Z  	r.reasons["LOOP_EXIT_PATHS_NOT_EXPANDED"] = true
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3162936Z  	entry, current := copyValueOriginEnv(env), copyValueOriginEnv(env)
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3163685Z -	for iteration := 0; iteration < 16; iteration++ {
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3164268Z +	for range 16 {
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3164692Z  		branchControls := controls
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3165114Z  		if loop.Cond != nil {
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3165629Z  			id := r.node("loop_condition", "", loop.Cond, r.inputs(loop.Cond, current), controls)
+Gooo CI plan use case	Conform, execute, measure, and replay	2026-10-13T13:44:34.3179118Z ##[error]Process completed with exit code 1.
+Gooo CI plan use case	Upload deterministic evidence	﻿2026-10-13T13:44:34.3284695Z ##[group]Run actions/upload-artifact@v7
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3285023Z with:
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3285338Z   name: ci-plan-usecase-836acea0bafc4622ace4b144a224a455858d7c03
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3285755Z   path: /home/runner/work/_temp/gooo-ci-plan
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3286065Z   if-no-files-found: error
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3286636Z   retention-days: 14
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3286886Z   compression-level: 6
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3287141Z   overwrite: false
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3287380Z   include-hidden-files: false
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3287637Z   archive: true
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3287849Z env:
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3288053Z   GOTOOLCHAIN: local
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.3288283Z ##[endgroup]
+Gooo CI plan use case	Upload deterministic evidence	2026-10-13T13:44:34.4732860Z ##[error]No files were found with the provided path: /home/runner/work/_temp/gooo-ci-plan. No artifacts will be uploaded.

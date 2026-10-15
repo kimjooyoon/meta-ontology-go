@@ -1,0 +1,5 @@
+=== RUN   TestCompositionFillOriginAndGoooConsumer3607
+    composition_fill_origin_test.go:56: native3607: producer2/2; condition -> chosen candidate/open hole -> exact input expression; Gooo consumer4/4 (one actual origin + three explicit interpretation fixtures); model0
+--- PASS: TestCompositionFillOriginAndGoooConsumer3607 (1.25s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.765s

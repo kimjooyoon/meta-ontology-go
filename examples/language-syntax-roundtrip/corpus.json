@@ -735,6 +735,439 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "GOVERNANCE_OBSERVATION"
+    },
+    {
+      "id": "value-origins-local-candidate",
+      "path": "examples/value-origins/eligibility.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "batch-planner",
+      "path": "examples/batch-planner/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "batch-handoff",
+      "path": "examples/batch-handoff/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-origin-reader-constructions",
+      "path": "examples/native-origin-reader/constructions/constructions.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-origin-reader-elements",
+      "path": "examples/native-origin-reader/elements/elements.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-origin-reader-links",
+      "path": "examples/native-origin-reader/links/links.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-origin-reader-reads",
+      "path": "examples/native-origin-reader/reads/reads.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-origin-reader-locals",
+      "path": "examples/native-origin-reader/locals/locals.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-origin-reader-local-fill",
+      "path": "examples/native-origin-reader/local-fill/reader.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "derived-origin-grammar-example",
+      "path": "examples/derived-origin/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "gooo-origin-coverage-metaprogram",
+      "path": "examples/derived-origin/coverage.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-local-file-origin-reader",
+      "path": "examples/native-origin-reader/local-files/reader.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "workspace-local-file-origin-example",
+      "path": "examples/workspace-local-origins/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "typed-field-origin-copy-example",
+      "path": "examples/typed-value-origins/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "typed-field-origin-gooo-ancestry",
+      "path": "examples/typed-value-origins/ancestry.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-record-field-history-example",
+      "path": "examples/native-record-fields/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-record-field-history-reader",
+      "path": "examples/native-record-fields/reader.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "native-field-lineage-reader",
+      "path": "examples/native-field-lineage/lineage.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "local-field-bridge-example",
+      "path": "examples/local-field-bridge/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "local-field-bridge-reader",
+      "path": "examples/local-field-bridge/trace.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "field-source-map-reader",
+      "path": "examples/field-source-map/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "scoped-origin-coverage-reader",
+      "path": "examples/scoped-origin-coverage/coverage.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "length-aware-summary",
+      "path": "examples/length-aware-summary/summary.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "assembled-length-summary",
+      "path": "examples/assembled-length-summary/summary.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "record-choice-origin-reader",
+      "path": "examples/record-choice-origins/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "fill-candidate-origin-source",
+      "path": "examples/fill-candidate-origins/source.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "fill-candidate-origin-reader",
+      "path": "examples/fill-candidate-origins/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "derived-candidate-origin-source",
+      "path": "examples/derived-candidate-origins/source.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "derived-candidate-origin-reader",
+      "path": "examples/derived-candidate-origins/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "everyday-local-condition-origins",
+      "path": "examples/everyday-program/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "compound-local-update-origins",
+      "path": "examples/compound-updates/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "readable-origin-display-policy",
+      "path": "internal/meta/originview/roles.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "local-version-identity-reader",
+      "path": "examples/local-version-origins/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "same-value-local-version-producer",
+      "path": "examples/local-version-origins/producer/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "json-text-escape-policy",
+      "path": "internal/meta/textinput/escapes.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "json-text-raw-and-decoded-origins",
+      "path": "examples/text-input-origins/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "recorded-local-use-relations",
+      "path": "examples/recorded-use-origins/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "source-control-source",
+      "path": "examples/source-control-reader/source.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "source-control-reader",
+      "path": "examples/source-control-reader/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "source-owned-else-policy",
+      "path": "internal/meta/bodysurface/else.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "else-layout-original-source",
+      "path": "examples/else-layout/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "authored-input-names",
+      "path": "examples/named-inputs/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "record-field-compound-origins",
+      "path": "examples/compound-updates/fields.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "recorded-arithmetic-fault-reader",
+      "path": "examples/fault-origins/describe.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
     }
   ],
   "package_units": [

@@ -1,0 +1,2713 @@
+{
+  "cases": {
+    "schema": "gooo/body-composition-cases/v1",
+    "cases": [
+      {
+        "inputs": {
+          "Build": {
+            "limit": 17,
+            "durations": [
+              8,
+              9,
+              3
+            ]
+          }
+        },
+        "expected": {
+          "Build": {
+            "accepted": 2,
+            "spent": 17,
+            "complete": false,
+            "reason": "budget"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "Build": {
+            "limit": 17,
+            "durations": [
+              9,
+              3,
+              8
+            ]
+          }
+        },
+        "expected": {
+          "Build": {
+            "accepted": 2,
+            "spent": 12,
+            "complete": false,
+            "reason": "budget"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "Build": {
+            "limit": -2,
+            "durations": [
+              11
+            ]
+          }
+        },
+        "expected": {
+          "Build": {
+            "accepted": 0,
+            "spent": 0,
+            "complete": false,
+            "reason": "invalid_limit"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "Build": {
+            "limit": 9223372036854775807,
+            "durations": [
+              9223372036854775805,
+              2
+            ]
+          }
+        },
+        "expected": {
+          "Build": {
+            "accepted": 2,
+            "spent": 9223372036854775807,
+            "complete": true,
+            "reason": "complete"
+          }
+        }
+      }
+    ]
+  },
+  "construction": {
+    "schema": "gooo/body-composition/v1",
+    "stage": "COMPLETE",
+    "original_source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+    "selected_source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+    "generated_sha256": "sha256:9a9fd841ee03b2a856c60d9a50651d0b478394f51719c1dca3a3b2c85ea6151d",
+    "driver_sha256": "sha256:e0b7166243fcbc631b8c6222022c66aa91e00fb72bd2510c6248a7bcac3d21c0",
+    "plan": {
+      "schema": "gooo/body-composition-plan/v1",
+      "typed_plan_sha256": "sha256:50e60a99710ed8ddb26e603ae5f1335c074f372ed52df212e543f7d453cacee2",
+      "semantic_fingerprint": "e51ea007615632ee17b7b925abb201eaaa6cf973beeddc66604380a0d147f0f3",
+      "activities": [
+        {
+          "name": "Build",
+          "id": "urn:batchplanner8297:build",
+          "input_type": "Batch",
+          "output_type": "Plan",
+          "input_entity_id": "urn:batchplanner8297:batch",
+          "output_entity_id": "urn:batchplanner8297:plan",
+          "go_function": "GoooComposedActivity0",
+          "input_from": -1,
+          "assembling": true
+        }
+      ],
+      "edges": [],
+      "record_types": [
+        {
+          "name": "Batch",
+          "id": "urn:batchplanner8297:batch",
+          "go_name": "GoooRecordf015b143cca1a65a4d533b72a16431cd872e95e90b6d53201498809baac3f0d3",
+          "fields": [
+            {
+              "name": "limit",
+              "id": "urn:batchplanner8297:limit",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647"
+            },
+            {
+              "name": "durations",
+              "id": "urn:batchplanner8297:durations",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField9cc23a211b130def6afc0e231a46495d36cd26eb7a255d7f0857864ecbbb7c10",
+              "cardinality": "many"
+            }
+          ]
+        },
+        {
+          "name": "Plan",
+          "id": "urn:batchplanner8297:plan",
+          "go_name": "GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a",
+          "fields": [
+            {
+              "name": "accepted",
+              "id": "urn:batchplanner8297:accepted",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6"
+            },
+            {
+              "name": "spent",
+              "id": "urn:batchplanner8297:spent",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6"
+            },
+            {
+              "name": "complete",
+              "id": "urn:batchplanner8297:complete",
+              "type_id": "urn:gooo:type:boolean",
+              "go_name": "GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059"
+            },
+            {
+              "name": "reason",
+              "id": "urn:batchplanner8297:reason",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e"
+            }
+          ]
+        }
+      ]
+    },
+    "steps": [
+      {
+        "input_source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+        "generation": {
+          "report": {
+            "schema": "gooo/body-codegen-report/v3",
+            "decision": "PASS",
+            "activity": "Build",
+            "activity_id": "urn:batchplanner8297:build",
+            "input_type": "Batch",
+            "record_types": [
+              {
+                "name": "Batch",
+                "id": "urn:batchplanner8297:batch",
+                "go_name": "GoooRecordf015b143cca1a65a4d533b72a16431cd872e95e90b6d53201498809baac3f0d3",
+                "fields": [
+                  {
+                    "name": "limit",
+                    "id": "urn:batchplanner8297:limit",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647"
+                  },
+                  {
+                    "name": "durations",
+                    "id": "urn:batchplanner8297:durations",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField9cc23a211b130def6afc0e231a46495d36cd26eb7a255d7f0857864ecbbb7c10",
+                    "cardinality": "many"
+                  }
+                ]
+              },
+              {
+                "name": "Plan",
+                "id": "urn:batchplanner8297:plan",
+                "go_name": "GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a",
+                "fields": [
+                  {
+                    "name": "accepted",
+                    "id": "urn:batchplanner8297:accepted",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6"
+                  },
+                  {
+                    "name": "spent",
+                    "id": "urn:batchplanner8297:spent",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6"
+                  },
+                  {
+                    "name": "complete",
+                    "id": "urn:batchplanner8297:complete",
+                    "type_id": "urn:gooo:type:boolean",
+                    "go_name": "GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059"
+                  },
+                  {
+                    "name": "reason",
+                    "id": "urn:batchplanner8297:reason",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e"
+                  }
+                ]
+              }
+            ],
+            "output_type": "Plan",
+            "plan_sha256": "sha256:b6a711f057b346f544849b868360216cf525c3d22607295c14906dc16b04653e",
+            "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+            "source_digest": "sha256:7168f58142e51c17d9a604b6b960fc6db58e579d97bb7bde9c3763c04775bec3",
+            "program_digest": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+            "generated_digest": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+            "replay_digest": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+            "route": "preserve",
+            "route_decision": {
+              "schema": "gooo/typed-decision-receipt/v1",
+              "mode": "deterministic_fallback",
+              "selected": "preserve",
+              "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+              "provider": "deterministic",
+              "request_sha256": ""
+            },
+            "route_selection": {
+              "method": "single_eligible_route",
+              "proposed_route": "preserve",
+              "final_route": "preserve"
+            },
+            "route_decision_latency_ms": 0,
+            "body_fill": {
+              "source_origin": {
+                "schema": "gooo/source-fill-origin/v1",
+                "filename": "batch-planner.gooo",
+                "view": "assembly_input",
+                "source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+                "selected_source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+                "selected_body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+                "activity_id": "urn:batchplanner8297:build",
+                "activity_source": {
+                  "start_byte": 610,
+                  "end_byte": 2054
+                },
+                "assembly_source": {
+                  "start_byte": 1223,
+                  "end_byte": 2054
+                },
+                "intent": "입력 순서대로 예산에 맞는 앞부분을 선택한다. 예산과 같은 합계도 허용한다.",
+                "intent_source": {
+                  "start_byte": 1257,
+                  "end_byte": 1361
+                },
+                "candidate_id": "inclusive",
+                "candidate_source": {
+                  "start_byte": 1462,
+                  "end_byte": 1471
+                },
+                "plan_sha256": "sha256:1ae241ad9aaba083732a0bdd4601b14d32d36ff1441d0ac0ce670b8212d888fa",
+                "fragments": [
+                  {
+                    "kind": "retained_template",
+                    "template_decoded": {
+                      "start_byte": 0,
+                      "end_byte": 281
+                    },
+                    "selected_decoded": {
+                      "start_byte": 0,
+                      "end_byte": 290
+                    },
+                    "template_source": {
+                      "start_byte": 682,
+                      "end_byte": 963
+                    },
+                    "selected_source": {
+                      "start_byte": 682,
+                      "end_byte": 981
+                    },
+                    "expression_source": {
+                      "start_byte": 682,
+                      "end_byte": 963
+                    }
+                  },
+                  {
+                    "kind": "declared_candidate",
+                    "hole_id": "fits",
+                    "expression": "duration \u003c= input.limit - spent",
+                    "template_decoded": {
+                      "start_byte": 281,
+                      "end_byte": 304
+                    },
+                    "selected_decoded": {
+                      "start_byte": 290,
+                      "end_byte": 321
+                    },
+                    "template_source": {
+                      "start_byte": 963,
+                      "end_byte": 986
+                    },
+                    "selected_source": {
+                      "start_byte": 981,
+                      "end_byte": 1012
+                    },
+                    "hole_declaration": {
+                      "start_byte": 1367,
+                      "end_byte": 1378
+                    },
+                    "expression_source": {
+                      "start_byte": 1488,
+                      "end_byte": 1519
+                    }
+                  },
+                  {
+                    "kind": "retained_template",
+                    "template_decoded": {
+                      "start_byte": 304,
+                      "end_byte": 539
+                    },
+                    "selected_decoded": {
+                      "start_byte": 321,
+                      "end_byte": 556
+                    },
+                    "template_source": {
+                      "start_byte": 986,
+                      "end_byte": 1221
+                    },
+                    "selected_source": {
+                      "start_byte": 1012,
+                      "end_byte": 1258
+                    },
+                    "expression_source": {
+                      "start_byte": 986,
+                      "end_byte": 1221
+                    }
+                  }
+                ],
+                "data_flow": {
+                  "schema": "gooo/body-value-origins/v1",
+                  "status": "PARTIAL",
+                  "reasons": [
+                    "COLLECTION_ELEMENTS_JOINED",
+                    "EARLY_EXIT_CONTROLS_NOT_EXPANDED",
+                    "LOOP_EXIT_PATHS_NOT_EXPANDED"
+                  ],
+                  "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+                  "nodes": [
+                    {
+                      "id": "assignment:334:350:spent",
+                      "kind": "assignment",
+                      "name": "spent",
+                      "decoded": {
+                        "start_byte": 334,
+                        "end_byte": 350
+                      },
+                      "inputs": [
+                        "assignment:334:350:spent",
+                        "collection_element:138:146:duration",
+                        "declaration:129:130:spent"
+                      ],
+                      "controls": [
+                        "collection:156:171:",
+                        "condition:290:321:"
+                      ]
+                    },
+                    {
+                      "id": "assignment:364:376:accepted",
+                      "kind": "assignment",
+                      "name": "accepted",
+                      "decoded": {
+                        "start_byte": 364,
+                        "end_byte": 376
+                      },
+                      "inputs": [
+                        "assignment:364:376:accepted",
+                        "declaration:115:116:accepted"
+                      ],
+                      "controls": [
+                        "collection:156:171:",
+                        "condition:290:321:"
+                      ]
+                    },
+                    {
+                      "id": "collection:156:171:",
+                      "kind": "collection",
+                      "decoded": {
+                        "start_byte": 156,
+                        "end_byte": 171
+                      },
+                      "inputs": [
+                        "input_reference:156:161:input"
+                      ]
+                    },
+                    {
+                      "id": "collection_element:138:146:duration",
+                      "kind": "collection_element",
+                      "name": "duration",
+                      "decoded": {
+                        "start_byte": 138,
+                        "end_byte": 146
+                      },
+                      "inputs": [
+                        "collection:156:171:"
+                      ]
+                    },
+                    {
+                      "id": "condition:178:190:",
+                      "kind": "condition",
+                      "decoded": {
+                        "start_byte": 178,
+                        "end_byte": 190
+                      },
+                      "inputs": [
+                        "collection_element:138:146:duration"
+                      ],
+                      "controls": [
+                        "collection:156:171:"
+                      ]
+                    },
+                    {
+                      "id": "condition:290:321:",
+                      "kind": "condition",
+                      "decoded": {
+                        "start_byte": 290,
+                        "end_byte": 321
+                      },
+                      "inputs": [
+                        "assignment:334:350:spent",
+                        "collection_element:138:146:duration",
+                        "declaration:129:130:spent",
+                        "input_reference:303:308:input"
+                      ],
+                      "controls": [
+                        "collection:156:171:"
+                      ]
+                    },
+                    {
+                      "id": "condition:3:18:",
+                      "kind": "condition",
+                      "decoded": {
+                        "start_byte": 3,
+                        "end_byte": 18
+                      },
+                      "inputs": [
+                        "input_reference:3:8:input"
+                      ]
+                    },
+                    {
+                      "id": "declaration:115:116:accepted",
+                      "kind": "declaration",
+                      "name": "accepted",
+                      "decoded": {
+                        "start_byte": 115,
+                        "end_byte": 116
+                      }
+                    },
+                    {
+                      "id": "declaration:129:130:spent",
+                      "kind": "declaration",
+                      "name": "spent",
+                      "decoded": {
+                        "start_byte": 129,
+                        "end_byte": 130
+                      }
+                    },
+                    {
+                      "id": "input_reference:156:161:input",
+                      "kind": "input_reference",
+                      "name": "input",
+                      "decoded": {
+                        "start_byte": 156,
+                        "end_byte": 161
+                      }
+                    },
+                    {
+                      "id": "input_reference:303:308:input",
+                      "kind": "input_reference",
+                      "name": "input",
+                      "decoded": {
+                        "start_byte": 303,
+                        "end_byte": 308
+                      }
+                    },
+                    {
+                      "id": "input_reference:3:8:input",
+                      "kind": "input_reference",
+                      "name": "input",
+                      "decoded": {
+                        "start_byte": 3,
+                        "end_byte": 8
+                      }
+                    },
+                    {
+                      "id": "return:200:283:",
+                      "kind": "return",
+                      "decoded": {
+                        "start_byte": 200,
+                        "end_byte": 283
+                      },
+                      "inputs": [
+                        "assignment:334:350:spent",
+                        "assignment:364:376:accepted",
+                        "declaration:115:116:accepted",
+                        "declaration:129:130:spent"
+                      ],
+                      "controls": [
+                        "collection:156:171:",
+                        "condition:178:190:"
+                      ]
+                    },
+                    {
+                      "id": "return:28:97:",
+                      "kind": "return",
+                      "decoded": {
+                        "start_byte": 28,
+                        "end_byte": 97
+                      },
+                      "controls": [
+                        "condition:3:18:"
+                      ]
+                    },
+                    {
+                      "id": "return:396:469:",
+                      "kind": "return",
+                      "decoded": {
+                        "start_byte": 396,
+                        "end_byte": 469
+                      },
+                      "inputs": [
+                        "assignment:334:350:spent",
+                        "assignment:364:376:accepted",
+                        "declaration:115:116:accepted",
+                        "declaration:129:130:spent"
+                      ],
+                      "controls": [
+                        "collection:156:171:",
+                        "condition:290:321:"
+                      ]
+                    },
+                    {
+                      "id": "return:482:556:",
+                      "kind": "return",
+                      "decoded": {
+                        "start_byte": 482,
+                        "end_byte": 556
+                      },
+                      "inputs": [
+                        "assignment:334:350:spent",
+                        "assignment:364:376:accepted",
+                        "declaration:115:116:accepted",
+                        "declaration:129:130:spent"
+                      ]
+                    }
+                  ],
+                  "roots": [
+                    "condition:178:190:",
+                    "condition:290:321:",
+                    "condition:3:18:",
+                    "return:200:283:",
+                    "return:28:97:",
+                    "return:396:469:",
+                    "return:482:556:"
+                  ]
+                }
+              },
+              "schema": "gooo/body-codegen-ir-fill-plan/v3-record",
+              "original_source_digest": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+              "intent": "입력 순서대로 예산에 맞는 앞부분을 선택한다. 예산과 같은 합계도 허용한다.",
+              "hole_id": "fits",
+              "hole_token": "__GOOO_BODY_HOLE_fits__",
+              "ir_plan_sha256": "sha256:1ae241ad9aaba083732a0bdd4601b14d32d36ff1441d0ac0ce670b8212d888fa",
+              "proposed_candidate_id": "strict",
+              "proposed_accuracy_percent": 66.66666666666667,
+              "selected_candidate_id": "inclusive",
+              "selected_expression": "fits=duration \u003c= input.limit - spent",
+              "hole_fills": [
+                {
+                  "hole_id": "fits",
+                  "expression": "duration \u003c= input.limit - spent"
+                }
+              ],
+              "best_candidate_id": "inclusive",
+              "best_candidate_accuracy_percent": 100,
+              "selection_regret_percentage_points": 33.33333333333333,
+              "selection_adjustment": "replaced_with_best_scoring_candidate",
+              "decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "strict",
+                "fallback_reason": "NOT_CONFIGURED",
+                "provider": "deterministic",
+                "request_sha256": "sha256:93a66070ead5858ef56752f759dd62df3b869c39342eeeb30e4732b5923803f9"
+              },
+              "candidate_scores": [
+                {
+                  "id": "strict",
+                  "expression": "fits=duration \u003c input.limit - spent",
+                  "typecheck_passed": true,
+                  "test_cases_passed": 2,
+                  "test_cases_total": 3,
+                  "accuracy_percent": 66.66666666666667
+                },
+                {
+                  "id": "inclusive",
+                  "expression": "fits=duration \u003c= input.limit - spent",
+                  "typecheck_passed": true,
+                  "test_cases_passed": 3,
+                  "test_cases_total": 3,
+                  "accuracy_percent": 100
+                }
+              ],
+              "test_suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+              "test_cases_passed": 3,
+              "test_cases_total": 3,
+              "functional_accuracy_percent": 100,
+              "holdout_suite_sha256": "sha256:2b34a9d598868389139fa56aac9375f4d21315def3a5b3e84f8a24b3a7598082",
+              "holdout_cases_passed": 1,
+              "holdout_cases_total": 1,
+              "holdout_accuracy_percent": 100,
+              "local_model_predictions": 0,
+              "external_provider_calls": 0,
+              "external_provider_calls_known": true,
+              "evaluator": "gooo/bodycodegen-record-value-interpreter/v1",
+              "selected_case_results": null,
+              "selected_value_case_results": [
+                {
+                  "inputs": [
+                    {
+                      "durations": [
+                        12,
+                        18
+                      ],
+                      "limit": 30
+                    }
+                  ],
+                  "expected": {
+                    "accepted": 2,
+                    "complete": true,
+                    "reason": "complete",
+                    "spent": 30
+                  },
+                  "actual": {
+                    "accepted": 2,
+                    "complete": true,
+                    "reason": "complete",
+                    "spent": 30
+                  },
+                  "passed": true,
+                  "fields": [
+                    {
+                      "id": "urn:batchplanner8297:accepted",
+                      "name": "accepted",
+                      "type_id": "urn:gooo:type:integer",
+                      "expected": "2",
+                      "actual": "2",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:spent",
+                      "name": "spent",
+                      "type_id": "urn:gooo:type:integer",
+                      "expected": "30",
+                      "actual": "30",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:complete",
+                      "name": "complete",
+                      "type_id": "urn:gooo:type:boolean",
+                      "expected": "true",
+                      "actual": "true",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:reason",
+                      "name": "reason",
+                      "expected": "complete",
+                      "actual": "complete",
+                      "passed": true
+                    }
+                  ]
+                },
+                {
+                  "inputs": [
+                    {
+                      "durations": [
+                        31
+                      ],
+                      "limit": 30
+                    }
+                  ],
+                  "expected": {
+                    "accepted": 0,
+                    "complete": false,
+                    "reason": "budget",
+                    "spent": 0
+                  },
+                  "actual": {
+                    "accepted": 0,
+                    "complete": false,
+                    "reason": "budget",
+                    "spent": 0
+                  },
+                  "passed": true,
+                  "fields": [
+                    {
+                      "id": "urn:batchplanner8297:accepted",
+                      "name": "accepted",
+                      "type_id": "urn:gooo:type:integer",
+                      "expected": "0",
+                      "actual": "0",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:spent",
+                      "name": "spent",
+                      "type_id": "urn:gooo:type:integer",
+                      "expected": "0",
+                      "actual": "0",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:complete",
+                      "name": "complete",
+                      "type_id": "urn:gooo:type:boolean",
+                      "expected": "false",
+                      "actual": "false",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:reason",
+                      "name": "reason",
+                      "expected": "budget",
+                      "actual": "budget",
+                      "passed": true
+                    }
+                  ]
+                },
+                {
+                  "inputs": [
+                    {
+                      "durations": [],
+                      "limit": 0
+                    }
+                  ],
+                  "expected": {
+                    "accepted": 0,
+                    "complete": true,
+                    "reason": "complete",
+                    "spent": 0
+                  },
+                  "actual": {
+                    "accepted": 0,
+                    "complete": true,
+                    "reason": "complete",
+                    "spent": 0
+                  },
+                  "passed": true,
+                  "fields": [
+                    {
+                      "id": "urn:batchplanner8297:accepted",
+                      "name": "accepted",
+                      "type_id": "urn:gooo:type:integer",
+                      "expected": "0",
+                      "actual": "0",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:spent",
+                      "name": "spent",
+                      "type_id": "urn:gooo:type:integer",
+                      "expected": "0",
+                      "actual": "0",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:complete",
+                      "name": "complete",
+                      "type_id": "urn:gooo:type:boolean",
+                      "expected": "true",
+                      "actual": "true",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:reason",
+                      "name": "reason",
+                      "expected": "complete",
+                      "actual": "complete",
+                      "passed": true
+                    }
+                  ]
+                }
+              ],
+              "selected_value_holdout_case_results": [
+                {
+                  "inputs": [
+                    {
+                      "durations": [
+                        22,
+                        -9,
+                        1
+                      ],
+                      "limit": 90
+                    }
+                  ],
+                  "expected": {
+                    "accepted": 1,
+                    "complete": false,
+                    "reason": "invalid_duration",
+                    "spent": 22
+                  },
+                  "actual": {
+                    "accepted": 1,
+                    "complete": false,
+                    "reason": "invalid_duration",
+                    "spent": 22
+                  },
+                  "passed": true,
+                  "fields": [
+                    {
+                      "id": "urn:batchplanner8297:accepted",
+                      "name": "accepted",
+                      "type_id": "urn:gooo:type:integer",
+                      "expected": "1",
+                      "actual": "1",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:spent",
+                      "name": "spent",
+                      "type_id": "urn:gooo:type:integer",
+                      "expected": "22",
+                      "actual": "22",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:complete",
+                      "name": "complete",
+                      "type_id": "urn:gooo:type:boolean",
+                      "expected": "false",
+                      "actual": "false",
+                      "passed": true
+                    },
+                    {
+                      "id": "urn:batchplanner8297:reason",
+                      "name": "reason",
+                      "expected": "invalid_duration",
+                      "actual": "invalid_duration",
+                      "passed": true
+                    }
+                  ]
+                }
+              ],
+              "accuracy_scope": "exact observed record equality over training value cases; holdout value cases are measured separately when present; neither is a full-domain proof",
+              "timing": {
+                "ir_plan_build_ms": 2.176916,
+                "behavioral_probe_ms": 0,
+                "provider_decision_ms": 0.008666,
+                "laya_decision_ms": 0,
+                "tiny_decision_ms": 0,
+                "final_emission_ms": 1.434584,
+                "total_ms": 3.822041,
+                "execution_model": "synchronous_sequential_no_background_codegen_goroutines",
+                "decision_stage": "after_typed_ir_plan_training_scores_before_final_emission"
+              },
+              "local_calls": {
+                "schema": "gooo/local-call-inputs/v1",
+                "status": "RECORDED",
+                "evaluations": [
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:09b637758242a89ad0e85dd49fbf244e46cb0ec5394307004bc97522fbac42ec",
+                    "activity_id": "urn:batchplanner8297:build",
+                    "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                    "phase": "fill-training",
+                    "candidate_id": "strict",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 3,
+                    "cases_completed": 3,
+                    "calls": []
+                  },
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                    "activity_id": "urn:batchplanner8297:build",
+                    "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                    "phase": "fill-training",
+                    "candidate_id": "inclusive",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 3,
+                    "cases_completed": 3,
+                    "calls": []
+                  },
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                    "activity_id": "urn:batchplanner8297:build",
+                    "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                    "phase": "fill-selected-training",
+                    "candidate_id": "inclusive",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 3,
+                    "cases_completed": 3,
+                    "calls": []
+                  },
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                    "activity_id": "urn:batchplanner8297:build",
+                    "suite_sha256": "sha256:2b34a9d598868389139fa56aac9375f4d21315def3a5b3e84f8a24b3a7598082",
+                    "phase": "fill-selected-holdout",
+                    "candidate_id": "inclusive",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 1,
+                    "cases_completed": 1,
+                    "calls": []
+                  }
+                ]
+              }
+            },
+            "body_conditions": [
+              {
+                "activity_id": "urn:batchplanner8297:build",
+                "native_ordinal": 0,
+                "source_ordinal": 0,
+                "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+                "decoded_start": 3,
+                "decoded_end": 18,
+                "expression": "input.limit \u003c 0",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:batchplanner8297:batch",
+                    "field_id": "urn:batchplanner8297:limit",
+                    "name": "limit"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:batchplanner8297:build",
+                "native_ordinal": 1,
+                "source_ordinal": 1,
+                "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+                "decoded_start": 178,
+                "decoded_end": 190,
+                "expression": "duration \u003c 0",
+                "relation": "retained_condition_node"
+              },
+              {
+                "activity_id": "urn:batchplanner8297:build",
+                "native_ordinal": 2,
+                "source_ordinal": 2,
+                "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+                "decoded_start": 290,
+                "decoded_end": 321,
+                "expression": "(duration \u003c= input.limit-spent)",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:batchplanner8297:batch",
+                    "field_id": "urn:batchplanner8297:limit",
+                    "name": "limit"
+                  }
+                ]
+              }
+            ],
+            "candidate_routes": [
+              "preserve"
+            ],
+            "equivalence_rule": "source-shape-preserving-v1",
+            "source_constructs": 12,
+            "lowered_constructs": 12,
+            "source_semantic_units": 101,
+            "lowered_semantic_units": 101,
+            "completeness_percent": 100,
+            "route_equivalence": {
+              "schema": "gooo/body-codegen-route-equivalence/v1",
+              "decision": "PASS",
+              "method": "canonical_control_flow_form/v2",
+              "rule": "source-shape-preserving-v1",
+              "source_semantic_digest": "sha256:c19f228a2879d04f9061bcaab55912fcd47dbe5e200472355319df81390674d7",
+              "generated_semantic_digest": "sha256:c19f228a2879d04f9061bcaab55912fcd47dbe5e200472355319df81390674d7",
+              "equivalent": true,
+              "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+            },
+            "typecheck_passed": true,
+            "deterministic_replay": true,
+            "repository_writes": 0,
+            "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+            "completeness_receipt": {
+              "schema": "gooo/metaprogramming-completeness-receipt/v2",
+              "profile_id": "gooo/body-codegen-pure-v1",
+              "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+              "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+              "scope": {
+                "allowed_investment": "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional Laya proposal; no human approval or authorization is required",
+                "boundary": {
+                  "excluded_effects": [
+                    "generated code execution",
+                    "repository mutation",
+                    "external authority"
+                  ],
+                  "non_authorizing": true,
+                  "non_executing": true
+                },
+                "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                "decision_mode": "deterministic_fallback",
+                "decision_provider": "deterministic",
+                "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                "excluded_scope": [
+                  "unstated natural-language intent",
+                  "independently sourced production workflows",
+                  "generated runtime behavior",
+                  "unrestricted Gooo body syntax",
+                  "route clarity or utility"
+                ],
+                "execution_environment": "darwin/arm64",
+                "input_type": "Batch",
+                "laya_mode": "deterministic_fallback",
+                "laya_provider": "deterministic",
+                "observed_system_cost": {
+                  "human_actions": 0,
+                  "repository_writes": 0
+                },
+                "output_type": "Plan",
+                "plan_sha256": "sha256:b6a711f057b346f544849b868360216cf525c3d22607295c14906dc16b04653e",
+                "receipt_declaration": {
+                  "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "projection_profile": "gooo/receipt-structure-projection/v1",
+                  "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                },
+                "record_types": [
+                  {
+                    "name": "Batch",
+                    "id": "urn:batchplanner8297:batch",
+                    "go_name": "GoooRecordf015b143cca1a65a4d533b72a16431cd872e95e90b6d53201498809baac3f0d3",
+                    "fields": [
+                      {
+                        "name": "limit",
+                        "id": "urn:batchplanner8297:limit",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647"
+                      },
+                      {
+                        "name": "durations",
+                        "id": "urn:batchplanner8297:durations",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField9cc23a211b130def6afc0e231a46495d36cd26eb7a255d7f0857864ecbbb7c10",
+                        "cardinality": "many"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "Plan",
+                    "id": "urn:batchplanner8297:plan",
+                    "go_name": "GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a",
+                    "fields": [
+                      {
+                        "name": "accepted",
+                        "id": "urn:batchplanner8297:accepted",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6"
+                      },
+                      {
+                        "name": "spent",
+                        "id": "urn:batchplanner8297:spent",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6"
+                      },
+                      {
+                        "name": "complete",
+                        "id": "urn:batchplanner8297:complete",
+                        "type_id": "urn:gooo:type:boolean",
+                        "go_name": "GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059"
+                      },
+                      {
+                        "name": "reason",
+                        "id": "urn:batchplanner8297:reason",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e"
+                      }
+                    ]
+                  }
+                ],
+                "system_budget": {
+                  "maximum_human_actions": 0,
+                  "maximum_repository_writes": 0
+                },
+                "toolchain": "go1.27.2"
+              },
+              "core_dimensions": [
+                "body_fill_holdout_accuracy",
+                "declaration_coverage",
+                "declared_suite_functional_accuracy",
+                "generation_coverage",
+                "internal_replay_coverage",
+                "provenance_integrity",
+                "receipt_schema_binding",
+                "repository_write_boundary",
+                "route_choice_protocol",
+                "route_semantic_equivalence",
+                "source_ast_coverage",
+                "typecheck_coverage"
+              ],
+              "dimensions": [
+                {
+                  "id": "declaration_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "stable activity declarations",
+                  "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                  "evidence": [
+                    "source_digest:sha256:7168f58142e51c17d9a604b6b960fc6db58e579d97bb7bde9c3763c04775bec3",
+                    "activity_id:urn:batchplanner8297:build"
+                  ]
+                },
+                {
+                  "id": "generation_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated Go functions",
+                  "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                  "evidence": [
+                    "generated_digest:sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                    "report decision:PASS"
+                  ]
+                },
+                {
+                  "id": "source_ast_coverage",
+                  "status": "PASS",
+                  "numerator": 101,
+                  "denominator": 101,
+                  "unit": "source semantic units lowered",
+                  "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                  "evidence": [
+                    "source_semantic_units",
+                    "lowered_semantic_units"
+                  ]
+                },
+                {
+                  "id": "route_semantic_equivalence",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source/generated route pairs",
+                  "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                  "evidence": [
+                    "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                    "route_equivalence.rule:source-shape-preserving-v1",
+                    "source_semantic_digest:sha256:c19f228a2879d04f9061bcaab55912fcd47dbe5e200472355319df81390674d7",
+                    "generated_semantic_digest:sha256:c19f228a2879d04f9061bcaab55912fcd47dbe5e200472355319df81390674d7"
+                  ]
+                },
+                {
+                  "id": "typecheck_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated functions accepted by Go type checking",
+                  "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                  "evidence": [
+                    "typecheck_passed"
+                  ]
+                },
+                {
+                  "id": "internal_replay_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "deterministic compiler emission replays",
+                  "reason": "Requires replayed generated bytes to match the selected output digest.",
+                  "evidence": [
+                    "generated_digest:sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                    "replay_digest:sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5"
+                  ]
+                },
+                {
+                  "id": "route_choice_protocol",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "selected routes in the compiler-declared candidate set",
+                  "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                  "evidence": [
+                    "candidate_routes",
+                    "selected_route:preserve"
+                  ]
+                },
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "numerator": 7,
+                  "denominator": 8,
+                  "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "evidence": [
+                    "source_digest:sha256:7168f58142e51c17d9a604b6b960fc6db58e579d97bb7bde9c3763c04775bec3",
+                    "program_digest:sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+                    "generated_digest:sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                    "replay_digest:sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                    "activity_id:urn:batchplanner8297:build",
+                    "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                    "route_equivalence semantic digests"
+                  ]
+                },
+                {
+                  "id": "receipt_schema_binding",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source-owned receipt schema and generated structure bindings",
+                  "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                  "evidence": [
+                    "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile:gooo/receipt-structure-projection/v1"
+                  ]
+                },
+                {
+                  "id": "repository_write_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "repository writes",
+                  "reason": "The command emits generated source without mutating the repository.",
+                  "evidence": [
+                    "repository_writes:0"
+                  ]
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated package runtime executions",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "evidence": [
+                    "body-codegen does not run generated Go"
+                  ]
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "observed host permission profiles",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "evidence": [
+                    "host permission profile is not observed"
+                  ]
+                },
+                {
+                  "id": "external_network_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "runs with no Laya provider request",
+                  "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                  "evidence": [
+                    "decision.mode:deterministic_fallback",
+                    "decision.provider:deterministic",
+                    "decision.fallback_reason:NOT_CONFIGURED"
+                  ]
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "eligible IR body-fill decisions",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "evidence": [
+                    "body_fill.candidate_scores",
+                    "body_fill.decision.mode:deterministic_fallback",
+                    "body_fill.decision.request_sha256:sha256:93a66070ead5858ef56752f759dd62df3b869c39342eeeb30e4732b5923803f9",
+                    "body_fill.decision.model_revision:"
+                  ]
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independently sourced real workflows",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "evidence": [
+                    "no independent workflow corpus is bound"
+                  ]
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated runtime observations mapped back to source",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "evidence": [
+                    "no source-bound reverse-observation trace"
+                  ]
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete input-domain behavior proofs",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "evidence": [
+                    "generated package execution and an independent domain oracle are not part of this command"
+                  ]
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independent route-clarity or utility criteria",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "evidence": [
+                    "no independent route-quality oracle"
+                  ]
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete process resource profiles",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "evidence": [
+                    "route_decision_latency_ms is recorded",
+                    "CPU and peak RSS are not captured"
+                  ]
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible prior resource receipts",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "evidence": [
+                    "no compatible prior resource receipt"
+                  ]
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible before/after semantic receipts",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "evidence": [
+                    "no comparable prior semantic receipt"
+                  ]
+                },
+                {
+                  "id": "declared_suite_functional_accuracy",
+                  "status": "PASS",
+                  "numerator": 3,
+                  "denominator": 3,
+                  "unit": "declared test cases matched by the emitted body in the bounded AST evaluator",
+                  "reason": "Measures the declared selection suite only; held-out behavior, generated-package execution, and full-domain correctness require separate evidence.",
+                  "evidence": [
+                    "body_fill.evaluator:gooo/bodycodegen-record-value-interpreter/v1",
+                    "body_fill.test_suite_sha256:sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                    "body_fill.ir_plan_sha256:sha256:1ae241ad9aaba083732a0bdd4601b14d32d36ff1441d0ac0ce670b8212d888fa",
+                    "generated_digest:sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5"
+                  ]
+                },
+                {
+                  "id": "body_fill_holdout_accuracy",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "held-out cases matched by the final emitted body after candidate selection",
+                  "reason": "Held-out cases are withheld from the chooser and training score; this is an observed finite check, not an all-domain proof.",
+                  "evidence": [
+                    "body_fill.holdout_suite_sha256:sha256:2b34a9d598868389139fa56aac9375f4d21315def3a5b3e84f8a24b3a7598082",
+                    "body_fill.ir_plan_sha256:sha256:1ae241ad9aaba083732a0bdd4601b14d32d36ff1441d0ac0ce670b8212d888fa",
+                    "generated_digest:sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5"
+                  ]
+                },
+                {
+                  "id": "provider_execution_accounting",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "body-fill provider executions classified as local predictions or external calls",
+                  "reason": "Counts local model predictions separately from external provider calls; unknown failed request outcomes remain unknown.",
+                  "evidence": [
+                    "body_fill.local_model_predictions:0",
+                    "body_fill.external_provider_calls:0",
+                    "body_fill.external_provider_calls_known:true"
+                  ]
+                }
+              ],
+              "status_counts": {
+                "FAIL_CLOSED": 0,
+                "PASS": 13,
+                "PROGRESS": 1,
+                "UNKNOWN": 10
+              },
+              "aggregate_completeness_score": null,
+              "first_unresolved": {
+                "id": "provenance_integrity",
+                "status": "PROGRESS",
+                "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+              },
+              "unresolved_claims": [
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                }
+              ],
+              "not_claimed": [
+                "user-intent completeness",
+                "real-workflow coverage",
+                "generated runtime behavior",
+                "full-domain semantics",
+                "route quality",
+                "universal language completeness"
+              ],
+              "fail_closed_reason": null
+            }
+          },
+          "source": "package batchplanner8297\n\n//gooo:generated:start id=\"urn:batchplanner8297:batch\" kind=\"entity\"\ntype GoooRecordf015b143cca1a65a4d533b72a16431cd872e95e90b6d53201498809baac3f0d3 struct {\n\tGoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647 int64   `json:\"limit\"`\n\tGoooField9cc23a211b130def6afc0e231a46495d36cd26eb7a255d7f0857864ecbbb7c10 []int64 `json:\"durations\"`\n}\n\n//gooo:generated:end id=\"urn:batchplanner8297:batch\" kind=\"entity\"\n//gooo:generated:start id=\"urn:batchplanner8297:plan\" kind=\"entity\"\ntype GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a struct {\n\tGoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6 int64  `json:\"accepted\"`\n\tGoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6 int64  `json:\"spent\"`\n\tGoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059 bool   `json:\"complete\"`\n\tGoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e string `json:\"reason\"`\n}\n\n//gooo:generated:end id=\"urn:batchplanner8297:plan\" kind=\"entity\"\n//gooo:generated:start id=\"urn:batchplanner8297:build\" kind=\"activity\"\nfunc Build(input GoooRecordf015b143cca1a65a4d533b72a16431cd872e95e90b6d53201498809baac3f0d3) GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a {\n\tif input.GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647 \u003c 0 {\n\t\treturn GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a{GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6: 0, GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6: 0, GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059: false, GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e: \"invalid_limit\"}\n\t}\n\tvar accepted int64 = 0\n\tvar spent int64 = 0\n\tfor _, duration := range input.GoooField9cc23a211b130def6afc0e231a46495d36cd26eb7a255d7f0857864ecbbb7c10 {\n\t\tif duration \u003c 0 {\n\t\t\treturn GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a{GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6: accepted, GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6: spent, GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059: false, GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e: \"invalid_duration\"}\n\t\t}\n\t\tif duration \u003c= input.GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647-spent {\n\t\t\tspent = spent + duration\n\t\t\taccepted = accepted + 1\n\t\t} else {\n\t\t\treturn GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a{GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6: accepted, GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6: spent, GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059: false, GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e: \"budget\"}\n\t\t}\n\t}\n\treturn GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a{GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6: accepted, GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6: spent, GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059: true, GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e: \"complete\"}\n}\n\n//gooo:generated:end id=\"urn:batchplanner8297:build\" kind=\"activity\"\n",
+          "gooo_source": "package batchplanner8297\nnamespace batchplanner8297\nentity Batch id \"urn:batchplanner8297:batch\" fields {\n field limit id \"urn:batchplanner8297:limit\" type integer required one\n field durations id \"urn:batchplanner8297:durations\" type integer required many\n}\nentity Plan id \"urn:batchplanner8297:plan\" fields {\n field accepted id \"urn:batchplanner8297:accepted\" type integer required one\n field spent id \"urn:batchplanner8297:spent\" type integer required one\n field complete id \"urn:batchplanner8297:complete\" type boolean required one\n field reason id \"urn:batchplanner8297:reason\" type string required one\n}\nactivity Build(Batch) -\u003e Plan id \"urn:batchplanner8297:build\" computes \"if input.limit \u003c 0 { return Plan{accepted: 0, spent: 0, complete: false, reason: \\\"invalid_limit\\\"} }\\nvar accepted = 0\\nvar spent = 0\\nfor _, duration := range input.durations {\\n if duration \u003c 0 { return Plan{accepted: accepted, spent: spent, complete: false, reason: \\\"invalid_duration\\\"} }\\n if (duration \u003c= input.limit-spent) {\\n  spent = spent + duration\\n  accepted = accepted + 1\\n } else {\\n  return Plan{accepted: accepted, spent: spent, complete: false, reason: \\\"budget\\\"}\\n }\\n}\\nreturn Plan{accepted: accepted, spent: spent, complete: true, reason: \\\"complete\\\"}\"\n"
+        }
+      }
+    ],
+    "fill_validations": [
+      {
+        "stage": "BODY_PREFLIGHT",
+        "observation": {
+          "schema": "gooo/source-fill-validation/v1",
+          "source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+          "activity": "Build",
+          "activity_id": "urn:batchplanner8297:build",
+          "completed": true,
+          "local_calls": {
+            "schema": "gooo/local-call-inputs/v1",
+            "status": "RECORDED",
+            "evaluations": [
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:09b637758242a89ad0e85dd49fbf244e46cb0ec5394307004bc97522fbac42ec",
+                "activity_id": "urn:batchplanner8297:build",
+                "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                "phase": "fill-training",
+                "candidate_id": "strict",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 3,
+                "cases_completed": 3,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                "activity_id": "urn:batchplanner8297:build",
+                "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                "phase": "fill-training",
+                "candidate_id": "inclusive",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 3,
+                "cases_completed": 3,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                "activity_id": "urn:batchplanner8297:build",
+                "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                "phase": "fill-selected-training",
+                "candidate_id": "inclusive",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 3,
+                "cases_completed": 3,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                "activity_id": "urn:batchplanner8297:build",
+                "suite_sha256": "sha256:2b34a9d598868389139fa56aac9375f4d21315def3a5b3e84f8a24b3a7598082",
+                "phase": "fill-selected-holdout",
+                "candidate_id": "inclusive",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 1,
+                "cases_completed": 1,
+                "calls": []
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stage": "ACTIVITY_GENERATION",
+        "observation": {
+          "schema": "gooo/source-fill-validation/v1",
+          "source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+          "activity": "Build",
+          "activity_id": "urn:batchplanner8297:build",
+          "completed": true,
+          "local_calls": {
+            "schema": "gooo/local-call-inputs/v1",
+            "status": "RECORDED",
+            "evaluations": [
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:09b637758242a89ad0e85dd49fbf244e46cb0ec5394307004bc97522fbac42ec",
+                "activity_id": "urn:batchplanner8297:build",
+                "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                "phase": "fill-training",
+                "candidate_id": "strict",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 3,
+                "cases_completed": 3,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                "activity_id": "urn:batchplanner8297:build",
+                "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                "phase": "fill-training",
+                "candidate_id": "inclusive",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 3,
+                "cases_completed": 3,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                "activity_id": "urn:batchplanner8297:build",
+                "suite_sha256": "sha256:3b0aaf5fa151aeb37c5b0f3fcbd354f4aac042aa4a9ca8d63f9caa85c6d7455c",
+                "phase": "fill-selected-training",
+                "candidate_id": "inclusive",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 3,
+                "cases_completed": 3,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:dec51c95d6d943e27ea9c76f8f8ea4bb96868ae8998082219dc105f99fccd2b5",
+                "activity_id": "urn:batchplanner8297:build",
+                "suite_sha256": "sha256:2b34a9d598868389139fa56aac9375f4d21315def3a5b3e84f8a24b3a7598082",
+                "phase": "fill-selected-holdout",
+                "candidate_id": "inclusive",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 1,
+                "cases_completed": 1,
+                "calls": []
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "gooo_source": "package batchplanner8297\nnamespace batchplanner8297\nentity Batch id \"urn:batchplanner8297:batch\" fields {\n field limit id \"urn:batchplanner8297:limit\" type integer required one\n field durations id \"urn:batchplanner8297:durations\" type integer required many\n}\nentity Plan id \"urn:batchplanner8297:plan\" fields {\n field accepted id \"urn:batchplanner8297:accepted\" type integer required one\n field spent id \"urn:batchplanner8297:spent\" type integer required one\n field complete id \"urn:batchplanner8297:complete\" type boolean required one\n field reason id \"urn:batchplanner8297:reason\" type string required one\n}\nactivity Build(Batch) -\u003e Plan id \"urn:batchplanner8297:build\" computes \"if input.limit \u003c 0 { return Plan{accepted: 0, spent: 0, complete: false, reason: \\\"invalid_limit\\\"} }\\nvar accepted = 0\\nvar spent = 0\\nfor _, duration := range input.durations {\\n if duration \u003c 0 { return Plan{accepted: accepted, spent: spent, complete: false, reason: \\\"invalid_duration\\\"} }\\n if (duration \u003c= input.limit-spent) {\\n  spent = spent + duration\\n  accepted = accepted + 1\\n } else {\\n  return Plan{accepted: accepted, spent: spent, complete: false, reason: \\\"budget\\\"}\\n }\\n}\\nreturn Plan{accepted: accepted, spent: spent, complete: true, reason: \\\"complete\\\"}\"\n",
+    "source": "package main\n\n//gooo:generated:start id=\"urn:batchplanner8297:batch\" kind=\"entity\"\ntype GoooRecordf015b143cca1a65a4d533b72a16431cd872e95e90b6d53201498809baac3f0d3 struct {\n\tGoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647 int64   `json:\"limit\"`\n\tGoooField9cc23a211b130def6afc0e231a46495d36cd26eb7a255d7f0857864ecbbb7c10 []int64 `json:\"durations\"`\n}\n\n//gooo:generated:end id=\"urn:batchplanner8297:batch\" kind=\"entity\"\n//gooo:generated:start id=\"urn:batchplanner8297:plan\" kind=\"entity\"\ntype GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a struct {\n\tGoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6 int64  `json:\"accepted\"`\n\tGoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6 int64  `json:\"spent\"`\n\tGoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059 bool   `json:\"complete\"`\n\tGoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e string `json:\"reason\"`\n}\n\n//gooo:generated:end id=\"urn:batchplanner8297:plan\" kind=\"entity\"\n\n//gooo:generated:start id=\"urn:batchplanner8297:build\" kind=\"activity\"\nfunc GoooComposedActivity0(input GoooRecordf015b143cca1a65a4d533b72a16431cd872e95e90b6d53201498809baac3f0d3) GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a {\n\tif input.GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647 \u003c 0 {\n\t\treturn GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a{GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6: 0, GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6: 0, GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059: false, GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e: \"invalid_limit\"}\n\t}\n\tvar accepted int64 = 0\n\tvar spent int64 = 0\n\tfor _, duration := range input.GoooField9cc23a211b130def6afc0e231a46495d36cd26eb7a255d7f0857864ecbbb7c10 {\n\t\tif duration \u003c 0 {\n\t\t\treturn GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a{GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6: accepted, GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6: spent, GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059: false, GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e: \"invalid_duration\"}\n\t\t}\n\t\tif duration \u003c= input.GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647-spent {\n\t\t\tspent = spent + duration\n\t\t\taccepted = accepted + 1\n\t\t} else {\n\t\t\treturn GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a{GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6: accepted, GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6: spent, GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059: false, GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e: \"budget\"}\n\t\t}\n\t}\n\treturn GoooRecordf742163387c416e7206d2fcfb29700d22345d4d49740e3c85638acf962d5538a{GoooField0b565b35c685aee27f6180c1974c9800db90ca1c76098c113f305200c970d6f6: accepted, GoooField80c1403b320dfcd508658e19a3cc3aefc70fc0a4943ec5236315e76e2c22bfa6: spent, GoooFieldc0574fc3752f70573eb3534ca29fbae4ecca0a1ede4cd88fbc1617f31979e059: true, GoooFielde51e14ebc646f474a1a5205da1a37200d53ae961ced5a334b2fd94cc576b9b0e: \"complete\"}\n}\n\n//gooo:generated:end id=\"urn:batchplanner8297:build\" kind=\"activity\"\n",
+    "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(\u0026in) != nil || len(in) \u003e 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][1]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 GoooRecordf015b143cca1a65a4d533b72a16431cd872e95e90b6d53201498809baac3f0d3\n\t\tif json.Unmarshal(row[0], \u0026input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+    "elapsed_ns": 28002541,
+    "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+  },
+  "historical_source_executions": 0,
+  "holdout_cases": 1,
+  "model_calls": 0,
+  "native_cases": 4,
+  "runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:5b1b135a72956271ccf67ca89c0ec70cfc12a5af70930cad4faf48abe25304e8",
+    "original_source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+    "selected_source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+    "typed_plan_sha256": "sha256:50e60a99710ed8ddb26e603ae5f1335c074f372ed52df212e543f7d453cacee2",
+    "generated_sha256": "sha256:9a9fd841ee03b2a856c60d9a50651d0b478394f51719c1dca3a3b2c85ea6151d",
+    "driver_sha256": "sha256:e0b7166243fcbc631b8c6222022c66aa91e00fb72bd2510c6248a7bcac3d21c0",
+    "observed_projection_sha256": "sha256:d99562513a460f28e41d68f15aff9c87bc59efba5684a7850f7edde621c95594",
+    "observed_driver_sha256": "sha256:af309baa50051d7f7c8f48e4b1e65402e91a70eca946374ba813625aa4c64f63",
+    "runtime_suite_sha256": "sha256:a973f4aa431397b723078903ef3012b8d57f8b70fbc6670553c56bc54145624a",
+    "executable_sha256": "sha256:7db7a10ef903b6cb0c0e80ef2838d42192017446d23fb7c371c8e221f53ea623",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "explicit",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 7341541,
+      "user_ns": 3186000,
+      "system_ns": 2401000,
+      "peak_rss_bytes": 14204928,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1064708,
+        "wait_ns": 6276833,
+        "deadline_remaining_ns": 59976078958,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 310238708,
+      "user_ns": 122909000,
+      "system_ns": 85648000,
+      "peak_rss_bytes": 87523328,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 751042,
+        "wait_ns": 309487666,
+        "deadline_remaining_ns": 59967535125,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 360045709,
+        "user_ns": 3413000,
+        "system_ns": 6514000,
+        "peak_rss_bytes": 4997120,
+        "stdout_sha256": "sha256:6b370a2ea4b3d857019091ee3994bf09a5487d4821fcb1121dc641f37b82128e",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 940500,
+          "wait_ns": 359105209,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59655789667,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 7414834,
+        "user_ns": 2696000,
+        "system_ns": 3377000,
+        "peak_rss_bytes": 5144576,
+        "stdout_sha256": "sha256:6b370a2ea4b3d857019091ee3994bf09a5487d4821fcb1121dc641f37b82128e",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 2328792,
+          "wait_ns": 5086042,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59294717792,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:batchplanner8297:build",
+            "input": {
+              "durations": [
+                8,
+                9,
+                3
+              ],
+              "limit": 17
+            },
+            "input_fields": [
+              {
+                "id": "urn:batchplanner8297:limit",
+                "name": "limit",
+                "value": 17
+              },
+              {
+                "id": "urn:batchplanner8297:durations",
+                "name": "durations",
+                "value": [
+                  8,
+                  9,
+                  3
+                ]
+              }
+            ],
+            "actual": {
+              "accepted": 2,
+              "complete": false,
+              "reason": "budget",
+              "spent": 17
+            },
+            "actual_fields": [
+              {
+                "id": "urn:batchplanner8297:accepted",
+                "name": "accepted",
+                "value": 2
+              },
+              {
+                "id": "urn:batchplanner8297:spent",
+                "name": "spent",
+                "value": 17
+              },
+              {
+                "id": "urn:batchplanner8297:complete",
+                "name": "complete",
+                "value": false
+              },
+              {
+                "id": "urn:batchplanner8297:reason",
+                "name": "reason",
+                "value": "budget"
+              }
+            ],
+            "expected": {
+              "accepted": 2,
+              "complete": false,
+              "reason": "budget",
+              "spent": 17
+            },
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:batchplanner8297:build",
+            "input": {
+              "durations": [
+                9,
+                3,
+                8
+              ],
+              "limit": 17
+            },
+            "input_fields": [
+              {
+                "id": "urn:batchplanner8297:limit",
+                "name": "limit",
+                "value": 17
+              },
+              {
+                "id": "urn:batchplanner8297:durations",
+                "name": "durations",
+                "value": [
+                  9,
+                  3,
+                  8
+                ]
+              }
+            ],
+            "actual": {
+              "accepted": 2,
+              "complete": false,
+              "reason": "budget",
+              "spent": 12
+            },
+            "actual_fields": [
+              {
+                "id": "urn:batchplanner8297:accepted",
+                "name": "accepted",
+                "value": 2
+              },
+              {
+                "id": "urn:batchplanner8297:spent",
+                "name": "spent",
+                "value": 12
+              },
+              {
+                "id": "urn:batchplanner8297:complete",
+                "name": "complete",
+                "value": false
+              },
+              {
+                "id": "urn:batchplanner8297:reason",
+                "name": "reason",
+                "value": "budget"
+              }
+            ],
+            "expected": {
+              "accepted": 2,
+              "complete": false,
+              "reason": "budget",
+              "spent": 12
+            },
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 2,
+        "deliveries": [
+          {
+            "activity_id": "urn:batchplanner8297:build",
+            "input": {
+              "durations": [
+                11
+              ],
+              "limit": -2
+            },
+            "input_fields": [
+              {
+                "id": "urn:batchplanner8297:limit",
+                "name": "limit",
+                "value": -2
+              },
+              {
+                "id": "urn:batchplanner8297:durations",
+                "name": "durations",
+                "value": [
+                  11
+                ]
+              }
+            ],
+            "actual": {
+              "accepted": 0,
+              "complete": false,
+              "reason": "invalid_limit",
+              "spent": 0
+            },
+            "actual_fields": [
+              {
+                "id": "urn:batchplanner8297:accepted",
+                "name": "accepted",
+                "value": 0
+              },
+              {
+                "id": "urn:batchplanner8297:spent",
+                "name": "spent",
+                "value": 0
+              },
+              {
+                "id": "urn:batchplanner8297:complete",
+                "name": "complete",
+                "value": false
+              },
+              {
+                "id": "urn:batchplanner8297:reason",
+                "name": "reason",
+                "value": "invalid_limit"
+              }
+            ],
+            "expected": {
+              "accepted": 0,
+              "complete": false,
+              "reason": "invalid_limit",
+              "spent": 0
+            },
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 3,
+        "deliveries": [
+          {
+            "activity_id": "urn:batchplanner8297:build",
+            "input": {
+              "durations": [
+                9223372036854775805,
+                2
+              ],
+              "limit": 9223372036854775807
+            },
+            "input_fields": [
+              {
+                "id": "urn:batchplanner8297:limit",
+                "name": "limit",
+                "value": 9223372036854775807
+              },
+              {
+                "id": "urn:batchplanner8297:durations",
+                "name": "durations",
+                "value": [
+                  9223372036854775805,
+                  2
+                ]
+              }
+            ],
+            "actual": {
+              "accepted": 2,
+              "complete": true,
+              "reason": "complete",
+              "spent": 9223372036854775807
+            },
+            "actual_fields": [
+              {
+                "id": "urn:batchplanner8297:accepted",
+                "name": "accepted",
+                "value": 2
+              },
+              {
+                "id": "urn:batchplanner8297:spent",
+                "name": "spent",
+                "value": 9223372036854775807
+              },
+              {
+                "id": "urn:batchplanner8297:complete",
+                "name": "complete",
+                "value": true
+              },
+              {
+                "id": "urn:batchplanner8297:reason",
+                "name": "reason",
+                "value": "complete"
+              }
+            ],
+            "expected": {
+              "accepted": 2,
+              "complete": true,
+              "reason": "complete",
+              "spent": 9223372036854775807
+            },
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 4,
+    "finite_total": 4,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:6f01cfc53d3bc0f622cc9868a1d2eabb93d2ecdbbac8a008bf2c55b70280e5e5",
+        "root_activity_id": "urn:batchplanner8297:build",
+        "activity_id": "urn:batchplanner8297:build",
+        "expression": "input.GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647 \u003c 0",
+        "projection_sha256": "sha256:9a9fd841ee03b2a856c60d9a50651d0b478394f51719c1dca3a3b2c85ea6151d",
+        "start": 1325,
+        "end": 1408,
+        "source": {
+          "construction": {
+            "schema": "gooo/source-fill-condition-origin/v1",
+            "filename": "batch-planner.gooo",
+            "view": "assembly_input",
+            "source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+            "selected_source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+            "selected_body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+            "activity_id": "urn:batchplanner8297:build",
+            "activity_source": {
+              "start_byte": 610,
+              "end_byte": 2054
+            },
+            "assembly_source": {
+              "start_byte": 1223,
+              "end_byte": 2054
+            },
+            "intent": "입력 순서대로 예산에 맞는 앞부분을 선택한다. 예산과 같은 합계도 허용한다.",
+            "intent_source": {
+              "start_byte": 1257,
+              "end_byte": 1361
+            },
+            "candidate_id": "inclusive",
+            "candidate_source": {
+              "start_byte": 1462,
+              "end_byte": 1471
+            },
+            "plan_sha256": "sha256:1ae241ad9aaba083732a0bdd4601b14d32d36ff1441d0ac0ce670b8212d888fa",
+            "fragments": [
+              {
+                "relation": "direct_and_static_dependency",
+                "kind": "retained_template",
+                "template_decoded": {
+                  "start_byte": 0,
+                  "end_byte": 281
+                },
+                "selected_decoded": {
+                  "start_byte": 0,
+                  "end_byte": 290
+                },
+                "template_source": {
+                  "start_byte": 682,
+                  "end_byte": 963
+                },
+                "selected_source": {
+                  "start_byte": 682,
+                  "end_byte": 981
+                },
+                "expression_source": {
+                  "start_byte": 682,
+                  "end_byte": 963
+                }
+              }
+            ],
+            "condition_decoded": {
+              "start_byte": 3,
+              "end_byte": 18
+            },
+            "data_flow": {
+              "schema": "gooo/body-value-origins/v1",
+              "status": "PARTIAL",
+              "reasons": [
+                "COLLECTION_ELEMENTS_JOINED",
+                "EARLY_EXIT_CONTROLS_NOT_EXPANDED",
+                "LOOP_EXIT_PATHS_NOT_EXPANDED"
+              ],
+              "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+              "nodes": [
+                {
+                  "id": "condition:3:18:",
+                  "kind": "condition",
+                  "decoded": {
+                    "start_byte": 3,
+                    "end_byte": 18
+                  },
+                  "inputs": [
+                    "input_reference:3:8:input"
+                  ]
+                },
+                {
+                  "id": "input_reference:3:8:input",
+                  "kind": "input_reference",
+                  "name": "input",
+                  "decoded": {
+                    "start_byte": 3,
+                    "end_byte": 8
+                  }
+                }
+              ],
+              "roots": [
+                "condition:3:18:"
+              ]
+            }
+          },
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:batchplanner8297:build",
+            "name": "Build",
+            "source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+            "start_byte": 610,
+            "end_byte": 1259
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+          "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+          "start_byte": 685,
+          "end_byte": 700,
+          "decoded_start": 3,
+          "decoded_end": 18,
+          "source_ordinal": 0,
+          "expression": "input.limit \u003c 0",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:batchplanner8297:limit",
+                "name": "limit",
+                "source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+                "start_byte": 107,
+                "end_byte": 176
+              },
+              "entity_id": "urn:batchplanner8297:batch",
+              "field_id": "urn:batchplanner8297:limit",
+              "name": "limit"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:f006c89a4de11844d8f85c42129bacc5b73763eb63f9ba31776064c535fe8ca8",
+        "root_activity_id": "urn:batchplanner8297:build",
+        "activity_id": "urn:batchplanner8297:build",
+        "expression": "duration \u003c 0",
+        "projection_sha256": "sha256:9a9fd841ee03b2a856c60d9a50651d0b478394f51719c1dca3a3b2c85ea6151d",
+        "start": 1986,
+        "end": 1998,
+        "source": {
+          "construction": {
+            "schema": "gooo/source-fill-condition-origin/v1",
+            "filename": "batch-planner.gooo",
+            "view": "assembly_input",
+            "source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+            "selected_source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+            "selected_body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+            "activity_id": "urn:batchplanner8297:build",
+            "activity_source": {
+              "start_byte": 610,
+              "end_byte": 2054
+            },
+            "assembly_source": {
+              "start_byte": 1223,
+              "end_byte": 2054
+            },
+            "intent": "입력 순서대로 예산에 맞는 앞부분을 선택한다. 예산과 같은 합계도 허용한다.",
+            "intent_source": {
+              "start_byte": 1257,
+              "end_byte": 1361
+            },
+            "candidate_id": "inclusive",
+            "candidate_source": {
+              "start_byte": 1462,
+              "end_byte": 1471
+            },
+            "plan_sha256": "sha256:1ae241ad9aaba083732a0bdd4601b14d32d36ff1441d0ac0ce670b8212d888fa",
+            "fragments": [
+              {
+                "relation": "direct_and_static_dependency",
+                "kind": "retained_template",
+                "template_decoded": {
+                  "start_byte": 0,
+                  "end_byte": 281
+                },
+                "selected_decoded": {
+                  "start_byte": 0,
+                  "end_byte": 290
+                },
+                "template_source": {
+                  "start_byte": 682,
+                  "end_byte": 963
+                },
+                "selected_source": {
+                  "start_byte": 682,
+                  "end_byte": 981
+                },
+                "expression_source": {
+                  "start_byte": 682,
+                  "end_byte": 963
+                }
+              }
+            ],
+            "condition_decoded": {
+              "start_byte": 178,
+              "end_byte": 190
+            },
+            "data_flow": {
+              "schema": "gooo/body-value-origins/v1",
+              "status": "PARTIAL",
+              "reasons": [
+                "COLLECTION_ELEMENTS_JOINED",
+                "EARLY_EXIT_CONTROLS_NOT_EXPANDED",
+                "LOOP_EXIT_PATHS_NOT_EXPANDED"
+              ],
+              "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+              "nodes": [
+                {
+                  "id": "collection:156:171:",
+                  "kind": "collection",
+                  "decoded": {
+                    "start_byte": 156,
+                    "end_byte": 171
+                  },
+                  "inputs": [
+                    "input_reference:156:161:input"
+                  ]
+                },
+                {
+                  "id": "collection_element:138:146:duration",
+                  "kind": "collection_element",
+                  "name": "duration",
+                  "decoded": {
+                    "start_byte": 138,
+                    "end_byte": 146
+                  },
+                  "inputs": [
+                    "collection:156:171:"
+                  ]
+                },
+                {
+                  "id": "condition:178:190:",
+                  "kind": "condition",
+                  "decoded": {
+                    "start_byte": 178,
+                    "end_byte": 190
+                  },
+                  "inputs": [
+                    "collection_element:138:146:duration"
+                  ],
+                  "controls": [
+                    "collection:156:171:"
+                  ]
+                },
+                {
+                  "id": "input_reference:156:161:input",
+                  "kind": "input_reference",
+                  "name": "input",
+                  "decoded": {
+                    "start_byte": 156,
+                    "end_byte": 161
+                  }
+                }
+              ],
+              "roots": [
+                "condition:178:190:"
+              ]
+            }
+          },
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:batchplanner8297:build",
+            "name": "Build",
+            "source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+            "start_byte": 610,
+            "end_byte": 1259
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+          "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+          "start_byte": 866,
+          "end_byte": 878,
+          "decoded_start": 178,
+          "decoded_end": 190,
+          "source_ordinal": 1,
+          "expression": "duration \u003c 0",
+          "relation": "retained_condition_node"
+        }
+      },
+      {
+        "expression_id": "sha256:848e4eaf3244d89cef1b4dd76b5db62866c154caf9e7fdef8c8879dc7929cfed",
+        "root_activity_id": "urn:batchplanner8297:build",
+        "activity_id": "urn:batchplanner8297:build",
+        "expression": "duration \u003c= input.GoooField75de5649fc385f97982842e051cf677d7b670222550dc15daa341aad07f16647-spent",
+        "projection_sha256": "sha256:9a9fd841ee03b2a856c60d9a50651d0b478394f51719c1dca3a3b2c85ea6151d",
+        "start": 2439,
+        "end": 2536,
+        "source": {
+          "construction": {
+            "schema": "gooo/source-fill-condition-origin/v1",
+            "filename": "batch-planner.gooo",
+            "view": "assembly_input",
+            "source_sha256": "sha256:6dab45259c821fd906da0562d3f2a79c706e7e88b36a2689fa8d0e92d020d3cb",
+            "selected_source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+            "selected_body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+            "activity_id": "urn:batchplanner8297:build",
+            "activity_source": {
+              "start_byte": 610,
+              "end_byte": 2054
+            },
+            "assembly_source": {
+              "start_byte": 1223,
+              "end_byte": 2054
+            },
+            "intent": "입력 순서대로 예산에 맞는 앞부분을 선택한다. 예산과 같은 합계도 허용한다.",
+            "intent_source": {
+              "start_byte": 1257,
+              "end_byte": 1361
+            },
+            "candidate_id": "inclusive",
+            "candidate_source": {
+              "start_byte": 1462,
+              "end_byte": 1471
+            },
+            "plan_sha256": "sha256:1ae241ad9aaba083732a0bdd4601b14d32d36ff1441d0ac0ce670b8212d888fa",
+            "fragments": [
+              {
+                "relation": "static_dependency",
+                "kind": "retained_template",
+                "template_decoded": {
+                  "start_byte": 0,
+                  "end_byte": 281
+                },
+                "selected_decoded": {
+                  "start_byte": 0,
+                  "end_byte": 290
+                },
+                "template_source": {
+                  "start_byte": 682,
+                  "end_byte": 963
+                },
+                "selected_source": {
+                  "start_byte": 682,
+                  "end_byte": 981
+                },
+                "expression_source": {
+                  "start_byte": 682,
+                  "end_byte": 963
+                }
+              },
+              {
+                "relation": "direct_and_static_dependency",
+                "kind": "declared_candidate",
+                "hole_id": "fits",
+                "expression": "duration \u003c= input.limit - spent",
+                "template_decoded": {
+                  "start_byte": 281,
+                  "end_byte": 304
+                },
+                "selected_decoded": {
+                  "start_byte": 290,
+                  "end_byte": 321
+                },
+                "template_source": {
+                  "start_byte": 963,
+                  "end_byte": 986
+                },
+                "selected_source": {
+                  "start_byte": 981,
+                  "end_byte": 1012
+                },
+                "hole_declaration": {
+                  "start_byte": 1367,
+                  "end_byte": 1378
+                },
+                "expression_source": {
+                  "start_byte": 1488,
+                  "end_byte": 1519
+                }
+              },
+              {
+                "relation": "static_dependency",
+                "kind": "retained_template",
+                "template_decoded": {
+                  "start_byte": 304,
+                  "end_byte": 539
+                },
+                "selected_decoded": {
+                  "start_byte": 321,
+                  "end_byte": 556
+                },
+                "template_source": {
+                  "start_byte": 986,
+                  "end_byte": 1221
+                },
+                "selected_source": {
+                  "start_byte": 1012,
+                  "end_byte": 1258
+                },
+                "expression_source": {
+                  "start_byte": 986,
+                  "end_byte": 1221
+                }
+              }
+            ],
+            "condition_decoded": {
+              "start_byte": 290,
+              "end_byte": 321
+            },
+            "data_flow": {
+              "schema": "gooo/body-value-origins/v1",
+              "status": "PARTIAL",
+              "reasons": [
+                "COLLECTION_ELEMENTS_JOINED",
+                "EARLY_EXIT_CONTROLS_NOT_EXPANDED",
+                "LOOP_EXIT_PATHS_NOT_EXPANDED"
+              ],
+              "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+              "nodes": [
+                {
+                  "id": "assignment:334:350:spent",
+                  "kind": "assignment",
+                  "name": "spent",
+                  "decoded": {
+                    "start_byte": 334,
+                    "end_byte": 350
+                  },
+                  "inputs": [
+                    "assignment:334:350:spent",
+                    "collection_element:138:146:duration",
+                    "declaration:129:130:spent"
+                  ],
+                  "controls": [
+                    "collection:156:171:",
+                    "condition:290:321:"
+                  ]
+                },
+                {
+                  "id": "collection:156:171:",
+                  "kind": "collection",
+                  "decoded": {
+                    "start_byte": 156,
+                    "end_byte": 171
+                  },
+                  "inputs": [
+                    "input_reference:156:161:input"
+                  ]
+                },
+                {
+                  "id": "collection_element:138:146:duration",
+                  "kind": "collection_element",
+                  "name": "duration",
+                  "decoded": {
+                    "start_byte": 138,
+                    "end_byte": 146
+                  },
+                  "inputs": [
+                    "collection:156:171:"
+                  ]
+                },
+                {
+                  "id": "condition:290:321:",
+                  "kind": "condition",
+                  "decoded": {
+                    "start_byte": 290,
+                    "end_byte": 321
+                  },
+                  "inputs": [
+                    "assignment:334:350:spent",
+                    "collection_element:138:146:duration",
+                    "declaration:129:130:spent",
+                    "input_reference:303:308:input"
+                  ],
+                  "controls": [
+                    "collection:156:171:"
+                  ]
+                },
+                {
+                  "id": "declaration:129:130:spent",
+                  "kind": "declaration",
+                  "name": "spent",
+                  "decoded": {
+                    "start_byte": 129,
+                    "end_byte": 130
+                  }
+                },
+                {
+                  "id": "input_reference:156:161:input",
+                  "kind": "input_reference",
+                  "name": "input",
+                  "decoded": {
+                    "start_byte": 156,
+                    "end_byte": 161
+                  }
+                },
+                {
+                  "id": "input_reference:303:308:input",
+                  "kind": "input_reference",
+                  "name": "input",
+                  "decoded": {
+                    "start_byte": 303,
+                    "end_byte": 308
+                  }
+                }
+              ],
+              "roots": [
+                "condition:290:321:"
+              ]
+            }
+          },
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:batchplanner8297:build",
+            "name": "Build",
+            "source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+            "start_byte": 610,
+            "end_byte": 1259
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+          "body_sha256": "sha256:f9f0790300fe207b316400a9e2bdb958f9522e3b14f93c3a9b91efb55ea38f1e",
+          "start_byte": 981,
+          "end_byte": 1012,
+          "decoded_start": 290,
+          "decoded_end": 321,
+          "source_ordinal": 2,
+          "expression": "(duration \u003c= input.limit-spent)",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:batchplanner8297:limit",
+                "name": "limit",
+                "source_sha256": "sha256:ca5efe2d8a4a0be35f90d8a93d32fe2b6dfa92d6ad3d0d420dc0daf2cb0c8c37",
+                "start_byte": 107,
+                "end_byte": 176
+              },
+              "entity_id": "urn:batchplanner8297:batch",
+              "field_id": "urn:batchplanner8297:limit",
+              "name": "limit"
+            }
+          ]
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 20,
+      "dropped_events": 0,
+      "sha256": "sha256:4e2cfdd219136e24fdb2c2b4c039deeed0a0e0e95507e2abe53dffa8c4fd1ad2"
+    },
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 4,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 4,
+      "disjoint_cases_passed": 4,
+      "unknown_inputs": 0,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 713826833,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "selection_cases": 3,
+  "source": "package batchplanner8297\nnamespace batchplanner8297\nentity Batch id \"urn:batchplanner8297:batch\" fields {\n field limit id \"urn:batchplanner8297:limit\" type integer required one\n field durations id \"urn:batchplanner8297:durations\" type integer required many\n}\nentity Plan id \"urn:batchplanner8297:plan\" fields {\n field accepted id \"urn:batchplanner8297:accepted\" type integer required one\n field spent id \"urn:batchplanner8297:spent\" type integer required one\n field complete id \"urn:batchplanner8297:complete\" type boolean required one\n field reason id \"urn:batchplanner8297:reason\" type string required one\n}\nactivity Build(Batch) -\u003e Plan id \"urn:batchplanner8297:build\" computes `if input.limit \u003c 0 { return Plan{accepted: 0, spent: 0, complete: false, reason: \"invalid_limit\"} }\nlet accepted = 0\nlet spent = 0\nfor duration in input.durations {\n if duration \u003c 0 { return Plan{accepted: accepted, spent: spent, complete: false, reason: \"invalid_duration\"} }\n if __GOOO_BODY_HOLE_fits__ {\n  spent = spent + duration\n  accepted = accepted + 1\n } else {\n  return Plan{accepted: accepted, spent: spent, complete: false, reason: \"budget\"}\n }\n}\nreturn Plan{accepted: accepted, spent: spent, complete: true, reason: \"complete\"}` assembling {\n source_fill intent \"입력 순서대로 예산에 맞는 앞부분을 선택한다. 예산과 같은 합계도 허용한다.\" {\n  hole \"fits\"\n  candidate \"strict\" { fill \"fits\" \"duration \u003c input.limit - spent\" }\n  candidate \"inclusive\" { fill \"fits\" \"duration \u003c= input.limit - spent\" }\n }\n value_case \"[{\\\"limit\\\":30,\\\"durations\\\":[12,18]}]\" -\u003e \"{\\\"accepted\\\":2,\\\"spent\\\":30,\\\"complete\\\":true,\\\"reason\\\":\\\"complete\\\"}\"\n value_case \"[{\\\"limit\\\":30,\\\"durations\\\":[31]}]\" -\u003e \"{\\\"accepted\\\":0,\\\"spent\\\":0,\\\"complete\\\":false,\\\"reason\\\":\\\"budget\\\"}\"\n value_case \"[{\\\"limit\\\":0,\\\"durations\\\":[]}]\" -\u003e \"{\\\"accepted\\\":0,\\\"spent\\\":0,\\\"complete\\\":true,\\\"reason\\\":\\\"complete\\\"}\"\n holdout_value_case \"[{\\\"limit\\\":90,\\\"durations\\\":[22,-9,1]}]\" -\u003e \"{\\\"accepted\\\":1,\\\"spent\\\":22,\\\"complete\\\":false,\\\"reason\\\":\\\"invalid_duration\\\"}\"\n}\n"
+}

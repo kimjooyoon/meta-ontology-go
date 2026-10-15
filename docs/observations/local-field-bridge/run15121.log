@@ -1,0 +1,4 @@
+# github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution
+/private/tmp/gooo-local-field-bridge-20261014/producer15121/internal/bodyexecution/composition_bridge_validate.go:43:9: undefined: validateBridgeEvaluationWindows
+FAIL	github.com/kimjooyoon/meta-ontology-go/cmd/gooo [build failed]
+FAIL

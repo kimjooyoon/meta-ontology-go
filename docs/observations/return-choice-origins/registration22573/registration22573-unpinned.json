@@ -1,0 +1,13 @@
+{
+  "case": {
+    "id": "record-choice-origin-reader",
+    "path": "examples/record-choice-origins/inspect.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY",
+    "ordered_collections": true
+  },
+  "base_version": 70
+}

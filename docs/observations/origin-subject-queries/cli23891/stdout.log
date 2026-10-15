@@ -1,0 +1,5 @@
+=== RUN   TestGoooOriginSubjects23891
+    origin_subject_query_fresh_test.go:116: real CLI generated a distinct Gooo reader;exact field default kind;27 retained/9 selected/3 paged;original source coordinates and write numbers;three no-receipt filters and wrong kind rejected;producer/model0;input-only finite0
+--- PASS: TestGoooOriginSubjects23891 (1.25s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/cliobservations	3.957s

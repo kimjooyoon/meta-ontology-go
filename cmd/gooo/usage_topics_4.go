@@ -1,6 +1,10 @@
 package main
 
 var topicHelpGroup4 = map[string]string{
+	"refactor": sourceRefactorHelp,
+	"impact":   sourceImpactHelp,
+
+	"context": semanticContextHelp,
 	"body-outcomes-delta": `Compare saved workflow outcomes
 
 ` + bodyOutcomesDeltaUsage + `
@@ -52,7 +56,7 @@ Use --build to include compiler build information.
 	"commands": `Core commands
 
   init, check, test, run, body-codegen, generate, emit
-  format, fix, inspect, query, graph, receipt-schema
+  refactor, format, fix, inspect, query, context, impact, graph, receipt-schema
   package, body-context, body-compose, body-construct, body-execute, body-search-run, body-realize, body-refine
   body-outcomes-delta, profile, debug, decide, invoke, lsp, version
 

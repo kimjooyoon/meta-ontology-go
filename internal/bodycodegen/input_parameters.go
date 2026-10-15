@@ -2,8 +2,8 @@ package bodycodegen
 
 import "strings"
 
-// InputParameter follows the source declaration order. Multiple inputs have
-// positional names input0..input15; the existing single-input name is input.
+// InputParameter follows source declaration order and retains its body binding.
+// Unnamed inputs use input/inputN; wire ports remain positional with named inputs.
 type InputParameter struct {
 	Name string `json:"name"`
 	Type string `json:"type"`

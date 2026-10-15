@@ -151,6 +151,13 @@ func preparePathOracle(ctx context.Context, filename string, source []byte, acti
 	if name == activity {
 		return Result{}, fmt.Errorf("path observation oracle must name a separate declared activity")
 	}
+	spec, err := SourceAssembly(ctx, filename, source, name)
+	if err != nil {
+		return Result{}, err
+	}
+	if spec != nil {
+		return Result{}, fmt.Errorf("path observation oracle requires a fixed computes activity")
+	}
 	oracle, err := GenerateWithPlanner(ctx, filename, source, name, "", "")
 	if err != nil {
 		return Result{}, fmt.Errorf("prepare declared Gooo oracle: %w", err)

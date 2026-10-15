@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T18:14:04.884315+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay=/private/tmp/gooo-race-package-order-20261015/scope57213/overlay.json",
+    "./internal/verify",
+    "-run=^TestRacePackageOrder(RetainsFullScope|RejectsNarrowedCommands)57213$",
+    "-v"
+  ],
+  "historical_test_reruns": 0
+}

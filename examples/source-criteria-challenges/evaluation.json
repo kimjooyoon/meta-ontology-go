@@ -1,0 +1,25 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Select": 23
+      },
+      "expected": {
+        "Select": {
+          "value": -23
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Select": -31
+      },
+      "expected": {
+        "Select": {
+          "value": 31
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+Recorded candidate origins: 0 uses; 0 matching constructions; 0 recorded value graphs
+
+Selected program value origins: urn:access8887:take [MAPPED]
+
+  Source access occurrences:
+    urn:access8887:take field_access: "input.pick" (body bytes 107..117)
+    urn:access8887:take slice_access: "input.readings[시작:끝]" (body bytes 73..99)
+    urn:access8887:take access_base: "input.readings" (body bytes 73..87)
+    urn:access8887:take slice_high: "끝" (body bytes 95..98)
+    urn:access8887:take slice_low: "시작" (body bytes 88..94)
+    urn:access8887:take field_access: "input.readings" (body bytes 73..87)
+    urn:access8887:take field_access: "input.upper" (body bytes 36..47)
+    urn:access8887:take field_access: "input.lower" (body bytes 13..24)
+
+  return -> external_input in urn:access8887:take
+    root urn:access8887:take return: "Window{readings: input.readings[시작:끝], pick: input.pick}"
+    input urn:access8887:take field_access: "input.pick"
+    input urn:access8887:take input_reference: "input"
+    source workspace_input_declaration: 측정구간.gooo bytes 616..809 (sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45)
+
+  return -> external_input in urn:access8887:take
+    root urn:access8887:take return: "Window{readings: input.readings[시작:끝], pick: input.pick}"
+    input urn:access8887:take slice_access: "input.readings[시작:끝]"
+    input urn:access8887:take slice_low: "시작"
+    input urn:access8887:take declaration: "input.lower"
+    input urn:access8887:take field_access: "input.lower"
+    input urn:access8887:take input_reference: "input"
+    source workspace_input_declaration: 측정구간.gooo bytes 616..809 (sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45)
+
+  return -> external_input in urn:access8887:take
+    root urn:access8887:take return: "Window{readings: input.readings[시작:끝], pick: input.pick}"
+    input urn:access8887:take slice_access: "input.readings[시작:끝]"
+    input urn:access8887:take slice_high: "끝"
+    input urn:access8887:take declaration: "input.upper"
+    input urn:access8887:take field_access: "input.upper"
+    input urn:access8887:take input_reference: "input"
+    source workspace_input_declaration: 측정구간.gooo bytes 616..809 (sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45)
+
+  return -> external_input in urn:access8887:take
+    root urn:access8887:take return: "Window{readings: input.readings[시작:끝], pick: input.pick}"
+    input urn:access8887:take slice_access: "input.readings[시작:끝]"
+    input urn:access8887:take access_base: "input.readings"
+    input urn:access8887:take field_access: "input.readings"
+    input urn:access8887:take input_reference: "input"
+    source workspace_input_declaration: 측정구간.gooo bytes 616..809 (sha256:8919c7b15b426b7f426da378f7d50d5cc9818e9bbb876b3bfdada7557ee1ce45)
+  current static analysis of retained selected source; use-to-origin paths across pure calls and binds; field/index/slice steps retain source expressions, not runtime element identities; one shortest path per root and origin; branch alternatives are joined; zero program or model execution
+
+one shortest recorded static path per condition/return root and filled hole; selected construction only; no body, candidate or model execution

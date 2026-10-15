@@ -1,0 +1,55 @@
+package choiceorigins
+namespace choiceorigins22291
+entity Anchor id "urn:choiceorigins22291:anchor" fields {
+ field case_index id "urn:choiceorigins22291:anchor:case_index" type integer required one
+ field event_kind id "urn:choiceorigins22291:anchor:event_kind" type string required one
+ field event_index id "urn:choiceorigins22291:anchor:event_index" type integer required one
+ field assignment_index id "urn:choiceorigins22291:anchor:assignment_index" type integer required one
+ field frame id "urn:choiceorigins22291:anchor:frame" type integer required one
+ field root_activity_id id "urn:choiceorigins22291:anchor:root_activity_id" type string required one
+ field activity_id id "urn:choiceorigins22291:anchor:activity_id" type string required one
+ field variable_ordinal id "urn:choiceorigins22291:anchor:variable_ordinal" type integer required one
+ field variable_name id "urn:choiceorigins22291:anchor:variable_name" type string required one
+ field record_id id "urn:choiceorigins22291:anchor:record_id" type string required one
+ field field_id id "urn:choiceorigins22291:anchor:field_id" type string required one
+ field site_kind id "urn:choiceorigins22291:anchor:site_kind" type string required one
+ field category id "urn:choiceorigins22291:anchor:category" type string required one
+ field mapping id "urn:choiceorigins22291:anchor:mapping" type string required one
+ field reason id "urn:choiceorigins22291:anchor:reason" type string required one
+ field package_path id "urn:choiceorigins22291:anchor:package_path" type string required one
+ field filename id "urn:choiceorigins22291:anchor:filename" type string required one
+ field original_activity_id id "urn:choiceorigins22291:anchor:original_activity_id" type string required one
+ field source_sha256 id "urn:choiceorigins22291:anchor:source_sha256" type string required one
+ field source_start id "urn:choiceorigins22291:anchor:source_start" type integer required one
+ field source_end id "urn:choiceorigins22291:anchor:source_end" type integer required one
+ field expression id "urn:choiceorigins22291:anchor:expression" type string required one
+ field candidate_id id "urn:choiceorigins22291:anchor:candidate_id" type string required one
+ field hole_id id "urn:choiceorigins22291:anchor:hole_id" type string required one
+ field grammar id "urn:choiceorigins22291:anchor:grammar" type string required one
+}
+entity Location id "urn:choiceorigins22291:location" fields {
+ field status id "urn:choiceorigins22291:location:status" type string required one
+ field selected_alternative id "urn:choiceorigins22291:location:selected" type boolean required one
+ field mapped id "urn:choiceorigins22291:location:mapped" type boolean required one
+ field filename id "urn:choiceorigins22291:location:filename" type string required one
+ field source_start id "urn:choiceorigins22291:location:start" type integer required one
+ field source_end id "urn:choiceorigins22291:location:end" type integer required one
+ field expression id "urn:choiceorigins22291:location:expression" type string required one
+ field record_id id "urn:choiceorigins22291:location:record" type string required one
+ field field_id id "urn:choiceorigins22291:location:field" type string required one
+ field assignment_index id "urn:choiceorigins22291:location:assignment" type integer required one
+ field original_activity_id id "urn:choiceorigins22291:location:activity" type string required one
+ field reason id "urn:choiceorigins22291:location:reason" type string required one
+}
+activity Inspect(Anchor)->Location id "urn:choiceorigins22291:inspect" computes `let selected=input.category=="record_choice"
+let status="UNRESOLVED"
+let mapped=false
+if input.mapping=="MAPPED" {
+ if input.filename!="" && input.source_sha256!="" && input.source_start>=0 && input.source_end>input.source_start && input.field_id!="" && input.record_id!="" {
+  mapped=true
+  status="ORIGINAL_EXPRESSION"
+  if selected {status="DECLARED_ALTERNATIVE"}
+  if input.category=="target" {status="FIELD_TARGET"}
+ } else {status="INVALID_LOCATION"}
+}
+return Location{status:status,selected_alternative:selected,mapped:mapped,filename:input.filename,source_start:input.source_start,source_end:input.source_end,expression:input.expression,record_id:input.record_id,field_id:input.field_id,assignment_index:input.assignment_index,original_activity_id:input.original_activity_id,reason:input.reason}`

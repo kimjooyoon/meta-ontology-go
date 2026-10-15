@@ -1,0 +1,14 @@
+{
+  "cause": "corpus JSON added one case without native registry/counters/version migration",
+  "new_case": "value-origins-local-candidate",
+  "old_total": 81,
+  "new_total": 82,
+  "old_capability": 79,
+  "new_capability": 80,
+  "old_version": 47,
+  "new_version": 48,
+  "new_digest": "sha256:2b9ac5c2293e7c61f23de5e0fbb1ca59d843e43ed9b78cba21054173fdaabfab",
+  "historical_denominators_edited": 0,
+  "historical_case_executions": 0,
+  "method": "source edits following the existing registration transformation, plus preserving v47 validation; CI will execute original source cohorts"
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "origins/app",
+    "activity": "Build"
+  },
+  "packages": [
+    {
+      "path": "origins/app",
+      "name": "localorigin",
+      "imports": [],
+      "sources": [
+        "main.gooo"
+      ]
+    }
+  ]
+}

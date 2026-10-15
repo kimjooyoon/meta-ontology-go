@@ -1,0 +1,1074 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "ALL_INPUTS_NAMED",
+          "reason": "",
+          "total": 2,
+          "named": 2,
+          "named_bps": 10000,
+          "labels": "minuend: Integer [input0]\nsubtrahend: Integer [input1]"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "",
+            ""
+          ],
+          "name_starts": [
+            0,
+            0
+          ],
+          "name_ends": [
+            0,
+            0
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "POSITIONAL_INPUTS",
+          "reason": "",
+          "total": 2,
+          "named": 0,
+          "named_bps": 0,
+          "labels": "input0: Integer [input0]\ninput1: Integer [input1]"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            ""
+          ],
+          "name_starts": [
+            183,
+            0
+          ],
+          "name_ends": [
+            190,
+            0
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "PARTIALLY_NAMED",
+          "reason": "",
+          "total": 2,
+          "named": 1,
+          "named_bps": 5000,
+          "labels": "minuend: Integer [input0]\ninput1: Integer [input1]"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "synthetic-signature",
+          "activity_id": "urn:synthetic:signature",
+          "count": 3,
+          "indices": [
+            0,
+            1,
+            2
+          ],
+          "ports": [
+            "input0",
+            "input1",
+            "input2"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            110,
+            140,
+            170
+          ],
+          "ends": [
+            117,
+            147,
+            177
+          ],
+          "names": [
+            "p0",
+            "p1",
+            ""
+          ],
+          "name_starts": [
+            100,
+            130,
+            0
+          ],
+          "name_ends": [
+            102,
+            132,
+            0
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "synthetic-signature",
+          "activity_id": "urn:synthetic:signature",
+          "status": "PARTIALLY_NAMED",
+          "reason": "",
+          "total": 3,
+          "named": 2,
+          "named_bps": 6666,
+          "labels": "p0: Integer [input0]\np1: Integer [input1]\ninput2: Integer [input2]"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "synthetic-signature",
+          "activity_id": "urn:synthetic:signature",
+          "count": 1,
+          "indices": [
+            0
+          ],
+          "ports": [
+            "input"
+          ],
+          "type_names": [
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            110
+          ],
+          "ends": [
+            117
+          ],
+          "names": [
+            "원금"
+          ],
+          "name_starts": [
+            100
+          ],
+          "name_ends": [
+            106
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "synthetic-signature",
+          "activity_id": "urn:synthetic:signature",
+          "status": "ALL_INPUTS_NAMED",
+          "reason": "",
+          "total": 1,
+          "named": 1,
+          "named_bps": 10000,
+          "labels": "원금: Integer [input]"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "synthetic-signature",
+          "activity_id": "urn:synthetic:signature",
+          "count": 16,
+          "indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "ports": [
+            "input0",
+            "input1",
+            "input2",
+            "input3",
+            "input4",
+            "input5",
+            "input6",
+            "input7",
+            "input8",
+            "input9",
+            "input10",
+            "input11",
+            "input12",
+            "input13",
+            "input14",
+            "input15"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            110,
+            140,
+            170,
+            200,
+            230,
+            260,
+            290,
+            320,
+            350,
+            380,
+            410,
+            440,
+            470,
+            500,
+            530,
+            560
+          ],
+          "ends": [
+            117,
+            147,
+            177,
+            207,
+            237,
+            267,
+            297,
+            327,
+            357,
+            387,
+            417,
+            447,
+            477,
+            507,
+            537,
+            567
+          ],
+          "names": [
+            "p0",
+            "p1",
+            "p2",
+            "p3",
+            "p4",
+            "p5",
+            "p6",
+            "p7",
+            "p8",
+            "p9",
+            "p10",
+            "p11",
+            "p12",
+            "p13",
+            "p14",
+            "p15"
+          ],
+          "name_starts": [
+            100,
+            130,
+            160,
+            190,
+            220,
+            250,
+            280,
+            310,
+            340,
+            370,
+            400,
+            430,
+            460,
+            490,
+            520,
+            550
+          ],
+          "name_ends": [
+            102,
+            132,
+            162,
+            192,
+            222,
+            252,
+            282,
+            312,
+            342,
+            372,
+            403,
+            433,
+            463,
+            493,
+            523,
+            553
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "synthetic-signature",
+          "activity_id": "urn:synthetic:signature",
+          "status": "ALL_INPUTS_NAMED",
+          "reason": "",
+          "total": 16,
+          "named": 16,
+          "named_bps": 10000,
+          "labels": "p0: Integer [input0]\np1: Integer [input1]\np2: Integer [input2]\np3: Integer [input3]\np4: Integer [input4]\np5: Integer [input5]\np6: Integer [input6]\np7: Integer [input7]\np8: Integer [input8]\np9: Integer [input9]\np10: Integer [input10]\np11: Integer [input11]\np12: Integer [input12]\np13: Integer [input13]\np14: Integer [input14]\np15: Integer [input15]"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            "minuend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "NAME_BINDING_CONFLICT",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "input1",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "NAME_BINDING_CONFLICT",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "NAME_COLUMNS_MISMATCH",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            192,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "NAME_POSITION_INVALID",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            197
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "NAME_POSITION_INVALID",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "UNNAMED_POSITION_HAS_NAME_SPAN",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v1",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "SOURCE_SCHEMA_MISMATCH",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 0,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_COLUMNS_MISMATCH",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input1"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_TYPE_ID_MISSING",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "source/control:DescribeInputs": {
+          "schema": "gooo/input-declaration-columns/v2",
+          "scope": "activity_signature",
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "count": 2,
+          "indices": [
+            0,
+            1
+          ],
+          "ports": [
+            "input0",
+            "input0"
+          ],
+          "type_names": [
+            "Integer",
+            "Integer"
+          ],
+          "type_ids": [
+            "urn:gooo:type:integer",
+            "urn:gooo:type:integer"
+          ],
+          "starts": [
+            191,
+            211
+          ],
+          "ends": [
+            198,
+            218
+          ],
+          "names": [
+            "minuend",
+            "subtrahend"
+          ],
+          "name_starts": [
+            183,
+            200
+          ],
+          "name_ends": [
+            190,
+            210
+          ]
+        }
+      },
+      "expected": {
+        "source/control:DescribeInputs": {
+          "source_sha256": "sha256:261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+          "activity_id": "urn:gooo:example:named-inputs:difference",
+          "status": "INVALID_INPUT",
+          "reason": "SIGNATURE_PORT_REPEATED",
+          "total": 0,
+          "named": 0,
+          "named_bps": 0,
+          "labels": ""
+        }
+      }
+    }
+  ]
+}

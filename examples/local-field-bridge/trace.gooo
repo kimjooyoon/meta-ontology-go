@@ -1,0 +1,164 @@
+package bridgetrace
+namespace bridgetrace
+entity Text id "urn:gooo:type:string"
+entity Columns id "urn:gooo:field-local-trace:columns" fields {
+    field source_sha256 id "urn:gooo:field-local-trace:source" type string required one
+    field journal_sha256 id "urn:gooo:field-local-trace:journal" type string required one
+    field case_index id "urn:gooo:field-local-trace:case" type integer required one
+    field selected_use id "urn:gooo:field-local-trace:use" type integer required one
+    field root_assignment id "urn:gooo:field-local-trace:root" type integer required one
+    field root_clock id "urn:gooo:field-local-trace:clock" type integer required one
+    field write_count id "urn:gooo:field-local-trace:write-count" type integer required one
+    field use_count id "urn:gooo:field-local-trace:use-count" type integer required one
+    field recording_complete id "urn:gooo:field-local-trace:complete" type boolean required one
+    field bits id "urn:gooo:field-local-trace:bits" type integer required many
+    field completion_order id "urn:gooo:field-local-trace:order" type integer required many
+    field completions id "urn:gooo:field-local-trace:completions" type integer required many
+    field parents id "urn:gooo:field-local-trace:parents" type integer required many
+    field use_starts id "urn:gooo:field-local-trace:starts" type integer required many
+    field use_ends id "urn:gooo:field-local-trace:ends" type integer required many
+    field write_completed id "urn:gooo:field-local-trace:done" type boolean required many
+    field write_drops id "urn:gooo:field-local-trace:drops" type integer required many
+    field modes id "urn:gooo:field-local-trace:modes" type string required many
+    field kinds id "urn:gooo:field-local-trace:kinds" type string required many
+    field input_kinds id "urn:gooo:field-local-trace:input-kinds" type string required many
+    field activities id "urn:gooo:field-local-trace:activities" type string required many
+    field ports id "urn:gooo:field-local-trace:ports" type string required many
+    field record_ids id "urn:gooo:field-local-trace:records" type string required many
+    field field_ids id "urn:gooo:field-local-trace:fields" type string required many
+    field use_assignments id "urn:gooo:field-local-trace:assignments" type integer required many
+    field use_clocks id "urn:gooo:field-local-trace:use-clocks" type integer required many
+    field other_starts id "urn:gooo:field-local-trace:other-starts" type integer required many
+    field other_ends id "urn:gooo:field-local-trace:other-ends" type integer required many
+    field node_names id "urn:gooo:field-local-trace:node-names" type string required many
+    field source_ordinals id "urn:gooo:field-local-trace:source-ordinals" type integer required many
+    field type_ids id "urn:gooo:field-local-trace:type-ids" type string required many
+    field field_use_count id "urn:gooo:field-local-trace:field-use-count" type integer required one
+}
+entity Result id "urn:gooo:field-local-trace:result" fields {
+    field source_sha256 id "urn:gooo:field-local-trace:result-source" type string required one
+    field case_index id "urn:gooo:field-local-trace:result-case" type integer required one
+    field selected_use id "urn:gooo:field-local-trace:result-use" type integer required one
+    field status id "urn:gooo:field-local-trace:status" type string required one
+    field roots id "urn:gooo:field-local-trace:roots" type string required one
+    field root_count id "urn:gooo:field-local-trace:root-count" type integer required one
+    field reachable_writes id "urn:gooo:field-local-trace:reachable" type integer required one
+    field parent_links id "urn:gooo:field-local-trace:parent-links" type integer required one
+    field field_read_edges id "urn:gooo:field-local-trace:read-edges" type integer required one
+    field unresolved_links id "urn:gooo:field-local-trace:unresolved" type integer required one
+    field shared_rhs_writes id "urn:gooo:field-local-trace:shared" type integer required one
+    field scalar_rhs_writes id "urn:gooo:field-local-trace:scalar" type integer required one
+    field recording_complete id "urn:gooo:field-local-trace:result-complete" type boolean required one
+    field local_read_edges id "urn:gooo:field-local-trace:local-reads" type integer required one
+    field carrier_writes id "urn:gooo:field-local-trace:carriers" type integer required one
+    field literal_writes id "urn:gooo:field-local-trace:literals" type integer required one
+    field read_edges id "urn:gooo:field-local-trace:all-reads" type integer required one
+    field collection_rhs_writes id "urn:gooo:field-local-trace:collection-rhs" type integer required one
+}
+activity Empty(Columns,Text)->Result id "urn:gooo:field-local-trace:empty" computes `return Result{source_sha256:input0.source_sha256,case_index:input0.case_index,selected_use:input0.selected_use,status:input1,roots:"",root_count:0,reachable_writes:0,parent_links:0,field_read_edges:0,unresolved_links:0,shared_rhs_writes:0,scalar_rhs_writes:0,recording_complete:input0.recording_complete,local_read_edges:0,carrier_writes:0,literal_writes:0,read_edges:0,collection_rhs_writes:0}`
+
+activity Trace(Columns)->Result id "urn:gooo:field-local-trace:trace" computes `if input.write_count<0 || input.write_count>60 || input.use_count<1 || input.use_count>128 || input.field_use_count<1 || input.field_use_count>input.use_count || input.selected_use<0 || input.selected_use>=input.field_use_count || int64(len(input.bits))!=input.write_count || len(input.completion_order)!=len(input.bits) || len(input.completions)!=len(input.bits) || len(input.parents)!=len(input.bits) || len(input.use_starts)!=len(input.bits) || len(input.use_ends)!=len(input.bits) || len(input.other_starts)!=len(input.bits) || len(input.other_ends)!=len(input.bits) || len(input.write_completed)!=len(input.bits) || len(input.write_drops)!=len(input.bits) || len(input.modes)!=len(input.bits) || len(input.kinds)!=len(input.bits) || len(input.input_kinds)!=len(input.bits) || len(input.activities)!=len(input.bits) || len(input.ports)!=len(input.bits) || len(input.record_ids)!=len(input.bits) || len(input.field_ids)!=len(input.bits) || len(input.node_names)!=len(input.bits) || len(input.source_ordinals)!=len(input.bits) || len(input.type_ids)!=len(input.bits) || int64(len(input.use_assignments))!=input.use_count || len(input.use_clocks)!=len(input.use_assignments) {return Empty(input,"INVALID_INPUT")}
+if input.use_assignments[input.selected_use]!=input.root_assignment || input.use_clocks[input.selected_use]!=input.root_clock {return Empty(input,"INVALID_INPUT")}
+let position=0
+let bit=1
+let gap=false
+for weight in input.bits {
+ if weight!=bit || input.parents[position]< -2 || input.parents[position]>=input.write_count || input.use_starts[position]<0 || input.use_ends[position]<input.use_starts[position] || input.use_ends[position]>input.use_count || input.other_starts[position]<0 || input.other_ends[position]<input.other_starts[position] || input.other_ends[position]>input.use_count || input.write_drops[position]<0 || input.node_names[position]=="" || input.activities[position]=="" {return Empty(input,"INVALID_INPUT")}
+ if input.type_ids[position]!="urn:gooo:type:integer" && input.type_ids[position]!="urn:gooo:type:boolean" && input.type_ids[position]!="urn:gooo:type:string" {return Empty(input,"INVALID_INPUT")}
+ if input.kinds[position]=="scalar_local" {
+  if input.source_ordinals[position]<0 || input.record_ids[position]!="" || input.field_ids[position]!="" || input.parents[position]!=-1 || input.use_starts[position]<input.field_use_count || input.other_ends[position]>input.field_use_count {return Empty(input,"INVALID_INPUT")}
+ }else{
+  if input.record_ids[position]=="" || input.field_ids[position]=="" || input.use_ends[position]>input.field_use_count || input.other_starts[position]<input.field_use_count {return Empty(input,"INVALID_INPUT")}
+ }
+ if input.write_completed[position] {
+  let completion=input.completions[position]
+  if completion<0 || completion>=input.write_count || input.completion_order[completion]!=position {return Empty(input,"INVALID_INPUT")}
+ }else{if input.completions[position]!=-1 {return Empty(input,"INVALID_INPUT")}}
+ let ordered=input.completion_order[position]
+ if ordered<0 {gap=true}else{if gap || ordered>=input.write_count || !input.write_completed[ordered] || input.completions[ordered]!=position {return Empty(input,"INVALID_INPUT")}}
+ let parent=input.parents[position]
+ if parent>=0 {if !input.write_completed[parent] || input.record_ids[parent]!=input.record_ids[position] || input.field_ids[parent]!=input.field_ids[position] || input.type_ids[parent]!=input.type_ids[position] || (input.write_completed[position] && input.completions[parent]>=input.completions[position]) {return Empty(input,"INVALID_INPUT")}}
+ position=position+1
+ bit=bit*2
+}
+let use_row=0
+let previous_clock=0
+for assignment in input.use_assignments {
+ if use_row==input.field_use_count {previous_clock=0}
+ let clock=input.use_clocks[use_row]
+ if assignment< -2 || assignment>=input.write_count || clock<previous_clock || clock>input.write_count {return Empty(input,"INVALID_INPUT")}
+ if assignment>=0 {if !input.write_completed[assignment] || input.completions[assignment]>=clock {return Empty(input,"INVALID_INPUT")}}
+ previous_clock=clock
+ use_row=use_row+1
+}
+if input.root_assignment<0 {return Empty(input,"UNRESOLVED_READ")}
+if input.root_assignment>=input.write_count || !input.write_completed[input.root_assignment] || input.completions[input.root_assignment]>=input.root_clock {return Empty(input,"INVALID_INPUT")}
+let mask=input.bits[input.root_assignment]
+let reachable=0
+let parents=0
+let field_reads=0
+let local_reads=0
+let unresolved=0
+let shared=0
+let scalar=0
+let carriers=0
+let literals=0
+let collections=0
+position=0
+for ignored in input.completion_order {
+ let assignment=input.completion_order[input.write_count-1-position]
+ if assignment>=0 {
+  let weight=input.bits[assignment]
+  if (mask/weight)%2==1 {
+   reachable=reachable+1
+   if input.kinds[assignment]=="scalar_local" {carriers=carriers+1}
+   let parent=input.parents[assignment]
+   if parent>=0 {
+    let parent_bit=input.bits[parent]
+    if (mask/parent_bit)%2==0 {mask=mask+parent_bit}
+    parents=parents+1
+   }else{
+    if input.kinds[assignment]=="parameter" && input.input_kinds[assignment]=="root_input" {
+     if input.ports[assignment]=="" {unresolved=unresolved+1}
+    }else{
+     if input.modes[assignment]=="literal" {literals=literals+1}else{
+      if input.modes[assignment]=="scalar_rhs" || input.modes[assignment]=="compound_update" || input.modes[assignment]=="collection_rhs" {
+       if input.modes[assignment]=="collection_rhs" {collections=collections+1;unresolved=unresolved+1}else{scalar=scalar+1}
+       use_row=0
+       for prior in input.use_assignments {
+        if (use_row>=input.use_starts[assignment] && use_row<input.use_ends[assignment]) || (use_row>=input.other_starts[assignment] && use_row<input.other_ends[assignment]) {
+         if prior>=0 {
+          if input.completions[prior]>=input.completions[assignment] {return Empty(input,"INVALID_INPUT")}
+          let prior_bit=input.bits[prior]
+          if (mask/prior_bit)%2==0 {mask=mask+prior_bit}
+          if use_row<input.field_use_count {field_reads=field_reads+1}else{local_reads=local_reads+1}
+         }else{unresolved=unresolved+1}
+        }
+        use_row=use_row+1
+       }
+       if input.write_drops[assignment]>0 || ((input.modes[assignment]=="scalar_rhs" || input.modes[assignment]=="compound_update") && input.use_starts[assignment]==input.use_ends[assignment] && input.other_starts[assignment]==input.other_ends[assignment]) {unresolved=unresolved+1}
+      }else{
+       unresolved=unresolved+1
+       if input.modes[assignment]=="shared_rhs" {shared=shared+1}
+      }
+     }
+    }
+   }
+  }
+ }
+ position=position+1
+}
+let roots=""
+let root_count=0
+position=0
+for weight in input.bits {
+ if (mask/weight)%2==1 && input.kinds[position]=="parameter" && input.input_kinds[position]=="root_input" {
+  roots=roots+input.activities[position]+"|"+input.ports[position]+"|"+input.field_ids[position]+";"
+  root_count=root_count+1
+ }
+ position=position+1
+}
+let status="SCOPED_FIELD_LOCAL_ORIGINS"
+if unresolved>0 || shared>0 {status="PARTIAL_LINKS"}
+if !input.recording_complete {status="PARTIAL_RECORDING"}
+return Result{source_sha256:input.source_sha256,case_index:input.case_index,selected_use:input.selected_use,status:status,roots:roots,root_count:root_count,reachable_writes:reachable,parent_links:parents,field_read_edges:field_reads,unresolved_links:unresolved,shared_rhs_writes:shared,scalar_rhs_writes:scalar,recording_complete:input.recording_complete,local_read_edges:local_reads,carrier_writes:carriers,literal_writes:literals,read_edges:field_reads+local_reads,collection_rhs_writes:collections}`

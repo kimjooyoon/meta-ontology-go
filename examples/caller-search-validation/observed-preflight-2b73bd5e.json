@@ -1,0 +1,194 @@
+{
+  "schema": "gooo/source-search-validation-observation/v1",
+  "producer": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.29-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.14-dev.0.20261011062624-2b73bd5e3358",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261011062624-2b73bd5e3358"
+    },
+    "compiler_source_sha": "2b73bd5e3358d5b52cd451c2fbabe8fceea74597",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "2b73bd5e3358d5b52cd451c2fbabe8fceea74597",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "scope": "One original constructor and one saved replay on a synthetic residual-grammar fixture. Step is fixed; Build has a source-owned candidate selection. Finite source-bound evidence; remaining unrecorded construction boundaries and model-training exposure remain unknown.",
+  "resource_scope": "Single macOS time -lp observation per invocation including compiler/native subprocess work. CPU seconds and max RSS are command accounting, not instantaneous system utilization, inference latency or a controlled speed comparison.",
+  "original": {
+    "decision": "COMPLETE_FINITE",
+    "original_source_sha256": "sha256:a193888d67bc15b8164427f1a224d1ac2e506518081dca3b8be87232f2f644f5",
+    "search_validations": [
+      {
+        "stage": "BODY_PREFLIGHT",
+        "observation": {
+          "schema": "gooo/source-search-validation/v1",
+          "source_sha256": "sha256:a193888d67bc15b8164427f1a224d1ac2e506518081dca3b8be87232f2f644f5",
+          "activity": "Build",
+          "activity_id": "validation://activity/build",
+          "completed": true,
+          "local_calls": {
+            "schema": "gooo/local-call-inputs/v1",
+            "status": "RECORDED",
+            "evaluations": [
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:ef87bde6f68caf660f773ea57ab852d8400662de8d2fc133367c86e77a414364",
+                "activity_id": "validation://activity/build",
+                "suite_sha256": "sha256:931c8a3e0d0ca58323bd6b61717a68329db44aac064b441bf9cc7a79c645e47b",
+                "phase": "candidate-generation",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 1,
+                "cases_completed": 1,
+                "calls": [
+                  {
+                    "case_index": 0,
+                    "activity_id": "validation://activity/step",
+                    "program_sha256": "sha256:d6992234f912887a96f329cf43c546e2e21fad703cdaaf1f16c28d45f451f0ad",
+                    "inputs": [
+                      2
+                    ]
+                  }
+                ]
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:0212a3cd3865d4d423c204f1fa7a41a8366dd71eece82e3276e7d3a61b50896e",
+                "activity_id": "validation://activity/build",
+                "suite_sha256": "sha256:931c8a3e0d0ca58323bd6b61717a68329db44aac064b441bf9cc7a79c645e47b",
+                "phase": "candidate-generation",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 1,
+                "cases_completed": 1,
+                "calls": [
+                  {
+                    "case_index": 0,
+                    "activity_id": "validation://activity/step",
+                    "program_sha256": "sha256:d6992234f912887a96f329cf43c546e2e21fad703cdaaf1f16c28d45f451f0ad",
+                    "inputs": [
+                      3
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stage": "ACTIVITY_GENERATION",
+        "observation": {
+          "schema": "gooo/source-search-validation/v1",
+          "source_sha256": "sha256:a193888d67bc15b8164427f1a224d1ac2e506518081dca3b8be87232f2f644f5",
+          "activity": "Build",
+          "activity_id": "validation://activity/build",
+          "completed": true,
+          "local_calls": {
+            "schema": "gooo/local-call-inputs/v1",
+            "status": "RECORDED",
+            "evaluations": [
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:ef87bde6f68caf660f773ea57ab852d8400662de8d2fc133367c86e77a414364",
+                "activity_id": "validation://activity/build",
+                "suite_sha256": "sha256:931c8a3e0d0ca58323bd6b61717a68329db44aac064b441bf9cc7a79c645e47b",
+                "phase": "candidate-generation",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 1,
+                "cases_completed": 1,
+                "calls": [
+                  {
+                    "case_index": 0,
+                    "activity_id": "validation://activity/step",
+                    "program_sha256": "sha256:d6992234f912887a96f329cf43c546e2e21fad703cdaaf1f16c28d45f451f0ad",
+                    "inputs": [
+                      2
+                    ]
+                  }
+                ]
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:0212a3cd3865d4d423c204f1fa7a41a8366dd71eece82e3276e7d3a61b50896e",
+                "activity_id": "validation://activity/build",
+                "suite_sha256": "sha256:931c8a3e0d0ca58323bd6b61717a68329db44aac064b441bf9cc7a79c645e47b",
+                "phase": "candidate-generation",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 1,
+                "cases_completed": 1,
+                "calls": [
+                  {
+                    "case_index": 0,
+                    "activity_id": "validation://activity/step",
+                    "program_sha256": "sha256:d6992234f912887a96f329cf43c546e2e21fad703cdaaf1f16c28d45f451f0ad",
+                    "inputs": [
+                      3
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "finite_passed": 3,
+    "finite_total": 3,
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 3,
+      "disjoint_cases_passed": 3,
+      "unknown_inputs": 0,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "new_model_calls": 0,
+    "resources": {
+      "wall_seconds": 0.77,
+      "user_seconds": 0.28,
+      "system_seconds": 0.22,
+      "max_rss_bytes": 87539712
+    }
+  },
+  "replay": {
+    "generated_now": false,
+    "construction_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 3,
+      "disjoint_cases_passed": 3,
+      "unknown_inputs": 0,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "new_model_calls": 0,
+    "resources": {
+      "wall_seconds": 0.34,
+      "user_seconds": 0.16,
+      "system_seconds": 0.10,
+      "max_rss_bytes": 86278144
+    }
+  }
+}

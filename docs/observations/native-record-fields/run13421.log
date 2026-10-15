@@ -1,0 +1,5 @@
+=== RUN   TestNativeFieldHistory13421
+    composition_field_native_fresh_test.go:156: new Gooo producer4/4;exact2-run field replay;copy+field mutation+helper arguments/record returns+atomic swap;equal zero payloads keep different branch-selected input-field roots;wrong field read rejected;models0
+--- PASS: TestNativeFieldHistory13421 (0.54s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.208s

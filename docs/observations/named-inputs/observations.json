@@ -1,0 +1,75 @@
+{
+  "schema": "gooo/named-input-observations/v1",
+  "date": "2026-10-15",
+  "scope": "development source; first finite named-input observations, no historical native cohort rerun",
+  "language_source": "examples/named-inputs/main.gooo",
+  "source_sha256": "261d55732ad763e5e9d13b153491d946492a4d0eeb2fdfa77138eca8f13224fd",
+  "design": {
+    "body_names": "authored source bindings; absent positions use canonical defaults",
+    "connection_names": "input for arity one, inputN for multiple; authored-name bind endpoints remain unsupported",
+    "role_ids": "not introduced; stable activity/type/field IDs and source coordinates retained",
+    "column_export": "existing input-declaration-columns/v1 remains 11 positional/type columns"
+  },
+  "native_observations": [
+    {
+      "scope": "imported helper and bind, Korean and English names",
+      "source": "observations/native/workspace.json",
+      "distinct_cases": 3,
+      "output_obligations": 6,
+      "passed": 6,
+      "model_calls": 0,
+      "test_wall_seconds": 0.69
+    },
+    {
+      "scope": "record helper, mixed inputs and branch",
+      "source": "observations/native/record.json",
+      "distinct_cases": 2,
+      "output_obligations": 2,
+      "passed": 2,
+      "model_calls": 0,
+      "test_wall_seconds": 0.7
+    },
+    {
+      "scope": "public single-file example",
+      "source": "observations/example-command-fixed-first/stdout",
+      "distinct_cases": 2,
+      "output_obligations": 4,
+      "passed": 4,
+      "model_calls": 0,
+      "command_wall_seconds": 1.109133166
+    },
+    {
+      "scope": "source_fill selection through a named helper; separate native cases",
+      "source": "observations/native/fill.json",
+      "distinct_cases": 2,
+      "output_obligations": 2,
+      "passed": 2,
+      "model_calls": 0,
+      "test_wall_seconds": 0.65,
+      "selection_cases": "one source case compares two candidates; not included in native denominator"
+    }
+  ],
+  "readonly_checks": {
+    "syntax": "7 positive signatures pass; ten corrected negative fixtures and one malformed manual AST reject",
+    "semantic": "three named/mixed signatures preserve GetPut,PutGet, stable IDs and spans",
+    "origins": "raw Korean name/type locations, source digest, positional identities, scoped calls and Unicode activity rename",
+    "impact": "input_names/body change reaches callers; local value shadowing stays unresolved",
+    "projection": "initial 55/60 source subjects; five complete-function refactors then 5/5, not 65 independent subjects",
+    "vet": "changed dependency packages pass",
+    "registration": "source-bound nine-member v85 proposal generated and applied after digest checks; AST/byte/semantic/GetPut/PutGet validation; 123 cases and 141 source paths"
+  },
+  "initial_failures": [
+    "negative syntax fixture omitted namespace; original failure retained, corrected negative function only rerun",
+    "workspace test compilation missed strings import; no native execution until fixed",
+    "unsupported guessed CLI command; corrected package execute entry ran the public case once",
+    "five direct source extraction failures repaired by function decomposition",
+    "first subtest filter selected zero subjects; excluded from success counts; corrected filter ran the five failed subjects"
+  ],
+  "limits": [
+    "finite synthetic examples, not general correctness or external adoption",
+    "wall times include different command overheads; no matched performance comparison",
+    "PR acceptance requires its own original CI; local results do not authorize merge",
+    "source and scope evolve through committed successors; historical observations stay archived"
+  ],
+  "archive": "archive-manifest.json"
+}

@@ -60,7 +60,7 @@ func discoverFromSource(reader SourceReader, filename string, source []byte, fla
 		}
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_PARSE_FAILED", message)
 	}
-	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV4Support())
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV4Support()))
 	if err != nil {
 		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_LOWER_FAILED", err.Error())
 	}

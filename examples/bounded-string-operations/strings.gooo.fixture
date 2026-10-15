@@ -1,0 +1,59 @@
+package stringops
+namespace bounded_stringops
+
+entity Text id "gooo://std/text"
+entity Integer id "gooo://std/integer"
+entity Boolean id "gooo://std/boolean"
+entity Query id "gooo://stringops/query" fields {
+    field text id "gooo://stringops/query/text" type string required one
+    field needle id "gooo://stringops/query/needle" type string required one
+}
+entity Report id "gooo://stringops/report" fields {
+    field index id "gooo://stringops/report/index" type integer required one
+    field count id "gooo://stringops/report/count" type integer required one
+    field runes id "gooo://stringops/report/runes" type integer required one
+}
+
+activity MatchAt(Text, Text, Integer) -> Boolean id "gooo://stringops/match-at" computes `let size = int64(len(input0))
+let width = int64(len(input1))
+if input2 < 0 || input2 > size { return false }
+let offset = 0
+for offset = 0; offset < 1024; offset = offset + 1 {
+    if offset >= width { return true }
+    if input2 + offset >= size { return false }
+    if input0[input2 + offset] != input1[offset] { return false }
+}
+return true`
+
+activity Index(Text, Text) -> Integer id "gooo://stringops/index" computes `let size = int64(len(input0))
+if len(input1) == 0 { return 0 }
+let offset = 0
+for offset = 0; offset < 1024; offset = offset + 1 {
+    if offset >= size { return -1 }
+    if MatchAt(input0, input1, offset) { return offset }
+}
+return -1`
+
+activity RuneCount(Text) -> Integer id "gooo://stringops/rune-count" computes `let size = int64(len(input))
+let offset = 0
+let total = 0
+for offset = 0; offset < 1024; offset = offset + 1 {
+    if offset >= size { return total }
+    if input[offset] < 128 || input[offset] >= 192 { total = total + 1 }
+}
+return total`
+
+activity Count(Text, Text) -> Integer id "gooo://stringops/count" computes `let size = int64(len(input0))
+let width = int64(len(input1))
+if width == 0 { return RuneCount(input0) + 1 }
+let iteration = 0
+let position = 0
+let total = 0
+for iteration = 0; iteration < 1024; iteration = iteration + 1 {
+    if position >= size { return total }
+    if MatchAt(input0, input1, position) {
+        total = total + 1
+        position = position + width
+    } else { position = position + 1 }
+}
+return total`

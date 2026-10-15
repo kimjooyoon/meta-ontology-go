@@ -138,6 +138,29 @@ func prepareContractModelContext(ctx context.Context, document pathplan.Document
 		if model.canonicalContract() {
 			r.Scope = "source-resolved canonical branch arrays, all declared outputs and Boolean conditions; zero predictions or candidate executions; original source owns execution"
 		}
+		if model.sourceRelativeContract() {
+			r.Schema = "gooo/compiler-source-relative-contract-model-context/v1"
+			r.Scope = "canonical source arrays with predicate/condition relations, all declared outputs and Boolean conditions; zero predictions or candidate executions; original source owns execution"
+		}
+		if model.sourceRelativeV2Contract() {
+			r.Schema = "gooo/compiler-source-relative-contract-model-context/v2"
+			r.Scope = "V2 canonical source arrays with division and predicate/condition relations, all declared outputs and Boolean conditions; zero predictions or candidate executions; original source owns execution"
+		}
+		if model.sourceRelativeV3Contract() {
+			r.Schema = "gooo/compiler-source-relative-contract-model-context/v3"
+			r.Scope = "V3 canonical source arrays with declared integer output relationships, all output and Boolean requirements; zero predictions or candidate executions; original source owns execution"
+		}
+		if model.sourceRelativeV3ProseNeutralContract() || model.sourceRelativeV4Contract() {
+			r.Schema = "gooo/compiler-source-relative-v3-prose-neutral-context/v1"
+			r.IntentPolicy = contractdecision.SourceRelativeV3ProseNeutralIntentPolicy
+			r.ClearedIntentCells = &[2]int{contractdecision.SourceRelativeV3ProseNeutralIntentStart,
+				contractdecision.SourceRelativeV3ProseNeutralIntentEnd}
+			r.Scope = "V3 input with only intent cells cleared; original source, all output and Boolean requirements retained; zero predictions or candidate executions"
+		}
+		if model.sourceRelativeV4Contract() {
+			r.Schema = "gooo/compiler-source-relative-contract-model-context/v4"
+			r.Scope = "V4 input with branch-owned integer output relations and intent cells cleared; original source, all output and Boolean requirements retained; zero predictions or candidate executions"
+		}
 		r.ContractConditions, err = contractConditionContext(ctx, input)
 		if err != nil {
 			return prepared, r, false, err
@@ -154,7 +177,17 @@ func appendContractSourceContext(ctx context.Context, document pathplan.Document
 		}
 		var exported ExportedPathInput
 		var err error
-		if r.FeatureVersion == contractdecision.CanonicalOrderedSourceFeatureVersion {
+		if r.FeatureVersion == contractdecision.SourceRelativeV4FeatureVersion {
+			exported, err = exportedSourceRelativeV4Input(input, choice)
+		} else if r.FeatureVersion == contractdecision.SourceRelativeV3ProseNeutralFeatureVersion {
+			exported, err = exportedSourceRelativeV3Input(input, choice, true)
+		} else if r.FeatureVersion == contractdecision.SourceRelativeV3FeatureVersion {
+			exported, err = exportedSourceRelativeV3ContractInput(input, choice)
+		} else if r.FeatureVersion == contractdecision.SourceRelativeV2FeatureVersion {
+			exported, err = exportedSourceRelativeV2ContractInput(input, choice)
+		} else if r.FeatureVersion == contractdecision.SourceRelativeOrderedSourceFeatureVersion {
+			exported, err = exportedSourceRelativeContractInput(input, choice)
+		} else if r.FeatureVersion == contractdecision.CanonicalOrderedSourceFeatureVersion {
 			exported, err = exportedCanonicalContractInput(input, choice)
 		} else {
 			exported, err = exportedContractInput(input, choice, r.FeatureVersion == contractdecision.OrderedSourceFeatureVersion)

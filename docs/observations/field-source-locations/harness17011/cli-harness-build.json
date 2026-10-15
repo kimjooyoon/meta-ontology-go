@@ -1,0 +1,1 @@
+{"binary_removed_after_tests":true,"command":["build","-p=1","-race","-overlay","/private/tmp/gooo-field-source-locations-20261014/harness17011/overlay.json","-o","/var/folders/t4/mkd0zjsn2hj2mqwsjftxcfmc0000gn/T/gooo-cli-observations-669276831/gooo","./cmd/gooo"],"race":true}

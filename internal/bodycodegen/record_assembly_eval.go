@@ -17,11 +17,12 @@ import (
 
 // Scalar slots keep records value-shaped and bounded; local copies never alias.
 type recordBodyScalar struct {
-	Text    string
-	Boolean bool
-	Integer int64
-	Kind    uint8
-	Present bool
+	Text       string
+	Boolean    bool
+	Integer    int64
+	Kind       uint8
+	Present    bool
+	Collection *recordBodySequence
 }
 
 type recordBodyOptionalScalar struct {
@@ -32,7 +33,7 @@ type recordBodyOptionalScalar struct {
 type recordBodyValue struct {
 	Type   string
 	Count  int
-	Values [16]recordBodyScalar
+	Values [RecordFieldLimit]recordBodyScalar
 }
 
 func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
@@ -41,7 +42,7 @@ func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
 		return recordBodyValue{}, fmt.Errorf("record requires a nominal value type")
 	}
 	structure, ok := named.Underlying().(*types.Struct)
-	if !ok || structure.NumFields() < 1 || structure.NumFields() > 16 {
+	if !ok || structure.NumFields() < 1 || structure.NumFields() > RecordFieldLimit {
 		return recordBodyValue{}, fmt.Errorf("record layout exceeds value bounds")
 	}
 	value := recordBodyValue{Type: named.Obj().Name(), Count: structure.NumFields()}
@@ -60,6 +61,13 @@ func recordBodyScalarKind(valueType types.Type) (uint8, bool, error) {
 	if pointer, ok := valueType.(*types.Pointer); ok {
 		optional = true
 		valueType = pointer.Elem()
+	}
+	if sequence, ok := valueType.Underlying().(*types.Slice); ok {
+		kind, nestedOptional, err := recordBodyScalarKind(sequence.Elem())
+		if err != nil || nestedOptional || kind > 3 {
+			return 0, optional, fmt.Errorf("collection elements must be scalar values")
+		}
+		return kind + 3, optional, nil
 	}
 	basic, ok := valueType.Underlying().(*types.Basic)
 	if !ok {
@@ -80,6 +88,12 @@ func recordBodyScalarKind(valueType types.Type) (uint8, bool, error) {
 func recordBodyScalarFromValue(value any, kind uint8) (recordBodyScalar, error) {
 	scalar := recordBodyScalar{Kind: kind, Present: true}
 	switch kind {
+	case 4, 5, 6:
+		collection, ok := value.(*recordBodySequence)
+		if !ok || collection == nil || collection.Kind != kind-3 || len(collection.Values) > RepeatedFieldLimit {
+			return recordBodyScalar{}, fmt.Errorf("record field requires its declared collection element type")
+		}
+		scalar.Collection = collection
 	case 1:
 		text, ok := value.(string)
 		if !ok {
@@ -127,6 +141,8 @@ func recordBodyScalarForField(value any, fieldType types.Type) (recordBodyScalar
 
 func recordBodyScalarValue(value recordBodyScalar) any {
 	switch value.Kind {
+	case 4, 5, 6:
+		return value.Collection
 	case 2:
 		return value.Boolean
 	case 3:
@@ -137,6 +153,9 @@ func recordBodyScalarValue(value recordBodyScalar) any {
 }
 
 func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) (any, error) {
+	if sequence, ok := e.information.Types[literal].Type.Underlying().(*types.Slice); ok {
+		return e.evaluateSequenceLiteral(literal, sequence)
+	}
 	value, err := zeroRecordBodyValue(e.information.Types[literal].Type)
 	if err != nil {
 		return nil, err
@@ -192,6 +211,14 @@ func (e *integerBodyEvaluator) evaluateRecordField(selector *ast.SelectorExpr) (
 
 func evaluateRecordAssembly(ctx context.Context, source []byte, activity string, records []RecordType,
 	cases []assemblyspec.ValueCase) ([]RecordAssemblyCase, error) {
+	if fill, ok := ctx.Value(fillCaptureKey{}).(*fillCallCapture); ok {
+		return fill.record(ctx, source, activity, records, cases)
+	}
+	return evaluateRecordAssemblyRecorded(ctx, source, activity, records, cases, nil)
+}
+
+func evaluateRecordAssemblyRecorded(ctx context.Context, source []byte, activity string, records []RecordType,
+	cases []assemblyspec.ValueCase, recorder *localCallRecorder) ([]RecordAssemblyCase, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -204,7 +231,7 @@ func evaluateRecordAssembly(ctx context.Context, source []byte, activity string,
 	if !ok {
 		return nil, fmt.Errorf("record function is missing")
 	}
-	e := integerBodyEvaluator{context: ctx, information: types.Info{Types: make(map[ast.Expr]types.TypeAndValue),
+	e := integerBodyEvaluator{context: ctx, localCalls: recorder, information: types.Info{Types: make(map[ast.Expr]types.TypeAndValue),
 		Defs: make(map[*ast.Ident]types.Object), Uses: make(map[*ast.Ident]types.Object)}}
 	if _, err = new(types.Config).Check(file.Name.Name, fset, []*ast.File{file}, &e.information); err != nil {
 		return nil, err
@@ -217,20 +244,31 @@ func evaluateRecordAssembly(ctx context.Context, source []byte, activity string,
 		}
 	}
 	output := e.information.Types[function.Type.Results.List[0].Type].Type
-	record := recordTypeByName(records, output.(*types.Named).Obj().Name())
+	if output == types.Typ[types.Int64] || output == types.Typ[types.Bool] || output == types.Typ[types.String] {
+		return evaluateScalarCriteriaCases(ctx, source, activity, records, cases, recorder)
+	}
+	named, ok := output.(*types.Named)
+	if !ok {
+		return nil, fmt.Errorf("record output contract is missing")
+	}
+	record := recordTypeByName(records, named.Obj().Name())
 	if record == nil {
 		return nil, fmt.Errorf("record output contract is missing")
 	}
 	results := make([]RecordAssemblyCase, 0, len(cases))
-	for _, c := range cases {
+	for caseIndex, c := range cases {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
+		e.caseIndex = caseIndex
 		result, err := e.evaluateRecordCase(function, inputs, output, *record, records, c)
 		if err != nil {
 			return nil, err
 		}
 		results = append(results, result)
+		if recorder != nil {
+			recorder.observation.CasesCompleted++
+		}
 	}
 	return results, ctx.Err()
 }
@@ -254,6 +292,9 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 	if err != nil {
 		return RecordAssemblyCase{}, fmt.Errorf("value_case expected: %w", err)
 	}
+	if e.localCalls != nil {
+		e.localCalls.observation.CasesStarted++
+	}
 	value, returned, err := e.evaluateBlock(function.Body)
 	if err != nil || !returned {
 		return RecordAssemblyCase{}, fmt.Errorf("record case did not return: %v", err)
@@ -263,23 +304,23 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 		return RecordAssemblyCase{}, fmt.Errorf("record case returned %T", value)
 	}
 	wanted := expected.(recordBodyValue)
-	result := RecordAssemblyCase{Inputs: json.RawMessage(c.Inputs), Expected: json.RawMessage(c.Expected), Passed: actual == wanted}
+	result := RecordAssemblyCase{Inputs: json.RawMessage(c.Inputs), Expected: json.RawMessage(c.Expected), Passed: equalRecordBodyValue(actual, wanted)}
 	object := make(map[string]any, len(record.Fields))
 	for i, field := range record.Fields {
 		actualScalar, expectedScalar := actual.Values[i], wanted.Values[i]
 		actualValue, expectedValue := "ABSENT", "ABSENT"
 		if actualScalar.Present {
-			actualValue = fmt.Sprint(recordScalarJSONValue(actualScalar))
+			actualValue = recordScalarDisplay(actualScalar)
 		}
 		if expectedScalar.Present {
-			expectedValue = fmt.Sprint(recordScalarJSONValue(expectedScalar))
+			expectedValue = recordScalarDisplay(expectedScalar)
 		}
 		typeID := ""
 		if field.TypeID == "urn:gooo:type:boolean" || field.TypeID == "urn:gooo:type:integer" {
 			typeID = field.TypeID
 		}
 		fieldResult := RecordAssemblyField{ID: field.ID, Name: field.Name, TypeID: typeID, Expected: expectedValue,
-			Actual: actualValue, Passed: actualScalar == expectedScalar}
+			Actual: actualValue, Passed: equalRecordBodyScalar(actualScalar, expectedScalar)}
 		if field.Presence == "optional" {
 			fieldResult.Presence = field.Presence
 			fieldResult.ExpectedPresent = new(expectedScalar.Present)
@@ -340,6 +381,9 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			} else if field.TypeID == "urn:gooo:type:integer" {
 				fieldType = types.Typ[types.Int64]
 			}
+			if field.Cardinality == "many" {
+				fieldType = types.NewSlice(fieldType)
+			}
 			decoded, err := decodeRecordCaseValue(fieldRaw, fieldType, records)
 			if err != nil {
 				return nil, err
@@ -354,6 +398,9 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			}
 		}
 		return value, nil
+	}
+	if sequence, ok := t.(*types.Slice); ok {
+		return decodeRecordSequence(raw, sequence, records)
 	}
 	switch t {
 	case types.Typ[types.Int64]:

@@ -31,6 +31,8 @@ type CallbackPackageRun struct {
 	Stderr             []byte                     `json:"stderr"`
 	Events             []CallbackPackageTestEvent `json:"events"`
 	TestEventsComplete bool                       `json:"test_events_complete"`
+	InputsBefore       *CallbackDependencyInputs  `json:"dependency_inputs_before,omitempty"`
+	InputsAfter        *CallbackDependencyInputs  `json:"dependency_inputs_after,omitempty"`
 }
 
 type CallbackExtractionObservation struct {
@@ -131,6 +133,7 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 		return observation, err
 	}
 	defer os.RemoveAll(directory)
+	dependencyDigest := ""
 	for _, variant := range []struct {
 		name  string
 		files map[string][]byte
@@ -140,13 +143,31 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 		if prepareError != nil {
 			return observation, prepareError
 		}
+		observation.Frontier = callbackObservationUnknown("SNAPSHOT_DEPENDENCIES", "DEPENDENCY_INPUTS_UNAVAILABLE",
+			"DIRECT_MISSING", "CAPTURE_SELECTED_DEPENDENCY_INPUTS")
+		before, inputError := callbackObservationDependencyInputs(ctx, workdir)
+		if inputError != nil {
+			return observation, inputError
+		}
 		run, runError := runCallbackPackageObservation(ctx, workdir, variant.name, requiredTest)
+		run.InputsBefore = &before
+		after, inputError := callbackObservationDependencyInputs(ctx, workdir)
+		if inputError == nil {
+			run.InputsAfter = &after
+		}
 		observation.Runs = append(observation.Runs, run)
 		if runError != nil {
 			observation.Frontier = callbackPackageFailureFrontier(run)
 			observation.Decision = observation.Frontier.State
 			return observation, runError
 		}
+		if inputError != nil {
+			return observation, inputError
+		}
+		if inputError := compareCallbackDependencyInputs(&observation, dependencyDigest, before, after); inputError != nil {
+			return observation, inputError
+		}
+		dependencyDigest = before.Digest
 	}
 	if !slices.Equal(observation.Runs[0].Events, observation.Runs[1].Events) {
 		observation.Decision = "REFUTED"
@@ -195,7 +216,7 @@ func runCallbackPackageObservation(ctx context.Context, directory, variant, requ
 	run := CallbackPackageRun{Variant: variant, Command: append([]string{"go"}, args...), ExitCode: -1}
 	command := exec.CommandContext(ctx, "go", args...)
 	command.Dir = directory
-	command.Env = append(os.Environ(), "GOWORK=off", "GOTOOLCHAIN=local")
+	command.Env = callbackObservationEnvironment()
 	var stdout, stderr bytes.Buffer
 	command.Stdout, command.Stderr = &stdout, &stderr
 	started := time.Now()

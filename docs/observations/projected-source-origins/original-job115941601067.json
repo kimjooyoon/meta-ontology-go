@@ -1,0 +1,163 @@
+{
+  "at": "2026-10-14T15:52:46.486470+00:00",
+  "job": {
+    "id": 115941601067,
+    "run_id": 38589875914,
+    "workflow_name": "Repository projection conformance",
+    "head_branch": "agent/source-role-contract-20261014",
+    "run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/runs/38589875914",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOT1omE88AAAAa_qhvKw",
+    "head_sha": "8e71fadf9039ba777d966ffc84d46d1eb3c35367",
+    "url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/jobs/115941601067",
+    "html_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38589875914/job/115941601067",
+    "status": "completed",
+    "conclusion": "failure",
+    "created_at": "2026-10-14T15:30:10Z",
+    "started_at": "2026-10-14T15:34:52Z",
+    "completed_at": "2026-10-14T15:50:31Z",
+    "name": "repository projection roundtrip",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-14T15:34:53Z",
+        "completed_at": "2026-10-14T15:34:54Z"
+      },
+      {
+        "name": "Check out the exact source identity",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-14T15:34:54Z",
+        "completed_at": "2026-10-14T15:34:58Z"
+      },
+      {
+        "name": "Install the declared Go toolchain",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-14T15:34:58Z",
+        "completed_at": "2026-10-14T15:35:06Z"
+      },
+      {
+        "name": "Bind clean exact-SHA logical split metrics",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-14T15:35:06Z",
+        "completed_at": "2026-10-14T15:35:33Z"
+      },
+      {
+        "name": "Materialize and activate the logical workspace",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-14T15:35:33Z",
+        "completed_at": "2026-10-14T15:35:38Z"
+      },
+      {
+        "name": "Plan CI-authorized tracked-tree cutover",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-14T15:35:38Z",
+        "completed_at": "2026-10-14T15:35:39Z"
+      },
+      {
+        "name": "Classify logical source split operations",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-10-14T15:35:39Z",
+        "completed_at": "2026-10-14T15:35:39Z"
+      },
+      {
+        "name": "Apply metric-selected density rewrites",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8,
+        "started_at": "2026-10-14T15:35:39Z",
+        "completed_at": "2026-10-14T15:38:20Z"
+      },
+      {
+        "name": "Apply metric-selected helper extractions",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9,
+        "started_at": "2026-10-14T15:38:20Z",
+        "completed_at": "2026-10-14T15:40:45Z"
+      },
+      {
+        "name": "Apply metric-selected logical source splits",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10,
+        "started_at": "2026-10-14T15:40:45Z",
+        "completed_at": "2026-10-14T15:40:54Z"
+      },
+      {
+        "name": "Verify authorized rewrites and test the logical module",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 11,
+        "started_at": "2026-10-14T15:40:54Z",
+        "completed_at": "2026-10-14T15:50:26Z"
+      },
+      {
+        "name": "Apply registration candidate to a copy of the actual projected workspace",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 12,
+        "started_at": "2026-10-14T15:50:26Z",
+        "completed_at": "2026-10-14T15:50:26Z"
+      },
+      {
+        "name": "Upload exact-SHA projection indicators",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13,
+        "started_at": "2026-10-14T15:50:26Z",
+        "completed_at": "2026-10-14T15:50:28Z"
+      },
+      {
+        "name": "Post Install the declared Go toolchain",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 25,
+        "started_at": "2026-10-14T15:50:28Z",
+        "completed_at": "2026-10-14T15:50:28Z"
+      },
+      {
+        "name": "Post Check out the exact source identity",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 26,
+        "started_at": "2026-10-14T15:50:28Z",
+        "completed_at": "2026-10-14T15:50:28Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 27,
+        "started_at": "2026-10-14T15:50:28Z",
+        "completed_at": "2026-10-14T15:50:28Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/check-runs/115941601067",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000369604,
+    "runner_name": "GitHub Actions 1000369604",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  },
+  "bytes": 254349,
+  "sha256": "6544c41b26291bcf16f41fd023f7554ab01f067f6a9277b293682d8b7d8cdb8c",
+  "compressed_bytes": 40613,
+  "downloaded_once": true
+}

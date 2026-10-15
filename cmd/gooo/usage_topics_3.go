@@ -40,36 +40,6 @@ Usage:
 
 Use --check to report whether formatting is needed without changing the file.
 `,
-	"package": `Work with a multi-file Gooo workspace
-
-Start from a library template:
-  gooo init --template library --module example.org/team/my-library my-library
-
-For workspace manifests and execution, see docs/language/workspace-manifest.md
-and docs/language/language-package-execution.md.
-
-Export declaration shapes for documentation and API comparison tools:
-  gooo package interface --json gooo.workspace.json
-
-The interface includes imported packages, stable IDs, ordered activity inputs,
-and record field types, presence, and cardinality. See docs/language/package-interface.md.
-
-Reuse a saved package execution without a model:
-  gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
-
-Continue saved record choices under an explicit Gooo policy:
-  gooo package resume --receipt execution.json --assembly-policy-workspace policy.workspace.json --cases cases.json gooo.workspace.json
-
-Reconsider imported helpers using caller examples:
-  gooo package construct --json --construction-cases feedback.json --cases evaluation.json --attempts 8 gooo.workspace.json
-  gooo package construct --json --receipt construction.json --cases evaluation.json gooo.workspace.json
-  gooo package construct --receipt construction.json --inputs inputs.json gooo.workspace.json
-
-Save the first command's JSON output as construction.json. Models are optional;
---model orders record choices and --fill-model selects initial source fills.
-Saved construction rechecks all attempts with zero new inference. See
-examples/package-caller-construction/README.md for a runnable package example.
-Use exactly one of --cases (finite checks) or --inputs (actual values).
-Input-only JSON is OBSERVED; the original construction decision stays separate.
-`,
+	"package":         packageTopicHelp,
+	"package origins": packageOriginsHelp,
 }

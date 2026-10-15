@@ -1,0 +1,11 @@
+package app
+namespace review_app
+import rules "review/rules"
+activity Main(Integer) -> Integer computes "let text=\"Review()\"; if text==\"\" { return input }; if rules.\u0052eview(input,12-input) { return Draft(input) }; return 0"
+activity Draft(Integer) -> Integer computes "return input-12" assembling {
+ choice "direction" operand_order at "0" intent "deduct input from twelve"
+ criteria { predicate "reference" activity "rules.Review" input "[5]" holdout_input "[2]" }
+ attempts "2"
+}
+activity Accept(Boolean) -> Boolean computes "return input"
+bind rules.Review.result -> Accept.input

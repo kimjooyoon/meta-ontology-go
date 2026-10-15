@@ -13,17 +13,19 @@ import (
 )
 
 type Result struct {
-	Schema         string                           `json:"schema"`
-	Program        Program                          `json:"program"`
-	BodyFills      []BodyFillStep                   `json:"body_fills,omitempty"`
-	SourceSHA256   string                           `json:"execution_source_sha256"`
-	Composition    bodyexecution.Composition        `json:"composition"`
-	Runtime        bodyexecution.CompositionRuntime `json:"runtime"`
-	Scope          string                           `json:"scope"`
-	Replay         *ReplayEvidence                  `json:"replay,omitempty"`
-	AssemblyPolicy *WorkspaceAssemblyPolicy         `json:"assembly_policy,omitempty"`
-	PolicyHistory  []*WorkspaceAssemblyPolicy       `json:"assembly_policy_history,omitempty"`
-	Continuation   *ContinuationEvidence            `json:"continuation,omitempty"`
+	FillOrigins     []WorkspaceFillOrigin            `json:"fill_origins,omitempty"`
+	FillOriginIssue string                           `json:"fill_origin_issue,omitempty"`
+	Schema          string                           `json:"schema"`
+	Program         Program                          `json:"program"`
+	BodyFills       []BodyFillStep                   `json:"body_fills,omitempty"`
+	SourceSHA256    string                           `json:"execution_source_sha256"`
+	Composition     bodyexecution.Composition        `json:"composition"`
+	Runtime         bodyexecution.CompositionRuntime `json:"runtime"`
+	Scope           string                           `json:"scope"`
+	Replay          *ReplayEvidence                  `json:"replay,omitempty"`
+	AssemblyPolicy  *WorkspaceAssemblyPolicy         `json:"assembly_policy,omitempty"`
+	PolicyHistory   []*WorkspaceAssemblyPolicy       `json:"assembly_policy_history,omitempty"`
+	Continuation    *ContinuationEvidence            `json:"continuation,omitempty"`
 }
 
 type BodyFillStep struct {
@@ -79,9 +81,12 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 		return Result{}, fmt.Errorf("generate workspace activity bodies: %w", err)
 	}
 	runtime, err := bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, composition, translated, options.GoBinary)
+	bindWorkspaceConditionSources(program, &runtime, fills)
+	bindWorkspaceLocalFileSources(program, &runtime, composition, fills)
 	result := Result{Schema: "gooo/workspace-body-execution/v1", Program: program, BodyFills: fills,
 		SourceSHA256: sourceSHA256(current), Composition: composition, AssemblyPolicy: policySnapshot,
 		Runtime: runtime, Scope: "typed imported activity bindings; generated Go compiled and run twice; finite named expectations only"}
+	result.FillOrigins, result.FillOriginIssue = collectWorkspaceFillOrigins(program, result)
 	if err != nil {
 		return result, fmt.Errorf("execute generated workspace bodies: %w", err)
 	}

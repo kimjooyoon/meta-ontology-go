@@ -1,0 +1,26 @@
+[
+  {
+    "source": "docs/observations/construction-origins/construction9533.json",
+    "source_sha256": "1b809c297b59a8846c4df66d088709468bc6f9e24cd7eb400f4517b9ff3e9a33",
+    "field": "runtime",
+    "export": "construction9533-runtime.json",
+    "sha256": "3daf1057c0f301d5cc036950be3fc368b7bb6272877514213c30a819441c4ee1",
+    "producer_reexecuted": false
+  },
+  {
+    "source": "docs/observations/construction-origins/construction9547.json",
+    "source_sha256": "f2203d67e27f492537f7b39359f32f7a3a793c6a2c28e1c4f62fe3bea91bfcf3",
+    "field": "runtime",
+    "export": "construction9547-runtime.json",
+    "sha256": "6777707cfb39a989e78644ade5d462fcd9f64c52e4a7c44356299d9aeffa3d74",
+    "producer_reexecuted": false
+  },
+  {
+    "source": "docs/observations/construction-origins/construction9551.json",
+    "source_sha256": "c8d9c98a77d36a20b71577dc511e68ac01aa09e2e2c6b92b69cffc537036db91",
+    "field": "runtime",
+    "export": "construction9551-runtime.json",
+    "sha256": "5acff02dfca7454425e76a83c0b69b7564e79c17fce8c5b7e5a41db6b1c341a3",
+    "producer_reexecuted": false
+  }
+]

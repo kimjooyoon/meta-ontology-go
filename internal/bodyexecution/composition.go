@@ -17,26 +17,29 @@ type CompositionStep struct {
 }
 
 type Composition struct {
-	Schema               string                         `json:"schema"`
-	Stage                string                         `json:"stage"`
-	Failure              string                         `json:"failure,omitempty"`
-	FillFailure          *bodycodegen.IRBodyFillFailure `json:"fill_failure,omitempty"`
-	ActiveActivity       string                         `json:"active_activity,omitempty"`
-	OriginalSourceSHA256 string                         `json:"original_source_sha256"`
-	SelectedSourceSHA256 string                         `json:"selected_source_sha256"`
-	GeneratedSHA256      string                         `json:"generated_sha256"`
-	DriverSHA256         string                         `json:"driver_sha256"`
-	Plan                 CompositionPlan                `json:"plan"`
-	Steps                []CompositionStep              `json:"steps"`
-	Preparations         []CompositionStep              `json:"preparations,omitempty"`
-	GoooSource           string                         `json:"gooo_source"`
-	Source               string                         `json:"source"`
-	Driver               string                         `json:"driver_source"`
-	Model                *bodycodegen.RetainedModelInfo `json:"model,omitempty"`
-	FillModel            *CompositionFillModelInfo      `json:"fill_model,omitempty"`
-	ElapsedNS            int64                          `json:"elapsed_ns"`
-	Scope                string                         `json:"scope"`
-	Continuation         *CompositionContinuation       `json:"continuation,omitempty"`
+	Schema               string                             `json:"schema"`
+	Stage                string                             `json:"stage"`
+	Failure              string                             `json:"failure,omitempty"`
+	FillFailure          *bodycodegen.IRBodyFillFailure     `json:"fill_failure,omitempty"`
+	RecordFailure        *bodycodegen.RecordAssemblyReceipt `json:"record_failure,omitempty"`
+	ActiveActivity       string                             `json:"active_activity,omitempty"`
+	OriginalSourceSHA256 string                             `json:"original_source_sha256"`
+	SelectedSourceSHA256 string                             `json:"selected_source_sha256"`
+	GeneratedSHA256      string                             `json:"generated_sha256"`
+	DriverSHA256         string                             `json:"driver_sha256"`
+	Plan                 CompositionPlan                    `json:"plan"`
+	Steps                []CompositionStep                  `json:"steps"`
+	Preparations         []CompositionStep                  `json:"preparations,omitempty"`
+	SearchValidations    []CompositionSearchValidation      `json:"search_validations,omitempty"`
+	FillValidations      []CompositionFillValidation        `json:"fill_validations,omitempty"`
+	GoooSource           string                             `json:"gooo_source"`
+	Source               string                             `json:"source"`
+	Driver               string                             `json:"driver_source"`
+	Model                *bodycodegen.RetainedModelInfo     `json:"model,omitempty"`
+	FillModel            *CompositionFillModelInfo          `json:"fill_model,omitempty"`
+	ElapsedNS            int64                              `json:"elapsed_ns"`
+	Scope                string                             `json:"scope"`
+	Continuation         *CompositionContinuation           `json:"continuation,omitempty"`
 }
 
 // GenerateComposition constructs each activity in typed plan order, retaining
@@ -63,6 +66,9 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 			if rejected, ok := errors.AsType[*bodycodegen.NoValidBodyFillCandidates](err); ok {
 				result.FillFailure = &rejected.Observation
 			}
+			if rejected, ok := errors.AsType[*bodycodegen.RecordAssemblyError](err); ok {
+				result.RecordFailure = rejected.Receipt
+			}
 		}
 		return result, err
 	}
@@ -76,7 +82,7 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 		return finish(err)
 	}
 	result.Stage = "BODY_PREFLIGHT"
-	if err := graph.preflight(ctx, filename, source); err != nil {
+	if err := graph.preflight(ctx, filename, source, &result.SearchValidations, &result.FillValidations); err != nil {
 		return finish(err)
 	}
 	if err := graph.validateModelRoute(ctx, filename, source, options); err != nil {
@@ -105,7 +111,8 @@ func GenerateCompositionWithOptions(ctx context.Context, filename string, source
 
 func generateCompositionSteps(ctx context.Context, filename string, source []byte,
 	graph compositionGraph, options CompositionOptions, result *Composition) ([]byte, error) {
-	generator := compositionAssemblyGenerator{options: options}
+	generator := compositionAssemblyGenerator{options: options,
+		validations: &result.SearchValidations, fillValidations: &result.FillValidations}
 	current, err := generateCalledBodies(ctx, filename, source, graph, &generator, result)
 	if err != nil {
 		return nil, err
@@ -163,7 +170,8 @@ func DecodeComposition(raw []byte) (Composition, error) {
 }
 
 // VerifyComposition reconstructs all selected bodies and the exact graph Go
-// projection without loading a model or repeating candidate selection.
+// projection without loading a model. Recorded validation boundaries repeat
+// their deterministic probes or bounded fill scoring against source checkpoints.
 func VerifyComposition(ctx context.Context, filename string, source []byte, prior Composition) error {
 	_, err := replayComposition(ctx, filename, source, prior)
 	return err
@@ -175,11 +183,16 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 		return graph, err
 	}
 	if prior.Schema != "gooo/body-composition/v1" || prior.Stage != "COMPLETE" || prior.Failure != "" ||
+		prior.FillFailure != nil || prior.RecordFailure != nil ||
 		prior.OriginalSourceSHA256 != digest(source) ||
 		!sameCompositionPlan(prior.Plan, graph.plan) || len(prior.Steps) != graph.count {
 		return graph, fmt.Errorf("composition original source, typed plan or step order differs")
 	}
-	current, err := replayCalledBodies(ctx, filename, source, graph, prior)
+	validations := compositionValidationReplay{checks: prior.SearchValidations, fills: prior.FillValidations}
+	if err := graph.replayAssemblyPreflights(ctx, filename, source, &validations); err != nil {
+		return graph, err
+	}
+	current, err := replayCalledBodies(ctx, filename, source, graph, prior, &validations)
 	if err != nil {
 		return graph, err
 	}
@@ -189,6 +202,9 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 			return graph, fmt.Errorf("composition step %d input or activity order differs", i)
 		}
 		if node.Assembling && !node.Prepared {
+			if err := validations.check(ctx, filename, current, node.Name, "ACTIVITY_GENERATION"); err != nil {
+				return graph, err
+			}
 			realized, err := bodycodegen.RealizeSourceAssembly(ctx, filename, current, step.Generation)
 			if err != nil {
 				return graph, fmt.Errorf("composition step %d replay: %w", i, err)
@@ -197,6 +213,12 @@ func replayComposition(ctx context.Context, filename string, source []byte, prio
 		} else if err := replayCompositionPlain(ctx, filename, current, node, step.Generation); err != nil {
 			return graph, fmt.Errorf("composition step %d replay: %w", i, err)
 		}
+	}
+	if validations.next != len(validations.checks) {
+		return graph, fmt.Errorf("source search validation has unconsumed observations")
+	}
+	if validations.nextFill != len(validations.fills) {
+		return graph, fmt.Errorf("source fill validation has unconsumed observations")
 	}
 	generated, err := emitCompositionProjection(prior.Steps, graph)
 	if err != nil || generated != prior.Source || prior.GeneratedSHA256 != digest([]byte(generated)) ||
@@ -229,7 +251,12 @@ func replayCompositionPlain(ctx context.Context, filename string, source []byte,
 		r.GeneratedDigest != expected.GeneratedDigest || r.ProgramDigest != expected.ProgramDigest ||
 		r.InputType != expected.InputType || r.OutputType != expected.OutputType ||
 		!reflect.DeepEqual(r.InputParameters, expected.InputParameters) || !reflect.DeepEqual(r.RecordTypes, expected.RecordTypes) ||
-		!reflect.DeepEqual(r.CallClosure, expected.CallClosure) {
+		!reflect.DeepEqual(r.CallClosure, expected.CallClosure) ||
+		(r.BodyConditions != nil && !reflect.DeepEqual(r.BodyConditions, expected.BodyConditions)) ||
+		!bodycodegen.EqualRetainedReadOrigins(r.BodyReads, expected.BodyReads) ||
+		!bodycodegen.EqualRetainedConstructionOrigins(r.BodyConstructions, expected.BodyConstructions) ||
+		!bodycodegen.EqualRetainedLocalOrigins(r.BodyLocals, expected.BodyLocals) ||
+		!bodycodegen.EqualRetainedFieldOrigins(r.BodyFields, expected.BodyFields) {
 		return fmt.Errorf("ordinary body projection differs from its source")
 	}
 	return nil

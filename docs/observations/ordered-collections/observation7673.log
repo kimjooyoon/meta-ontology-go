@@ -1,0 +1,5 @@
+=== RUN   TestCollectionCLIGeneration7673
+    entity_fields_collection_test.go:70: 7673: ordinary check/generate, required and optional collection Go types, binding plan and unchanged-source BX law
+--- PASS: TestCollectionCLIGeneration7673 (0.03s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	0.503s

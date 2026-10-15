@@ -1,0 +1,24 @@
+{
+  "case": {
+    "id": "native-field-lineage-reader",
+    "path": "examples/native-field-lineage/lineage.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY",
+    "ordered_collections": true
+  },
+  "base_version": 63,
+  "snapshot_digest": "sha256:e5a9c783a3ff29b54f42d0d13accd2b2ca85080fe9907e6a684b0d5f8b489481",
+  "source_digest": "sha256:570cfe28271cf3e0edb1d71cb0d9cafbacd7852d04a93e957f418462d877801f",
+  "toolchain": "go1.27.2",
+  "execution_identity": {
+    "go_version": "go1.27.2",
+    "goos": "darwin",
+    "goarch": "arm64",
+    "executable_sha256": "sha256:f2d043d46bf3c0c363be5a5e97b367e780f8ecaf27147cfa569c6f627ae7eff3",
+    "go_command_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "compiler_sha256": "sha256:8a3add4030b0f724c535afe946a4fcd27ca235ba869d4d4b91091e0ef8a611e2"
+  }
+}

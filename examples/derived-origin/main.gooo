@@ -1,0 +1,15 @@
+package grammarorigin
+namespace grammarorigin
+
+entity Integer id "urn:gooo:type:integer"
+
+activity Prepare(Integer) -> Integer id "urn:grammar-origin:prepare" computes `let shifted = __GOOO_BODY_HOLE_shift__
+let copied = shifted
+return copied` assembling {
+    source_fill intent "입력에 같은 보정량을 더하고, 조립한 식의 문법 출처를 남긴다. Add a shared offset and retain the grammar origin." {
+        hole "shift"
+        derive grammar "integer-offset-constant/v1" max_expressions "16" max_candidates "16"
+    }
+    case "563" -> "1120"
+    case "-569" -> "-12"
+}

@@ -1,0 +1,26 @@
+=== RUN   TestPackageActivityOriginPresence6971
+=== RUN   TestPackageActivityOriginPresence6971/recorded
+=== RUN   TestPackageActivityOriginPresence6971/before-annotations
+=== RUN   TestPackageActivityOriginPresence6971/before-activity-origins
+=== RUN   TestPackageActivityOriginPresence6971/activity-only
+=== RUN   TestPackageActivityOriginPresence6971/explicit-null
+=== RUN   TestPackageActivityOriginPresence6971/explicit-empty
+=== RUN   TestPackageActivityOriginPresence6971/different-declaration
+=== RUN   TestPackageActivityOriginPresence6971/different-source
+=== RUN   TestPackageActivityOriginPresence6971/different-identity
+=== RUN   TestPackageActivityOriginPresence6971/unknown-claim
+=== NAME  TestPackageActivityOriginPresence6971
+    platform_package_activity_origin_test.go:74: 6971: ten fresh annotation forms; absent fields retained, recorded declaration claims and source identity compared; preparation only; historical source/native/model executions0
+--- PASS: TestPackageActivityOriginPresence6971 (0.01s)
+    --- PASS: TestPackageActivityOriginPresence6971/recorded (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/before-annotations (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/before-activity-origins (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/activity-only (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/explicit-null (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/explicit-empty (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/different-declaration (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/different-source (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/different-identity (0.00s)
+    --- PASS: TestPackageActivityOriginPresence6971/unknown-claim (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease	0.532s

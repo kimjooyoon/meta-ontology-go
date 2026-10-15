@@ -1,0 +1,10 @@
+=== RUN   TestTypedOriginBounds13193
+    typed_value_origin_bounds_fresh_test.go:28: fresh180-write graph stops at512 nodes without a resolved prefix; input activity ID retained;61-node adapter rejected
+--- PASS: TestTypedOriginBounds13193 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.517s
+=== RUN   TestTypedAncestryBounds13201
+    body_origins_bounds_fresh_test.go:83: 7 fresh synthetic Gooo graph inputs:1/60 node ancestry,0/61 node refusal,bit/order/self-edge refusal;input-only finite0,models0
+--- PASS: TestTypedAncestryBounds13201 (0.57s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.044s

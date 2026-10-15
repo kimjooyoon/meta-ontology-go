@@ -100,105 +100,29 @@ func EmbeddedDenominator() []byte {
 }
 
 func activeDenominator() []byte {
-	switch languagesyntax.FixedCapabilityTotal {
-	case 45:
-		return embeddedDenominator
-	case 46:
-		return embeddedDenominatorV22
-	case 47:
-		return embeddedDenominatorV23
-	case 48:
-		return embeddedDenominatorV24
-	case 49:
-		return embeddedDenominatorV25
-	case 50:
-		return embeddedDenominatorV26
-	case 52:
-		return embeddedDenominatorV27
-	case 56:
-		return embeddedDenominatorV28
-	case 57:
-		return embeddedDenominatorV29
-	case 58:
-		return embeddedDenominatorV30
-	case 60:
-		return embeddedDenominatorV31
-	case 63:
-		return embeddedDenominatorV32
-	case 64:
-		return embeddedDenominatorV33
-	case 65:
-		return embeddedDenominatorV34
-	case 66:
-		return embeddedDenominatorV35
-	case 67:
-		return embeddedDenominatorV36
-	case 68:
-		return embeddedDenominatorV37
-	case 69:
-		return embeddedDenominatorV38
-	case 73:
-		return embeddedDenominatorV42
-	case 75:
-		return embeddedDenominatorV43
-	case 77:
-		return embeddedDenominatorV45
-	case 79:
-		return embeddedDenominatorV47
-	default:
-		return nil
+	if value := activeDenominatorChunk0(languagesyntax.FixedCapabilityTotal); value != nil {
+		return value
 	}
+	if value := activeDenominatorChunk1(languagesyntax.FixedCapabilityTotal); value != nil {
+		return value
+	}
+	if value := activeDenominatorChunk2(languagesyntax.FixedCapabilityTotal); value != nil {
+		return value
+	}
+	return activeDenominatorChunk3(languagesyntax.FixedCapabilityTotal)
 }
 
 func activeDenominatorDigest() string {
-	switch languagesyntax.FixedCapabilityTotal {
-	case 45:
-		return DenominatorDigest
-	case 46:
-		return DenominatorMigrationDigest
-	case 47:
-		return DenominatorMigrationV23Digest
-	case 48:
-		return DenominatorMigrationV24Digest
-	case 49:
-		return DenominatorMigrationV25Digest
-	case 50:
-		return DenominatorMigrationV26Digest
-	case 52:
-		return DenominatorMigrationV27Digest
-	case 56:
-		return DenominatorMigrationV28Digest
-	case 57:
-		return DenominatorMigrationV29Digest
-	case 58:
-		return DenominatorMigrationV30Digest
-	case 60:
-		return DenominatorMigrationV31Digest
-	case 63:
-		return DenominatorMigrationV32Digest
-	case 64:
-		return DenominatorMigrationV33Digest
-	case 65:
-		return DenominatorMigrationV34Digest
-	case 66:
-		return DenominatorMigrationV35Digest
-	case 67:
-		return DenominatorMigrationV36Digest
-	case 68:
-		return DenominatorMigrationV37Digest
-	case 69:
-		return DenominatorMigrationV38Digest
-	case 73:
-		return DenominatorMigrationV42Digest
-	case 75:
-		return DenominatorMigrationV43Digest
-	case 77:
-		return DenominatorMigrationV45Digest
-	case 79:
-		return DenominatorMigrationV47Digest
-	default:
-		return ""
+	if value := activeDenominatorDigestChunk0(languagesyntax.FixedCapabilityTotal); value != "" {
+		return value
 	}
+	if value := activeDenominatorDigestChunk1(languagesyntax.FixedCapabilityTotal); value != "" {
+		return value
+	}
+	if value := activeDenominatorDigestChunk2(languagesyntax.FixedCapabilityTotal); value != "" {
+		return value
+	}
+	return activeDenominatorDigestChunk3(languagesyntax.FixedCapabilityTotal)
 }
 
 type assuranceSummary struct {
@@ -240,4 +164,420 @@ func inspectAssurance(raw []byte) (string, string, string) {
 		return "", ResolutionInvariant, ReasonAssuranceBase
 	}
 	return report.SubjectSHA, ResolutionExact, ""
+}
+
+//go:embed evidence/denominator-v48.json
+var embeddedDenominatorV48 []byte
+
+//go:embed evidence/denominator-v49.json
+var embeddedDenominatorV49 []byte
+
+//go:embed evidence/denominator-v50.json
+var embeddedDenominatorV50 []byte
+
+//go:embed evidence/denominator-v51.json
+var embeddedDenominatorV51 []byte
+
+//go:embed evidence/denominator-v52.json
+var embeddedDenominatorV52 []byte
+
+//go:embed evidence/denominator-v53.json
+var embeddedDenominatorV53 []byte
+
+//go:embed evidence/denominator-v54.json
+var embeddedDenominatorV54 []byte
+
+//go:embed evidence/denominator-v55.json
+var embeddedDenominatorV55 []byte
+
+//go:embed evidence/denominator-v56.json
+var embeddedDenominatorV56 []byte
+
+//go:embed evidence/denominator-v57.json
+var embeddedDenominatorV57 []byte
+
+//go:embed evidence/denominator-v58.json
+var embeddedDenominatorV58 []byte
+
+//go:embed evidence/denominator-v59.json
+var embeddedDenominatorV59 []byte
+
+//go:embed evidence/denominator-v60.json
+var embeddedDenominatorV60 []byte
+
+//go:embed evidence/denominator-v61.json
+var embeddedDenominatorV61 []byte
+
+//go:embed evidence/denominator-v62.json
+var embeddedDenominatorV62 []byte
+
+//go:embed evidence/denominator-v63.json
+var embeddedDenominatorV63 []byte
+
+//go:embed evidence/denominator-v64.json
+var embeddedDenominatorV64 []byte
+
+//go:embed evidence/denominator-v65.json
+var embeddedDenominatorV65 []byte
+
+//go:embed evidence/denominator-v66.json
+var embeddedDenominatorV66 []byte
+
+//go:embed evidence/denominator-v67.json
+var embeddedDenominatorV67 []byte
+
+//go:embed evidence/denominator-v68.json
+var embeddedDenominatorV68 []byte
+
+//go:embed evidence/denominator-v69.json
+var embeddedDenominatorV69 []byte
+
+//go:embed evidence/denominator-v70.json
+var embeddedDenominatorV70 []byte
+
+//go:embed evidence/denominator-v71.json
+var embeddedDenominatorV71 []byte
+
+//go:embed evidence/denominator-v72.json
+var embeddedDenominatorV72 []byte
+
+//go:embed evidence/denominator-v73.json
+var embeddedDenominatorV73 []byte
+
+//go:embed evidence/denominator-v74.json
+var embeddedDenominatorV74 []byte
+
+//go:embed evidence/denominator-v75.json
+var embeddedDenominatorV75 []byte
+
+//go:embed evidence/denominator-v76.json
+var embeddedDenominatorV76 []byte
+
+//go:embed evidence/denominator-v77.json
+var embeddedDenominatorV77 []byte
+
+//go:embed evidence/denominator-v78.json
+var embeddedDenominatorV78 []byte
+
+//go:embed evidence/denominator-v79.json
+var embeddedDenominatorV79 []byte
+
+//go:embed evidence/denominator-v80.json
+var embeddedDenominatorV80 []byte
+
+//go:embed evidence/denominator-v81.json
+var embeddedDenominatorV81 []byte
+
+//go:embed evidence/denominator-v82.json
+var embeddedDenominatorV82 []byte
+
+//go:embed evidence/denominator-v83.json
+var embeddedDenominatorV83 []byte
+
+//go:embed evidence/denominator-v84.json
+var embeddedDenominatorV84 []byte
+
+//go:embed evidence/denominator-v85.json
+var embeddedDenominatorV85 []byte
+
+//go:embed evidence/denominator-v86.json
+var embeddedDenominatorV86 []byte
+
+//go:embed evidence/denominator-v87.json
+var embeddedDenominatorV87 []byte
+
+func activeDenominatorDigestChunk0(total int) string {
+	switch total {
+	case 45:
+		return DenominatorDigest
+	case 46:
+		return DenominatorMigrationDigest
+	case 47:
+		return DenominatorMigrationV23Digest
+	case 48:
+		return DenominatorMigrationV24Digest
+	case 49:
+		return DenominatorMigrationV25Digest
+	case 50:
+		return DenominatorMigrationV26Digest
+	case 52:
+		return DenominatorMigrationV27Digest
+	case 56:
+		return DenominatorMigrationV28Digest
+	case 57:
+		return DenominatorMigrationV29Digest
+	case 58:
+		return DenominatorMigrationV30Digest
+	case 60:
+		return DenominatorMigrationV31Digest
+	case 63:
+		return DenominatorMigrationV32Digest
+	case 64:
+		return DenominatorMigrationV33Digest
+	case 65:
+		return DenominatorMigrationV34Digest
+	case 66:
+		return DenominatorMigrationV35Digest
+	case 67:
+		return DenominatorMigrationV36Digest
+	}
+	return ""
+}
+
+func activeDenominatorDigestChunk1(total int) string {
+	switch total {
+	case 68:
+		return DenominatorMigrationV37Digest
+	case 69:
+		return DenominatorMigrationV38Digest
+	case 73:
+		return DenominatorMigrationV42Digest
+	case 75:
+		return DenominatorMigrationV43Digest
+	case 77:
+		return DenominatorMigrationV45Digest
+	case 79:
+		return DenominatorMigrationV47Digest
+	case 80:
+		return DenominatorMigrationV48Digest
+	case 82:
+		return DenominatorMigrationV49Digest
+	case 83:
+		return DenominatorMigrationV50Digest
+	case 84:
+		return DenominatorMigrationV51Digest
+	case 85:
+		return DenominatorMigrationV52Digest
+	case 86:
+		return DenominatorMigrationV53Digest
+	case 87:
+		return DenominatorMigrationV54Digest
+	case 88:
+		return DenominatorMigrationV55Digest
+	case 89:
+		return DenominatorMigrationV56Digest
+	case 90:
+		return DenominatorMigrationV57Digest
+	}
+	return ""
+}
+
+func activeDenominatorDigestChunk2(total int) string {
+	switch total {
+	case 91:
+		return DenominatorMigrationV58Digest
+	case 92:
+		return DenominatorMigrationV59Digest
+	case 93:
+		return DenominatorMigrationV60Digest
+	case 94:
+		return DenominatorMigrationV61Digest
+	case 95:
+		return DenominatorMigrationV62Digest
+	case 96:
+		return DenominatorMigrationV63Digest
+	case 97:
+		return DenominatorMigrationV64Digest
+	case 98:
+		return DenominatorMigrationV65Digest
+	case 99:
+		return DenominatorMigrationV66Digest
+	case 100:
+		return DenominatorMigrationV67Digest
+	case 101:
+		return DenominatorMigrationV68Digest
+	case 102:
+		return DenominatorMigrationV69Digest
+	case 103:
+		return DenominatorMigrationV70Digest
+	case 104:
+		return DenominatorMigrationV71Digest
+	case 108:
+		return DenominatorMigrationV72Digest
+	case 109:
+		return DenominatorMigrationV73Digest
+	}
+	return ""
+}
+
+func activeDenominatorDigestChunk3(total int) string {
+	switch total {
+	case 110:
+		return DenominatorMigrationV74Digest
+	case 111:
+		return DenominatorMigrationV75Digest
+	case 112:
+		return DenominatorMigrationV76Digest
+	case 113:
+		return DenominatorMigrationV77Digest
+	case 114:
+		return DenominatorMigrationV78Digest
+	case 115:
+		return DenominatorMigrationV79Digest
+	case 116:
+		return DenominatorMigrationV80Digest
+	case 117:
+		return DenominatorMigrationV81Digest
+	case 118:
+		return DenominatorMigrationV82Digest
+	case 119:
+		return DenominatorMigrationV83Digest
+	case 120:
+		return DenominatorMigrationV84Digest
+	case 121:
+		return DenominatorMigrationV85Digest
+	case 122:
+		return DenominatorMigrationV86Digest
+	case 123:
+		return DenominatorMigrationV87Digest
+	}
+	return ""
+}
+
+func activeDenominatorChunk0(total int) []byte {
+	switch total {
+	case 45:
+		return embeddedDenominator
+	case 46:
+		return embeddedDenominatorV22
+	case 47:
+		return embeddedDenominatorV23
+	case 48:
+		return embeddedDenominatorV24
+	case 49:
+		return embeddedDenominatorV25
+	case 50:
+		return embeddedDenominatorV26
+	case 52:
+		return embeddedDenominatorV27
+	case 56:
+		return embeddedDenominatorV28
+	case 57:
+		return embeddedDenominatorV29
+	case 58:
+		return embeddedDenominatorV30
+	case 60:
+		return embeddedDenominatorV31
+	case 63:
+		return embeddedDenominatorV32
+	case 64:
+		return embeddedDenominatorV33
+	case 65:
+		return embeddedDenominatorV34
+	case 66:
+		return embeddedDenominatorV35
+	case 67:
+		return embeddedDenominatorV36
+	}
+	return nil
+}
+
+func activeDenominatorChunk1(total int) []byte {
+	switch total {
+	case 68:
+		return embeddedDenominatorV37
+	case 69:
+		return embeddedDenominatorV38
+	case 73:
+		return embeddedDenominatorV42
+	case 75:
+		return embeddedDenominatorV43
+	case 77:
+		return embeddedDenominatorV45
+	case 79:
+		return embeddedDenominatorV47
+	case 80:
+		return embeddedDenominatorV48
+	case 82:
+		return embeddedDenominatorV49
+	case 83:
+		return embeddedDenominatorV50
+	case 84:
+		return embeddedDenominatorV51
+	case 85:
+		return embeddedDenominatorV52
+	case 86:
+		return embeddedDenominatorV53
+	case 87:
+		return embeddedDenominatorV54
+	case 88:
+		return embeddedDenominatorV55
+	case 89:
+		return embeddedDenominatorV56
+	case 90:
+		return embeddedDenominatorV57
+	}
+	return nil
+}
+
+func activeDenominatorChunk2(total int) []byte {
+	switch total {
+	case 91:
+		return embeddedDenominatorV58
+	case 92:
+		return embeddedDenominatorV59
+	case 93:
+		return embeddedDenominatorV60
+	case 94:
+		return embeddedDenominatorV61
+	case 95:
+		return embeddedDenominatorV62
+	case 96:
+		return embeddedDenominatorV63
+	case 97:
+		return embeddedDenominatorV64
+	case 98:
+		return embeddedDenominatorV65
+	case 99:
+		return embeddedDenominatorV66
+	case 100:
+		return embeddedDenominatorV67
+	case 101:
+		return embeddedDenominatorV68
+	case 102:
+		return embeddedDenominatorV69
+	case 103:
+		return embeddedDenominatorV70
+	case 104:
+		return embeddedDenominatorV71
+	case 108:
+		return embeddedDenominatorV72
+	case 109:
+		return embeddedDenominatorV73
+	}
+	return nil
+}
+
+func activeDenominatorChunk3(total int) []byte {
+	switch total {
+	case 110:
+		return embeddedDenominatorV74
+	case 111:
+		return embeddedDenominatorV75
+	case 112:
+		return embeddedDenominatorV76
+	case 113:
+		return embeddedDenominatorV77
+	case 114:
+		return embeddedDenominatorV78
+	case 115:
+		return embeddedDenominatorV79
+	case 116:
+		return embeddedDenominatorV80
+	case 117:
+		return embeddedDenominatorV81
+	case 118:
+		return embeddedDenominatorV82
+	case 119:
+		return embeddedDenominatorV83
+	case 120:
+		return embeddedDenominatorV84
+	case 121:
+		return embeddedDenominatorV85
+	case 122:
+		return embeddedDenominatorV86
+	case 123:
+		return embeddedDenominatorV87
+	}
+	return nil
 }

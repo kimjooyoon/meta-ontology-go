@@ -1,0 +1,5 @@
+=== RUN   TestFieldInputLocations16301
+    field_file_source_fresh_test.go:114: new native business cases2/2;authored location countsmap[field_assignment:4 field_read:16 record_constructor:12];repeat sites1;field/local journals retained;source files2;model0;saved read producer0
+--- PASS: TestFieldInputLocations16301 (0.72s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.232s

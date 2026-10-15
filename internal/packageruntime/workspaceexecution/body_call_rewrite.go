@@ -5,12 +5,15 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"slices"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/inputbinding"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, source, surface string, body bool) (string, []WorkspaceCallSite, error) {
+func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, source, surface string, body bool, edits ...*[]BodySourceEdit) (string, []WorkspaceCallSite, error) {
 	if source == "" {
 		return source, nil, nil
 	}
@@ -18,9 +21,15 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 	prefix := ""
 	var root ast.Node
 	var err error
+	var mapping bodycodegen.BodySourceMap
 	if body {
 		prefix = "package scoped\nvar _ = func() {\n"
-		root, err = parser.ParseFile(set, "computes", prefix+recordBodyGoSyntax(source)+"\n}", 0)
+		normalized, sourceMap, normalizeErr := bodycodegen.NormalizeBodySource(source)
+		if normalizeErr != nil {
+			return "", nil, normalizeErr
+		}
+		mapping = sourceMap
+		root, err = parser.ParseFile(set, "computes", prefix+normalized+"\n}", 0)
 	} else {
 		root, err = parser.ParseExprFrom(set, "expression", source, 0)
 	}
@@ -33,7 +42,7 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 		if !ok || err != nil {
 			return err == nil
 		}
-		if name, plain := call.Fun.(*ast.Ident); plain && name.Obj == nil && bodycodegen.IsBodyPrimitiveName(name.Name) {
+		if name, plain := call.Fun.(*ast.Ident); plain && name.Obj == nil && !isActivityInput(name.Name, len(d.activity.Inputs), syntax.ActivityDeclaredInputNames(d.activity)...) && bodycodegen.IsBodyPrimitiveName(name.Name) {
 			if _, declared := c[packageActivityKey(d.ref.PackagePath, name.Name)]; !declared {
 				// Keep the primitive text and descend into its arguments so that
 				// nested source activity calls still enter the dependency graph.
@@ -43,8 +52,8 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 		var target string
 		target, err = c.resolveCall(d, call)
 		if err == nil {
-			sites = append(sites, WorkspaceCallSite{key, target, surface,
-				set.Position(call.Fun.Pos()).Offset - len(prefix), set.Position(call.Fun.End()).Offset - len(prefix)})
+			span := mapping.OriginalRange(set.Position(call.Fun.Pos()).Offset-len(prefix), set.Position(call.Fun.End()).Offset-len(prefix))
+			sites = append(sites, WorkspaceCallSite{key, target, surface, span.Start, span.End})
 		}
 		return err == nil
 	})
@@ -54,6 +63,11 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 	changes := append([]WorkspaceCallSite(nil), sites...)
 	sort.Slice(changes, func(i, j int) bool { return changes[i].Start > changes[j].Start })
 	for _, change := range changes {
+		for _, target := range edits {
+			if target != nil {
+				*target = append(*target, BodySourceEdit{change.Start, change.End, c[change.Callee].ref.LoweredName})
+			}
+		}
 		source = source[:change.Start] + c[change.Callee].ref.LoweredName + source[change.End:]
 	}
 	return source, sites, nil
@@ -87,7 +101,7 @@ func (c workspaceCalls) resolveCall(d workspaceCallDeclaration, call *ast.CallEx
 	default:
 		return "", fmt.Errorf("call requires a source-declared named activity")
 	}
-	if reference.Obj != nil || isActivityInput(reference.Name, len(d.activity.Inputs)) {
+	if reference.Obj != nil || isActivityInput(reference.Name, len(d.activity.Inputs), syntax.ActivityDeclaredInputNames(d.activity)...) {
 		return "", fmt.Errorf("call name %q is shadowed by a local value", reference.Name)
 	}
 	key := packageActivityKey(pkg, name)
@@ -98,14 +112,10 @@ func (c workspaceCalls) resolveCall(d workspaceCallDeclaration, call *ast.CallEx
 	return key, nil
 }
 
-func isActivityInput(name string, count int) bool {
-	if count == 1 {
-		return name == "input"
+func isActivityInput(name string, count int, declared ...string) bool {
+	names, err := inputbinding.Resolve(count, declared)
+	if err != nil {
+		return false
 	}
-	for i := range count {
-		if name == fmt.Sprintf("input%d", i) {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(names, name)
 }

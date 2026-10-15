@@ -1,0 +1,484 @@
+{
+  "schema": "gooo/workspace-derived-fill-development-observations/v1",
+  "slot_construction": {
+    "schema": "gooo/derived-fill-rename-development-observation/v1",
+    "producer": {
+      "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+      "overlays": [
+        {
+          "path": "internal/bodycodegen/source_fill_reference_grammar.go",
+          "sha256": "1762226bf7f0c77346de2bdbbf4688be492202a54c22327f3574b13ee3b55e12"
+        },
+        {
+          "path": "internal/bodycodegen/source_fill_reference_grammar_test.go",
+          "sha256": "9fa5e726bbb8a6abfb8d8c1a3907dde228f81bad098f91acf6764c25efe988ec"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill.go",
+          "sha256": "7ae33b047f08ef22959183862d7db3b6e8eaf479e11475128e5d40a03f56df74"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill_materialize.go",
+          "sha256": "6ed2925ab56873d60ffd2d69401772fa5e25e0de4903cdc42e0f5d0fc0c5ae01"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "sha256": "9da0e9572b4df87eadd89c12dc531b10d60287ce365265979cea2bbe03408042"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/derived_fill_rename_test.go",
+          "sha256": "99f4af602e96e29851f48660266f1da3a6a6bac0e92c2bbe9d96bf72b1e7956c"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/derived_slot_planning_test.go",
+          "sha256": "19f559309688fc1d23434abdf3589d41eb690691c74689772f49a67176e4b240"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_scope_rename_test.go",
+          "sha256": "1c3a02f892125c274942e35da6dc62c15428dcb1eaefd706b6bf96a0815beec7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_shadow_rename_test.go",
+          "sha256": "aaab2aeb5e222a67d7bb88ade19a5e0a6824a1d2e439ce29b0f10225a42faad0"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_three_candidate_rename_test.go",
+          "sha256": "71e3575b56b1caf6cac6032574daf31a2fc56c51119b59f4ba4c996935d63942"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "test": "TestDerivedSlotPlanningRetainsRenamedHelperAndHeldInput",
+      "scope": "one distinctderive129 2package3file template refs; dedicated source fill API afterrename, newcase4/87 held-3/80; no earlier local sources/models/tests repeated",
+      "created_at": "2026-10-13T05:04:07.701352+00:00"
+    },
+    "observation": {
+      "activity_id": "urn:derive129:base",
+      "candidate_generation": {
+        "schema": "gooo/source-fill-candidate-generation-receipt/v2",
+        "grammar": "per-hole",
+        "hole_grammars": [
+          {
+            "hole_id": "condition",
+            "grammar": "integer-predicate/v1",
+            "expression_candidates_total": 8,
+            "expressions_retained": 2,
+            "grammar_coverage_percent": 25,
+            "grammar_complete": false
+          },
+          {
+            "hole_id": "value",
+            "grammar": "integer-offset-constant/v1",
+            "expression_candidates_total": 5,
+            "expressions_retained": 2,
+            "grammar_coverage_percent": 40,
+            "grammar_complete": false
+          }
+        ],
+        "expression_candidates_total": 13,
+        "expressions_retained_total": 4,
+        "grammar_coverage_percent": 30.76923076923077,
+        "grammar_complete": false,
+        "assignment_space_size": 4,
+        "assignments_retained": 4,
+        "assignments_omitted": 0,
+        "assignment_coverage_percent": 100,
+        "candidate_set_sha256": "sha256:eeff2d7a5a4b61d68b3ccecd015908194e53e1f6271ef3417229a9f68a97bbe8",
+        "completeness_scope": "declared per-hole typed expression grammars and lexicographically enumerated complete assignments under the source candidate cap; excludes other grammars, later assignments, unstated intent and all-domain semantics"
+      },
+      "changed_files": 3,
+      "construction_model_predictions": 0,
+      "external_provider_calls": 0,
+      "held_cases_passed": 1,
+      "held_cases_total": 1,
+      "input_unchanged": true,
+      "native_processes": 0,
+      "reference_total": 2,
+      "references": 2,
+      "rename_model_predictions": 0,
+      "rename_program_executions": 0,
+      "selected_candidate": "derived_36fd58264a16",
+      "selected_cases_passed": 1,
+      "selected_cases_total": 1,
+      "source_files": 3
+    },
+    "outcome": "PASS",
+    "execution": "79891 consumed_closed_0",
+    "historical_replays": 0,
+    "training_runs": 0,
+    "native_processes": 0,
+    "earlier_failure": {
+      "schema": "gooo/derived-fill-rename-development-observation/v1",
+      "producer": {
+        "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+        "overlays": [
+          {
+            "path": "internal/bodycodegen/source_fill_reference_grammar.go",
+            "original_sha256": null,
+            "sha256": "1762226bf7f0c77346de2bdbbf4688be492202a54c22327f3574b13ee3b55e12"
+          },
+          {
+            "path": "internal/bodycodegen/source_fill_reference_grammar_test.go",
+            "original_sha256": null,
+            "sha256": "9fa5e726bbb8a6abfb8d8c1a3907dde228f81bad098f91acf6764c25efe988ec"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/activity_rename_fill.go",
+            "original_sha256": null,
+            "sha256": "7ae33b047f08ef22959183862d7db3b6e8eaf479e11475128e5d40a03f56df74"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/activity_rename_fill_materialize.go",
+            "original_sha256": null,
+            "sha256": "6ed2925ab56873d60ffd2d69401772fa5e25e0de4903cdc42e0f5d0fc0c5ae01"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+            "original_sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51",
+            "sha256": "9da0e9572b4df87eadd89c12dc531b10d60287ce365265979cea2bbe03408042"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/derived_fill_rename_test.go",
+            "original_sha256": null,
+            "sha256": "34b59a452960809403416a76e8253d5eb50fe00460c9fe73d7017e71e589a610"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/fill_scope_rename_test.go",
+            "original_sha256": null,
+            "sha256": "1c3a02f892125c274942e35da6dc62c15428dcb1eaefd706b6bf96a0815beec7"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/fill_shadow_rename_test.go",
+            "original_sha256": null,
+            "sha256": "aaab2aeb5e222a67d7bb88ade19a5e0a6824a1d2e439ce29b0f10225a42faad0"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/fill_three_candidate_rename_test.go",
+            "original_sha256": null,
+            "sha256": "71e3575b56b1caf6cac6032574daf31a2fc56c51119b59f4ba4c996935d63942"
+          }
+        ],
+        "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+        "tests": [
+          "TestDerivedPerHoleRenameKeepsImportedCallThroughConstruction",
+          "TestDerivedReferenceGrammarRequiresVersionedClosedProductions"
+        ],
+        "scope": "one distinctderive117 source117 importedhelper perhole4assignments; rename0model/scoring/program, then one constructednewsource finiteASTcase1/1 held1/1 observed ifsuccessful; separate16-version referenceprofile contract; no historical source/model/test cohorts replayed",
+        "created_at": "2026-10-13T05:02:33.814735+00:00"
+      },
+      "overall_outcome": "FAILURE",
+      "failed_test": "TestDerivedPerHoleRenameKeepsImportedCallThroughConstruction",
+      "stage": "incorrect_test_consumer_api",
+      "reason": "TypedPathGenerator.GenerateSourceAssembly dispatches scalar/record paths; source_fill uses existing GenerateWithSourceIRBodyFill in CLI/workspace runtime",
+      "original_error": "typecheck generated activity: undefined __GOOO_BODY_HOLE_condition__",
+      "rename_stage": "returned; subsequent assertions and Prepare passed; full receipt not logged before later failure so no successful end-to-end claim",
+      "profile_test": "TestDerivedReferenceGrammarRequiresVersionedClosedProductions PASS16known_versions3rejected_profiles; no enumeration/scoring/model/execution",
+      "execution": "83609 consumed_closed_1",
+      "historical_replays": 0,
+      "training_runs": 0,
+      "native_processes": 0,
+      "updated_at": "2026-10-13T05:04:07.480547+00:00"
+    }
+  },
+  "actual_cli": {
+    "schema": "gooo/derived-fill-rename-actual-cli-observation/v1",
+    "producer": {
+      "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+      "overlays": [
+        {
+          "path": "internal/bodycodegen/record_assembly.go",
+          "sha256": "8ba254d1f204b3caa516485a09488e1dd722751d79aad7dfaf1e93802d2c5db2"
+        },
+        {
+          "path": "internal/bodycodegen/search_consumer_diagnostic_test.go",
+          "sha256": "446d26db888d42c9d218de6d256804f83172acd317cf27793b6917bb0ffa5c48"
+        },
+        {
+          "path": "internal/bodycodegen/source_fill_reference_grammar.go",
+          "sha256": "1762226bf7f0c77346de2bdbbf4688be492202a54c22327f3574b13ee3b55e12"
+        },
+        {
+          "path": "internal/bodycodegen/source_fill_reference_grammar_test.go",
+          "sha256": "9fa5e726bbb8a6abfb8d8c1a3907dde228f81bad098f91acf6764c25efe988ec"
+        },
+        {
+          "path": "internal/bodycodegen/source_mode_dispatch_test.go",
+          "sha256": "aeef612a5c17ceb788941c33ed4995375387344c8937ab1d647830eff8ac658c"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill.go",
+          "sha256": "7ae33b047f08ef22959183862d7db3b6e8eaf479e11475128e5d40a03f56df74"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill_materialize.go",
+          "sha256": "6ed2925ab56873d60ffd2d69401772fa5e25e0de4903cdc42e0f5d0fc0c5ae01"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "sha256": "9da0e9572b4df87eadd89c12dc531b10d60287ce365265979cea2bbe03408042"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/derived_fill_rename_test.go",
+          "sha256": "99f4af602e96e29851f48660266f1da3a6a6bac0e92c2bbe9d96bf72b1e7956c"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/derived_slot_planning_test.go",
+          "sha256": "19f559309688fc1d23434abdf3589d41eb690691c74689772f49a67176e4b240"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_scope_rename_test.go",
+          "sha256": "1c3a02f892125c274942e35da6dc62c15428dcb1eaefd706b6bf96a0815beec7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_shadow_rename_test.go",
+          "sha256": "aaab2aeb5e222a67d7bb88ade19a5e0a6824a1d2e439ce29b0f10225a42faad0"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_three_candidate_rename_test.go",
+          "sha256": "71e3575b56b1caf6cac6032574daf31a2fc56c51119b59f4ba4c996935d63942"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "scope": "one newdistinctderive148 sharedgrammar actualCLI source rename;0candidate enumeration/scoring/model/program; no historical local cohort replays",
+      "created_at": "2026-10-13T05:07:03.345166+00:00",
+      "source_sha256": {
+        "add.gooo": "66817013660d09fd83f1f0df022f5bb71f9a12fce112a97a795038716d6c064f",
+        "bill.gooo": "cf4cb3c47ecfceaaf521f3658ed14fb3a7d032bb202e3b8940bd9020affe6cc3",
+        "workspace.json": "4cf95300d19eeff33a284b6623f79eb20ce4aafba694901c69d7e8371bd3d73e"
+      },
+      "argv": [
+        "package",
+        "rename-activity",
+        "--package",
+        "derive148/helpers",
+        "--id",
+        "urn:derive148:add",
+        "--to",
+        "가산",
+        "--json",
+        "workspace.json"
+      ],
+      "binary_sha256": "a0bf89f042dae5239375a22fa32cac0453f4816059ed7d0c3dcf7917e114f406",
+      "binary_bytes": 25657570
+    },
+    "decision": "PROPOSED",
+    "CLIprocesses": 1,
+    "source_program_executions": 0,
+    "model_predictions": 0,
+    "candidate_enumeration": 0,
+    "candidate_scoring": 0,
+    "references": 1,
+    "reference_total": 1,
+    "changed_files": 2,
+    "input_files_unchanged": true,
+    "elapsed_ns": 563928667,
+    "timing_scope": "singleprocess wallinterval includesstartup/sourceparsing; no comparativeCPU/RAM or inference measurement",
+    "binary_removed_after_observation": true,
+    "training_runs": 0,
+    "historical_replays": 0
+  },
+  "search_consumer": {
+    "producer": {
+      "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+      "overlays": [
+        {
+          "path": "internal/bodycodegen/record_assembly.go",
+          "sha256": "8ba254d1f204b3caa516485a09488e1dd722751d79aad7dfaf1e93802d2c5db2"
+        },
+        {
+          "path": "internal/bodycodegen/search_consumer_diagnostic_test.go",
+          "sha256": "446d26db888d42c9d218de6d256804f83172acd317cf27793b6917bb0ffa5c48"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "test": "TestSearchConsumerDiagnosticPrecedesUnfilledBodyProjection",
+      "scope": "one distinctmodes145 sourcewrongconsumer diagnostic;0model/scoring/program, no historical source/test/model cohort replay",
+      "created_at": "2026-10-13T05:06:21.200006+00:00"
+    },
+    "execution": "79894 consumed_closed_0",
+    "outcome": "PASS",
+    "profile": "newmodes145 source search consumer diagnostic before unfilledbody projection",
+    "code_emitted": 0,
+    "model_predictions": 0,
+    "candidate_scoring": 0,
+    "program_executions": 0,
+    "historical_replays": 0
+  },
+  "reference_profile_contract": {
+    "producer": {
+      "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+      "overlays": [
+        {
+          "path": "internal/bodycodegen/source_fill_reference_grammar.go",
+          "original_sha256": null,
+          "sha256": "1762226bf7f0c77346de2bdbbf4688be492202a54c22327f3574b13ee3b55e12"
+        },
+        {
+          "path": "internal/bodycodegen/source_fill_reference_grammar_test.go",
+          "original_sha256": null,
+          "sha256": "9fa5e726bbb8a6abfb8d8c1a3907dde228f81bad098f91acf6764c25efe988ec"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill.go",
+          "original_sha256": null,
+          "sha256": "7ae33b047f08ef22959183862d7db3b6e8eaf479e11475128e5d40a03f56df74"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_fill_materialize.go",
+          "original_sha256": null,
+          "sha256": "6ed2925ab56873d60ffd2d69401772fa5e25e0de4903cdc42e0f5d0fc0c5ae01"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "original_sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51",
+          "sha256": "9da0e9572b4df87eadd89c12dc531b10d60287ce365265979cea2bbe03408042"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/derived_fill_rename_test.go",
+          "original_sha256": null,
+          "sha256": "34b59a452960809403416a76e8253d5eb50fe00460c9fe73d7017e71e589a610"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_scope_rename_test.go",
+          "original_sha256": null,
+          "sha256": "1c3a02f892125c274942e35da6dc62c15428dcb1eaefd706b6bf96a0815beec7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_shadow_rename_test.go",
+          "original_sha256": null,
+          "sha256": "aaab2aeb5e222a67d7bb88ade19a5e0a6824a1d2e439ce29b0f10225a42faad0"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/fill_three_candidate_rename_test.go",
+          "original_sha256": null,
+          "sha256": "71e3575b56b1caf6cac6032574daf31a2fc56c51119b59f4ba4c996935d63942"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "tests": [
+        "TestDerivedPerHoleRenameKeepsImportedCallThroughConstruction",
+        "TestDerivedReferenceGrammarRequiresVersionedClosedProductions"
+      ],
+      "scope": "one distinctderive117 source117 importedhelper perhole4assignments; rename0model/scoring/program, then one constructednewsource finiteASTcase1/1 held1/1 observed ifsuccessful; separate16-version referenceprofile contract; no historical source/model/test cohorts replayed",
+      "created_at": "2026-10-13T05:02:33.814735+00:00"
+    },
+    "execution": "83609 consumed_closed_1 aggregate; grammarprofile individualPASS",
+    "test": "TestDerivedReferenceGrammarRequiresVersionedClosedProductions",
+    "known_versioned_traits": 16,
+    "rejected_profiles": 3,
+    "scope": "referenceproperty classifier contract, not execution of all generatedgrammars",
+    "enumeration": 0,
+    "scoring": 0,
+    "model_predictions": 0,
+    "program_execution": 0
+  },
+  "failures_preserved": [
+    {
+      "schema": "gooo/derived-fill-rename-development-observation/v1",
+      "producer": {
+        "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+        "overlays": [
+          {
+            "path": "internal/bodycodegen/source_fill_reference_grammar.go",
+            "original_sha256": null,
+            "sha256": "1762226bf7f0c77346de2bdbbf4688be492202a54c22327f3574b13ee3b55e12"
+          },
+          {
+            "path": "internal/bodycodegen/source_fill_reference_grammar_test.go",
+            "original_sha256": null,
+            "sha256": "9fa5e726bbb8a6abfb8d8c1a3907dde228f81bad098f91acf6764c25efe988ec"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/activity_rename_fill.go",
+            "original_sha256": null,
+            "sha256": "7ae33b047f08ef22959183862d7db3b6e8eaf479e11475128e5d40a03f56df74"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/activity_rename_fill_materialize.go",
+            "original_sha256": null,
+            "sha256": "6ed2925ab56873d60ffd2d69401772fa5e25e0de4903cdc42e0f5d0fc0c5ae01"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+            "original_sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51",
+            "sha256": "9da0e9572b4df87eadd89c12dc531b10d60287ce365265979cea2bbe03408042"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/derived_fill_rename_test.go",
+            "original_sha256": null,
+            "sha256": "34b59a452960809403416a76e8253d5eb50fe00460c9fe73d7017e71e589a610"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/fill_scope_rename_test.go",
+            "original_sha256": null,
+            "sha256": "1c3a02f892125c274942e35da6dc62c15428dcb1eaefd706b6bf96a0815beec7"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/fill_shadow_rename_test.go",
+            "original_sha256": null,
+            "sha256": "aaab2aeb5e222a67d7bb88ade19a5e0a6824a1d2e439ce29b0f10225a42faad0"
+          },
+          {
+            "path": "internal/packageruntime/workspaceexecution/fill_three_candidate_rename_test.go",
+            "original_sha256": null,
+            "sha256": "71e3575b56b1caf6cac6032574daf31a2fc56c51119b59f4ba4c996935d63942"
+          }
+        ],
+        "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+        "tests": [
+          "TestDerivedPerHoleRenameKeepsImportedCallThroughConstruction",
+          "TestDerivedReferenceGrammarRequiresVersionedClosedProductions"
+        ],
+        "scope": "one distinctderive117 source117 importedhelper perhole4assignments; rename0model/scoring/program, then one constructednewsource finiteASTcase1/1 held1/1 observed ifsuccessful; separate16-version referenceprofile contract; no historical source/model/test cohorts replayed",
+        "created_at": "2026-10-13T05:02:33.814735+00:00"
+      },
+      "overall_outcome": "FAILURE",
+      "failed_test": "TestDerivedPerHoleRenameKeepsImportedCallThroughConstruction",
+      "stage": "incorrect_test_consumer_api",
+      "reason": "TypedPathGenerator.GenerateSourceAssembly dispatches scalar/record paths; source_fill uses existing GenerateWithSourceIRBodyFill in CLI/workspace runtime",
+      "original_error": "typecheck generated activity: undefined __GOOO_BODY_HOLE_condition__",
+      "rename_stage": "returned; subsequent assertions and Prepare passed; full receipt not logged before later failure so no successful end-to-end claim",
+      "profile_test": "TestDerivedReferenceGrammarRequiresVersionedClosedProductions PASS16known_versions3rejected_profiles; no enumeration/scoring/model/execution",
+      "execution": "83609 consumed_closed_1",
+      "historical_replays": 0,
+      "training_runs": 0,
+      "native_processes": 0,
+      "updated_at": "2026-10-13T05:04:07.480547+00:00"
+    },
+    {
+      "schema": "gooo/source-mode-diagnostic-development-observation/v1",
+      "producer": {
+        "compiler_base": "ae957835f1724c742c9d2627c2c1fbae5cc57eb9",
+        "overlays": [
+          {
+            "path": "internal/bodycodegen/record_assembly.go",
+            "sha256": "8ba254d1f204b3caa516485a09488e1dd722751d79aad7dfaf1e93802d2c5db2"
+          },
+          {
+            "path": "internal/bodycodegen/source_mode_dispatch_test.go",
+            "sha256": "3e1dcb84afcc627ab9d3e333c939ac279c3842046e1cc100dbaf0d278f780645"
+          }
+        ],
+        "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+        "test": "TestTypedPathModeDiagnosticNamesTheSourceOwnedConsumer",
+        "scope": "two distinctsource modes131fill and132search; wrong typedpath consumer error before body decoding;0model/scoring/program; no historical cohort replays",
+        "created_at": "2026-10-13T05:05:22.373598+00:00"
+      },
+      "outcome": "FAILURE",
+      "stage": "second_source_fixture_parse",
+      "reason": "search clause fields were written in wrong order; actual grammar is hole,grammar,intent,max_candidates",
+      "source_fill_first_profile": "reached expected consumer error; aggregate test still failed, not claimed as full successful two-profile observation",
+      "execution": "89470 consumed_closed_1",
+      "model_predictions": 0,
+      "candidate_scoring": 0,
+      "program_executions": 0,
+      "historical_replays": 0,
+      "updated_at": "2026-10-13T05:06:03.713291+00:00"
+    }
+  ],
+  "fresh_tests_passed": 3,
+  "fresh_tests_failed_preserved": 2,
+  "training_runs": 0,
+  "historical_replays": 0,
+  "competitor_executions": 0,
+  "native_processes": 0
+}

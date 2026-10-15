@@ -1,0 +1,14 @@
+{
+  "original": {
+    "source": "internal/packageruntime/workspaceexecution/collection_handoff_test.go",
+    "sha256": "76a9050ed7e1832f3c8c45cc1428aebdca1cc47eefb0a8a9ac445e8318f76625",
+    "outcome": "native14/14 assertions passed; test failed reading Composition.Steps[0].Generation.Report.BodyFill before querying origins"
+  },
+  "final": {
+    "sha256": "0bcc7eaedb55d4bd29b95118b5f684b0dae6d06e3d2210a99e341fb67aa5dea7",
+    "change": "Read Result.BodyFills, where ExecuteWorkspace retains construction records before composition",
+    "locally_reexecuted": false,
+    "verification": "successor original CI pending"
+  },
+  "syntax8429": "six fresh sources PASS; exact V5 and rejecting V1 paths"
+}

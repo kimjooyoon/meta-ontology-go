@@ -1,0 +1,8 @@
+{
+  "raw_source": "producer11591.json",
+  "raw_source_sha256": "a0b46c217f410855a3ec2f9997fbf07812120b73f51e6fec9dc17f4dc24a795b",
+  "selected_field": "$.result.runtime",
+  "saved_runtime": "examples/native-origin-reader/local-fill11591-runtime.json",
+  "saved_runtime_sha256": "c39b057371edcbb40da27ca92c18434552f033251ce82301cb080ddbbc5afc5a",
+  "transformation": "JSON field extraction and formatting only; no producer re-execution"
+}

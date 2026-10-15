@@ -11,6 +11,8 @@ import (
 )
 
 type Spec struct {
+	Criteria           *Criteria           `json:"criteria,omitempty"`
+	Observation        *Observation        `json:"observation,omitempty"`
 	Choices            []Choice            `json:"choices"`
 	Cases              []Case              `json:"cases"`
 	ConditionCases     []ConditionCase     `json:"condition_cases,omitempty"`
@@ -43,7 +45,7 @@ type SearchAlternative struct {
 	MaxCandidates int    `json:"max_candidates"`
 }
 
-// FillPlan declares complete candidate assignments for multiple typed holes.
+// FillPlan declares complete candidate assignments for one or more typed holes.
 // Models can rank these assignments but cannot add or rewrite expressions.
 type FillPlan struct {
 	Intent     string          `json:"intent"`
@@ -113,14 +115,20 @@ type ValueCase struct {
 }
 
 func (s Spec) Validate() error {
+	if err := s.validateCriteria(); err != nil {
+		return err
+	}
+	if err := s.validateObservation(); err != nil {
+		return err
+	}
 	if err := s.validateConditionCases(); err != nil {
 		return err
 	}
 	if err := s.validateSearchAlternatives(); err != nil {
 		return err
 	}
-	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases) < 1 ||
-		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases) > 128 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
+	if len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases)+s.criteriaInputCount() < 1 ||
+		len(s.Cases)+len(s.HoldoutCases)+len(s.ValueCases)+len(s.ValueHoldoutCases)+s.criteriaInputCount() > 128 || len(s.Seed) > 512 || !utf8.ValidString(s.Seed) {
 		return fmt.Errorf("assembly requires 1..16 choices, 1..128 cases and 1..64 attempts")
 	}
 	if s.FillPlan != nil {
@@ -148,8 +156,11 @@ func (s Spec) Validate() error {
 		}
 		return nil
 	}
-	if len(s.HoldoutCases) != 0 || len(s.Choices) < 1 || len(s.Choices) > 16 {
-		return fmt.Errorf("assembly requires 1..16 choices and holdout cases are available only to IR search")
+	if len(s.Choices) < 1 || len(s.Choices) > 16 {
+		return fmt.Errorf("assembly requires 1..16 choices")
+	}
+	if err := s.validatePathHoldout(); err != nil {
+		return err
 	}
 	var seen [16]string
 	for i, c := range s.Choices {
@@ -172,16 +183,16 @@ func (s Spec) Validate() error {
 				return fmt.Errorf("assembly name choice %q requires an alternative local", c.ID)
 			}
 		case "field_value", "field_update":
-			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || len(s.ValueCases) == 0 || len(s.ValueHoldoutCases) != 0 || len(s.Choices) > 6 {
-				return fmt.Errorf("field assembly requires an alternative expression, 1..6 choices and value_case expectations")
+			if !boundedText(c.Alternative, 512) || len(s.Cases) != 0 || (len(s.ValueCases) == 0 && s.Criteria == nil) || len(s.Choices) > 6 {
+				return fmt.Errorf("field assembly requires an alternative expression, 1..6 choices and value_case or criteria obligations")
 			}
 		default:
 			return fmt.Errorf("unknown assembly choice kind %q", c.Kind)
 		}
 	}
 	if len(s.ValueCases) != 0 || len(s.ValueHoldoutCases) != 0 {
-		if len(s.ValueHoldoutCases) != 0 {
-			return fmt.Errorf("holdout_value_case is available only for source_fill plans")
+		if err := s.validateRecordHoldout(); err != nil {
+			return err
 		}
 		for _, choice := range s.Choices {
 			if choice.Kind != "field_value" && choice.Kind != "field_update" {
@@ -208,8 +219,8 @@ func (s Spec) validateFillPlan() error {
 	if len(s.Cases) == 0 && !recordCases || len(s.Cases) > 0 && recordCases ||
 		len(s.Choices) != 0 || s.Search != nil || s.MaxAttempts != 0 || s.Seed != "" ||
 		s.Baseline != "" || len(s.Picked) != 0 || !boundedText(plan.Intent, 2000) ||
-		len(plan.Holes) < 2 || len(plan.Holes) > 8 {
-		return fmt.Errorf("source fill plan requires intent, 2..8 holes and either integer cases or typed record value cases; it cannot mix with other assembly modes")
+		len(plan.Holes) < 1 || len(plan.Holes) > 8 {
+		return fmt.Errorf("source fill plan requires intent, 1..8 holes and either integer cases or typed record value cases; it cannot mix with other assembly modes")
 	}
 	if recordCases {
 		if len(s.HoldoutCases) != 0 {
@@ -387,6 +398,14 @@ func identifier(value string) bool {
 
 func (s Spec) Clone() *Spec {
 	clone := s
+	clone.Criteria = s.Criteria.Clone()
+	if s.Observation != nil {
+		observation := *s.Observation
+		observation.Inputs = append([]int64(nil), s.Observation.Inputs...)
+		observation.ValueInputs = append([]string(nil), s.Observation.ValueInputs...)
+		observation.CriteriaInputs = append([]string(nil), s.Observation.CriteriaInputs...)
+		clone.Observation = &observation
+	}
 	clone.Choices = append([]Choice(nil), s.Choices...)
 	clone.Cases = append([]Case(nil), s.Cases...)
 	clone.ConditionCases = append([]ConditionCase(nil), s.ConditionCases...)

@@ -1,0 +1,5 @@
+=== RUN   TestLocalFillFragmentConsumer11213
+    composition_local_fill_fresh_test.go:45: fresh source_fill producer2/2; six actual write fragments -> original candidate/template; Gooo consumer6/6; selection producer0/models0
+--- PASS: TestLocalFillFragmentConsumer11213 (1.26s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.765s

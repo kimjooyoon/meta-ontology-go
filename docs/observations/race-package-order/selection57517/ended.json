@@ -1,0 +1,16 @@
+{
+  "completed_at": "2026-10-14T18:14:30.395231+00:00",
+  "status": "PASS",
+  "scope": "PACKAGE_AND_TEST_VARIANT_ENUMERATION_ONLY",
+  "test_executions": 0,
+  "full_count": 919,
+  "scheduled_count": 919,
+  "duplicate_count": 0,
+  "omitted": [],
+  "added": [],
+  "full_target_position": 312,
+  "scheduled_target_position": 0,
+  "full_sha256": "11d349c9f29569ca9fd88c8008639166a98346405012ab00e4f549f109685b21",
+  "scheduled_sha256": "e7ee21072d31751a1abde0219796fd172c2273d4a6d86902c55bdaeae911857f",
+  "performance_improvement": "UNOBSERVED"
+}

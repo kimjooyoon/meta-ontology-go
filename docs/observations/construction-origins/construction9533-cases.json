@@ -1,0 +1,47 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Build": {
+          "values": [
+            541,
+            541
+          ],
+          "pick": 0
+        }
+      },
+      "expected": {
+        "Read": 1082
+      }
+    },
+    {
+      "inputs": {
+        "Build": {
+          "values": [
+            547,
+            557
+          ],
+          "pick": 1
+        }
+      },
+      "expected": {
+        "Read": 549
+      }
+    },
+    {
+      "inputs": {
+        "Build": {
+          "values": [
+            557,
+            563
+          ],
+          "pick": 0
+        }
+      },
+      "expected": {
+        "Read": 1120
+      }
+    }
+  ]
+}

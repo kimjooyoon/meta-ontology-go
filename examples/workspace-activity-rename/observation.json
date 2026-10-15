@@ -1,0 +1,645 @@
+{
+  "schema": "gooo/workspace-activity-rename-development-observations/v1",
+  "publication_state": "prepared_unpublished",
+  "cli": {
+    "producer": {
+      "compiler_base": "6e30044f88f9ccfb1139c617f21897d156011bad",
+      "overlays": [
+        {
+          "path": "cmd/gooo/package_resolve.go",
+          "sha256": "00dce41094c8474d64a9a6ed90f13067cf6be0e49a863aec35cbaad13d60131a"
+        },
+        {
+          "path": "cmd/gooo/usage_package.go",
+          "sha256": "42d0de2901c397b2ccaaf094b021de42da69168d3f2c056e1cdbc88849cca0f2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename.go",
+          "sha256": "2a2f3c34c0b4f5d7da8cea17ec03e50e50d1ba20d229edd7bcb95140a652b53c"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_io.go",
+          "sha256": "f2638fd5a1ea955f32960d987cc2c186cb87985a48ccebfaa0fe954ed7e9e2a2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_test.go",
+          "sha256": "b1de2a683107d7702d3904f6115c0e1b6a2cc5a58727dce008bd70bff09014d4"
+        },
+        {
+          "path": "internal/assemblyspec/observation.go",
+          "sha256": "d08d1d5e704045c86a54432d7a4f6362a82d5d260c4781be8de9c71d5a32e517"
+        },
+        {
+          "path": "internal/assemblyspec/observation_test.go",
+          "sha256": "a9e74d55d28252df38e9e015d5e7efe956c6fcfabd3119cc5732a5811123b0ff"
+        },
+        {
+          "path": "internal/bodycodegen/source_literal_range.go",
+          "sha256": "78459f5d280ed2ad82908201560dcd7aeeb973d13f36e905b8f2c75d0642db88"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename.go",
+          "sha256": "a56dc9f177bb2d5e5c4f9f64893ad382928a9f0bbc2988f6734afffe3f57dcc9"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_apply.go",
+          "sha256": "1be03df50943076fbaa8f418ce7bab0eeebb373d06fcd138d51938e69e3311a4"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_checkpoint_test.go",
+          "sha256": "a1abdbaa5fa3f1b32603d564dbcc0b504442ea544a18625cfa0a45116a9cd2fa"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_index.go",
+          "sha256": "09a5e74ea28b4613e0a03b0edecb6cfd5711601a24c887522a2367271d20f94b"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_reference_forms.go",
+          "sha256": "714d411eabf8f9d37ec9a52384b38ade35b4a7141ad70a1caa60fc17daff48ee"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_test.go",
+          "sha256": "4b0dfcc513b96dce933acbdd3d3e8770257707f3a0da115610069d704f369808"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_types.go",
+          "sha256": "461e4917aaeaf76c869417c6e70edb4d45e8e8df414b16b3600f84785f6a6bd7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_rename_test.go",
+          "sha256": "5f5ba5b481a07c39119f889f6f6e0202fc0c7a2fc74063ebd11963f56d4fe323"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+      "sdk_version": "v0.2.51-experimental",
+      "tests": [
+        "TestWorkspaceRenameCLIIncludesDormantFixedCriteriaAndBinding",
+        "TestQualifiedOracleRenameFeedsFiniteWorkspaceConstruction"
+      ],
+      "scope": "two distinct fresh source profiles: CLI review references and imported fixed oracle questions; no historical source/test/model cohorts replayed; no native execution or model prediction",
+      "started_at": "2026-10-13T04:06:26.197344+00:00"
+    },
+    "observation": {
+      "activity_id": "urn:review:rule",
+      "changed_files": 3,
+      "criterion_updated": true,
+      "dormant_updated": true,
+      "entry_updated": false,
+      "identity_pinned": false,
+      "model_predictions": 0,
+      "ordinary_literal_preserved": true,
+      "other_package_preserved": true,
+      "packages": 3,
+      "program_executions": 0,
+      "reference_total": 5,
+      "references": 5,
+      "source_files": 5
+    },
+    "test_state": "PASS",
+    "original_invocation_aggregate": "one CLI pass and one separate oracle assertion failure; both retained"
+  },
+  "imported_oracle_holdout": {
+    "schema": "gooo/imported-oracle-rename-development-observation/v1",
+    "producer": {
+      "compiler_base": "6e30044f88f9ccfb1139c617f21897d156011bad",
+      "overlays": [
+        {
+          "path": "cmd/gooo/package_resolve.go",
+          "sha256": "00dce41094c8474d64a9a6ed90f13067cf6be0e49a863aec35cbaad13d60131a"
+        },
+        {
+          "path": "cmd/gooo/usage_package.go",
+          "sha256": "42d0de2901c397b2ccaaf094b021de42da69168d3f2c056e1cdbc88849cca0f2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename.go",
+          "sha256": "2a2f3c34c0b4f5d7da8cea17ec03e50e50d1ba20d229edd7bcb95140a652b53c"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_io.go",
+          "sha256": "f2638fd5a1ea955f32960d987cc2c186cb87985a48ccebfaa0fe954ed7e9e2a2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_test.go",
+          "sha256": "b1de2a683107d7702d3904f6115c0e1b6a2cc5a58727dce008bd70bff09014d4"
+        },
+        {
+          "path": "internal/assemblyspec/observation.go",
+          "sha256": "d08d1d5e704045c86a54432d7a4f6362a82d5d260c4781be8de9c71d5a32e517"
+        },
+        {
+          "path": "internal/assemblyspec/observation_test.go",
+          "sha256": "a9e74d55d28252df38e9e015d5e7efe956c6fcfabd3119cc5732a5811123b0ff"
+        },
+        {
+          "path": "internal/bodycodegen/source_literal_range.go",
+          "sha256": "78459f5d280ed2ad82908201560dcd7aeeb973d13f36e905b8f2c75d0642db88"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename.go",
+          "sha256": "a56dc9f177bb2d5e5c4f9f64893ad382928a9f0bbc2988f6734afffe3f57dcc9"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_apply.go",
+          "sha256": "1be03df50943076fbaa8f418ce7bab0eeebb373d06fcd138d51938e69e3311a4"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_checkpoint_test.go",
+          "sha256": "a1abdbaa5fa3f1b32603d564dbcc0b504442ea544a18625cfa0a45116a9cd2fa"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_index.go",
+          "sha256": "09a5e74ea28b4613e0a03b0edecb6cfd5711601a24c887522a2367271d20f94b"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_reference_forms.go",
+          "sha256": "714d411eabf8f9d37ec9a52384b38ade35b4a7141ad70a1caa60fc17daff48ee"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_test.go",
+          "sha256": "4b0dfcc513b96dce933acbdd3d3e8770257707f3a0da115610069d704f369808"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_types.go",
+          "sha256": "461e4917aaeaf76c869417c6e70edb4d45e8e8df414b16b3600f84785f6a6bd7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_holdout_test.go",
+          "sha256": "5e21f18c88407002aaadafcd7a0bff57f4a924d401085a3a37aa9a126829a0dd"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_rename_test.go",
+          "sha256": "cdf23fe3c983923accb046971a31375c8d14e38211ca41142544b20845a297d7"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "sdk_version": "v0.2.51-experimental",
+      "test": "TestImportedOracleQuestionKeepsHoldoutSeparateAfterWorkspaceRename",
+      "scope": "one new 2-package 2-source renamed imported oracle profile; original case31, source question-8, reserved evaluation42; no historical source/test/model cohorts replayed; no native execution/model prediction",
+      "started_at": "2026-10-13T04:08:25.024951+00:00"
+    },
+    "observation": {
+      "activity_id": "urn:question31:expected",
+      "answered_source_questions": 1,
+      "changed_files": 2,
+      "holdout": {
+        "schema": "gooo/typed-path-holdout/v1",
+        "activity": "GoooPackage1ActivityPrice",
+        "activity_id": "gooo-workspace://activity/gooo-package1activity-price",
+        "declaration_source_sha256": "sha256:9c575073506f48e9f1ea1214e21f1d3933a80d2636725ec24b04f6f789057863",
+        "selected_source_sha256": "sha256:46afa287a9351126c6240364c3022c1bf327a52d6e0c828aa8d98b9c3614f0f4",
+        "generated_sha256": "sha256:3de741b4cab73e532ce4ad156e288871dc7fc2dd1c6be705008accd278ce97f4",
+        "suite_sha256": "sha256:78716fd44c83a60ac8cabe78b94d3ae2938fa1feb181bcebe24036666dc49e82",
+        "cases": [
+          {
+            "input": 42,
+            "expected": -11
+          }
+        ],
+        "results": [
+          {
+            "input": 42,
+            "expected": -11,
+            "actual": -11,
+            "passed": true
+          }
+        ],
+        "passed": 1,
+        "total": 1,
+        "accuracy_percent": 100,
+        "scope": "source holdout cases after this body's selection; excluded from local path ranking and observation; bounded Go AST evaluation, no candidate reselection or native execution; caller exposure is a separate observation"
+      },
+      "model_predictions": 0,
+      "native_processes": 0,
+      "oracle": {
+        "schema": "gooo/typed-path-observation/v1",
+        "status": "ONE_SURVIVING_CANDIDATE",
+        "options": {
+          "inputs": [
+            -8
+          ],
+          "max_candidates": 2,
+          "max_rounds": 1,
+          "oracle_activity": "GoooPackage0Activity\uae30\uc900\uac12",
+          "reuse_probe_outputs": true,
+          "resolve_unique_candidate": true
+        },
+        "options_sha256": "sha256:96807601b6123b447fb055b65139a8e2d288398e19637376f441fedaa9821253",
+        "source_sha256": "sha256:9c575073506f48e9f1ea1214e21f1d3933a80d2636725ec24b04f6f789057863",
+        "prepared_plan_sha256": "d764c33fef4145c1bc0ab6b191e409497f1ac197d0f66a58075d78d322423a63",
+        "initial_cases": [
+          {
+            "input": 31,
+            "expected": 0
+          }
+        ],
+        "effective_cases_sha256": "sha256:f74a790feed68a04c9afaa4c6c3f1fe5a57d042962691684a3305ea592630ec6",
+        "effective_cases": 2,
+        "oracle_activity_id": "urn:question31:expected",
+        "oracle_go_sha256": "sha256:6607ce47d5a6e1231e3ccd119bc215dd1a945b06254e9b44b58a91c5ee2f5658",
+        "oracle_initial_cases": [
+          {
+            "input": 31,
+            "expected": 0,
+            "actual": 0,
+            "passed": true
+          }
+        ],
+        "oracle_evaluations": 2,
+        "rounds": [
+          {
+            "ranking": {
+              "schema": "gooo/typed-path-probe-ranking/v1",
+              "status": "COMPLETE",
+              "plan_sha256": "d764c33fef4145c1bc0ab6b191e409497f1ac197d0f66a58075d78d322423a63",
+              "cases_sha256": "44273bb58c715e0dad91fb9218fcf9ff66dbcab52b0510118857880f977c7da1",
+              "probe_inputs_sha256": "c9f58ec29f8bab09abac925db143bb60fffa13c1401944b0cdb8703101b1ee6d",
+              "declared_combinations": 2,
+              "observed_combinations": 2,
+              "unobserved_combinations": 0,
+              "type_rejected_candidates": 0,
+              "case_rejected_candidates": 0,
+              "surviving_masks": [
+                0,
+                1
+              ],
+              "candidate_pairs": 1,
+              "probes": [
+                {
+                  "input": -8,
+                  "already_tested": false,
+                  "candidate_outputs": [
+                    -39,
+                    39
+                  ],
+                  "distinct_outputs": 2,
+                  "separated_pairs": 1,
+                  "largest_output_group": 1
+                }
+              ],
+              "recommended_probe_index": 0,
+              "model_predictions": 0,
+              "evaluation_attempts": 4,
+              "output_matrix_bytes": 16384
+            },
+            "oracle_observation": {
+              "input": -8,
+              "expected": 39
+            },
+            "reuse": {
+              "revision": 0,
+              "initial_ranking_sha256": "542f507dc4d8d3004fa66763780c5cafa029fabd916f4dc8974f3da54f0802d1",
+              "reused_probe_values": 0,
+              "cached_comparisons": 0,
+              "total_evaluation_attempts": 4,
+              "total_cached_comparisons": 0
+            }
+          },
+          {
+            "ranking": {
+              "schema": "gooo/typed-path-probe-ranking/v1",
+              "status": "COMPLETE",
+              "plan_sha256": "d764c33fef4145c1bc0ab6b191e409497f1ac197d0f66a58075d78d322423a63",
+              "cases_sha256": "f74a790feed68a04c9afaa4c6c3f1fe5a57d042962691684a3305ea592630ec6",
+              "probe_inputs_sha256": "c9f58ec29f8bab09abac925db143bb60fffa13c1401944b0cdb8703101b1ee6d",
+              "declared_combinations": 2,
+              "observed_combinations": 2,
+              "unobserved_combinations": 0,
+              "type_rejected_candidates": 0,
+              "case_rejected_candidates": 1,
+              "surviving_masks": [
+                1
+              ],
+              "candidate_pairs": 0,
+              "probes": [
+                {
+                  "input": -8,
+                  "already_tested": true,
+                  "candidate_outputs": [
+                    39
+                  ],
+                  "distinct_outputs": 1,
+                  "separated_pairs": 0,
+                  "largest_output_group": 1
+                }
+              ],
+              "recommended_probe_index": null,
+              "model_predictions": 0,
+              "evaluation_attempts": 0,
+              "output_matrix_bytes": 16384
+            },
+            "reuse": {
+              "revision": 1,
+              "initial_ranking_sha256": "542f507dc4d8d3004fa66763780c5cafa029fabd916f4dc8974f3da54f0802d1",
+              "reused_probe_values": 1,
+              "cached_comparisons": 2,
+              "total_evaluation_attempts": 4,
+              "total_cached_comparisons": 2
+            }
+          }
+        ],
+        "scope": "bounded typed candidates and caller-declared pure Gooo oracle; Go AST evaluation; no native process or all-input proof"
+      },
+      "reference_total": 1,
+      "references": 1,
+      "rename_model_predictions": 0,
+      "rename_program_executions": 0
+    },
+    "fresh_test": "PASS",
+    "historical_replays": 0,
+    "training_runs": 0,
+    "scope": "one new 2-package 2-source renamed imported oracle profile; original case31, source question-8, reserved evaluation42; no historical source/test/model cohorts replayed; no native execution/model prediction"
+  },
+  "implicit_entry": {
+    "schema": "gooo/implicit-workspace-rename-development-observation/v1",
+    "producer": {
+      "compiler_base": "6e30044f88f9ccfb1139c617f21897d156011bad",
+      "overlays": [
+        {
+          "path": "cmd/gooo/package_resolve.go",
+          "sha256": "00dce41094c8474d64a9a6ed90f13067cf6be0e49a863aec35cbaad13d60131a"
+        },
+        {
+          "path": "cmd/gooo/usage_package.go",
+          "sha256": "42d0de2901c397b2ccaaf094b021de42da69168d3f2c056e1cdbc88849cca0f2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename.go",
+          "sha256": "2a2f3c34c0b4f5d7da8cea17ec03e50e50d1ba20d229edd7bcb95140a652b53c"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_io.go",
+          "sha256": "f2638fd5a1ea955f32960d987cc2c186cb87985a48ccebfaa0fe954ed7e9e2a2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_test.go",
+          "sha256": "b1de2a683107d7702d3904f6115c0e1b6a2cc5a58727dce008bd70bff09014d4"
+        },
+        {
+          "path": "internal/assemblyspec/observation.go",
+          "sha256": "d08d1d5e704045c86a54432d7a4f6362a82d5d260c4781be8de9c71d5a32e517"
+        },
+        {
+          "path": "internal/assemblyspec/observation_test.go",
+          "sha256": "a9e74d55d28252df38e9e015d5e7efe956c6fcfabd3119cc5732a5811123b0ff"
+        },
+        {
+          "path": "internal/bodycodegen/source_literal_range.go",
+          "sha256": "78459f5d280ed2ad82908201560dcd7aeeb973d13f36e905b8f2c75d0642db88"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename.go",
+          "sha256": "a56dc9f177bb2d5e5c4f9f64893ad382928a9f0bbc2988f6734afffe3f57dcc9"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_apply.go",
+          "sha256": "1be03df50943076fbaa8f418ce7bab0eeebb373d06fcd138d51938e69e3311a4"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_checkpoint_test.go",
+          "sha256": "a1abdbaa5fa3f1b32603d564dbcc0b504442ea544a18625cfa0a45116a9cd2fa"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_index.go",
+          "sha256": "09a5e74ea28b4613e0a03b0edecb6cfd5711601a24c887522a2367271d20f94b"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_reference_forms.go",
+          "sha256": "714d411eabf8f9d37ec9a52384b38ade35b4a7141ad70a1caa60fc17daff48ee"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_test.go",
+          "sha256": "4b0dfcc513b96dce933acbdd3d3e8770257707f3a0da115610069d704f369808"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_types.go",
+          "sha256": "461e4917aaeaf76c869417c6e70edb4d45e8e8df414b16b3600f84785f6a6bd7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/implicit_identity_entry_rename_test.go",
+          "sha256": "22a5844c63f94f6956cd666431a29157e151ac2f13b059e81db2e58feccbf728"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_holdout_test.go",
+          "sha256": "5e21f18c88407002aaadafcd7a0bff57f4a924d401085a3a37aa9a126829a0dd"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_rename_test.go",
+          "sha256": "cdf23fe3c983923accb046971a31375c8d14e38211ca41142544b20845a297d7"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "sdk_version": "v0.2.51-experimental",
+      "test": "TestImplicitWorkspaceEntryRenamePinsInventoryIdentity",
+      "scope": "one new dispatch/core implicit entry with dormant Carry consumer; source proposal only; no historical tests/source/model cohorts replayed",
+      "started_at": "2026-10-13T04:09:40.606630+00:00"
+    },
+    "observation": {
+      "activity_id": "dispatch-core://activity/sum",
+      "changed_files": 2,
+      "entry_updated": true,
+      "identity_pinned": true,
+      "input_image_digest": "sha256:32af3391e6006ba9adb4133355161d2cecea6471b3be7708e68d3edf77594496",
+      "model_predictions": 0,
+      "output_image_digest": "sha256:4ea0231db986fd35ee175f0a57d494b6543b8c1a168511e818022200dd1abe54",
+      "packages": 1,
+      "program_executions": 0,
+      "reference_total": 1,
+      "references": 1,
+      "source_files": 2
+    },
+    "fresh_test": "PASS",
+    "historical_replays": 0,
+    "training_runs": 0,
+    "scope": "one new dispatch/core implicit entry with dormant Carry consumer; source proposal only; no historical tests/source/model cohorts replayed"
+  },
+  "source_fixture_sha256": {
+    "rules.gooo": "8022c522b9a9a9686b7e515ef2060c6406e5795cac3c40ece61ef9ae3e72c899",
+    "peer.gooo": "e88522a0025311debd4d50531409f1cc4091067b607d03edbd4699ec465c2dc8",
+    "app.gooo": "d027a47e5cf4c9b5db81f096791b0faf2f2276f39e5a70b96e0cf9de3c9a1093",
+    "unused.gooo": "e9ad1ffd04c6272d25096895093296a12d776f3b16a648419b57e3b12d03aa05",
+    "other.gooo": "9fb3e29f1efcf38f66eaaef2819a7bc90caecfe23a7279aae08cd738f91eb6e4"
+  },
+  "historical_replays": 0,
+  "training_runs": 0,
+  "limitations": [
+    "source proposal output; no automatic disk application",
+    "selection questions and held evaluation have distinct denominators",
+    "no competitor benchmark, native rename execution or fitted-model quality measurement"
+  ],
+  "failed_development_observations": [
+    {
+      "fixture": "original three-package identity rename",
+      "reason": "derived identity missing in original export index",
+      "replays": 0
+    },
+    {
+      "fixture": "implicit estimate checkpoint",
+      "reason": "fixture missing required picked label",
+      "replays": 0
+    },
+    {
+      "fixture": "income checkpoint reference",
+      "reason": "qualified oracle name rejected by original source spec",
+      "replays": 0
+    },
+    {
+      "fixture": "module reference finite construction",
+      "reason": "assertion counted answered questions as ranking records; receipt was not logged",
+      "replays": 0
+    }
+  ],
+  "plain_cli": {
+    "schema": "gooo/workspace-rename-plain-cli-development-observation/v1",
+    "producer": {
+      "compiler_base": "6e30044f88f9ccfb1139c617f21897d156011bad",
+      "overlays": [
+        {
+          "path": "cmd/gooo/package_resolve.go",
+          "original_sha256": "5c315bba57ca6f01811a9280cbe76ef3b4f64a8f75b6589f86ab6fff10086c4b",
+          "pending_sha256": "95feea2d2789b3d73dca1b99a616c0fcd889e6178a03a15593d67e0cad425fb2"
+        },
+        {
+          "path": "cmd/gooo/usage_package.go",
+          "original_sha256": "bb38e80e6d23103a2307377ff4526c60d1ffb53e9ef7a6c85ce1e280b4ee6cda",
+          "pending_sha256": "42d0de2901c397b2ccaaf094b021de42da69168d3f2c056e1cdbc88849cca0f2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename.go",
+          "original_sha256": null,
+          "pending_sha256": "2a2f3c34c0b4f5d7da8cea17ec03e50e50d1ba20d229edd7bcb95140a652b53c"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_io.go",
+          "original_sha256": null,
+          "pending_sha256": "f2638fd5a1ea955f32960d987cc2c186cb87985a48ccebfaa0fe954ed7e9e2a2"
+        },
+        {
+          "path": "cmd/gooo/workspace_activity_rename_test.go",
+          "original_sha256": null,
+          "pending_sha256": "b1de2a683107d7702d3904f6115c0e1b6a2cc5a58727dce008bd70bff09014d4"
+        },
+        {
+          "path": "internal/assemblyspec/observation.go",
+          "original_sha256": "e370ced4ddd2ee07f6dfa5bcc1c324f2870ae8d7b54b90f7fe3044b926c3244f",
+          "pending_sha256": "d08d1d5e704045c86a54432d7a4f6362a82d5d260c4781be8de9c71d5a32e517"
+        },
+        {
+          "path": "internal/assemblyspec/observation_test.go",
+          "original_sha256": "a25b4ec06305e356318fcb67eba800d49d4c5558cc948c02227ff0c2e43df2b4",
+          "pending_sha256": "a9e74d55d28252df38e9e015d5e7efe956c6fcfabd3119cc5732a5811123b0ff"
+        },
+        {
+          "path": "internal/bodycodegen/source_literal_range.go",
+          "original_sha256": null,
+          "pending_sha256": "78459f5d280ed2ad82908201560dcd7aeeb973d13f36e905b8f2c75d0642db88"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename.go",
+          "original_sha256": null,
+          "pending_sha256": "a56dc9f177bb2d5e5c4f9f64893ad382928a9f0bbc2988f6734afffe3f57dcc9"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_apply.go",
+          "original_sha256": null,
+          "pending_sha256": "1be03df50943076fbaa8f418ce7bab0eeebb373d06fcd138d51938e69e3311a4"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_checkpoint_test.go",
+          "original_sha256": null,
+          "pending_sha256": "a1abdbaa5fa3f1b32603d564dbcc0b504442ea544a18625cfa0a45116a9cd2fa"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_index.go",
+          "original_sha256": null,
+          "pending_sha256": "09a5e74ea28b4613e0a03b0edecb6cfd5711601a24c887522a2367271d20f94b"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_reference_forms.go",
+          "original_sha256": null,
+          "pending_sha256": "714d411eabf8f9d37ec9a52384b38ade35b4a7141ad70a1caa60fc17daff48ee"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_references.go",
+          "original_sha256": null,
+          "pending_sha256": "012177ffa7e187d4f92a6c79d3103863f46a2108706acca7669d60df64437f51"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_test.go",
+          "original_sha256": null,
+          "pending_sha256": "4b0dfcc513b96dce933acbdd3d3e8770257707f3a0da115610069d704f369808"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/activity_rename_types.go",
+          "original_sha256": null,
+          "pending_sha256": "461e4917aaeaf76c869417c6e70edb4d45e8e8df414b16b3600f84785f6a6bd7"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/implicit_identity_entry_rename_test.go",
+          "original_sha256": null,
+          "pending_sha256": "22a5844c63f94f6956cd666431a29157e151ac2f13b059e81db2e58feccbf728"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_holdout_test.go",
+          "original_sha256": null,
+          "pending_sha256": "5e21f18c88407002aaadafcd7a0bff57f4a924d401085a3a37aa9a126829a0dd"
+        },
+        {
+          "path": "internal/packageruntime/workspaceexecution/qualified_oracle_rename_test.go",
+          "original_sha256": null,
+          "pending_sha256": "cdf23fe3c983923accb046971a31375c8d14e38211ca41142544b20845a297d7"
+        }
+      ],
+      "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+      "source_sha256": {
+        "credit.gooo": "27f20b3186ebcf2679f244684144cc3b9706f1dbee94c285eabb4dcde428c7b9",
+        "display.gooo": "78019ebff52730631da521312b9cdcf1e5a63de07b9ed2d3b72b1dc0eb32b8a1",
+        "workspace.json": "e78b8b8e0186c4a619b9f71fd94160fb579d8b1d67ea0b3a048dbcae7906258e"
+      },
+      "argv": [
+        "package",
+        "rename-activity",
+        "--package",
+        "reward/core",
+        "--id",
+        "reward://activity/credit",
+        "--to",
+        "\uc801\ub9bd",
+        "workspace.json"
+      ],
+      "scope": "one new reward workspace actual CLI invocation in plain output mode; no historical source/test/model cohorts replayed; source programs and model predictions0",
+      "created_at": "2026-10-13T04:28:33.996148+00:00",
+      "binary_sha256": "d23639fd0f4eb649bc971fa09c3c8476b49fb83c8b5cae3a6f2b5e9fa223fb6b",
+      "binary_bytes": 25622674
+    },
+    "cli_exit_code": 0,
+    "cli_executions": 1,
+    "source_program_executions": 0,
+    "model_predictions": 0,
+    "stdout": "proposed reward/core.Credit -> \uc801\ub9bd id=reward://activity/credit references=1/1 files=2 entry_updated=true\n  reward/core: credit.gooo edits=2\n  reward/core: display.gooo edits=1\nUse --json to save the source proposal and updated workspace manifest.\n",
+    "stderr": "",
+    "elapsed_ns": 571686208,
+    "timing_scope": "single CLI process wall interval, includes startup and source parsing; no latency comparison or CPU/RAM measurement",
+    "target_references": 1,
+    "updated_references": 1,
+    "changed_source_files": 2,
+    "entry_updated": true,
+    "input_files_unchanged": true,
+    "training_runs": 0,
+    "historical_replays": 0,
+    "binary_removed_after_observation": true
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "gooo/joint-agreement-report-observation/v1",
+  "source_base": "93e392a09a5b70b1c1a30752dff1eb8c06f5efeb",
+  "compiler_sha256": "295a00ec7b3dba558b143d8ee0e703cafab5f78b5da75d50903dd3eefbf37045",
+  "compiler_overlay": {
+    "cmd/gooo/body_construct_agreement_report.go": "0be80f6aefc9cd072d6dd1fdf1ba4e5482674c6cb109db7d951b9fc98c6eaab0",
+    "cmd/gooo/body_construct_report.go": "2dffa91370cc8a1086fc07d2c265969bd2a8e815a3fceb32fb3ed76b236e4127"
+  },
+  "new_program_executions": 0,
+  "new_model_calls": 0,
+  "model_training_performed": false,
+  "scope": "read-only formatting of the two previously recorded finite Gooo relation results; original claims remain unverified",
+  "variants": {
+    "insufficient": {
+      "saved_input_sha256": "292c01cd9b5c12aa9f2646bb22ea19dc9ff0eb3c8f8ffcf92766501745783f8a",
+      "saved_input_unchanged": true,
+      "format": "markdown",
+      "exit_code": 0,
+      "report_file": "insufficient-agreement-report.md",
+      "report_sha256": "358b31dbe8445795ea9aae97d6af8be4a691e1f1b2c8f3c18563752f1def81bf",
+      "agreement_row": "0 both satisfied; 2 local only; 0 caller only; 0 neither; 0 unclassified",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "conflicting": {
+      "saved_input_sha256": "f749d70677592667d743e06cae3594e894f02d0994a506b23789edb6314944d2",
+      "saved_input_unchanged": true,
+      "format": "markdown",
+      "exit_code": 0,
+      "report_file": "conflicting-agreement-report.md",
+      "report_sha256": "bd13bb557f0d138f5f0e0e16d3d2456de342fdca1f6b177ad2dbd7bfc28d5899",
+      "agreement_row": "0 both satisfied; 1 local only; 1 caller only; 0 neither; 0 unclassified",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

@@ -8,7 +8,7 @@ func compileSource(spec PackageSpec, source Source) (*syntax.File, []string, []E
 	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(source.Filename, source.Content, syntax.EntityFieldsV4Support())
 	if file == nil || diagnostics.HasErrors() {
 		return nil, nil, nil, nil,
-			reject("PACKAGE_SOURCE_INVALID", "source %q has syntax errors", source.Filename)
+			reject("PACKAGE_SOURCE_INVALID", "source %q has syntax errors: %v", source.Filename, diagnostics.Error())
 	}
 	if file.Package == nil || file.Namespace == nil || file.Package.Name != spec.Name {
 		return nil, nil, nil, nil,

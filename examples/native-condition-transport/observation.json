@@ -1,0 +1,135 @@
+{
+  "schema": "gooo/native-condition-evidence-observation/v1",
+  "decision": "PASS",
+  "producer": {
+    "compiler_head": "4569d4920c0c3acb923f53ca32485e22262a71dd",
+    "overlays": [
+      {
+        "path": "internal/bodyexecution/composition_condition_driver.go",
+        "sha256": "e337103f29e545c0bfe7133f96235a2432f6be3c12c37a66a6b95e544e708711"
+      },
+      {
+        "path": "internal/bodyexecution/composition_condition_rows.go",
+        "sha256": "59b19e4601d2ba516d9501f85cb82f1337db193075e572a9b53b155bc94b9a3f"
+      },
+      {
+        "path": "internal/bodyexecution/composition_condition_transport_test.go",
+        "sha256": "f9f22890074e1f87f374e961df9239653dcba3787bcf5a3691836544fe74dc1a"
+      },
+      {
+        "path": "internal/bodyexecution/composition_conditions.go",
+        "sha256": "e5e10020a873b3a8d3b78f8f4e1d4ca60d3da343b4432b4c4a4253288dcecd2d"
+      },
+      {
+        "path": "internal/bodyexecution/composition_runtime.go",
+        "sha256": "669ff57c1ec4e97624126db26e1c289975827b5ce7534368505bb0509fb9f314"
+      },
+      {
+        "path": "internal/bodyexecution/joint_replay.go",
+        "sha256": "3936c6b94bab09d343c521760298c7327badb3d6b85d86aa66d6703e5436ab7d"
+      }
+    ],
+    "scope": "one new quota1289 CLI program with separate native condition file channel; final source producer4569+6; no historical or prior original local replay",
+    "source_input_hashes": {
+      "cases.json": "8215f523840819f36a9eb5dc0a21d19cb2979eef1011847a0cc7d28bfd2bb3bb",
+      "workspace.json": "69f51a5e68b07803159a892f70d1297fb3783a1ae66ed24817c4038189900e17",
+      "계약.gooo.fixture": "41d460abc49389b5a2b190c7bd31c223010a063417bc607132a7e4836654887f",
+      "승인.gooo.fixture": "7e0b8155b2bc5cc4a7c23ec16225170102500371fcd63c7e2310cba8fe0c0415"
+    }
+  },
+  "binary": {
+    "sha256": "5d6287988c81972d2a0b2b09ee5fc5f8dda1fa2698c69b6f25fc3880665a8d33",
+    "bytes": 25727890
+  },
+  "binary_removed": true,
+  "input_files_unchanged": true,
+  "execution": {
+    "exit_code": 0,
+    "wall_ns": 1504456583,
+    "children_user_seconds": 0.18531899999999998,
+    "children_system_seconds": 0.182248
+  },
+  "historical_replays": 0,
+  "competitor_executions": 0,
+  "scope": "one distinct units1289 actual CLI; native whole-if truth values at pure-projection byte spans; source-owned reasons and finite cases",
+  "execution_source_sha256": "sha256:b02083bf0a59d55ffb05c62779550eed985970e635c8724ce7ef8c857b5a3ff6",
+  "native_passed": 12,
+  "native_total": 12,
+  "native_input_cases": 6,
+  "native_runs_agree": true,
+  "condition_sites": [
+    {
+      "expression_id": "sha256:ea1c0b28e0ea4fba76d18bfb330af3d7f4c84f4ed42ed912ebd607bcf227b773",
+      "root_activity_id": "urn:quota1289:authorize",
+      "activity_id": "urn:quota1289:authorize",
+      "expression": "input.GoooFieldc6f6554bba6983845893f38b6d316b1869567808f72d13e7ba9b87437e0ce1b6 < 3",
+      "projection_sha256": "sha256:93b17ce92d1d91c2f57630b81252ad0261170f98a09b62ed6aa1ee802b1430cf",
+      "start": 1646,
+      "end": 1729
+    },
+    {
+      "expression_id": "sha256:a58bd5871248886aec06254fbadefb8646afdb2449436fad11a36625d8fd1ce6",
+      "root_activity_id": "urn:quota1289:authorize",
+      "activity_id": "urn:quota1289:authorize",
+      "expression": "input.GoooFieldc6f6554bba6983845893f38b6d316b1869567808f72d13e7ba9b87437e0ce1b6 > input.GoooFielde1939df09bb28ebe1dc53bfc5b4881de737ca2f3cdb0cbcd2978fe7fa8eff2a6",
+      "projection_sha256": "sha256:93b17ce92d1d91c2f57630b81252ad0261170f98a09b62ed6aa1ee802b1430cf",
+      "start": 2156,
+      "end": 2317
+    }
+  ],
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 10,
+    "dropped_events": 0,
+    "sha256": "sha256:5dd2e05a0a8904c57aca510cf38714e7d896090e8bea068297dc3bd21f16c50f"
+  },
+  "evaluated_conditions": 10,
+  "observed_site_outcomes": 4,
+  "possible_site_outcomes": 4,
+  "selected_candidate": "fit",
+  "selection_passed": 1,
+  "selection_total": 1,
+  "holdout_passed": 1,
+  "holdout_total": 1,
+  "candidate_scores": [
+    {
+      "id": "fit",
+      "expression": "result=Decision{approved:true, reason: \"available_capacity\", reference:input.reference}",
+      "typecheck_passed": true,
+      "test_cases_passed": 1,
+      "test_cases_total": 1,
+      "accuracy_percent": 100
+    },
+    {
+      "id": "mislabel",
+      "expression": "result=Decision{approved:true, reason: \"unknown\", reference:input.reference}",
+      "typecheck_passed": true,
+      "test_cases_passed": 0,
+      "test_cases_total": 1,
+      "accuracy_percent": 0
+    }
+  ],
+  "model_predictions": 0,
+  "external_provider_calls": 0,
+  "input_separation": {
+    "status": "PASS",
+    "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+    "unique_inputs": 6,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 6,
+    "disjoint_cases_passed": 6,
+    "unknown_inputs": 0,
+    "scope": "unique root-input tuples; actual inputs at all composing and earlier body-fill activities compared with their selection/holdout cases and probes; duplicate expectations must all match; model-training exposure is unknown",
+    "earlier_stages": [
+      {
+        "activity_id": "urn:quota1289:authorize",
+        "source_sha256": "sha256:7072b87b79a4af407621054944a57f1fd4a21fb5baae058e77dce2f6d0d5973c",
+        "plan_sha256": "sha256:72d918cb9b7641561ef0e993cacaca936b9f72c0c6f703d507955def2efe3cc1",
+        "input_set_sha256": "sha256:10c6561ce1b4866739ba318d7ae2989dfeaf800fc7857fa8a35da431c05b8886",
+        "unique_inputs": 2
+      }
+    ]
+  }
+}

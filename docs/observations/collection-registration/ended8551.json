@@ -1,0 +1,21 @@
+{
+  "exit_code": 0,
+  "wall_ns": 6586172000,
+  "historical_local_replays": 0,
+  "model_calls": 0,
+  "args": [
+    "go",
+    "test",
+    "-p=1",
+    "-count=1",
+    "-overlay",
+    "/tmp/gooo-collection-registration-20261014/overlay8551.json",
+    "-run",
+    "^(TestOrderedCollectionRegistration8551|TestCollectionDenominatorMigration8553|TestDisposableSnapshotCleanup8557|TestCollectionRegistryRecipeRetirement8559)$",
+    "-v",
+    "./internal/meta/syntaxregistration",
+    "./internal/meta/languageassurance/verticalsliceclosureshadow",
+    "./scripts/meta-execution",
+    "./internal/meta/functionextractorrecipe"
+  ]
+}

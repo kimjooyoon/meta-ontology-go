@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.28-dev
-version  = 0.6.28-dev
+tag      = v0.6.32-dev
+version  = 0.6.32-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -151,6 +151,43 @@ The witness independently checks four actual values, including an integer above
 construction history and make zero new predictions. A ninth command checks the
 four plain output lines exactly. Each platform artifact retains all eight raw
 JSON receipts and the plain-value output.
+
+For 0.6.30, the helper-checkpoint profile adds two raw outputs per platform. The
+candidate binary assembles `Seed` before deriving `Build`'s seven-expression
+pool, then executes the one selected combination and three evaluation cases.
+Saved replay must preserve the complete original construction, including the
+planning source, current helper source, local call input and fixed initial pool.
+The witness compares native values with the independent case files and requires
+zero model calls. All three evaluation inputs retain unknown construction
+exposure. These finite counts remain separate from the structural release corpus.
+
+For 0.6.31, the bounded Text profile adds two raw package receipts per platform.
+It executes the Gooo search library through an importing caller, then replays
+that exact receipt. Ten cases cover empty Text, absent/repeated bytes, NUL,
+multibyte byte offsets, the 1,024-byte boundary and invalid needle values.
+The reader compares every actual value with Go `strings.IndexByte`, binds the
+manifest and case-file digests, checks the selected program and exact original
+receipt digest, and requires zero model calls. These are ten finite cases on each
+platform; platform repetition does not increase the independent case count.
+
+For 0.6.32, two computation profiles each add execution and exact saved-replay
+receipts per platform: the importing string package has twenty finite queries,
+and the single-condition byte package has ten. The reader lowers the committed
+source without executing it, binds that complete graph and all source digests,
+and independently checks the case outputs with Go string functions. The byte
+profile requires its one-hole source fill and separate six selection/four
+held-out counts. The ten external byte queries reuse those source cases; model
+calls are zero and no unseen-model accuracy is claimed.
+
+The helper-fill history profile adds another two raw outputs per platform.
+The candidate binary constructs and replays `examples/caller-fill-history`.
+Its first rejected assignment must retain both entered helper arguments and an
+incomplete local evaluation. The profile checks the prepared-source preflight,
+helper identity, selected hole assignment, 2/2 local training and 1/1 holdout
+results, and 3/3 native outputs against the independent evaluation file. Two
+evaluation inputs overlap construction and one remains unknown. Missing inference
+counts fail the profile. Saved replay preserves the complete original history;
+a failed command retains its raw output and stops the profile.
 
 The selected readiness run must have all of these properties:
 

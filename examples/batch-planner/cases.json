@@ -1,0 +1,82 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Build": {
+          "limit": 17,
+          "durations": [
+            8,
+            9,
+            3
+          ]
+        }
+      },
+      "expected": {
+        "Build": {
+          "accepted": 2,
+          "spent": 17,
+          "complete": false,
+          "reason": "budget"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Build": {
+          "limit": 17,
+          "durations": [
+            9,
+            3,
+            8
+          ]
+        }
+      },
+      "expected": {
+        "Build": {
+          "accepted": 2,
+          "spent": 12,
+          "complete": false,
+          "reason": "budget"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Build": {
+          "limit": -2,
+          "durations": [
+            11
+          ]
+        }
+      },
+      "expected": {
+        "Build": {
+          "accepted": 0,
+          "spent": 0,
+          "complete": false,
+          "reason": "invalid_limit"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Build": {
+          "limit": 9223372036854775807,
+          "durations": [
+            9223372036854775805,
+            2
+          ]
+        }
+      },
+      "expected": {
+        "Build": {
+          "accepted": 2,
+          "spent": 9223372036854775807,
+          "complete": true,
+          "reason": "complete"
+        }
+      }
+    }
+  ]
+}

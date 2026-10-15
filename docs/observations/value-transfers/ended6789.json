@@ -1,0 +1,41 @@
+{
+  "producer": "producer6781.json",
+  "binary_sha256": "3a7a9104cf53e449ae1258df446f377ed6647dc33e0a706fc8f68d5bbc0be670",
+  "binary_bytes": 26074882,
+  "receipt_sha256": "09cb41b02d615148f22f50b32663d74da959193bcad5bb02927aeab8ca77dba5",
+  "original_program_executions": 0,
+  "model_calls": 0,
+  "calls": [
+    {
+      "name": "json",
+      "exit_code": 0,
+      "wall_ns": 580634791,
+      "child_user_seconds": 0.014955999999999999,
+      "child_system_seconds": 0.015241
+    },
+    {
+      "name": "candidate",
+      "exit_code": 0,
+      "wall_ns": 12551875,
+      "child_user_seconds": 0.008839999999999999,
+      "child_system_seconds": 0.0034230000000000007
+    },
+    {
+      "name": "text",
+      "exit_code": 0,
+      "wall_ns": 10894750,
+      "child_user_seconds": 0.007627000000000002,
+      "child_system_seconds": 0.0029889999999999986
+    },
+    {
+      "name": "help",
+      "exit_code": 0,
+      "wall_ns": 5846250,
+      "child_user_seconds": 0.0029859999999999956,
+      "child_system_seconds": 0.0018360000000000008
+    }
+  ],
+  "receipt_unchanged": true,
+  "status": "PASS",
+  "binary_removed": true
+}

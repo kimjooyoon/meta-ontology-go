@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "originusage",
+    "activity": "Describe"
+  },
+  "packages": [
+    {
+      "path": "originusage",
+      "name": "originusage",
+      "sources": [
+        "classify.gooo.fixture"
+      ]
+    }
+  ]
+}

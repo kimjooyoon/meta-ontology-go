@@ -36,7 +36,11 @@ func normalizeField(field Field, owner ID, kind Kind, registry semantic.TypeRegi
 	if err != nil {
 		return Field{}, err
 	}
-	if normalized.Parent != semantic.ID(owner) {
+	semanticOwner, err := semantic.ParseIdentity(string(owner))
+	if err != nil {
+		return Field{}, fmt.Errorf("%w: owner identity: %v", ErrInvalidField, err)
+	}
+	if normalized.Parent != semanticOwner {
 		return Field{}, fmt.Errorf("%w: field %s parent is %s, want %s", ErrInvalidField, normalized.ID, normalized.Parent, owner)
 	}
 	definition, err := resolveFieldType(normalized.TypeRef, use, registry)

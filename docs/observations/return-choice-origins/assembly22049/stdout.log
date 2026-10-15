@@ -1,0 +1,6 @@
+=== RUN   TestLengthAssemblyOrigins22049
+    length_assembly_origin_fresh_test.go:54: generate workspace activity bodies: activity "GoooPackage0ActivitySummarize" generation: selected record choice range differs
+--- FAIL: TestLengthAssemblyOrigins22049 (0.03s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	0.552s
+FAIL

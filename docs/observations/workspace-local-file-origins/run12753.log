@@ -1,0 +1,5 @@
+=== RUN   TestWorkspaceLocalExample12753
+    package_local_example_fresh_test.go:42: actual new Gooo example2/2;28 file origins and28Gooo reader outputs matched;branch-local names and nested record/helper source retained;original producer/model calls during reads0
+--- PASS: TestWorkspaceLocalExample12753 (1.22s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.776s

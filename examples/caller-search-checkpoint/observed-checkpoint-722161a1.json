@@ -1,0 +1,323 @@
+{
+  "schema": "gooo/search-checkpoint-observation/v1",
+  "producer": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.29-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.14-dev.0.20261011074055-722161a1ac3f",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.14-dev.0.20261011074055-722161a1ac3f"
+    },
+    "compiler_source_sha": "722161a1ac3f7d82d3fedc4aeb3266ee1b0c81ee",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "722161a1ac3f7d82d3fedc4aeb3266ee1b0c81ee",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "scope": "One new synthetic constructor/evaluation command and one saved replay. Fixed initial candidate pools; no model configured. Finite output correctness and construction-input exposure are separate observations.",
+  "resource_scope": "Single macOS whole-command accounting including compilation and subprocesses. Instantaneous system CPU utilization and controlled speedup were not measured.",
+  "original": {
+    "decision": "COMPLETE_FINITE",
+    "original_source_sha256": "sha256:8dc2818dca624ecdca35215dfb4364b40f5d7c5bf8ce43e583a8ae02a5eaac7c",
+    "candidate_space": "14",
+    "program_budget": 8,
+    "attempts_consumed": 1,
+    "selected_attempt": 0,
+    "model": {
+      "schema": "gooo/retained-path-model/v1",
+      "loaded": false,
+      "resident_tensor_bytes": 0,
+      "setup_ms": 0,
+      "scope": "one constructor load; excluded from request timing; fresh source and plan each request"
+    },
+    "initial_search": {
+      "activity": "Build",
+      "preparation_input_sha256": "sha256:ca260cc5bb2e3b2a05ba39c78d2289b46e8c552d35854d981948551571cc2130",
+      "original_source_digest": "sha256:ca260cc5bb2e3b2a05ba39c78d2289b46e8c552d35854d981948551571cc2130",
+      "initial_candidate_set": {
+        "plan_sha256": "sha256:433dc2382b485077878b666f7bf92d8d78f230e449472eb8b28ace7eac2d1e74",
+        "attempt_budget": 8,
+        "candidates": [
+          {
+            "id": "generated_6b86b273ff34",
+            "expression": "1"
+          },
+          {
+            "id": "generated_8ef4b09fa432",
+            "expression": "input + -1"
+          },
+          {
+            "id": "generated_c96c6d5be8d0",
+            "expression": "input"
+          },
+          {
+            "id": "generated_e7f6c011776e",
+            "expression": "6"
+          },
+          {
+            "id": "generated_baabddd4f59e",
+            "expression": "-input"
+          },
+          {
+            "id": "generated_bb758a19faf5",
+            "expression": "input + 4"
+          },
+          {
+            "id": "generated_13aace1f8726",
+            "expression": "input - -4"
+          }
+        ],
+        "generation_sha256": "sha256:afffdd439e61883e666da5d6f9e7de992c5224f9981bc2a0c8a3b804fcf23ddb"
+      },
+      "candidate_generation": {
+        "schema": "gooo/body-codegen-ir-candidate-generation-receipt/v1",
+        "grammar": "integer-hole-residual/v1",
+        "candidates_enumerated": 7,
+        "candidates_retained": 7,
+        "candidates_omitted": 0,
+        "candidate_set_sha256": "sha256:4ffc89e4cafc58da3d221ea268755b6fe89d9f3d11991ddd426d6a3150931e53",
+        "grammar_coverage_percent": 100,
+        "grammar_complete": true,
+        "completeness_scope": "retained unique expressions / contextual constants, input offsets, first-anchor affine fits and legacy grammar seeds derived from training-only zero/one hole probes; excludes other grammars and all-domain semantics",
+        "hole_context": {
+          "schema": "gooo/integer-hole-context/v1",
+          "body_sha256": "sha256:60274f6b6c1e8ba6159e9f88411ee18be79bb08c38e0db0ebf9fcc9dafc54a0e",
+          "training_suite_sha256": "sha256:931c8a3e0d0ca58323bd6b61717a68329db44aac064b441bf9cc7a79c645e47b",
+          "evaluation_calls": 2,
+          "probes": [
+            {
+              "input": 2,
+              "expected": 6,
+              "zero_output": 4,
+              "one_output": 6,
+              "derived_hole_value": 1,
+              "status": "DERIVED_PROPOSAL"
+            }
+          ],
+          "scope": "pure typed-body outputs with the hole set to zero and one on training inputs; exact integer residual proposals; nonlinear and wrapped behavior still requires full candidate scoring"
+        }
+      },
+      "selected_expression": "1",
+      "training_passed": 1,
+      "training_total": 1,
+      "provider_operations": 0,
+      "local_evaluation_phases": [
+        "candidate-generation",
+        "candidate-generation",
+        "candidate",
+        "selected-training"
+      ]
+    },
+    "caller_attempts": [
+      {
+        "masks": [
+          1,
+          0
+        ],
+        "local_passed": 2,
+        "local_total": 2,
+        "search_candidates": [
+          {
+            "planning_source_sha256": "sha256:ca260cc5bb2e3b2a05ba39c78d2289b46e8c552d35854d981948551571cc2130",
+            "input_source_sha256": "sha256:ca260cc5bb2e3b2a05ba39c78d2289b46e8c552d35854d981948551571cc2130",
+            "plan_sha256": "sha256:433dc2382b485077878b666f7bf92d8d78f230e449472eb8b28ace7eac2d1e74",
+            "attempt": {
+              "candidate_id": "generated_6b86b273ff34",
+              "expression": "1",
+              "selection_method": "caller_selected_candidate",
+              "typecheck_passed": true,
+              "scoring_completed": true,
+              "test_cases_passed": 1,
+              "test_cases_total": 1,
+              "accuracy_percent": 100,
+              "case_results": [
+                {
+                  "input": 2,
+                  "expected": 6,
+                  "actual": 6,
+                  "passed": true
+                }
+              ],
+              "decision_latency_ms": 0,
+              "evaluation_ms": 0
+            },
+            "local_calls": {
+              "schema": "gooo/local-call-inputs/v1",
+              "status": "RECORDED",
+              "evaluations": [
+                {
+                  "schema": "gooo/local-call-inputs/v1",
+                  "generated_sha256": "sha256:f329d0fded9c3ef646578ed63945dac8e720a6224c07de96ade09735dafb2fd0",
+                  "activity_id": "searchcheckpoint://activity/build",
+                  "suite_sha256": "sha256:931c8a3e0d0ca58323bd6b61717a68329db44aac064b441bf9cc7a79c645e47b",
+                  "phase": "candidate",
+                  "candidate_id": "generated_6b86b273ff34",
+                  "status": "RECORDED",
+                  "evaluation_completed": true,
+                  "cases_started": 1,
+                  "cases_completed": 1,
+                  "calls": [
+                    {
+                      "case_index": 0,
+                      "activity_id": "searchcheckpoint://activity/seed",
+                      "program_sha256": "sha256:93e0e8645e0535c090a824bb77a783fd53ea2dbb06ea4b84066d04c1cb80cf2e",
+                      "inputs": [
+                        3
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "finite_passed": 1,
+        "finite_total": 1
+      }
+    ],
+    "native": {
+      "finite_passed": 3,
+      "finite_total": 3,
+      "traces": [
+        {
+          "case_index": 0,
+          "deliveries": [
+            {
+              "activity_id": "searchcheckpoint://activity/main",
+              "input": -1,
+              "actual": 0,
+              "expected": 0,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "searchcheckpoint://activity/main",
+              "activity_id": "searchcheckpoint://activity/build",
+              "inputs": [
+                -1
+              ]
+            },
+            {
+              "root_activity_id": "searchcheckpoint://activity/main",
+              "activity_id": "searchcheckpoint://activity/seed",
+              "inputs": [
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 1,
+          "deliveries": [
+            {
+              "activity_id": "searchcheckpoint://activity/main",
+              "input": 5,
+              "actual": 12,
+              "expected": 12,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "searchcheckpoint://activity/main",
+              "activity_id": "searchcheckpoint://activity/build",
+              "inputs": [
+                5
+              ]
+            },
+            {
+              "root_activity_id": "searchcheckpoint://activity/main",
+              "activity_id": "searchcheckpoint://activity/seed",
+              "inputs": [
+                6
+              ]
+            }
+          ]
+        },
+        {
+          "case_index": 2,
+          "deliveries": [
+            {
+              "activity_id": "searchcheckpoint://activity/main",
+              "input": 8,
+              "actual": 18,
+              "expected": 18,
+              "passed": true
+            }
+          ],
+          "called_inputs_observed": true,
+          "calls": [
+            {
+              "root_activity_id": "searchcheckpoint://activity/main",
+              "activity_id": "searchcheckpoint://activity/build",
+              "inputs": [
+                8
+              ]
+            },
+            {
+              "root_activity_id": "searchcheckpoint://activity/main",
+              "activity_id": "searchcheckpoint://activity/seed",
+              "inputs": [
+                9
+              ]
+            }
+          ]
+        }
+      ],
+      "new_model_calls": 0,
+      "input_separation": {
+        "status": "UNKNOWN",
+        "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+        "unique_inputs": 3,
+        "duplicate_rows": 0,
+        "overlapping_inputs": 0,
+        "disjoint_inputs": 0,
+        "disjoint_cases_passed": 0,
+        "unknown_inputs": 3,
+        "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+      }
+    },
+    "resources": {
+      "wall_seconds": 1.00,
+      "user_seconds": 0.29,
+      "system_seconds": 0.23,
+      "max_rss_bytes": 87605248
+    }
+  },
+  "replay": {
+    "generated_now": false,
+    "construction_replayed": true,
+    "finite_passed": 3,
+    "finite_total": 3,
+    "new_model_calls": 0,
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "CONSTRUCTION_CALL_INPUTS_NOT_OBSERVED",
+      "unique_inputs": 3,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 3,
+      "scope": "unique evaluation root-input tuples; actual constructed activity/helper arguments compared with source output/condition/holdout cases, recorded local probes and every consumed native caller attempt; duplicate expectations must all match; unobserved local calls and model-training exposure remain unknown"
+    },
+    "resources": {
+      "wall_seconds": 0.36,
+      "user_seconds": 0.17,
+      "system_seconds": 0.11,
+      "max_rss_bytes": 85082112
+    }
+  }
+}

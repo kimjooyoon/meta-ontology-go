@@ -25,6 +25,9 @@ func EntityFieldsV3Support() EntityFieldsSupport { return syntax.EntityFieldsV3S
 // the V3 string, Boolean and integer rules.
 func EntityFieldsV4Support() EntityFieldsSupport { return syntax.EntityFieldsV4Support() }
 
+// EntityFieldsV5Support enables bounded ordered scalar collections.
+func EntityFieldsV5Support() EntityFieldsSupport { return syntax.EntityFieldsV5Support() }
+
 // DocumentFromSyntaxWithEntityFieldsSupport adapts a profile-bound AST.
 func DocumentFromSyntaxWithEntityFieldsSupport(file *syntax.File, support EntityFieldsSupport) (Document, error) {
 	return documentFromSyntaxWithEntityFieldsSupport(file, support)

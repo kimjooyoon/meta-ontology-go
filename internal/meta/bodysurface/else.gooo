@@ -1,0 +1,25 @@
+package bodycodegen
+namespace branch_surface
+
+entity Boolean id "urn:gooo:type:boolean"
+entity LayoutFacts id "urn:gooo:body-surface:layout-facts" fields {
+    field else_token id "urn:gooo:body-surface:else-token" type boolean required one
+    field inserted_linebreak id "urn:gooo:body-surface:inserted-linebreak" type boolean required one
+    field closing_brace id "urn:gooo:body-surface:closing-brace" type boolean required one
+    field whitespace_gap id "urn:gooo:body-surface:whitespace-gap" type boolean required one
+}
+
+# Named source facts keep their meaning when the host passes four Boolean slots.
+activity ClassifyElse(LayoutFacts) -> Boolean id "urn:gooo:body-surface:classify-else" computes `
+return input.else_token && input.inserted_linebreak && input.closing_brace && input.whitespace_gap
+`
+
+# The host bridge assembles the named facts in Gooo before the decision.
+activity JoinElse(Boolean, Boolean, Boolean, Boolean) -> Boolean id "urn:gooo:body-surface:join-else" computes `
+return ClassifyElse(LayoutFacts{
+    else_token: input0,
+    inserted_linebreak: input1,
+    closing_brace: input2,
+    whitespace_gap: input3,
+})
+`

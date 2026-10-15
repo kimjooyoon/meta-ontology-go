@@ -1,0 +1,16 @@
+package indexed
+namespace indexed9361
+entity Integer id "urn:gooo:type:integer"
+entity Input id "urn:indexed9361:input" fields {
+ field values id "urn:indexed9361:values" type integer required many
+ field order id "urn:indexed9361:order" type integer required many
+ field position id "urn:indexed9361:position" type integer required one
+}
+entity Output id "urn:indexed9361:output" fields {
+ field item id "urn:indexed9361:item" type integer optional one
+}
+activity Seed(Input) -> Input id "urn:indexed9361:seed" computes "return input"
+activity ByValue(Input) -> Integer id "urn:indexed9361:value" computes "return input.values[input.order[input.position]]"
+activity ByAddress(Input) -> Output id "urn:indexed9361:address" computes "return Output{item: &input.values[input.order[input.position]]}"
+bind Seed.result -> ByValue.input
+bind Seed.result -> ByAddress.input

@@ -33,6 +33,16 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 			continue
 		}
 		switch field.Value {
+		case "criteria":
+			if d.Spec.Criteria != nil {
+				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate assembly criteria declaration")
+			}
+			d.Spec.Criteria = p.parseAssemblyCriteria()
+		case "observe":
+			if d.Spec.Observation != nil {
+				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate assembly observe declaration")
+			}
+			d.Spec.Observation = p.parseAssemblyObservation()
 		case "choice":
 			if len(d.Spec.Choices) == 16 {
 				p.error(DiagUnexpectedDeclaration, field.Span, "assembly exceeds 16 choices")
@@ -119,8 +129,10 @@ func (p *Parser) parseAssembly() *AssemblyDecl {
 			value := p.assemblyInteger("attempt budget")
 			if seenAttempts || value < 1 || value > 64 {
 				p.error(DiagUnexpectedDeclaration, field.Span, "assembly needs one attempts field in 1..64")
+			} else {
+				d.Spec.MaxAttempts = int(value)
 			}
-			seenAttempts, d.Spec.MaxAttempts = true, int(value)
+			seenAttempts = true
 		case "seed":
 			if seenSeed {
 				p.error(DiagUnexpectedDeclaration, field.Span, "duplicate assembly seed")
@@ -303,8 +315,9 @@ func (p *Parser) parseAssemblyChoice() assemblyspec.Choice {
 	occurrence := p.assemblyInteger("choice occurrence")
 	if occurrence < 0 || occurrence > 127 {
 		p.error(DiagUnexpectedDeclaration, p.peek().Span, "assembly occurrence must be 0..127")
+	} else {
+		c.Occurrence = int(occurrence)
 	}
-	c.Occurrence = int(occurrence)
 	if p.at(TokenIdentifier) && p.peek().Value == "alternative" {
 		p.advance()
 		c.Alternative = p.expectString().Name
@@ -413,6 +426,8 @@ func formatAssembly(output *strings.Builder, d *AssemblyDecl) error {
 		fmt.Fprintf(output, "    condition_case %s input %s -> %s\n", quoteString(c.ChoiceID),
 			quoteString(strconv.FormatInt(c.Input, 10)), quoteString(strconv.FormatBool(c.Expected)))
 	}
+	formatAssemblyCriteria(output, d.Spec.Criteria)
+	formatAssemblyObservation(output, d.Spec.Observation)
 	for _, c := range d.Spec.HoldoutCases {
 		fmt.Fprintf(output, "    holdout_case %s -> %s\n", quoteString(strconv.FormatInt(c.Input, 10)),
 			quoteString(strconv.FormatInt(c.Expected, 10)))

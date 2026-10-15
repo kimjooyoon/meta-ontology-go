@@ -1,0 +1,66 @@
+{
+  "source_pr": 1586,
+  "source_head": "16f8f7655c0381dd2ddc59eecd0aace401b9f878",
+  "original_failed_run": 38699039887,
+  "current_scope": "original source run still has live workflows; closure and successor publication wait for all original source handles to be terminal",
+  "first_new_source_contract": {
+    "argv": [
+      "<go1.27.2>/bin/go",
+      "test",
+      "-p=1",
+      "./internal/verify",
+      "-run",
+      "^(TestCommandEvolutionBindsSourceWithoutLosingAnOriginalObligation|TestCommandEvolutionBindsBothChangedWorkflowJobs|TestSharedWorkClockRetainsCommandPopulation124073|TestCIWorkflowSeparatesPushCapsFromPullRequestChecks)$",
+      "-count=1",
+      "-v"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.977007291,
+    "scope": "new command ancestry contract and known failed original CI assertions after source correction; source text/hash inspection only, no Gooo/native/model/historical experiment execution"
+  },
+  "stdout": "=== RUN   TestCommandEvolutionBindsBothChangedWorkflowJobs\n--- PASS: TestCommandEvolutionBindsBothChangedWorkflowJobs (0.00s)\n=== RUN   TestCommandEvolutionBindsSourceWithoutLosingAnOriginalObligation\n--- PASS: TestCommandEvolutionBindsSourceWithoutLosingAnOriginalObligation (0.00s)\n=== RUN   TestSharedWorkClockRetainsCommandPopulation124073\n--- PASS: TestSharedWorkClockRetainsCommandPopulation124073 (0.00s)\n=== RUN   TestCIWorkflowSeparatesPushCapsFromPullRequestChecks\n--- PASS: TestCIWorkflowSeparatesPushCapsFromPullRequestChecks (0.00s)\nPASS\nok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/verify\t0.506s\n",
+  "stderr": "",
+  "failure": "two source assertions assumed the former policy predecessor list and byte-identical evidence/proof commands",
+  "correction": "preserve immutable predecessor command bytes/digests; bind all old obligations exactly once to explicit current command descendants; reject new commands with invented predecessor, dropped original obligations, repeated origins and changed current bytes",
+  "no_changes_to": [
+    "Gooo reader source",
+    "source-control export",
+    "all earlier compiler features",
+    "workflow budgets or gates",
+    "historical denominator files",
+    "first recorded native/program/model outcomes"
+  ],
+  "native_source_observation": {
+    "source_head": "16f8f7655c0381dd2ddc59eecd0aace401b9f878",
+    "source_run": 38699040375,
+    "artifact_id": 11955930186,
+    "archive_digest": "sha256:26ba8f16c2cef31065fc5981308b3995499d51829be7f0a8bcde94326668d0a6",
+    "decision": "CONFORMANT",
+    "independent_operations": 2,
+    "observed_receipts": 2,
+    "replay_comparisons": 2,
+    "scope": "own original exact-source CI artifact; readonly inspection, no local native replay"
+  },
+  "local_correction_source": {
+    "state": "UNBOUND_LOCAL_SOURCE",
+    "parent_revision": "16f8f7655c0381dd2ddc59eecd0aace401b9f878",
+    "sha256": {
+      "internal/verify/ci_command_evolution_test.go": "7594b86bac279f5bf02efc3f1fcb1fcfe7b15d233b436a947d7df23b67aae7ed",
+      "internal/verify/ci_command_evolution_source_test.go": "4f3cd1b645410835275cacb9f7b426091633c7599bde59cb2129970e2562528e",
+      "internal/verify/ci_work_domain_fresh124073_test.go": "cfe8b1eda38d5d0d542982b798ff4b362aeb6f6d0704ab79ace33b6974cd8ffd",
+      "internal/verify/workflow_part03_test.go": "a8eecc4c4b441c588ed0f5f9871db308c8138d860ca4354b769decb002d9776f",
+      "docs/observations/ci-source-join/command-evolution.json": "8dddaac7b0f75fe017371d5d1324a578d467e5c9c2aca477e6869610867b7dc2"
+    }
+  },
+  "modernization_first": {
+    "argv": [
+      "<go1.27.2>/bin/go",
+      "fix",
+      "-diff",
+      "./internal/verify"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.513019208,
+    "scope": "read-only modernization for new source command-evolution tests; no workload execution"
+  }
+}

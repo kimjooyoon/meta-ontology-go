@@ -49,7 +49,8 @@ func (graph compositionGraph) selectionInputs(ctx context.Context, filename stri
 		sets.nodes[i] = set
 		sets.unobservedConstructionCalls = sets.unobservedConstructionCalls || graph.deferred[node.Name]
 	}
-	return sets, nil
+	err := graph.includeCompositionLocalInputs(&sets, prior)
+	return sets, err
 }
 
 func (graph compositionGraph) selectionInputSet(ctx context.Context, filename string, source []byte,
@@ -67,6 +68,9 @@ func (graph compositionGraph) selectionInputSet(ctx context.Context, filename st
 			tuples = append(tuples, scalarInputTuple(c.Input))
 		}
 	}
+	for _, c := range spec.ConditionCases {
+		tuples = append(tuples, scalarInputTuple(c.Input))
+	}
 	for _, cases := range [][]assemblyspec.ValueCase{spec.ValueCases, spec.ValueHoldoutCases} {
 		for _, c := range cases {
 			var tuple []json.RawMessage
@@ -74,6 +78,28 @@ func (graph compositionGraph) selectionInputSet(ctx context.Context, filename st
 				return nil, err
 			}
 			tuples = append(tuples, tuple)
+		}
+	}
+	if spec.Criteria != nil {
+		for _, group := range [][]string{spec.Criteria.Inputs, spec.Criteria.HoldoutInputs} {
+			for _, input := range group {
+				var tuple []json.RawMessage
+				if err := json.Unmarshal([]byte(input), &tuple); err != nil {
+					return nil, err
+				}
+				tuples = append(tuples, tuple)
+			}
+		}
+	}
+	if o := spec.Observation; o != nil {
+		for _, group := range [][]string{o.ValueInputs, o.CriteriaInputs} {
+			for _, input := range group {
+				var tuple []json.RawMessage
+				if err := json.Unmarshal([]byte(input), &tuple); err != nil {
+					return nil, err
+				}
+				tuples = append(tuples, tuple)
+			}
 		}
 	}
 	tuples = append(tuples, recordedInputTuples(report)...)

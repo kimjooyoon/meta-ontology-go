@@ -15,7 +15,10 @@ func run(cfg config) error {
 		return err
 	}
 	source := rollbackfixedpoint.Collect(cfg.guard, cfg.transformation, cfg.expectedSHA)
-	report := rollbackfixedpoint.Build(source)
+	return writeReport(cfg, rollbackfixedpoint.Build(source))
+}
+
+func writeReport(cfg config, report rollbackfixedpoint.Report) error {
 	if err := rollbackfixedpoint.Validate(report); err != nil {
 		return err
 	}
@@ -30,9 +33,12 @@ func run(cfg config) error {
 		return err
 	}
 	if report.Decision != rollbackfixedpoint.DecisionPass &&
-		!rollbackfixedpoint.IsKnownMixedTerminal(report) {
+		!rollbackfixedpoint.IsKnownMixedTerminal(report) && !rollbackfixedpoint.IsKnownAppliedTerminal(report) {
 		return fmt.Errorf("rollback fixed-point decision = %s reason = %s",
 			report.Decision, report.Reason)
+	}
+	if rollbackfixedpoint.IsKnownAppliedTerminal(report) {
+		fmt.Println("rollback-fixed-point: observed=SANDBOX_APPLIED_NON_PROMOTING recovery=false promotion=false")
 	}
 	fmt.Printf("rollback-fixed-point: mode=%s coordinates=%d/%d bps=%d writes=%d digest=%s\n",
 		report.Mode, report.Summary.Satisfied, report.Summary.Total,

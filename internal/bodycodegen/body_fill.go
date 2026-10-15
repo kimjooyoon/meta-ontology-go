@@ -11,7 +11,6 @@ import (
 	"go/token"
 	"maps"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -163,6 +162,7 @@ type IRBodyFillCandidateProbeProfile struct {
 }
 
 type IRBodyFillReceipt struct {
+	SourceOrigin                    *SourceFillOrigin                     `json:"source_origin,omitempty"`
 	Schema                          string                                `json:"schema"`
 	OriginalSourceDigest            string                                `json:"original_source_digest"`
 	Intent                          string                                `json:"intent"`
@@ -202,6 +202,7 @@ type IRBodyFillReceipt struct {
 	SelectedValueHoldoutCaseResults []RecordAssemblyCase                  `json:"selected_value_holdout_case_results,omitempty"`
 	AccuracyScope                   string                                `json:"accuracy_scope"`
 	Timing                          IRBodyFillTiming                      `json:"timing"`
+	LocalCalls                      *LocalCallHistory                     `json:"local_calls,omitempty"`
 }
 
 type IRBodyFillHoleFill struct {
@@ -277,10 +278,8 @@ func generateWithIRBodyFillOptions(
 		return Result{}, fmt.Errorf("body-fill context is required")
 	}
 	usingTinyGo := bodyFillUsesTinyGo(options, tinyProvider)
-	if usingTinyGo {
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
-		}
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
 	}
 	if err := validateIRBodyFillPlan(plan); err != nil {
 		return Result{}, err
@@ -355,6 +354,14 @@ func generateWithIRBodyFillOptions(
 		}
 	}
 	planStarted := time.Now()
+	prepared, err := prepareActivityBodySource(filename, source, activityName)
+	if err != nil {
+		return Result{}, err
+	}
+	ctx, capture := captureFillCalls(ctx)
+	if options.localCalls != nil {
+		*options.localCalls = capture.history
+	}
 	scores := make([]IRBodyFillCandidateScore, 0, len(plan.Candidates))
 	var rejected []IRBodyFillCandidateRejection
 	eligible := make([]IRBodyFillCandidate, 0, len(plan.Candidates))
@@ -373,14 +380,14 @@ func generateWithIRBodyFillOptions(
 				return Result{}, fmt.Errorf("fill candidate %q at hole %q: %w", candidate.ID, hole.ID, err)
 			}
 		}
-		generated, err := generateRouteParameters(
-			file.Package.Name, activityName, activityID, bodyFillInputParameters(activity.Inputs), "int64", candidateBody, preserveRoute,
-		)
+		generated, err := prepared.generateBody(candidateBody, preserveRoute)
 		if err != nil {
 			rejected = append(rejected, rejectedBodyFillCandidate(plan, candidate, "TYPECHECK", err))
 			continue
 		}
-		_, passed, err := evaluateIntegerCasesContext(ctx, []byte(generated.source), activityName, plan.TestCases)
+		capture.bind(generated.source, generated.report)
+		_, passed, err := evaluateIntegerCasesContext(localCallPhase(ctx, "fill-training", candidate.ID),
+			generated.source, activityName, plan.TestCases)
 		if err != nil {
 			if ctx.Err() != nil {
 				return Result{}, ctx.Err()
@@ -406,7 +413,7 @@ func generateWithIRBodyFillOptions(
 	}
 	usingTinyGo = usingTinyGo && len(eligible) > 1
 	behavioralProbeStarted := time.Now()
-	behavioralProbes, err := measureIRBodyFillBehavioralProbes(activityName, candidateSources, plan.TestCases, plan.HoldoutTestCases)
+	behavioralProbes, err := measureIRBodyFillBehavioralProbes(ctx, activityName, candidateSources, plan.TestCases, plan.HoldoutTestCases)
 	if err != nil {
 		return Result{}, fmt.Errorf("measure candidate behavior on synthetic probes: %w", err)
 	}
@@ -469,16 +476,17 @@ func generateWithIRBodyFillOptions(
 	if usingTinyGo {
 		request.Intent = plan.Intent
 	}
-	if usingTinyGo {
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
-		}
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
 	}
 	decisionStarted := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, irBodyFillDecisionBudget)
 	decision, err := resolveBodyFillDecision(decisionContext, request, endpoint, apiKey, options, tinyProvider)
 	cancel()
 	decisionMS := float64(time.Since(decisionStarted)) / float64(time.Millisecond)
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
 	if err != nil {
 		return Result{}, fmt.Errorf("select Gooo IR body-fill candidate: %w", err)
 	}
@@ -492,11 +500,6 @@ func generateWithIRBodyFillOptions(
 		}
 		if !validTinyGoDecisionReceipt(decision, expectedRequestSHA256, request) {
 			return Result{}, fmt.Errorf("tiny_go chooser returned incomplete or mismatched model provenance")
-		}
-	}
-	if usingTinyGo {
-		if err := ctx.Err(); err != nil {
-			return Result{}, err
 		}
 	}
 	proposed, ok := candidateByID(modelCandidates, decision.Selected)
@@ -527,7 +530,9 @@ func generateWithIRBodyFillOptions(
 		return Result{}, fmt.Errorf("emit selected Gooo IR body: %w", err)
 	}
 	result.GoooSource = string(completedSource)
-	caseResults, passed, err := evaluateIntegerCases([]byte(result.Source), activityName, plan.TestCases)
+	capture.bind([]byte(result.Source), result.Report)
+	caseResults, passed, err := evaluateIntegerCasesContext(localCallPhase(ctx, "fill-selected-training", selected.ID),
+		[]byte(result.Source), activityName, plan.TestCases)
 	if err != nil {
 		return Result{}, fmt.Errorf("evaluate selected generated body: %w", err)
 	}
@@ -537,7 +542,8 @@ func generateWithIRBodyFillOptions(
 	var holdoutSuiteSHA256 string
 	holdoutPassed := 0
 	if len(plan.HoldoutTestCases) > 0 {
-		holdoutResults, holdoutPassed, err = evaluateIntegerCases([]byte(result.Source), activityName, plan.HoldoutTestCases)
+		holdoutResults, holdoutPassed, err = evaluateIntegerCasesContext(localCallPhase(ctx, "fill-selected-holdout", selected.ID),
+			[]byte(result.Source), activityName, plan.HoldoutTestCases)
 		if err != nil {
 			return Result{}, fmt.Errorf("evaluate selected generated body on held-out cases: %w", err)
 		}
@@ -563,6 +569,7 @@ func generateWithIRBodyFillOptions(
 	}
 	result.Report.BodyFill = &IRBodyFillReceipt{
 		OriginalSourceDigest: digest(source),
+		LocalCalls:           capture.history,
 		Schema:               plan.Schema, Intent: plan.Intent, HoleID: bodyFillHoleSummary(holes),
 		HoleToken: bodyFillHoleToken(holes[0].ID), IRPlanSHA256: digest(planBytes),
 		ProposedCandidateID: proposed.ID, ProposedAccuracyPct: proposedScore.AccuracyPercent,
@@ -613,8 +620,8 @@ func validateIRBodyFillPlan(plan IRBodyFillPlan) error {
 		if !validBodyFillIdentifier(plan.HoleID) || len(plan.Holes) != 0 {
 			return fmt.Errorf("IR body-fill v1 requires one valid hole_id and no holes array")
 		}
-	} else if plan.HoleID != "" || len(holes) < 2 || len(holes) > 8 {
-		return fmt.Errorf("IR body-fill v2 requires 2..8 holes and no hole_id")
+	} else if plan.HoleID != "" || len(holes) < 1 || len(holes) > 8 {
+		return fmt.Errorf("IR body-fill v2 requires 1..8 holes and no hole_id")
 	}
 	seenHoles := make(map[string]bool, len(holes))
 	for _, hole := range holes {
@@ -869,16 +876,7 @@ func replaceIdentifier(body, name, replacement string) (string, error) {
 }
 
 func replaceActivityProgram(source []byte, span syntax.Span, body string) ([]byte, error) {
-	start, end := span.Start.Offset, span.End.Offset
-	if start < 0 || end < start || end > len(source) || start == end {
-		return nil, fmt.Errorf("activity computes body has an invalid source span")
-	}
-	quoted := strconv.Quote(body)
-	updated := make([]byte, 0, len(source)-span.Len()+len(quoted))
-	updated = append(updated, source[:start]...)
-	updated = append(updated, quoted...)
-	updated = append(updated, source[end:]...)
-	return updated, nil
+	return syntax.ReplaceStringLiteral(source, span, body)
 }
 
 func scoreByID(scores []IRBodyFillCandidateScore, id string) IRBodyFillCandidateScore {

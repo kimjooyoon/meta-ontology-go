@@ -1,0 +1,9 @@
+{
+  "cohort": "refactor144617",
+  "scope": "new embedded source transitions, refactored declaration capacity and new helper-source CLI inputs",
+  "original_local_execution": true,
+  "local_reruns": 0,
+  "exit_code": 0,
+  "wall_seconds": 11.126696825027466,
+  "producer_manifest_sha256": "0c0af9918905f38217f202c99eb95a370ba915776973d70b2f5b96126041880a"
+}

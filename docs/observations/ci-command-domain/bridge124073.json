@@ -1,0 +1,11 @@
+{
+  "cohort": "bridge124073",
+  "scope": "new command-population and actual step-adapter inputs",
+  "original_local_execution": true,
+  "local_reruns": 0,
+  "exit_code": 0,
+  "wall_seconds": 4.156548976898193,
+  "stdout_sha256": "486399eebfa7809354966e97f64dfcc9b702aee4a32840582212cf32e8553dd0",
+  "producer_manifest_sha256": "ea51bf90a008e1206152283a50ddf9d051ef6c0eef8972495f5dd7c8eab5d135",
+  "whole_compiler_ci": false
+}

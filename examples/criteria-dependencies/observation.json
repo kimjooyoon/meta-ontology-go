@@ -1,0 +1,123 @@
+{
+  "schema": "gooo/criteria-dependency-source-observation/v1",
+  "producer": {
+    "schema": "gooo/development-source-identity/v1",
+    "compiler_base": "84fa3e09658bd881816dda867eda32e88c623883",
+    "source_overlays": [
+      {
+        "path": "cmd/gooo/emit_dispatch.go",
+        "sha256": "cf0529d10b610c9d7d0e50716e69a4297866d4486f42b3ed676fb9cdd2ed12dd"
+      },
+      {
+        "path": "cmd/gooo/source_refactor.go",
+        "sha256": "d19cca5acc99344b527bff5257a9b3c07db5479749e00870c454fb9300f57cc9"
+      },
+      {
+        "path": "cmd/gooo/usage.go",
+        "sha256": "d4f6c35d0982bea2d28c03d0b99758dbc78533974f6b9314dd1a7a016008c024"
+      },
+      {
+        "path": "cmd/gooo/usage_body_context.go",
+        "sha256": "1f68350153885cd9fd7f6375f0920eb1af7571dff37fed64a27e37b42133d004"
+      },
+      {
+        "path": "cmd/gooo/usage_topics_4.go",
+        "sha256": "0fadc07b9087523f693cfb07551ef021b57d0a2948f263fbf447a9dc916617ab"
+      },
+      {
+        "path": "internal/bodycodegen/criteria_dependencies.go",
+        "sha256": "f822ffcc06746b36adc4dced83b7458c061646484b3c8ca3c573877a9a277a8b"
+      },
+      {
+        "path": "internal/bodycodegen/criteria_source_flow.go",
+        "sha256": "fec60e9a66c2e0a217ad62285f9093ab1ad686fab00eeb915a6ca3d4b003275b"
+      },
+      {
+        "path": "internal/bodycodegen/rename_assembly.go",
+        "sha256": "785f8a96ef4f4529e7c0d2985b8e115bfc93b23246bb5ada6e8752704512d08b"
+      },
+      {
+        "path": "internal/bodycodegen/rename_body.go",
+        "sha256": "cd0ffe69d678a4b5ca4a22e081c3e37d63a06e2f9e39eefb206ea0f8aa5266b2"
+      },
+      {
+        "path": "internal/bodycodegen/rename_body_parse.go",
+        "sha256": "11e295e45ec14864e39f88f6a3184e44f392bd72c205de53bc74af95d25a148a"
+      },
+      {
+        "path": "internal/bodycodegen/source_activity_reference.go",
+        "sha256": "253ab04310a7f141513ab466ef4df263ad9585c2ec87a78cc018f8da1612edb0"
+      },
+      {
+        "path": "internal/bodycodegen/source_literal_position.go",
+        "sha256": "3442c58ae14b904be64a092c2134d26db2e3e06c22c6338a2523a248218e83bb"
+      },
+      {
+        "path": "internal/bodycodegen/source_rename.go",
+        "sha256": "1e06eeafca52bad32e1a38c53fc4888260d23b8f6f178cd44614c9785d3862cc"
+      },
+      {
+        "path": "internal/lsp/activity_rename.go",
+        "sha256": "e56152bfd639eb4277dd7d1f2ffc2f8180948628964081492957ccf8a8605b9c"
+      },
+      {
+        "path": "internal/lsp/prepare_rename_part02.go",
+        "sha256": "dad11e34cf2629b0206bc76a3caf7f74c703a0ebe093c96d7ba81d8c909a6f15"
+      },
+      {
+        "path": "internal/lsp/rename_part01.go",
+        "sha256": "134dde7630048fdae3673b4d8551ba19d6f5c0616cb2339ff579c7084bfb55e0"
+      }
+    ],
+    "module_overlay": {
+      "go_mod_sha256": "a8e14a07811a86dce0296b1877b435bf05cbf92ac7b0e3817b65c3e2f154c168",
+      "go_sum_sha256": "b0129fe5ad2fb415c25f4abe2ad31ba55f612f85431dfbe24b7c752ff01a0219",
+      "sdk_version": "v0.2.48-experimental"
+    },
+    "binary_sha256": "4938a649df82a2f44d73298f4cb4bfd8a6cbcd3b3ad7fe1296ce0012f851ed17",
+    "toolchain": "go1.27.2",
+    "scope": "composite development source; prepared pure-call closure projected into criteria view; no future submitted SHA or released binary claim"
+  },
+  "source_sha256": "sha256:147a9c9eefc4c42a6fd21619655a2fd45d238531e3cf1fa04ea64350f906085f",
+  "output_sha256": "sha256:cea5f6eae2c298e0c0f40e3fe176c6f03336a98c29a2e730930b37b3ae455139",
+  "source_inspections": 1,
+  "source_unchanged": true,
+  "source_dependency_edges": 3,
+  "fixed_helper_activities": 2,
+  "pure_activity_call_budget": 2,
+  "predicate_graph_nodes": 14,
+  "dependencies": {
+    "schema": "gooo/criteria-dependencies/v1",
+    "status": "RESOLVED",
+    "activity_id": "dependency://fee",
+    "edges": [
+      {
+        "from_activity_id": "dependency://fee",
+        "to_activity_id": "dependency://allowed",
+        "kind": "requires_predicate",
+        "criterion_id": "ceiling",
+        "ordinal": 0
+      },
+      {
+        "from_activity_id": "dependency://within",
+        "to_activity_id": "dependency://ceiling",
+        "kind": "calls",
+        "criterion_id": "ceiling",
+        "ordinal": 0
+      },
+      {
+        "from_activity_id": "dependency://allowed",
+        "to_activity_id": "dependency://within",
+        "kind": "calls",
+        "criterion_id": "ceiling",
+        "ordinal": 0
+      }
+    ],
+    "scope": "outgoing requires_predicate edges and bounded same-source pure calls; static source closure includes unexecuted branches; ordinal is predicate order or caller-local call order; no runtime result or reuse authorization"
+  },
+  "program_executions": 0,
+  "model_predictions": 0,
+  "candidate_tests": 0,
+  "training_runs": 0,
+  "scope": "one fresh source export; call identities and edge closure observed; no selection/held-input outcomes or model quality observation"
+}

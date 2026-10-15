@@ -1,0 +1,114 @@
+{
+  "schema": "gooo/pr-resolution-review/v1",
+  "review_base": "4c0d811a95e810236daec3f8ae337b24c6040da8",
+  "scope": "Eight retired or superseded proposals. Historical workflows were inspected without rerun. Source branches remain accessible; closure is not a claim that every prototype feature was implemented.",
+  "proposals": [
+    {
+      "pr": 1109,
+      "head": "716ac3712c9cbb26c6d830f2be65830b301a79af",
+      "decision": "CLOSE_SUPERSEDED",
+      "reason": "Stale main snapshot: source 8ad28b3 is already an ancestor of dev; candidate tree is not the live dev tree. All 11 original workflows terminal, action_required. No current promotion authorization.",
+      "original_source_workflows": 11,
+      "state": "closed",
+      "closed_at": "2026-10-15T12:40:13Z",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/pull/1109"
+    },
+    {
+      "pr": 1071,
+      "head": "0870b463ab13c4bd5be66104c5cec18cd067400e",
+      "decision": "CLOSE_SUPERSEDED",
+      "reason": "Stale main snapshot: source 13187af is already an ancestor of dev. Historical successful workflows do not authorize the current live main/dev tuple.",
+      "original_source_workflows": 11,
+      "state": "closed",
+      "closed_at": "2026-10-15T12:40:15Z",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/pull/1071"
+    },
+    {
+      "pr": 655,
+      "head": "63f8261e7221f1eba5027f8e55af7643663c1b1e",
+      "decision": "CLOSE_SUPERSEDED",
+      "reason": "Retired reconciliation protocol: source 119ac82 is already an ancestor of dev. The proposal restores Guardian-era authority and a stale snapshot; its original failure concerns old source-repacking capacity and absent downstream proof.",
+      "original_source_workflows": 11,
+      "state": "closed",
+      "closed_at": "2026-10-15T12:40:17Z",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/pull/655"
+    },
+    {
+      "pr": 1027,
+      "head": "5b8cd4c41d3b921d534399d6b3535e1c85e67eea",
+      "decision": "CLOSE_SUPERSEDED",
+      "reason": "Empty product diff. Main ancestry reconciliation is obsolete under current exact-tree snapshot promotion; original external-observation failures were HTTP 404, not a product change.",
+      "original_source_workflows": 18,
+      "state": "closed",
+      "closed_at": "2026-10-15T12:40:19Z",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/pull/1027"
+    },
+    {
+      "pr": 1008,
+      "head": "53c6add1c58f51785da3ee3d806f8c31e6b7e989",
+      "decision": "CLOSE_SUPERSEDED",
+      "reason": "Original intended source commit 2988a67 is preserved in current self_improvement_cycle.go and its test with no whitespace-insensitive diff. The current PR head instead has a stale 7004-file repository-wide delta and no original workflow runs.",
+      "original_source_workflows": 0,
+      "state": "closed",
+      "closed_at": "2026-10-15T12:40:22Z",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/pull/1008"
+    },
+    {
+      "pr": 1022,
+      "head": "2a41e85b668241d5bfd63847f3ae104ddf6e47d9",
+      "decision": "SUPERSEDED_BY_EXECUTABLE_GOOO_PROFILE",
+      "reason": "The original schema is a proposal with a different wire shape. Current scripts/domain-completeness/profile.gooo, types.go and comparison.go implement scoped dimensions, source/profile identity, missing-observation handling and comparison. Restoring the old schema and Guardian-era governance/baseline changes would misdescribe the current receipt. Original failures include scope/governance mismatches and source-repacking limits.",
+      "source_workflow_count": 30,
+      "failed_workflow_ids": [
+        36400972480,
+        36400972515,
+        36400972433,
+        36400972426
+      ],
+      "scope": "Current implementations inspected; retired prototype functionality is not claimed as implemented. No historical test or workflow rerun.",
+      "state": "closed",
+      "closed_at": "2026-10-15T12:42:10Z",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/pull/1022"
+    },
+    {
+      "pr": 1020,
+      "head": "4077305b81d890440b2a201352b0cf8866ff4549",
+      "decision": "RETIRED_DUPLICATE_ORIGIN_AND_INFERRED_TELEMETRY",
+      "reason": "Current gooo/documentProvenance v3 reports source, semantic, profile, toolchain and contract origins plus symbol/reference maps. The old refresh wrapper adds inferred parse counts and a separately retained map: refresh may use a cache, yet the wrapper increments ParseCalls; its cache-hit path releases the document lock before recording without a freshness recheck. These counters are not integrated or claimed. Retire the proposal rather than introduce misleading telemetry. Original failures include incomplete syntax registration and stale projection constraints.",
+      "source_workflow_count": 35,
+      "failed_workflow_ids": [
+        36345435254,
+        36345435288,
+        36345435313,
+        36345435281,
+        36345435260,
+        36345435223,
+        36345435242
+      ],
+      "scope": "Current implementations inspected; retired prototype functionality is not claimed as implemented. No historical test or workflow rerun.",
+      "state": "closed",
+      "closed_at": "2026-10-15T12:42:12Z",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/pull/1020"
+    },
+    {
+      "pr": 1018,
+      "head": "500063494590defc544e05e33da1a771cc2c9d04",
+      "decision": "SUPERSEDED_BY_TYPED_EXECUTION_ORIGIN",
+      "reason": "Current executionPlanProvenanceRequest and internal/provenance/execution_plan_provenance_binding_part01.go bind typed-plan identity, activity/edge order, workload identity and execution-origin receipt closure. The old generation facade is a handwritten alias; its extra Jev/adoption prototypes are not integrated or claimed. Original generation adoption tamper checks and syntax registration failed. Retain the live typed origin path and close the stale proposal.",
+      "source_workflow_count": 39,
+      "failed_workflow_ids": [
+        36219281397,
+        36219281420,
+        36219281580,
+        36219281409,
+        36219281552,
+        36219281443,
+        36219281400
+      ],
+      "scope": "Current implementations inspected; retired prototype functionality is not claimed as implemented. No historical test or workflow rerun.",
+      "state": "closed",
+      "closed_at": "2026-10-15T12:42:13Z",
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/pull/1018"
+    }
+  ]
+}

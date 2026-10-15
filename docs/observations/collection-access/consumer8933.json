@@ -1,0 +1,2987 @@
+{
+  "cases": {
+    "cases": [
+      {
+        "expected": {
+          "Explain": "원소 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:at",
+            "kind": "index_access",
+            "expression": "input.readings[input.pick]",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 84,
+            "end_byte": 110,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:at",
+            "kind": "field_access",
+            "expression": "input.pick",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 21,
+            "end_byte": 31,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:at",
+            "kind": "field_access",
+            "expression": "input.pick",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 3,
+            "end_byte": 13,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "읽을 목록"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:at",
+            "kind": "access_base",
+            "expression": "input.readings",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 84,
+            "end_byte": 98,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "위치를 정하는 식"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:at",
+            "kind": "index_operand",
+            "expression": "input.pick",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 99,
+            "end_byte": 109,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:at",
+            "kind": "field_access",
+            "expression": "input.readings",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 84,
+            "end_byte": 98,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:at",
+            "kind": "field_access",
+            "expression": "input.pick",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 99,
+            "end_byte": 109,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:at",
+            "kind": "field_access",
+            "expression": "input.readings",
+            "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+            "start_byte": 45,
+            "end_byte": 59,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:take",
+            "kind": "field_access",
+            "expression": "input.pick",
+            "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+            "start_byte": 107,
+            "end_byte": 117,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "구간 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:take",
+            "kind": "slice_access",
+            "expression": "input.readings[시작:끝]",
+            "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+            "start_byte": 73,
+            "end_byte": 99,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "읽을 목록"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:take",
+            "kind": "access_base",
+            "expression": "input.readings",
+            "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+            "start_byte": 73,
+            "end_byte": 87,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "구간 끝"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:take",
+            "kind": "slice_high",
+            "expression": "끝",
+            "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+            "start_byte": 95,
+            "end_byte": 98,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "구간 시작"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:take",
+            "kind": "slice_low",
+            "expression": "시작",
+            "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+            "start_byte": 88,
+            "end_byte": 94,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:take",
+            "kind": "field_access",
+            "expression": "input.readings",
+            "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+            "start_byte": 73,
+            "end_byte": 87,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:take",
+            "kind": "field_access",
+            "expression": "input.upper",
+            "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+            "start_byte": 36,
+            "end_byte": 47,
+            "snippet_truncated": false
+          }
+        }
+      },
+      {
+        "expected": {
+          "Explain": "필드 읽기"
+        },
+        "inputs": {
+          "Explain": {
+            "root_id": "return:7:36:",
+            "activity_id": "urn:access8887:take",
+            "kind": "field_access",
+            "expression": "input.lower",
+            "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+            "start_byte": 13,
+            "end_byte": 24,
+            "snippet_truncated": false
+          }
+        }
+      }
+    ],
+    "schema": "gooo/body-composition-cases/v1"
+  },
+  "generation": {
+    "schema": "gooo/body-composition/v1",
+    "stage": "COMPLETE",
+    "original_source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+    "selected_source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+    "generated_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+    "driver_sha256": "sha256:057f075b688614c8417de581c082635fd0aca144806f50e1d0db24977cb1ca08",
+    "plan": {
+      "schema": "gooo/body-composition-plan/v1",
+      "typed_plan_sha256": "sha256:42ed45d9134ef32d57fa1c60398ad66bbabf57957d20458b89409b0b8e3d242c",
+      "semantic_fingerprint": "ad3ce15d81561bd4c6c27a13c319ebb74beacc4c331b13e0565b8f7202037c02",
+      "activities": [
+        {
+          "name": "Explain",
+          "id": "urn:accessexplanation8933:explain",
+          "input_type": "Access",
+          "output_type": "Text",
+          "input_entity_id": "urn:accessexplanation8933:access",
+          "output_entity_id": "urn:gooo:type:string",
+          "go_function": "GoooComposedActivity0",
+          "input_from": -1,
+          "assembling": false
+        }
+      ],
+      "edges": [],
+      "record_types": [
+        {
+          "name": "Access",
+          "id": "urn:accessexplanation8933:access",
+          "go_name": "GoooRecord69a60b259c3e96886c9629242827f37a88b5c78a4787f23eef208f853113f74a",
+          "fields": [
+            {
+              "name": "root_id",
+              "id": "urn:accessexplanation8933:root",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField0d6d460835c9e9679ebb8c17b8922fd1aa6d014400003434cef3bf096b0b6269"
+            },
+            {
+              "name": "activity_id",
+              "id": "urn:accessexplanation8933:activity",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField548d3d12f456842c21d9e042cbedf67b843227fcc88acb966915b4fbea980f11"
+            },
+            {
+              "name": "kind",
+              "id": "urn:accessexplanation8933:kind",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641"
+            },
+            {
+              "name": "expression",
+              "id": "urn:accessexplanation8933:expression",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooFieldef43542dce250602f0be088617ff543db7765553269e3157deb81b4e84043790"
+            },
+            {
+              "name": "body_sha256",
+              "id": "urn:accessexplanation8933:body",
+              "type_id": "urn:gooo:type:string",
+              "go_name": "GoooField6bdc06863569b278e71f5bad2e10ed2949c4b2f1816f95f5efba26576f9e67a1"
+            },
+            {
+              "name": "start_byte",
+              "id": "urn:accessexplanation8933:start",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooField2bd766ca5fb00f9ee260d11a387cedb0bf0ea7a6808a1930b2b4e0247e7648d8"
+            },
+            {
+              "name": "end_byte",
+              "id": "urn:accessexplanation8933:end",
+              "type_id": "urn:gooo:type:integer",
+              "go_name": "GoooFieldd6ce1f975465b05c0ef92e746bd9b931b8580727308c0fa4563a04bfaf4b3ad2"
+            },
+            {
+              "name": "snippet_truncated",
+              "id": "urn:accessexplanation8933:truncated",
+              "type_id": "urn:gooo:type:boolean",
+              "go_name": "GoooFieldf823bcb1ab77bd5bbf564ebc43e5e8d175aba0054dabb424a7b51ae3e98196f9"
+            }
+          ]
+        }
+      ]
+    },
+    "steps": [
+      {
+        "input_source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+        "generation": {
+          "report": {
+            "schema": "gooo/body-codegen-report/v3",
+            "decision": "PASS",
+            "activity": "Explain",
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input_type": "Access",
+            "record_types": [
+              {
+                "name": "Access",
+                "id": "urn:accessexplanation8933:access",
+                "go_name": "GoooRecord69a60b259c3e96886c9629242827f37a88b5c78a4787f23eef208f853113f74a",
+                "fields": [
+                  {
+                    "name": "root_id",
+                    "id": "urn:accessexplanation8933:root",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField0d6d460835c9e9679ebb8c17b8922fd1aa6d014400003434cef3bf096b0b6269"
+                  },
+                  {
+                    "name": "activity_id",
+                    "id": "urn:accessexplanation8933:activity",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField548d3d12f456842c21d9e042cbedf67b843227fcc88acb966915b4fbea980f11"
+                  },
+                  {
+                    "name": "kind",
+                    "id": "urn:accessexplanation8933:kind",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641"
+                  },
+                  {
+                    "name": "expression",
+                    "id": "urn:accessexplanation8933:expression",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooFieldef43542dce250602f0be088617ff543db7765553269e3157deb81b4e84043790"
+                  },
+                  {
+                    "name": "body_sha256",
+                    "id": "urn:accessexplanation8933:body",
+                    "type_id": "urn:gooo:type:string",
+                    "go_name": "GoooField6bdc06863569b278e71f5bad2e10ed2949c4b2f1816f95f5efba26576f9e67a1"
+                  },
+                  {
+                    "name": "start_byte",
+                    "id": "urn:accessexplanation8933:start",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooField2bd766ca5fb00f9ee260d11a387cedb0bf0ea7a6808a1930b2b4e0247e7648d8"
+                  },
+                  {
+                    "name": "end_byte",
+                    "id": "urn:accessexplanation8933:end",
+                    "type_id": "urn:gooo:type:integer",
+                    "go_name": "GoooFieldd6ce1f975465b05c0ef92e746bd9b931b8580727308c0fa4563a04bfaf4b3ad2"
+                  },
+                  {
+                    "name": "snippet_truncated",
+                    "id": "urn:accessexplanation8933:truncated",
+                    "type_id": "urn:gooo:type:boolean",
+                    "go_name": "GoooFieldf823bcb1ab77bd5bbf564ebc43e5e8d175aba0054dabb424a7b51ae3e98196f9"
+                  }
+                ]
+              }
+            ],
+            "output_type": "string",
+            "plan_sha256": "sha256:37053511bf67b15a0ba9f1b11e344b933edb44adf8d718fd4f6111ab43f18615",
+            "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+            "source_digest": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+            "program_digest": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+            "generated_digest": "sha256:99ea973e13c74d51c30ca26e0a2b79d4714ac4d254f0fce9d8fee36dc3484e1d",
+            "replay_digest": "sha256:99ea973e13c74d51c30ca26e0a2b79d4714ac4d254f0fce9d8fee36dc3484e1d",
+            "route": "preserve",
+            "route_decision": {
+              "schema": "gooo/typed-decision-receipt/v1",
+              "mode": "deterministic_fallback",
+              "selected": "preserve",
+              "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+              "provider": "deterministic",
+              "request_sha256": ""
+            },
+            "route_selection": {
+              "method": "single_eligible_route",
+              "proposed_route": "preserve",
+              "final_route": "preserve"
+            },
+            "route_decision_latency_ms": 0,
+            "body_conditions": [
+              {
+                "activity_id": "urn:accessexplanation8933:explain",
+                "native_ordinal": 0,
+                "source_ordinal": 0,
+                "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+                "decoded_start": 3,
+                "decoded_end": 32,
+                "expression": "input.kind == \"index_operand\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:accessexplanation8933:access",
+                    "field_id": "urn:accessexplanation8933:kind",
+                    "name": "kind"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:accessexplanation8933:explain",
+                "native_ordinal": 1,
+                "source_ordinal": 1,
+                "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+                "decoded_start": 74,
+                "decoded_end": 99,
+                "expression": "input.kind == \"slice_low\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:accessexplanation8933:access",
+                    "field_id": "urn:accessexplanation8933:kind",
+                    "name": "kind"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:accessexplanation8933:explain",
+                "native_ordinal": 2,
+                "source_ordinal": 2,
+                "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+                "decoded_start": 131,
+                "decoded_end": 157,
+                "expression": "input.kind == \"slice_high\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:accessexplanation8933:access",
+                    "field_id": "urn:accessexplanation8933:kind",
+                    "name": "kind"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:accessexplanation8933:explain",
+                "native_ordinal": 3,
+                "source_ordinal": 3,
+                "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+                "decoded_start": 186,
+                "decoded_end": 211,
+                "expression": "input.kind == \"slice_max\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:accessexplanation8933:access",
+                    "field_id": "urn:accessexplanation8933:kind",
+                    "name": "kind"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:accessexplanation8933:explain",
+                "native_ordinal": 4,
+                "source_ordinal": 4,
+                "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+                "decoded_start": 250,
+                "decoded_end": 278,
+                "expression": "input.kind == \"index_access\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:accessexplanation8933:access",
+                    "field_id": "urn:accessexplanation8933:kind",
+                    "name": "kind"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:accessexplanation8933:explain",
+                "native_ordinal": 5,
+                "source_ordinal": 5,
+                "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+                "decoded_start": 310,
+                "decoded_end": 338,
+                "expression": "input.kind == \"slice_access\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:accessexplanation8933:access",
+                    "field_id": "urn:accessexplanation8933:kind",
+                    "name": "kind"
+                  }
+                ]
+              },
+              {
+                "activity_id": "urn:accessexplanation8933:explain",
+                "native_ordinal": 6,
+                "source_ordinal": 6,
+                "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+                "decoded_start": 370,
+                "decoded_end": 397,
+                "expression": "input.kind == \"access_base\"",
+                "relation": "retained_condition_node",
+                "fields": [
+                  {
+                    "entity_id": "urn:accessexplanation8933:access",
+                    "field_id": "urn:accessexplanation8933:kind",
+                    "name": "kind"
+                  }
+                ]
+              }
+            ],
+            "candidate_routes": [
+              "preserve"
+            ],
+            "equivalence_rule": "source-shape-preserving-v1",
+            "source_constructs": 15,
+            "lowered_constructs": 15,
+            "source_semantic_units": 58,
+            "lowered_semantic_units": 58,
+            "completeness_percent": 100,
+            "route_equivalence": {
+              "schema": "gooo/body-codegen-route-equivalence/v1",
+              "decision": "PASS",
+              "method": "canonical_control_flow_form/v2",
+              "rule": "source-shape-preserving-v1",
+              "source_semantic_digest": "sha256:b1074a67d93ca4e19d24c37bbef2bb2a160daf1933919bc28d55b9ea7f8b2219",
+              "generated_semantic_digest": "sha256:b1074a67d93ca4e19d24c37bbef2bb2a160daf1933919bc28d55b9ea7f8b2219",
+              "equivalent": true,
+              "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+            },
+            "typecheck_passed": true,
+            "deterministic_replay": true,
+            "repository_writes": 0,
+            "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+            "completeness_receipt": {
+              "schema": "gooo/metaprogramming-completeness-receipt/v2",
+              "profile_id": "gooo/body-codegen-pure-v1",
+              "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+              "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+              "scope": {
+                "allowed_investment": "compiler-controlled lowering and optional Laya selection only among prevalidated equivalent routes; no human approval or authorization is required",
+                "boundary": {
+                  "excluded_effects": [
+                    "generated code execution",
+                    "repository mutation",
+                    "external authority"
+                  ],
+                  "non_authorizing": true,
+                  "non_executing": true
+                },
+                "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                "decision_mode": "deterministic_fallback",
+                "decision_provider": "deterministic",
+                "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                "excluded_scope": [
+                  "unstated natural-language intent",
+                  "independently sourced production workflows",
+                  "generated runtime behavior",
+                  "unrestricted Gooo body syntax",
+                  "route clarity or utility"
+                ],
+                "execution_environment": "darwin/arm64",
+                "input_type": "Access",
+                "laya_mode": "deterministic_fallback",
+                "laya_provider": "deterministic",
+                "observed_system_cost": {
+                  "human_actions": 0,
+                  "repository_writes": 0
+                },
+                "output_type": "string",
+                "plan_sha256": "sha256:37053511bf67b15a0ba9f1b11e344b933edb44adf8d718fd4f6111ab43f18615",
+                "receipt_declaration": {
+                  "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "projection_profile": "gooo/receipt-structure-projection/v1",
+                  "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                },
+                "record_types": [
+                  {
+                    "name": "Access",
+                    "id": "urn:accessexplanation8933:access",
+                    "go_name": "GoooRecord69a60b259c3e96886c9629242827f37a88b5c78a4787f23eef208f853113f74a",
+                    "fields": [
+                      {
+                        "name": "root_id",
+                        "id": "urn:accessexplanation8933:root",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField0d6d460835c9e9679ebb8c17b8922fd1aa6d014400003434cef3bf096b0b6269"
+                      },
+                      {
+                        "name": "activity_id",
+                        "id": "urn:accessexplanation8933:activity",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField548d3d12f456842c21d9e042cbedf67b843227fcc88acb966915b4fbea980f11"
+                      },
+                      {
+                        "name": "kind",
+                        "id": "urn:accessexplanation8933:kind",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641"
+                      },
+                      {
+                        "name": "expression",
+                        "id": "urn:accessexplanation8933:expression",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooFieldef43542dce250602f0be088617ff543db7765553269e3157deb81b4e84043790"
+                      },
+                      {
+                        "name": "body_sha256",
+                        "id": "urn:accessexplanation8933:body",
+                        "type_id": "urn:gooo:type:string",
+                        "go_name": "GoooField6bdc06863569b278e71f5bad2e10ed2949c4b2f1816f95f5efba26576f9e67a1"
+                      },
+                      {
+                        "name": "start_byte",
+                        "id": "urn:accessexplanation8933:start",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooField2bd766ca5fb00f9ee260d11a387cedb0bf0ea7a6808a1930b2b4e0247e7648d8"
+                      },
+                      {
+                        "name": "end_byte",
+                        "id": "urn:accessexplanation8933:end",
+                        "type_id": "urn:gooo:type:integer",
+                        "go_name": "GoooFieldd6ce1f975465b05c0ef92e746bd9b931b8580727308c0fa4563a04bfaf4b3ad2"
+                      },
+                      {
+                        "name": "snippet_truncated",
+                        "id": "urn:accessexplanation8933:truncated",
+                        "type_id": "urn:gooo:type:boolean",
+                        "go_name": "GoooFieldf823bcb1ab77bd5bbf564ebc43e5e8d175aba0054dabb424a7b51ae3e98196f9"
+                      }
+                    ]
+                  }
+                ],
+                "system_budget": {
+                  "maximum_human_actions": 0,
+                  "maximum_repository_writes": 0
+                },
+                "toolchain": "go1.27.2"
+              },
+              "core_dimensions": [
+                "declaration_coverage",
+                "generation_coverage",
+                "internal_replay_coverage",
+                "provenance_integrity",
+                "receipt_schema_binding",
+                "repository_write_boundary",
+                "route_choice_protocol",
+                "route_semantic_equivalence",
+                "source_ast_coverage",
+                "typecheck_coverage"
+              ],
+              "dimensions": [
+                {
+                  "id": "declaration_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "stable activity declarations",
+                  "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                  "evidence": [
+                    "source_digest:sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                    "activity_id:urn:accessexplanation8933:explain"
+                  ]
+                },
+                {
+                  "id": "generation_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated Go functions",
+                  "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                  "evidence": [
+                    "generated_digest:sha256:99ea973e13c74d51c30ca26e0a2b79d4714ac4d254f0fce9d8fee36dc3484e1d",
+                    "report decision:PASS"
+                  ]
+                },
+                {
+                  "id": "source_ast_coverage",
+                  "status": "PASS",
+                  "numerator": 58,
+                  "denominator": 58,
+                  "unit": "source semantic units lowered",
+                  "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                  "evidence": [
+                    "source_semantic_units",
+                    "lowered_semantic_units"
+                  ]
+                },
+                {
+                  "id": "route_semantic_equivalence",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source/generated route pairs",
+                  "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                  "evidence": [
+                    "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                    "route_equivalence.rule:source-shape-preserving-v1",
+                    "source_semantic_digest:sha256:b1074a67d93ca4e19d24c37bbef2bb2a160daf1933919bc28d55b9ea7f8b2219",
+                    "generated_semantic_digest:sha256:b1074a67d93ca4e19d24c37bbef2bb2a160daf1933919bc28d55b9ea7f8b2219"
+                  ]
+                },
+                {
+                  "id": "typecheck_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated functions accepted by Go type checking",
+                  "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                  "evidence": [
+                    "typecheck_passed"
+                  ]
+                },
+                {
+                  "id": "internal_replay_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "deterministic compiler emission replays",
+                  "reason": "Requires replayed generated bytes to match the selected output digest.",
+                  "evidence": [
+                    "generated_digest:sha256:99ea973e13c74d51c30ca26e0a2b79d4714ac4d254f0fce9d8fee36dc3484e1d",
+                    "replay_digest:sha256:99ea973e13c74d51c30ca26e0a2b79d4714ac4d254f0fce9d8fee36dc3484e1d"
+                  ]
+                },
+                {
+                  "id": "route_choice_protocol",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "selected routes in the compiler-declared candidate set",
+                  "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                  "evidence": [
+                    "candidate_routes",
+                    "selected_route:preserve"
+                  ]
+                },
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "numerator": 7,
+                  "denominator": 8,
+                  "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "evidence": [
+                    "source_digest:sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                    "program_digest:sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+                    "generated_digest:sha256:99ea973e13c74d51c30ca26e0a2b79d4714ac4d254f0fce9d8fee36dc3484e1d",
+                    "replay_digest:sha256:99ea973e13c74d51c30ca26e0a2b79d4714ac4d254f0fce9d8fee36dc3484e1d",
+                    "activity_id:urn:accessexplanation8933:explain",
+                    "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                    "route_equivalence semantic digests"
+                  ]
+                },
+                {
+                  "id": "receipt_schema_binding",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source-owned receipt schema and generated structure bindings",
+                  "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                  "evidence": [
+                    "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile:gooo/receipt-structure-projection/v1"
+                  ]
+                },
+                {
+                  "id": "repository_write_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "repository writes",
+                  "reason": "The command emits generated source without mutating the repository.",
+                  "evidence": [
+                    "repository_writes:0"
+                  ]
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated package runtime executions",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "evidence": [
+                    "body-codegen does not run generated Go"
+                  ]
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "observed host permission profiles",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "evidence": [
+                    "host permission profile is not observed"
+                  ]
+                },
+                {
+                  "id": "external_network_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "runs with no Laya provider request",
+                  "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                  "evidence": [
+                    "decision.mode:deterministic_fallback",
+                    "decision.provider:deterministic",
+                    "decision.fallback_reason:NO_ALTERNATIVE_ROUTE"
+                  ]
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 0,
+                  "unit": "eligible multi-route Laya decisions",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "evidence": [
+                    "candidate_routes",
+                    "route_decision.mode:deterministic_fallback",
+                    "route_decision.request_sha256:",
+                    "route_decision.model_revision:"
+                  ]
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independently sourced real workflows",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "evidence": [
+                    "no independent workflow corpus is bound"
+                  ]
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated runtime observations mapped back to source",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "evidence": [
+                    "no source-bound reverse-observation trace"
+                  ]
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete input-domain behavior proofs",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "evidence": [
+                    "generated package execution and an independent domain oracle are not part of this command"
+                  ]
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independent route-clarity or utility criteria",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "evidence": [
+                    "no independent route-quality oracle"
+                  ]
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete process resource profiles",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "evidence": [
+                    "route_decision_latency_ms is recorded",
+                    "CPU and peak RSS are not captured"
+                  ]
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible prior resource receipts",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "evidence": [
+                    "no compatible prior resource receipt"
+                  ]
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible before/after semantic receipts",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "evidence": [
+                    "no comparable prior semantic receipt"
+                  ]
+                }
+              ],
+              "status_counts": {
+                "FAIL_CLOSED": 0,
+                "PASS": 10,
+                "PROGRESS": 1,
+                "UNKNOWN": 10
+              },
+              "aggregate_completeness_score": null,
+              "first_unresolved": {
+                "id": "provenance_integrity",
+                "status": "PROGRESS",
+                "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+              },
+              "unresolved_claims": [
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                }
+              ],
+              "not_claimed": [
+                "user-intent completeness",
+                "real-workflow coverage",
+                "generated runtime behavior",
+                "full-domain semantics",
+                "route quality",
+                "universal language completeness"
+              ],
+              "fail_closed_reason": null
+            }
+          },
+          "source": "package accessexplanation\n\n//gooo:generated:start id=\"urn:accessexplanation8933:access\" kind=\"entity\"\ntype GoooRecord69a60b259c3e96886c9629242827f37a88b5c78a4787f23eef208f853113f74a struct {\n\tGoooField0d6d460835c9e9679ebb8c17b8922fd1aa6d014400003434cef3bf096b0b6269 string `json:\"root_id\"`\n\tGoooField548d3d12f456842c21d9e042cbedf67b843227fcc88acb966915b4fbea980f11 string `json:\"activity_id\"`\n\tGoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 string `json:\"kind\"`\n\tGoooFieldef43542dce250602f0be088617ff543db7765553269e3157deb81b4e84043790 string `json:\"expression\"`\n\tGoooField6bdc06863569b278e71f5bad2e10ed2949c4b2f1816f95f5efba26576f9e67a1 string `json:\"body_sha256\"`\n\tGoooField2bd766ca5fb00f9ee260d11a387cedb0bf0ea7a6808a1930b2b4e0247e7648d8 int64  `json:\"start_byte\"`\n\tGoooFieldd6ce1f975465b05c0ef92e746bd9b931b8580727308c0fa4563a04bfaf4b3ad2 int64  `json:\"end_byte\"`\n\tGoooFieldf823bcb1ab77bd5bbf564ebc43e5e8d175aba0054dabb424a7b51ae3e98196f9 bool   `json:\"snippet_truncated\"`\n}\n\n//gooo:generated:end id=\"urn:accessexplanation8933:access\" kind=\"entity\"\n//gooo:generated:start id=\"urn:accessexplanation8933:explain\" kind=\"activity\"\nfunc Explain(input GoooRecord69a60b259c3e96886c9629242827f37a88b5c78a4787f23eef208f853113f74a) string {\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"index_operand\" {\n\t\treturn \"위치를 정하는 식\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_low\" {\n\t\treturn \"구간 시작\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_high\" {\n\t\treturn \"구간 끝\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_max\" {\n\t\treturn \"구간 용량 경계\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"index_access\" {\n\t\treturn \"원소 읽기\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_access\" {\n\t\treturn \"구간 읽기\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"access_base\" {\n\t\treturn \"읽을 목록\"\n\t}\n\treturn \"필드 읽기\"\n}\n\n//gooo:generated:end id=\"urn:accessexplanation8933:explain\" kind=\"activity\"\n"
+        }
+      }
+    ],
+    "gooo_source": "package accessexplanation\nnamespace accessexplanation8933\nentity Text id \"urn:gooo:type:string\"\nentity Access id \"urn:accessexplanation8933:access\" fields {\n field root_id id \"urn:accessexplanation8933:root\" type string required one\n field activity_id id \"urn:accessexplanation8933:activity\" type string required one\n field kind id \"urn:accessexplanation8933:kind\" type string required one\n field expression id \"urn:accessexplanation8933:expression\" type string required one\n field body_sha256 id \"urn:accessexplanation8933:body\" type string required one\n field start_byte id \"urn:accessexplanation8933:start\" type integer required one\n field end_byte id \"urn:accessexplanation8933:end\" type integer required one\n field snippet_truncated id \"urn:accessexplanation8933:truncated\" type boolean required one\n}\nactivity Explain(Access) -\u003e Text id \"urn:accessexplanation8933:explain\" computes \"if input.kind == \\\"index_operand\\\" { return \\\"위치를 정하는 식\\\" }; if input.kind == \\\"slice_low\\\" { return \\\"구간 시작\\\" }; if input.kind == \\\"slice_high\\\" { return \\\"구간 끝\\\" }; if input.kind == \\\"slice_max\\\" { return \\\"구간 용량 경계\\\" }; if input.kind == \\\"index_access\\\" { return \\\"원소 읽기\\\" }; if input.kind == \\\"slice_access\\\" { return \\\"구간 읽기\\\" }; if input.kind == \\\"access_base\\\" { return \\\"읽을 목록\\\" }; return \\\"필드 읽기\\\"\"\n",
+    "source": "package main\n\n//gooo:generated:start id=\"urn:accessexplanation8933:access\" kind=\"entity\"\ntype GoooRecord69a60b259c3e96886c9629242827f37a88b5c78a4787f23eef208f853113f74a struct {\n\tGoooField0d6d460835c9e9679ebb8c17b8922fd1aa6d014400003434cef3bf096b0b6269 string `json:\"root_id\"`\n\tGoooField548d3d12f456842c21d9e042cbedf67b843227fcc88acb966915b4fbea980f11 string `json:\"activity_id\"`\n\tGoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 string `json:\"kind\"`\n\tGoooFieldef43542dce250602f0be088617ff543db7765553269e3157deb81b4e84043790 string `json:\"expression\"`\n\tGoooField6bdc06863569b278e71f5bad2e10ed2949c4b2f1816f95f5efba26576f9e67a1 string `json:\"body_sha256\"`\n\tGoooField2bd766ca5fb00f9ee260d11a387cedb0bf0ea7a6808a1930b2b4e0247e7648d8 int64  `json:\"start_byte\"`\n\tGoooFieldd6ce1f975465b05c0ef92e746bd9b931b8580727308c0fa4563a04bfaf4b3ad2 int64  `json:\"end_byte\"`\n\tGoooFieldf823bcb1ab77bd5bbf564ebc43e5e8d175aba0054dabb424a7b51ae3e98196f9 bool   `json:\"snippet_truncated\"`\n}\n\n//gooo:generated:end id=\"urn:accessexplanation8933:access\" kind=\"entity\"\n\n//gooo:generated:start id=\"urn:accessexplanation8933:explain\" kind=\"activity\"\nfunc GoooComposedActivity0(input GoooRecord69a60b259c3e96886c9629242827f37a88b5c78a4787f23eef208f853113f74a) string {\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"index_operand\" {\n\t\treturn \"위치를 정하는 식\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_low\" {\n\t\treturn \"구간 시작\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_high\" {\n\t\treturn \"구간 끝\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_max\" {\n\t\treturn \"구간 용량 경계\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"index_access\" {\n\t\treturn \"원소 읽기\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_access\" {\n\t\treturn \"구간 읽기\"\n\t}\n\tif input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"access_base\" {\n\t\treturn \"읽을 목록\"\n\t}\n\treturn \"필드 읽기\"\n}\n\n//gooo:generated:end id=\"urn:accessexplanation8933:explain\" kind=\"activity\"\n",
+    "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(\u0026in) != nil || len(in) \u003e 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][1]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 GoooRecord69a60b259c3e96886c9629242827f37a88b5c78a4787f23eef208f853113f74a\n\t\tif json.Unmarshal(row[0], \u0026input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+    "elapsed_ns": 6635166,
+    "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+  },
+  "original_program_executions": 0,
+  "runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:6d6446e8cba976196f2f618285f9a708a8cb35401e9213befe1ecfe68bc94df6",
+    "original_source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+    "selected_source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+    "typed_plan_sha256": "sha256:42ed45d9134ef32d57fa1c60398ad66bbabf57957d20458b89409b0b8e3d242c",
+    "generated_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+    "driver_sha256": "sha256:057f075b688614c8417de581c082635fd0aca144806f50e1d0db24977cb1ca08",
+    "observed_projection_sha256": "sha256:3d447c2b2b7b4bd0cdf1bdc8919017b9981d34f322af5ea4357b3512bdb71039",
+    "observed_driver_sha256": "sha256:826dcd469cfa849ef66dc5f96b33fcf05c863e76dee0a7accbbc388f1b16fa2d",
+    "runtime_suite_sha256": "sha256:fbccfe86e4e989b25548b6fc9794317fd3e42fef529ad6c23071b07cce247dab",
+    "executable_sha256": "sha256:a5481508982986e56449e03f3f123058bd2fe5608501414e3a321b9583cdaed4",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "path",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8840708,
+      "user_ns": 4036000,
+      "system_ns": 2685000,
+      "peak_rss_bytes": 14368768,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1230416,
+        "wait_ns": 7610292,
+        "deadline_remaining_ns": 59983963583,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 308838791,
+      "user_ns": 128320000,
+      "system_ns": 86753000,
+      "peak_rss_bytes": 86474752,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 876958,
+        "wait_ns": 307961833,
+        "deadline_remaining_ns": 59973831083,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 361322542,
+        "user_ns": 3956000,
+        "system_ns": 6392000,
+        "peak_rss_bytes": 5029888,
+        "stdout_sha256": "sha256:232a660ca2cf05a70682eb7a829a882469a8cfe474e2a6bff1d946d6d7d03fda",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 791917,
+          "wait_ns": 360530625,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59663521250,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 7678417,
+        "user_ns": 2745000,
+        "system_ns": 3336000,
+        "peak_rss_bytes": 5242880,
+        "stdout_sha256": "sha256:232a660ca2cf05a70682eb7a829a882469a8cfe474e2a6bff1d946d6d7d03fda",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 2584792,
+          "wait_ns": 5093625,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59300417375,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:at",
+              "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "end_byte": 110,
+              "expression": "input.readings[input.pick]",
+              "kind": "index_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 84
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:at"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "index_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.readings[input.pick]"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 84
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 110
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "원소 읽기",
+            "expected": "원소 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:at",
+              "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "end_byte": 31,
+              "expression": "input.pick",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 21
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:at"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.pick"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 21
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 31
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 2,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:at",
+              "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "end_byte": 13,
+              "expression": "input.pick",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 3
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:at"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.pick"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 3
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 13
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 3,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:at",
+              "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "end_byte": 98,
+              "expression": "input.readings",
+              "kind": "access_base",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 84
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:at"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "access_base"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.readings"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 84
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 98
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "읽을 목록",
+            "expected": "읽을 목록",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 4,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:at",
+              "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "end_byte": 109,
+              "expression": "input.pick",
+              "kind": "index_operand",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 99
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:at"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "index_operand"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.pick"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 99
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 109
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "위치를 정하는 식",
+            "expected": "위치를 정하는 식",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 5,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:at",
+              "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "end_byte": 98,
+              "expression": "input.readings",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 84
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:at"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.readings"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 84
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 98
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 6,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:at",
+              "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "end_byte": 109,
+              "expression": "input.pick",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 99
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:at"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.pick"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 99
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 109
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 7,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:at",
+              "body_sha256": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768",
+              "end_byte": 59,
+              "expression": "input.readings",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 45
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:at"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.readings"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 45
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 59
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 8,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:take",
+              "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+              "end_byte": 117,
+              "expression": "input.pick",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 107
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:take"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.pick"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 107
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 117
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 9,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:take",
+              "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+              "end_byte": 99,
+              "expression": "input.readings[시작:끝]",
+              "kind": "slice_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 73
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:take"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "slice_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.readings[시작:끝]"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 73
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 99
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "구간 읽기",
+            "expected": "구간 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 10,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:take",
+              "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+              "end_byte": 87,
+              "expression": "input.readings",
+              "kind": "access_base",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 73
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:take"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "access_base"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.readings"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 73
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 87
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "읽을 목록",
+            "expected": "읽을 목록",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 11,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:take",
+              "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+              "end_byte": 98,
+              "expression": "끝",
+              "kind": "slice_high",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 95
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:take"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "slice_high"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "끝"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 95
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 98
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "구간 끝",
+            "expected": "구간 끝",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 12,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:take",
+              "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+              "end_byte": 94,
+              "expression": "시작",
+              "kind": "slice_low",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 88
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:take"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "slice_low"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "시작"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 88
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 94
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "구간 시작",
+            "expected": "구간 시작",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 13,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:take",
+              "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+              "end_byte": 87,
+              "expression": "input.readings",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 73
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:take"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.readings"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 73
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 87
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 14,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:take",
+              "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+              "end_byte": 47,
+              "expression": "input.upper",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 36
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:take"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.upper"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 36
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 47
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      },
+      {
+        "case_index": 15,
+        "deliveries": [
+          {
+            "activity_id": "urn:accessexplanation8933:explain",
+            "input": {
+              "activity_id": "urn:access8887:take",
+              "body_sha256": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d",
+              "end_byte": 24,
+              "expression": "input.lower",
+              "kind": "field_access",
+              "root_id": "return:7:36:",
+              "snippet_truncated": false,
+              "start_byte": 13
+            },
+            "input_fields": [
+              {
+                "id": "urn:accessexplanation8933:root",
+                "name": "root_id",
+                "value": "return:7:36:"
+              },
+              {
+                "id": "urn:accessexplanation8933:activity",
+                "name": "activity_id",
+                "value": "urn:access8887:take"
+              },
+              {
+                "id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "value": "field_access"
+              },
+              {
+                "id": "urn:accessexplanation8933:expression",
+                "name": "expression",
+                "value": "input.lower"
+              },
+              {
+                "id": "urn:accessexplanation8933:body",
+                "name": "body_sha256",
+                "value": "sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d"
+              },
+              {
+                "id": "urn:accessexplanation8933:start",
+                "name": "start_byte",
+                "value": 13
+              },
+              {
+                "id": "urn:accessexplanation8933:end",
+                "name": "end_byte",
+                "value": 24
+              },
+              {
+                "id": "urn:accessexplanation8933:truncated",
+                "name": "snippet_truncated",
+                "value": false
+              }
+            ],
+            "actual": "필드 읽기",
+            "expected": "필드 읽기",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          },
+          {
+            "site_index": 3,
+            "value": false
+          },
+          {
+            "site_index": 4,
+            "value": false
+          },
+          {
+            "site_index": 5,
+            "value": false
+          },
+          {
+            "site_index": 6,
+            "value": false
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 16,
+    "finite_total": 16,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:3b41bc5206f1c533d67b4077830e89e93f4c18c6651a86b8c316b853c346b758",
+        "root_activity_id": "urn:accessexplanation8933:explain",
+        "activity_id": "urn:accessexplanation8933:explain",
+        "expression": "input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"index_operand\"",
+        "projection_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+        "start": 1269,
+        "end": 1367,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:accessexplanation8933:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+            "start_byte": 807,
+            "end_byte": 1368
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+          "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+          "start_byte": 892,
+          "end_byte": 923,
+          "decoded_start": 3,
+          "decoded_end": 32,
+          "source_ordinal": 0,
+          "expression": "input.kind == \"index_operand\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                "start_byte": 318,
+                "end_byte": 389
+              },
+              "entity_id": "urn:accessexplanation8933:access",
+              "field_id": "urn:accessexplanation8933:kind",
+              "name": "kind"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:8e2ee88b13838fc3261adb09e38bcba59d75a6e441b733540d2c56e7377c54d0",
+        "root_activity_id": "urn:accessexplanation8933:explain",
+        "activity_id": "urn:accessexplanation8933:explain",
+        "expression": "input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_low\"",
+        "projection_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+        "start": 1412,
+        "end": 1506,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:accessexplanation8933:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+            "start_byte": 807,
+            "end_byte": 1368
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+          "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+          "start_byte": 967,
+          "end_byte": 994,
+          "decoded_start": 74,
+          "decoded_end": 99,
+          "source_ordinal": 1,
+          "expression": "input.kind == \"slice_low\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                "start_byte": 318,
+                "end_byte": 389
+              },
+              "entity_id": "urn:accessexplanation8933:access",
+              "field_id": "urn:accessexplanation8933:kind",
+              "name": "kind"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:1e37dc00cd74609985716ec4c196e46028acf068630ebd91d93e54f8166a380a",
+        "root_activity_id": "urn:accessexplanation8933:explain",
+        "activity_id": "urn:accessexplanation8933:explain",
+        "expression": "input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_high\"",
+        "projection_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+        "start": 1541,
+        "end": 1636,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:accessexplanation8933:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+            "start_byte": 807,
+            "end_byte": 1368
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+          "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+          "start_byte": 1028,
+          "end_byte": 1056,
+          "decoded_start": 131,
+          "decoded_end": 157,
+          "source_ordinal": 2,
+          "expression": "input.kind == \"slice_high\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                "start_byte": 318,
+                "end_byte": 389
+              },
+              "entity_id": "urn:accessexplanation8933:access",
+              "field_id": "urn:accessexplanation8933:kind",
+              "name": "kind"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:ebbc3191fff6f64644fde510396308b9757f5a400521648d8ce3f2025b883a0c",
+        "root_activity_id": "urn:accessexplanation8933:explain",
+        "activity_id": "urn:accessexplanation8933:explain",
+        "expression": "input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_max\"",
+        "projection_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+        "start": 1668,
+        "end": 1762,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:accessexplanation8933:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+            "start_byte": 807,
+            "end_byte": 1368
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+          "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+          "start_byte": 1087,
+          "end_byte": 1114,
+          "decoded_start": 186,
+          "decoded_end": 211,
+          "source_ordinal": 3,
+          "expression": "input.kind == \"slice_max\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                "start_byte": 318,
+                "end_byte": 389
+              },
+              "entity_id": "urn:accessexplanation8933:access",
+              "field_id": "urn:accessexplanation8933:kind",
+              "name": "kind"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:09238ecc114162129d3f4f127fc410d752e5e60cbd90cfd93c191c24717de561",
+        "root_activity_id": "urn:accessexplanation8933:explain",
+        "activity_id": "urn:accessexplanation8933:explain",
+        "expression": "input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"index_access\"",
+        "projection_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+        "start": 1804,
+        "end": 1901,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:accessexplanation8933:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+            "start_byte": 807,
+            "end_byte": 1368
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+          "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+          "start_byte": 1155,
+          "end_byte": 1185,
+          "decoded_start": 250,
+          "decoded_end": 278,
+          "source_ordinal": 4,
+          "expression": "input.kind == \"index_access\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                "start_byte": 318,
+                "end_byte": 389
+              },
+              "entity_id": "urn:accessexplanation8933:access",
+              "field_id": "urn:accessexplanation8933:kind",
+              "name": "kind"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:f1ea2f16ef50d2655aa3647413c41c763ec7192c16572a84ffe6014dde681d1a",
+        "root_activity_id": "urn:accessexplanation8933:explain",
+        "activity_id": "urn:accessexplanation8933:explain",
+        "expression": "input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"slice_access\"",
+        "projection_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+        "start": 1936,
+        "end": 2033,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:accessexplanation8933:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+            "start_byte": 807,
+            "end_byte": 1368
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+          "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+          "start_byte": 1219,
+          "end_byte": 1249,
+          "decoded_start": 310,
+          "decoded_end": 338,
+          "source_ordinal": 5,
+          "expression": "input.kind == \"slice_access\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                "start_byte": 318,
+                "end_byte": 389
+              },
+              "entity_id": "urn:accessexplanation8933:access",
+              "field_id": "urn:accessexplanation8933:kind",
+              "name": "kind"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:e3aeed089162861b261489cc6473e6dc64435c718edcf4590aa161d23991af01",
+        "root_activity_id": "urn:accessexplanation8933:explain",
+        "activity_id": "urn:accessexplanation8933:explain",
+        "expression": "input.GoooField55720f4dd4b214d300c20108a507718aa0009dbbd20477b8fa12acc5fcd3c641 == \"access_base\"",
+        "projection_sha256": "sha256:8813fbbd2fd6befaf9360db628499c45e9e77d5928f3254c3b18c4dfa2a8d783",
+        "start": 2068,
+        "end": 2164,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:accessexplanation8933:explain",
+            "name": "Explain",
+            "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+            "start_byte": 807,
+            "end_byte": 1368
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+          "body_sha256": "sha256:c06734259ebb7e31ba642f8cd0018fe1978c3451aac9e8f203a135964ab048f4",
+          "start_byte": 1283,
+          "end_byte": 1312,
+          "decoded_start": 370,
+          "decoded_end": 397,
+          "source_ordinal": 6,
+          "expression": "input.kind == \"access_base\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:accessexplanation8933:kind",
+                "name": "kind",
+                "source_sha256": "sha256:ee35132d41cf5075cfa9959c871226fa7529c6a966032818470edd99a36c6b77",
+                "start_byte": 318,
+                "end_byte": 389
+              },
+              "entity_id": "urn:accessexplanation8933:access",
+              "field_id": "urn:accessexplanation8933:kind",
+              "name": "kind"
+            }
+          ]
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 94,
+      "dropped_events": 0,
+      "sha256": "sha256:3074747a6e8a0498cbc56c430d9b14297c223337e42caa68d5519c43d1c41041"
+    },
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 16,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 16,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 708980167,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "saved_input_sha256": "sha256:73f144e4c9615036688f5c2f6fca8bd8f67ba4c699bff64d8d7c9a876d00d684",
+  "source": "package accessexplanation\nnamespace accessexplanation8933\nentity Text id \"urn:gooo:type:string\"\nentity Access id \"urn:accessexplanation8933:access\" fields {\n field root_id id \"urn:accessexplanation8933:root\" type string required one\n field activity_id id \"urn:accessexplanation8933:activity\" type string required one\n field kind id \"urn:accessexplanation8933:kind\" type string required one\n field expression id \"urn:accessexplanation8933:expression\" type string required one\n field body_sha256 id \"urn:accessexplanation8933:body\" type string required one\n field start_byte id \"urn:accessexplanation8933:start\" type integer required one\n field end_byte id \"urn:accessexplanation8933:end\" type integer required one\n field snippet_truncated id \"urn:accessexplanation8933:truncated\" type boolean required one\n}\nactivity Explain(Access) -\u003e Text id \"urn:accessexplanation8933:explain\" computes \"if input.kind == \\\"index_operand\\\" { return \\\"위치를 정하는 식\\\" }; if input.kind == \\\"slice_low\\\" { return \\\"구간 시작\\\" }; if input.kind == \\\"slice_high\\\" { return \\\"구간 끝\\\" }; if input.kind == \\\"slice_max\\\" { return \\\"구간 용량 경계\\\" }; if input.kind == \\\"index_access\\\" { return \\\"원소 읽기\\\" }; if input.kind == \\\"slice_access\\\" { return \\\"구간 읽기\\\" }; if input.kind == \\\"access_base\\\" { return \\\"읽을 목록\\\" }; return \\\"필드 읽기\\\"\"\n",
+  "synthetic_facts": 0
+}

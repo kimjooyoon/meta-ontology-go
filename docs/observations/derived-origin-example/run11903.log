@@ -1,0 +1,5 @@
+=== RUN   TestPackageDerivedOrigin11903
+    package_derived_origin_fresh_test.go:40: source grammar and assembly roundtrip retained; fresh CLI producer3/3; actual derived/template rows6/6 classifications matched; grammar positions exact; no fabricated expression position; read producer0/models0
+--- PASS: TestPackageDerivedOrigin11903 (1.21s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.769s

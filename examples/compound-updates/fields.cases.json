@@ -1,0 +1,81 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "examples/compound:Summarize.input0": {
+          "count": 8,
+          "step": 3,
+          "title": "a",
+          "untouched": 11
+        },
+        "examples/compound:Summarize.input1": true
+      },
+      "expected": {
+        "examples/compound:Summarize": {
+          "count": 8,
+          "step": 3,
+          "title": "a✓",
+          "untouched": 11
+        }
+      }
+    },
+    {
+      "inputs": {
+        "examples/compound:Summarize.input0": {
+          "count": 5,
+          "step": 2,
+          "title": "한글",
+          "untouched": 13
+        },
+        "examples/compound:Summarize.input1": false
+      },
+      "expected": {
+        "examples/compound:Summarize": {
+          "count": 1,
+          "step": 2,
+          "title": "한글✓",
+          "untouched": 13
+        }
+      }
+    },
+    {
+      "inputs": {
+        "examples/compound:Summarize.input0": {
+          "count": -7,
+          "step": 4,
+          "title": "",
+          "untouched": 17
+        },
+        "examples/compound:Summarize.input1": true
+      },
+      "expected": {
+        "examples/compound:Summarize": {
+          "count": -1,
+          "step": 4,
+          "title": "✓",
+          "untouched": 17
+        }
+      }
+    },
+    {
+      "inputs": {
+        "examples/compound:Summarize.input0": {
+          "count": 0,
+          "step": -2,
+          "title": "x",
+          "untouched": 19
+        },
+        "examples/compound:Summarize.input1": false
+      },
+      "expected": {
+        "examples/compound:Summarize": {
+          "count": 0,
+          "step": -2,
+          "title": "x✓",
+          "untouched": 19
+        }
+      }
+    }
+  ]
+}

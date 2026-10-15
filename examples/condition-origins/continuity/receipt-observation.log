@@ -1,0 +1,5 @@
+=== RUN   TestPackageReceiptOriginPresence3233
+    platform_package_receipt_origin_test.go:29: fresh3233: original and absent origins accepted; recorded null, empty, changed origin and unknown member rejected through raw receipt comparison; source preparation only; model0
+--- PASS: TestPackageReceiptOriginPresence3233 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease	0.429s

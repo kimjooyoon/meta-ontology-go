@@ -11,12 +11,19 @@ import (
 )
 
 type recordAssemblyPlan struct {
-	body             preparedBody
-	original         preparedBody
-	spec             *assemblyspec.Spec
-	choices          []RecordValueChoice
-	sites            []recordValueSite
-	dependencySHA256 string
+	sourceFilename          string
+	sourceCarrier           []byte
+	scalar                  *scalarCriteriaPlan
+	effectiveCriteriaInputs []string
+	criteria                []preparedRecordCriterion
+	sourceSHA256            string
+	effectiveCases          []assemblyspec.ValueCase
+	body                    preparedBody
+	original                preparedBody
+	spec                    *assemblyspec.Spec
+	choices                 []RecordValueChoice
+	sites                   []recordValueSite
+	dependencySHA256        string
 }
 
 type recordValueSite struct {
@@ -25,7 +32,9 @@ type recordValueSite struct {
 	choice     RecordValueChoice
 }
 
-func IsRecordAssembly(spec *assemblyspec.Spec) bool { return spec != nil && len(spec.ValueCases) != 0 }
+func IsRecordAssembly(spec *assemblyspec.Spec) bool {
+	return spec != nil && (len(spec.ValueCases) != 0 || spec.Criteria != nil)
+}
 
 // ValidateSourceAssembly checks field alternatives and typed cases before any
 // optional model is loaded. Source IR search validates its grammar and bodies;
@@ -66,8 +75,10 @@ func prepareRecordAssembly(ctx context.Context, filename string, source []byte, 
 		return plan, err
 	}
 	if !IsRecordAssembly(plan.spec) || plan.spec.Seed != "" {
-		return plan, fmt.Errorf("record assembly requires value_case and unseeded bounded selection")
+		return plan, fmt.Errorf("record assembly requires value_case or criteria and unseeded bounded selection")
 	}
+	plan.sourceSHA256 = digest(source)
+	plan.sourceFilename, plan.sourceCarrier = filename, source
 	plan.original, err = prepareActivityBody(filename, source, activity)
 	if err != nil {
 		return plan, err
@@ -80,13 +91,26 @@ func prepareRecordAssembly(ctx context.Context, filename string, source []byte, 
 	if err != nil {
 		return plan, err
 	}
+	if assemblyspec.IsScalarCriteria(plan.spec) {
+		return prepareScalarCriteriaAssembly(ctx, filename, source, activity, plan)
+	}
 	if recordTypeByName(plan.body.records, plan.body.outputType) == nil {
 		return plan, fmt.Errorf("field assembly requires a declared record result")
+	}
+	plan.criteria, err = prepareRecordCriteria(ctx, filename, source, plan.body, plan.spec.Criteria)
+	if err != nil {
+		return plan, err
+	}
+	if err = validateRecordCriteriaInputs(ctx, plan); err != nil {
+		return plan, err
 	}
 	if err = plan.bindSites(); err != nil {
 		return plan, err
 	}
-	if err = validateRecordAssemblyCases(ctx, plan.body.base.source, activity, plan.body.records, plan.spec.ValueCases); err != nil {
+	if err = validateRecordAssemblyCaseGroups(ctx, plan); err != nil {
+		return plan, err
+	}
+	if err = validateRecordObservationProbes(ctx, plan); err != nil {
 		return plan, err
 	}
 	if err = plan.validateAlternatives(ctx); err != nil {
@@ -145,6 +169,9 @@ func (p recordAssemblyPlan) validateSiteSpans() error {
 }
 
 func (p recordAssemblyPlan) candidateBody(mask uint16) (string, error) {
+	if p.scalar != nil {
+		return p.scalar.body(mask)
+	}
 	if int(mask) >= 1<<len(p.sites) {
 		return "", fmt.Errorf("record choice mask exceeds declared alternatives")
 	}
@@ -171,6 +198,12 @@ func (p recordAssemblyPlan) candidate(mask uint16) (generatedRoute, error) {
 	if err != nil {
 		return generatedRoute{}, err
 	}
+	if p.scalar != nil {
+		body, err = rewriteLetDeclarations(body)
+		if err != nil {
+			return generatedRoute{}, err
+		}
+	}
 	return p.body.generateBody(body, preserveRoute)
 }
 
@@ -189,6 +222,10 @@ func (p *recordAssemblyPlan) validateAlternatives(ctx context.Context) error {
 		}
 		fingerprint.WriteString(digest(candidate.source))
 	}
+	for _, criterion := range p.criteria {
+		fingerprint.WriteString(criterion.activityID)
+		fingerprint.WriteString(criterion.goSHA256)
+	}
 	p.dependencySHA256 = digest([]byte(fingerprint.String()))
 	return nil
 }
@@ -196,9 +233,10 @@ func (p *recordAssemblyPlan) validateAlternatives(ctx context.Context) error {
 func recordPickedMask(spec *assemblyspec.Spec) (uint16, error) {
 	var mask uint16
 	for i, pick := range spec.Picked {
-		if pick.Label == "value_second" {
+		first, second := assemblyChoiceLabels(spec.Choices[i].Kind)
+		if pick.Label == second {
 			mask |= 1 << i
-		} else if pick.Label != "value_first" {
+		} else if pick.Label != first {
 			return 0, fmt.Errorf("invalid record field pick")
 		}
 	}
@@ -209,6 +247,18 @@ func recordTypeByName(records []RecordType, name string) *RecordType {
 	for i := range records {
 		if records[i].Name == name || records[i].GoName == name {
 			return &records[i]
+		}
+	}
+	return nil
+}
+
+func validateRecordAssemblyCaseGroups(ctx context.Context, plan recordAssemblyPlan) error {
+	if err := validateRecordAssemblyCases(ctx, plan.body.base.source, plan.body.activity.Name, plan.body.records, plan.spec.ValueCases); err != nil {
+		return err
+	}
+	if len(plan.spec.ValueHoldoutCases) > 0 {
+		if err := validateRecordAssemblyCases(ctx, plan.body.base.source, plan.body.activity.Name, plan.body.records, plan.spec.ValueHoldoutCases); err != nil {
+			return fmt.Errorf("record holdout: %w", err)
 		}
 	}
 	return nil

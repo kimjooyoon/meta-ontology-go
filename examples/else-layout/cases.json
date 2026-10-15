@@ -1,0 +1,93 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "syntax/else-layout:Adjust": {
+          "amount": 17,
+          "enabled": true
+        }
+      },
+      "expected": {
+        "syntax/else-layout:Adjust": 35
+      }
+    },
+    {
+      "inputs": {
+        "syntax/else-layout:Adjust": {
+          "amount": 17,
+          "enabled": false
+        }
+      },
+      "expected": {
+        "syntax/else-layout:Adjust": 23
+      }
+    },
+    {
+      "inputs": {
+        "syntax/else-layout:Adjust": {
+          "amount": 47,
+          "enabled": true
+        }
+      },
+      "expected": {
+        "syntax/else-layout:Adjust": 108
+      }
+    },
+    {
+      "inputs": {
+        "syntax/else-layout:Adjust": {
+          "amount": 47,
+          "enabled": false
+        }
+      },
+      "expected": {
+        "syntax/else-layout:Adjust": 84
+      }
+    },
+    {
+      "inputs": {
+        "syntax/else-layout:Adjust": {
+          "amount": -13,
+          "enabled": true
+        }
+      },
+      "expected": {
+        "syntax/else-layout:Adjust": 5
+      }
+    },
+    {
+      "inputs": {
+        "syntax/else-layout:Adjust": {
+          "amount": -13,
+          "enabled": false
+        }
+      },
+      "expected": {
+        "syntax/else-layout:Adjust": -7
+      }
+    },
+    {
+      "inputs": {
+        "syntax/else-layout:Adjust": {
+          "amount": 34,
+          "enabled": true
+        }
+      },
+      "expected": {
+        "syntax/else-layout:Adjust": 52
+      }
+    },
+    {
+      "inputs": {
+        "syntax/else-layout:Adjust": {
+          "amount": 46,
+          "enabled": false
+        }
+      },
+      "expected": {
+        "syntax/else-layout:Adjust": 52
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "RoundTrip": 12
+      },
+      "expected": {
+        "RoundTrip": true
+      }
+    }
+  ]
+}

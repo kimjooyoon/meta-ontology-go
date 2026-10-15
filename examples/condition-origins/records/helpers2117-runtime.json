@@ -1,0 +1,420 @@
+{
+  "schema": "gooo/body-composition-runtime/v1",
+  "stage": "COMPLETE",
+  "composition_sha256": "sha256:829cb7f688af78613f6250101b6e2515e7aacae8a200b538514958fae9bebc6c",
+  "original_source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+  "selected_source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+  "typed_plan_sha256": "sha256:a1b0b061c46b8b91353b83a4a59169ce3f014b65bd85fe0d421902d08c67365a",
+  "generated_sha256": "sha256:f8f2f08041a91dc8ec8d6f0914c34621fca4e4a9a77d36d71cb08d8863826f56",
+  "driver_sha256": "sha256:eca520bb55626f69f4638ba8f10dd81083a46b478bb2e82352971b98d5d80aa3",
+  "observed_projection_sha256": "sha256:f94928c32b9555285869795947dd18ee22254a0ccffbb4f5e26e8c2129a6dce2",
+  "observed_driver_sha256": "sha256:a5153046b79b60385bd1b7b7a9236429b984ff70c9d6c0d29922163b066e9bef",
+  "runtime_suite_sha256": "sha256:77bc277fef2b45d3d8ee5511691e655706b02dcc6caacf59559c06eeca875bc7",
+  "executable_sha256": "sha256:706bf917c64b0dfef5f6db858733db2350468e58778a5e62b01005286b6f050b",
+  "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+  "go_tool_selection": "explicit",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+  "producer_module": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "(devel)"
+  },
+  "toolchain": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 8864041,
+    "user_ns": 3972000,
+    "system_ns": 2943000,
+    "peak_rss_bytes": 14352384,
+    "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1149375,
+      "wait_ns": 7714666,
+      "deadline_remaining_ns": 59986632541,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 114575625,
+    "user_ns": 128430000,
+    "system_ns": 102508000,
+    "peak_rss_bytes": 88227840,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 815333,
+      "wait_ns": 113760292,
+      "deadline_remaining_ns": 59976629041,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 356639333,
+      "user_ns": 3542000,
+      "system_ns": 6469000,
+      "peak_rss_bytes": 4964352,
+      "stdout_sha256": "sha256:e7e7bfdca8778964f0a09aa36e2343677eab74210b080aa1d2710befd602ffbb",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 908000,
+        "wait_ns": 355731333,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59860612458,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 7608375,
+      "user_ns": 2831000,
+      "system_ns": 3374000,
+      "peak_rss_bytes": 4947968,
+      "stdout_sha256": "sha256:e7e7bfdca8778964f0a09aa36e2343677eab74210b080aa1d2710befd602ffbb",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 2215625,
+        "wait_ns": 5392750,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59503371583,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "helpers2117://first",
+          "input": 8,
+          "actual": 16,
+          "expected": 16,
+          "passed": true
+        },
+        {
+          "activity_id": "helpers2117://second",
+          "producer_id": "helpers2117://first",
+          "input": 16,
+          "actual": 80,
+          "expected": 80,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 2,
+          "value": true
+        },
+        {
+          "site_index": 1,
+          "value": true
+        },
+        {
+          "site_index": 4,
+          "value": true
+        },
+        {
+          "site_index": 3,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "helpers2117://first",
+          "input": 39,
+          "actual": 31,
+          "expected": 31,
+          "passed": true
+        },
+        {
+          "activity_id": "helpers2117://second",
+          "producer_id": "helpers2117://first",
+          "input": 31,
+          "actual": 155,
+          "expected": 155,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        },
+        {
+          "site_index": 2,
+          "value": false
+        },
+        {
+          "site_index": 1,
+          "value": false
+        },
+        {
+          "site_index": 4,
+          "value": true
+        },
+        {
+          "site_index": 3,
+          "value": true
+        }
+      ]
+    },
+    {
+      "case_index": 2,
+      "deliveries": [
+        {
+          "activity_id": "helpers2117://first",
+          "input": -6,
+          "actual": -4,
+          "expected": -4,
+          "passed": true
+        },
+        {
+          "activity_id": "helpers2117://second",
+          "producer_id": "helpers2117://first",
+          "input": -4,
+          "actual": -20,
+          "expected": -20,
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        },
+        {
+          "site_index": 4,
+          "value": true
+        },
+        {
+          "site_index": 3,
+          "value": true
+        }
+      ]
+    }
+  ],
+  "projection_replayed": true,
+  "runtime_replayed": true,
+  "finite_passed": 6,
+  "finite_total": 6,
+  "condition_sites": [
+    {
+      "expression_id": "sha256:225c749ac205d7894c68f21cca0db6e168cee2e0dd6c789fb9ad9d6b8a88005a",
+      "root_activity_id": "helpers2117://first",
+      "activity_id": "helpers2117://first",
+      "expression": "input \u003c 0",
+      "projection_sha256": "sha256:f8f2f08041a91dc8ec8d6f0914c34621fca4e4a9a77d36d71cb08d8863826f56",
+      "start": 130,
+      "end": 139,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "helpers2117://first",
+          "name": "First",
+          "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+          "start_byte": 253,
+          "end_byte": 416
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+        "body_sha256": "sha256:2cd6bdbbbb75f666548e85667c9e2ba9bda737e893945dd3404eda1cca9de8dc",
+        "start_byte": 326,
+        "end_byte": 335,
+        "decoded_start": 3,
+        "decoded_end": 12,
+        "source_ordinal": 0,
+        "expression": "input \u003c 0",
+        "relation": "retained_condition_node"
+      }
+    },
+    {
+      "expression_id": "sha256:75ea36ddbd14c9ff6f152bf2d9ec8ad37bf892b8cb876c5842c082ac3d508fb7",
+      "root_activity_id": "helpers2117://first",
+      "activity_id": "helpers2117://first",
+      "expression": "GoooComposedActivity0Call0(input * 2)",
+      "projection_sha256": "sha256:f8f2f08041a91dc8ec8d6f0914c34621fca4e4a9a77d36d71cb08d8863826f56",
+      "start": 168,
+      "end": 205,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "helpers2117://first",
+          "name": "First",
+          "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+          "start_byte": 253,
+          "end_byte": 416
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+        "body_sha256": "sha256:2cd6bdbbbb75f666548e85667c9e2ba9bda737e893945dd3404eda1cca9de8dc",
+        "start_byte": 361,
+        "end_byte": 376,
+        "decoded_start": 38,
+        "decoded_end": 53,
+        "source_ordinal": 1,
+        "expression": "Gate(input * 2)",
+        "relation": "retained_condition_node"
+      }
+    },
+    {
+      "expression_id": "sha256:a10f3599194ed00aeebe0561e10a04d9c6450942a82e9ee3d0f810a75bc55583",
+      "root_activity_id": "helpers2117://first",
+      "activity_id": "helpers2117://gate",
+      "expression": "input \u003c 41 \u0026\u0026 input \u003e= 0",
+      "projection_sha256": "sha256:f8f2f08041a91dc8ec8d6f0914c34621fca4e4a9a77d36d71cb08d8863826f56",
+      "start": 306,
+      "end": 330,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "helpers2117://gate",
+          "name": "Gate",
+          "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+          "start_byte": 126,
+          "end_byte": 252
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+        "body_sha256": "sha256:743b0ba24d84b0f342bc422d9070b651f94dcdb7789f11eb3a468747ce18c60d",
+        "start_byte": 197,
+        "end_byte": 221,
+        "decoded_start": 3,
+        "decoded_end": 27,
+        "source_ordinal": 0,
+        "expression": "input \u003c 41 \u0026\u0026 input \u003e= 0",
+        "relation": "retained_condition_node"
+      }
+    },
+    {
+      "expression_id": "sha256:e4446c871e7f56a002778a2c5b425e252a696b539c1401f186a141f0518ca613",
+      "root_activity_id": "helpers2117://second",
+      "activity_id": "helpers2117://second",
+      "expression": "GoooComposedActivity1Call0(input + floor)",
+      "projection_sha256": "sha256:f8f2f08041a91dc8ec8d6f0914c34621fca4e4a9a77d36d71cb08d8863826f56",
+      "start": 568,
+      "end": 609,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "helpers2117://second",
+          "name": "Second",
+          "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+          "start_byte": 417,
+          "end_byte": 566
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+        "body_sha256": "sha256:0b65b2d3ebe2dc44445e07424ade74d11623122d6c559c11e1a1ac1630e5ea25",
+        "start_byte": 507,
+        "end_byte": 526,
+        "decoded_start": 18,
+        "decoded_end": 37,
+        "source_ordinal": 0,
+        "expression": "Gate(input + floor)",
+        "relation": "retained_condition_node"
+      }
+    },
+    {
+      "expression_id": "sha256:f65d4c1a868fdae5ae54f2fe12b5619b1d4a5ac028bbf81c929a81df7db99cba",
+      "root_activity_id": "helpers2117://second",
+      "activity_id": "helpers2117://gate",
+      "expression": "input \u003c 41 \u0026\u0026 input \u003e= 0",
+      "projection_sha256": "sha256:f8f2f08041a91dc8ec8d6f0914c34621fca4e4a9a77d36d71cb08d8863826f56",
+      "start": 710,
+      "end": 734,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "helpers2117://gate",
+          "name": "Gate",
+          "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+          "start_byte": 126,
+          "end_byte": 252
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:5cc75b1ab3b72a84dd449686c63e18989c34cb01cd47caa5c6255b25b39f8e92",
+        "body_sha256": "sha256:743b0ba24d84b0f342bc422d9070b651f94dcdb7789f11eb3a468747ce18c60d",
+        "start_byte": 197,
+        "end_byte": 221,
+        "decoded_start": 3,
+        "decoded_end": 27,
+        "source_ordinal": 0,
+        "expression": "input \u003c 41 \u0026\u0026 input \u003e= 0",
+        "relation": "retained_condition_node"
+      }
+    }
+  ],
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 13,
+    "dropped_events": 0,
+    "sha256": "sha256:835cc64e9df7fffc6d441e6ce99afc65e5e0ae8a2653691c1c0e06937316d6b3"
+  },
+  "input_separation": {
+    "status": "UNKNOWN",
+    "reason": "UNCLASSIFIED_INPUTS",
+    "unique_inputs": 3,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 0,
+    "disjoint_cases_passed": 0,
+    "unknown_inputs": 3,
+    "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+  },
+  "model_calls": 0,
+  "elapsed_ns": 505221917,
+  "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+}

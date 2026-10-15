@@ -1,0 +1,433 @@
+{
+  "schema": "gooo/original-source-ci-observation/v1",
+  "pull_request": "https://github.com/kimjooyoon/meta-ontology-go/pull/1578",
+  "source_head": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+  "original_run": 38665499793,
+  "attempt": 1,
+  "workflows": 39,
+  "events": {
+    "pull_request": 38,
+    "push": 1
+  },
+  "conclusions": {
+    "success": 36,
+    "failure": 3
+  },
+  "canonical": {
+    "gofmt": "success",
+    "go test -race": "failure",
+    "Semantic conformance": "failure",
+    "go vet": "success",
+    "go test": "failure",
+    "CI policy": "success"
+  },
+  "root_failure": {
+    "test": "TestCompoundSourceRegistration105341",
+    "expected_historical_total": 112,
+    "current_registered_total": 113,
+    "current_registry_decoded": true,
+    "occurrences": [
+      "Core conformance registry",
+      "canonical unit tests",
+      "canonical race tests",
+      "semantic transformed-source tests",
+      "repository projection logical-module tests"
+    ]
+  },
+  "race_events": {
+    "test": {
+      "run": 8503,
+      "output": 20767,
+      "pass": 8485,
+      "skip": 17,
+      "pause": 2,
+      "cont": 2,
+      "fail": 1
+    },
+    "package": {
+      "start": 431,
+      "output": 676,
+      "pass": 243,
+      "skip": 187,
+      "fail": 1
+    }
+  },
+  "race_warning_count": 0,
+  "downstream_evidence": "canonical CI job go test is missing or mismatched",
+  "downstream_proof": "ARTIFACT_LINEAGE_NOT_FOUND after CI evidence failure",
+  "source_work_budget_ms": 2400000,
+  "current_merge_authority": false,
+  "disposition": "CLOSED_UNMERGED; corrected source receives a new original PR run; no retry or population narrowing",
+  "raw_log_origins": [
+    {
+      "file": "core-conformance.log",
+      "bytes": 2040881,
+      "sha256": "cb3f1b32e45ec4783cd3949866a1e17fd37ae6ffa2ebdc8245110c6dba765ce7",
+      "archive": "core-conformance.log.gz",
+      "archive_bytes": 133077,
+      "archive_sha256": "4be6092f392616856d9d978a6ce20ac8645d6ad5408f6d8ade397deb588e75a0"
+    },
+    {
+      "file": "projection.log",
+      "bytes": 276885,
+      "sha256": "7e7da113f0fb409f85b07c0f84aba0ef4cccfccc38383849c0aebc1657f80fd8",
+      "archive": "projection.log.gz",
+      "archive_bytes": 42170,
+      "archive_sha256": "28659d1dc0b8c4006a9b3b4b9fd24174a9501eeaea1d2719da4fea67da79a252"
+    },
+    {
+      "file": "race.log",
+      "bytes": 13153119,
+      "sha256": "8bbcc8ba0e4263758f1c2f8d232a8bd0772897d96a0a27659a6637cae298a0e7",
+      "archive": "race.log.gz",
+      "archive_bytes": 1263951,
+      "archive_sha256": "593c7c0b812627fef3d00d1ea5cf008ef43dd646488c68e5292ae5eb13bf714a"
+    },
+    {
+      "file": "semantic.log",
+      "bytes": 3184664,
+      "sha256": "66fc9bcfaae4411d81d4d57feb63253e1fd62169db393c073328d24eb1f7484d",
+      "archive": "semantic.log.gz",
+      "archive_bytes": 332704,
+      "archive_sha256": "21a1652c045be6b4599795076bef2150f4ffa50022caac309e4565b715c6e003"
+    },
+    {
+      "file": "unit.log",
+      "bytes": 274983,
+      "sha256": "a7517ad85d2451957408d626f090f8ce2774e90e000427654e6876009023d5cb",
+      "archive": "unit.log.gz",
+      "archive_bytes": 43035,
+      "archive_sha256": "536f11693d5b04b9acafcf221a96db27c5e9f3e43e9ee36b6cbbecf0efa64e3c"
+    },
+    {
+      "file": "evidence.log",
+      "bytes": 219271,
+      "sha256": "98bc7a6ddaa85e0d165cb574c1f1817d5e89afcd8866c80b85b98613557cb063",
+      "archive": "evidence.log.gz",
+      "archive_bytes": 36944,
+      "archive_sha256": "7a0679a43882d7375533a817fbb83915b65aa97bffc78885f7cb4e6f3d71bd4f"
+    },
+    {
+      "file": "proof.log",
+      "bytes": 210112,
+      "sha256": "1e8137c81aa558b79e8b3c46e0800ce0eb58538eb8e541a0894c9c3c98ca427e",
+      "archive": "proof.log.gz",
+      "archive_bytes": 35034,
+      "archive_sha256": "e5257a005f749afe5db220f53dd887aa5b7af26839cec83b6d030d2084759b53"
+    }
+  ],
+  "original_workflows": [
+    {
+      "conclusion": "success",
+      "databaseId": 38665500072,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Compiler self-improvement",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499744,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Transformation effect ledger",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499954,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Public trust surface",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499941,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Self-improvement semantic observation",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499742,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Repair handoff dogfood",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499876,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Symbolic invocation user use case",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665500017,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Native registration common execution",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665500030,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Self-improvement non-executing candidate",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499737,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Metric counterfactual conformance",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665500001,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "CI Plan Use Case",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499745,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Gooo release readiness",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499791,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Self-improvement candidate execution contract",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499856,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Activity cardinality conformance",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665500029,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Integration progress evidence",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499912,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Temporal transition ticket v1",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499966,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Compiler self-improvement adoption",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499703,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Public self-observation continuity",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499818,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Language example experiment",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665500016,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Go package partition remediation",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499816,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Symbolic invocation schema",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499723,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Artifact resolution experiment",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499909,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Dependency review",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499925,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Go vulnerability check",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499859,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Workflow lint",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665500005,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Domain observation example",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499851,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "CI effort observation",
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "databaseId": 38665499701,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Core conformance registry",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499951,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Self-improvement language observation",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499913,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Language value witness",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499858,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Language utility evidence",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499782,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Self-improvement contract",
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "databaseId": 38665499968,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Repository projection conformance",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499914,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Action runtime conformance",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499679,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Self-improvement separate execution grant",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499801,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "EntityFields V1 observation",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499706,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Syntax registration candidate",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665499695,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "OpenTofu released-CLI observation",
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "databaseId": 38665499793,
+      "event": "pull_request",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "CI [PR authoritative]",
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38665494295,
+      "event": "push",
+      "headSha": "2419117869f9b23ef6ba17a2d099b54d35d8477b",
+      "name": "Action runtime conformance",
+      "status": "completed"
+    }
+  ]
+}

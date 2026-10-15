@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
-	"go/scanner"
 	"go/token"
 	"sort"
 
@@ -12,14 +11,24 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func (n workspaceRecordNames) rewriteConstructors(pkg, source string, body bool) (string, error) {
+func (n workspaceRecordNames) rewriteConstructors(pkg, source string, body bool, scopes ...recordConstructorScope) (string, error) {
+	return n.rewriteConstructorsWithEdits(pkg, source, body, scopes, nil)
+}
+
+func (n workspaceRecordNames) rewriteConstructorsWithEdits(pkg, source string, body bool, scopes []recordConstructorScope, edits *[]BodySourceEdit) (string, error) {
 	if source == "" || len(n.canonical) == 0 {
 		return source, nil
 	}
 	prefix, parsed := "", source
+	var mapping bodycodegen.BodySourceMap
 	if body {
 		prefix = "package scoped\nfunc body() {\n"
-		parsed = prefix + recordBodyGoSyntax(source) + "\n}"
+		normalized, sourceMap, err := bodycodegen.NormalizeBodySource(source)
+		if err != nil {
+			return "", err
+		}
+		mapping = sourceMap
+		parsed = prefix + normalized + "\n}"
 	}
 	set := token.NewFileSet()
 	var root ast.Node
@@ -42,18 +51,19 @@ func (n workspaceRecordNames) rewriteConstructors(pkg, source string, body bool)
 		if !ok || err != nil {
 			return err == nil
 		}
-		name, ok := literal.Type.(*ast.Ident)
-		if !ok || !n.known[name.Name] {
-			return true
-		}
-		lowered, visible := n.visible[pkg][name.Name]
-		if !visible || lowered == "" {
-			err = fmt.Errorf("record constructor %q is undeclared or ambiguous in package %q", name.Name, pkg)
+		var lowered string
+		lowered, err = n.constructorTypeName(pkg, literal.Type, scopes)
+		if err != nil {
 			return false
 		}
-		if lowered != name.Name {
-			start := set.Position(name.Pos()).Offset - len(prefix)
-			changes = append(changes, replacement{start, start + len(name.Name), lowered})
+		if lowered != "" {
+			start := set.Position(literal.Type.Pos()).Offset - len(prefix)
+			end := set.Position(literal.Type.End()).Offset - len(prefix)
+			span := mapping.OriginalRange(start, end)
+			start, end = span.Start, span.End
+			if source[start:end] != lowered {
+				changes = append(changes, replacement{start, end, lowered})
+			}
 		}
 		return true
 	})
@@ -62,43 +72,28 @@ func (n workspaceRecordNames) rewriteConstructors(pkg, source string, body bool)
 	}
 	sort.Slice(changes, func(i, j int) bool { return changes[i].start > changes[j].start })
 	for _, change := range changes {
+		if edits != nil {
+			*edits = append(*edits, BodySourceEdit{change.start, change.end, change.name})
+		}
 		source = source[:change.start] + change.name + source[change.end:]
 	}
 	return source, nil
 }
 
-// let and var have the same byte length, preserving original source offsets.
-func recordBodyGoSyntax(body string) string {
-	raw := []byte(body)
-	file := token.NewFileSet().AddFile("computes", -1, len(raw))
-	var scan scanner.Scanner
-	scan.Init(file, raw, nil, scanner.ScanComments)
-	for {
-		pos, kind, literal := scan.Scan()
-		if kind == token.EOF {
-			break
-		}
-		if kind == token.IDENT && literal == "let" {
-			copy(raw[file.Offset(pos):], "var")
-		}
-	}
-	return string(raw)
-}
-
-func (n workspaceRecordNames) rewriteAssembly(pkg string, assembly *syntax.AssemblyDecl) error {
+func (n workspaceRecordNames) rewriteAssembly(pkg string, assembly *syntax.AssemblyDecl, scopes ...recordConstructorScope) error {
 	if assembly == nil {
 		return nil
 	}
 	spec := &assembly.Spec
 	var err error
-	spec.Baseline, err = n.rewriteConstructors(pkg, spec.Baseline, true)
+	spec.Baseline, err = n.rewriteConstructors(pkg, spec.Baseline, true, scopes...)
 	if err != nil {
 		return err
 	}
 	for i := range spec.Choices {
 		choice := &spec.Choices[i]
 		if choice.Kind == "field_value" || choice.Kind == "field_update" {
-			choice.Alternative, err = n.rewriteConstructors(pkg, choice.Alternative, false)
+			choice.Alternative, err = n.rewriteConstructors(pkg, choice.Alternative, false, scopes...)
 			if err != nil {
 				return err
 			}
@@ -108,7 +103,7 @@ func (n workspaceRecordNames) rewriteAssembly(pkg string, assembly *syntax.Assem
 		for i := range spec.FillPlan.Candidates {
 			for j := range spec.FillPlan.Candidates[i].Fills {
 				fill := &spec.FillPlan.Candidates[i].Fills[j]
-				fill.Expression, err = n.rewriteConstructors(pkg, fill.Expression, false)
+				fill.Expression, err = n.rewriteConstructorFill(pkg, fill.HoleID, fill.Expression, scopes)
 				if err != nil {
 					return err
 				}
@@ -118,18 +113,18 @@ func (n workspaceRecordNames) rewriteAssembly(pkg string, assembly *syntax.Assem
 	return nil
 }
 
-func (n workspaceRecordNames) rewriteFillPlan(pkg string, plan bodycodegen.IRBodyFillPlan) (bodycodegen.IRBodyFillPlan, error) {
+func (n workspaceRecordNames) rewriteFillPlan(pkg string, plan bodycodegen.IRBodyFillPlan, scopes ...recordConstructorScope) (bodycodegen.IRBodyFillPlan, error) {
 	plan.Candidates = append([]bodycodegen.IRBodyFillCandidate(nil), plan.Candidates...)
 	for i := range plan.Candidates {
 		candidate := &plan.Candidates[i]
 		var err error
-		candidate.Expression, err = n.rewriteConstructors(pkg, candidate.Expression, false)
+		candidate.Expression, err = n.rewriteConstructorFill(pkg, plan.HoleID, candidate.Expression, scopes)
 		if err != nil {
 			return plan, err
 		}
 		fills := make(map[string]string, len(candidate.Fills))
 		for hole, expression := range candidate.Fills {
-			fills[hole], err = n.rewriteConstructors(pkg, expression, false)
+			fills[hole], err = n.rewriteConstructorFill(pkg, hole, expression, scopes)
 			if err != nil {
 				return plan, err
 			}

@@ -50,7 +50,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: true
@@ -100,7 +100,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: true
@@ -188,7 +188,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: true
@@ -269,7 +269,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
       - uses: actions/download-artifact@v8
@@ -322,7 +322,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
       - name: Download exact meta artifacts
@@ -390,7 +390,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Go 1.27
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: false
@@ -674,7 +674,7 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Set up Go 1.27
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
       - name: Build and observe language syntax scope partition
@@ -900,18 +900,14 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
-      - name: Assert causal workflows use setup-go v7
+      - name: Assert causal workflows use the selected setup-go release
         shell: bash
         run: |
           set -euo pipefail
-          if grep -En '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v[0-6]([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml; then
-            echo 'FAIL_CLOSED: unsupported setup-go action version' >&2
-            exit 1
-          fi
-          grep -Eq '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v7([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml
+          go test ./scripts/action-runtime -run '^TestSetupGoSourceAvailabilityBinding$'
       - name: Download exact platform release receipts
         uses: actions/download-artifact@v8
         with:
@@ -2400,7 +2396,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: true
@@ -2494,7 +2490,7 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Set up Go 1.27
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
       - name: Download exact guarded promotion receipt
@@ -2547,7 +2543,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: false
@@ -2612,7 +2608,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: false
@@ -2692,7 +2688,7 @@ jobs:
           fetch-depth: 1
           path: gomacro
       - name: Set up exact Go
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: false
@@ -2961,7 +2957,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: true
@@ -3004,7 +3000,7 @@ jobs:
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: true
@@ -3033,7 +3029,7 @@ jobs:
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: true
@@ -3072,7 +3068,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
       - name: Bind the declared Go 1.27 toolchain
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
           cache: true

@@ -1,0 +1,133 @@
+{
+  "schema": "gooo/fresh-qualified-field-observation/v1",
+  "producer": {
+    "compiler_base": "c34bae45a8935f398c1be1d35397ab60bb99cd96",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "overlays": [
+      {
+        "path": "internal/packageruntime/bindings.go",
+        "sha256": "4cbb3bed62341a4ed2b9b3e7fd94722414695f707de16b38e58aeb6a5a32c786"
+      },
+      {
+        "path": "internal/packageruntime/compile.go",
+        "sha256": "ff6712e7f5ed98ed449892b6c07e2e9b4a7d7648d38e484372a6a06b5ff299d3"
+      },
+      {
+        "path": "internal/packageruntime/compile_source.go",
+        "sha256": "287057f48897d076e0cb9e275dbfdb6c93277f1c7f6742eb07f2e43dfb10bd73"
+      },
+      {
+        "path": "internal/packageruntime/model.go",
+        "sha256": "f540a21f64312cc738cbe5faa9f32e2e7b01db04046d14eb2b33ead6f4e5db8d"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_decline_test.go",
+        "sha256": "28849ced762fef5c7556cfac3f39b7e5850072e52d8e81b96ecac7885fb5be74"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_profile_test.go",
+        "sha256": "4661b1b855f8dc1b35b7e98301ad65c513ee3818e1bb510b9fcb87469b05583c"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_types_test.go",
+        "sha256": "0473647ac7406ed46b4c9066994c65dda60a73d501f0cc16da4f5ac02fea12e5"
+      },
+      {
+        "path": "internal/packageruntime/source_field_types.go",
+        "sha256": "0a398384b4f3fa0a95606c4a14b07e400075dc65c0f8e2dcdb6a77d693c39eef"
+      },
+      {
+        "path": "internal/packageruntime/source_local_bindings.go",
+        "sha256": "4b0f0eea3ba081acb29bdce379815bd603ee5b2a44432779ba3081095390b1bb"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/program.go",
+        "sha256": "d3266a8fd45971ba3b388676cdf31dfaccaa04ffa0c8671e32fe0226f79a5eaa"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_cross_file_test.go",
+        "sha256": "462898fafdbfd6229d4312c9a1ef24152e84bc54a20a81dfb7fd3581a43d8403"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_module_test.go",
+        "sha256": "59dbd95e7cfafb30ca24548226587e24ff74eb4f8823d81a3c157d52725e4881"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_native_test.go",
+        "sha256": "987afad829afa16aeecce69e90d776a0c5d50473cd0d3f88eefa98da507e0291"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_transport_test.go",
+        "sha256": "406c936002cdafcc789f981e20b2be17df4e61505746012c65c6f7ea41783298"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_values_test.go",
+        "sha256": "81cd6d87ec76eb2dc4db7782a529c27da976538ec34d92ba677a1de4a00f2abd"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "sha256": "cab84a6189981e28bbf35a8dff1823a589233162460f81f3b4646a78119061a2"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/scalar_type_names.go",
+        "sha256": "3d86e5dcba129a5c05275a2c770c4b13674e2c54b29639a29d85552c7f302e0b"
+      },
+      {
+        "path": "internal/syntax/entity_fields_parser_part02.go",
+        "sha256": "34896893ea66c445c874b30c88d6c9898dfaa5e53cfe693062ecb87db319350d"
+      },
+      {
+        "path": "internal/syntax/format_part03.go",
+        "sha256": "64d42fd548d90959876e5dc5c1a7dee22f230d02e445a520bd17e06d1711f2c7"
+      }
+    ],
+    "scope": "distinct field270 threshold31 native scalar aliases and cross-file local binding; original source/model/test cohorts not repeated",
+    "created_at": "2026-10-13T05:44:52.230082+00:00"
+  },
+  "outcome": "PASS",
+  "observation": {
+    "activity_outputs": 6,
+    "canonical_field_types": {
+      "urn:field270:amount": "urn:gooo:type:integer",
+      "urn:field270:eligible": "urn:gooo:type:boolean",
+      "urn:field270:note": "urn:gooo:type:string"
+    },
+    "cross_file_bindings": 1,
+    "finite_passed": 6,
+    "finite_total": 6,
+    "formatted_qualified_spelling": true,
+    "input_cases": 3,
+    "input_unchanged": true,
+    "interface_fields": 3,
+    "model_calls": 0,
+    "runtime_replayed": true,
+    "same_named_scalar_ids": {
+      "urn:gooo:type:boolean": "GoooEntity522c451e5e272357282b4d751c941a3963e66737edb3d04293cf016e612d24fa",
+      "urn:gooo:type:integer": "GoooEntity719fdfeae2e21d4334b7c2951742168fec46b6460c55989830891db372b9a2d4"
+    },
+    "source_reference_total": 3,
+    "source_references": 3,
+    "source_sha256": "sha256:a6cddda07a5fbc531e6da9da2920883edf203d6d88bf6dd8deaf51ab3705e10b"
+  },
+  "execution": "32998 consumed_closed_0",
+  "earlier_failures": [
+    {
+      "directory": "original-field-observation",
+      "execution": "30792 consumed_closed_1"
+    },
+    {
+      "directory": "distinct-module-observation",
+      "execution": "21665 consumed_closed_1"
+    },
+    {
+      "directory": "distinct-values-observation",
+      "execution": "93059 consumed_closed_1"
+    },
+    {
+      "directory": "distinct-transport-observation",
+      "execution": "31362 consumed_closed_1_with_one_individual_negative_profile_PASS"
+    }
+  ],
+  "historical_replays": 0,
+  "training_runs": 0
+}

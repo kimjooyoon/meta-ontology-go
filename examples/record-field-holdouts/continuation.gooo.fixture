@@ -1,0 +1,17 @@
+package staged
+namespace staged
+entity Integer id "staged://integer"
+entity Box id "staged://box" fields { field value id "staged://box/value" type integer required one }
+activity Seed(Integer) -> Box id "staged://seed" computes "return Box{value: input}" assembling {
+ choice "increment" field_value at "0" alternative "input + 1" intent "Add one."
+ value_case "[17]" -> "{\"value\":18}"
+ holdout_value_case "[29]" -> "{\"value\":30}"
+ attempts "2"
+}
+activity Wrap(Integer) -> Box id "staged://wrap" computes "let next = Seed(input); return Box{value: next.value * 2}" assembling {
+ choice "double" field_value at "0" alternative "(next.value + 1) * 2" intent "Double the selected helper result."
+ value_case "[17]" -> "{\"value\":36}"
+ holdout_value_case "[29]" -> "{\"value\":60}"
+ attempts "2"
+}
+activity Main(Integer) -> Integer id "staged://main" computes "let result = Wrap(input); return result.value"

@@ -1,0 +1,2 @@
+# github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution
+/private/tmp/gooo-length-assembly-origin-20261014/capacity22681/source/internal/bodyexecution/composition_field_function_nodes.go:16:34: cannot use value (variable of interface type ast.Node) as ast.Expr value in argument to p.collectLocalRecordWrite: ast.Node does not implement ast.Expr (missing method exprNode)

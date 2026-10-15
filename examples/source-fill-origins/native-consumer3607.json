@@ -1,0 +1,1987 @@
+{
+  "actual_fact_inputs": 1,
+  "composition": {
+    "schema": "gooo/body-composition/v1",
+    "stage": "COMPLETE",
+    "original_source_sha256": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+    "selected_source_sha256": "sha256:5b1394af0d5d4ff67617b40abb5bc6c2bfd2aa57659db656adae948b9be58803",
+    "generated_sha256": "sha256:d605d9ebd4cd8c9ee35bf92552bafae75ca9513bd9b9f46a5eded1fecc3b0610",
+    "driver_sha256": "sha256:b60505029d66031b47bc2e849d5fb37f04920d4b8ff01c7dd372ab4dc1395ad2",
+    "plan": {
+      "schema": "gooo/body-composition-plan/v1",
+      "typed_plan_sha256": "sha256:4ea8e99d6b67afd147e951ddc5e48abdf58ec8bc9e6bc068682ccb4a161bb5a0",
+      "semantic_fingerprint": "79806546ab38754587f8feb66097f30e3c6f4af9fbfac1bf1686d876b12aef0c",
+      "activities": [
+        {
+          "name": "Quote",
+          "id": "urn:origin3607:quote",
+          "input_type": "Integer",
+          "output_type": "Integer",
+          "input_entity_id": "urn:gooo:type:integer",
+          "output_entity_id": "urn:gooo:type:integer",
+          "go_function": "GoooComposedActivity0",
+          "input_from": -1,
+          "assembling": true
+        }
+      ],
+      "edges": []
+    },
+    "steps": [
+      {
+        "input_source_sha256": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+        "generation": {
+          "report": {
+            "schema": "gooo/body-codegen-report/v3",
+            "decision": "PASS",
+            "activity": "Quote",
+            "activity_id": "urn:origin3607:quote",
+            "input_type": "int64",
+            "output_type": "int64",
+            "plan_sha256": "sha256:5e05a6bc12cbaba0136421aa5f3edebdba40e7623aba09a82d5b58335333e965",
+            "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+            "source_digest": "sha256:870aac9ecaeddcf829fff36658b3ec7488ff692f9cac10bbe28bd1fd782f8f37",
+            "program_digest": "sha256:747238a568fecd392951b7f563e254db536c313dd8746dde39f99255e017de09",
+            "generated_digest": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+            "replay_digest": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+            "route": "preserve",
+            "route_decision": {
+              "schema": "gooo/typed-decision-receipt/v1",
+              "mode": "deterministic_fallback",
+              "selected": "preserve",
+              "fallback_reason": "NO_ALTERNATIVE_ROUTE",
+              "provider": "deterministic",
+              "request_sha256": ""
+            },
+            "route_selection": {
+              "method": "single_eligible_route",
+              "proposed_route": "preserve",
+              "final_route": "preserve"
+            },
+            "route_decision_latency_ms": 0,
+            "body_fill": {
+              "source_origin": {
+                "schema": "gooo/source-fill-origin/v1",
+                "filename": "기원3607.gooo",
+                "view": "assembly_input",
+                "source_sha256": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+                "selected_source_sha256": "sha256:5b1394af0d5d4ff67617b40abb5bc6c2bfd2aa57659db656adae948b9be58803",
+                "selected_body_sha256": "sha256:747238a568fecd392951b7f563e254db536c313dd8746dde39f99255e017de09",
+                "activity_id": "urn:origin3607:quote",
+                "activity_source": {
+                  "start_byte": 82,
+                  "end_byte": 559
+                },
+                "assembly_source": {
+                  "start_byte": 252,
+                  "end_byte": 559
+                },
+                "intent": "금액 규칙의 선택 경로를 남긴다",
+                "intent_source": {
+                  "start_byte": 286,
+                  "end_byte": 329
+                },
+                "candidate_id": "bounded3607",
+                "candidate_source": {
+                  "start_byte": 374,
+                  "end_byte": 385
+                },
+                "plan_sha256": "sha256:06f8f5cd669c4370d27609980f4b20926d49416ef8d889bf824bc89a0b2c21d3",
+                "fragments": [
+                  {
+                    "kind": "retained_template",
+                    "template_decoded": {
+                      "start_byte": 0,
+                      "end_byte": 11
+                    },
+                    "selected_decoded": {
+                      "start_byte": 0,
+                      "end_byte": 11
+                    },
+                    "template_source": {
+                      "start_byte": 153,
+                      "end_byte": 164
+                    },
+                    "selected_source": {
+                      "start_byte": 153,
+                      "end_byte": 164
+                    },
+                    "expression_source": {
+                      "start_byte": 153,
+                      "end_byte": 164
+                    }
+                  },
+                  {
+                    "kind": "declared_candidate",
+                    "hole_id": "seed",
+                    "expression": "input + 29",
+                    "template_decoded": {
+                      "start_byte": 11,
+                      "end_byte": 34
+                    },
+                    "selected_decoded": {
+                      "start_byte": 11,
+                      "end_byte": 23
+                    },
+                    "template_source": {
+                      "start_byte": 164,
+                      "end_byte": 187
+                    },
+                    "selected_source": {
+                      "start_byte": 164,
+                      "end_byte": 176
+                    },
+                    "hole_declaration": {
+                      "start_byte": 335,
+                      "end_byte": 346
+                    },
+                    "expression_source": {
+                      "start_byte": 402,
+                      "end_byte": 412
+                    }
+                  },
+                  {
+                    "kind": "retained_template",
+                    "template_decoded": {
+                      "start_byte": 34,
+                      "end_byte": 39
+                    },
+                    "selected_decoded": {
+                      "start_byte": 23,
+                      "end_byte": 28
+                    },
+                    "template_source": {
+                      "start_byte": 187,
+                      "end_byte": 192
+                    },
+                    "selected_source": {
+                      "start_byte": 176,
+                      "end_byte": 181
+                    },
+                    "expression_source": {
+                      "start_byte": 187,
+                      "end_byte": 192
+                    }
+                  },
+                  {
+                    "kind": "declared_candidate",
+                    "hole_id": "open",
+                    "expression": "input \u003c 61",
+                    "template_decoded": {
+                      "start_byte": 39,
+                      "end_byte": 62
+                    },
+                    "selected_decoded": {
+                      "start_byte": 28,
+                      "end_byte": 40
+                    },
+                    "template_source": {
+                      "start_byte": 192,
+                      "end_byte": 215
+                    },
+                    "selected_source": {
+                      "start_byte": 181,
+                      "end_byte": 193
+                    },
+                    "hole_declaration": {
+                      "start_byte": 349,
+                      "end_byte": 360
+                    },
+                    "expression_source": {
+                      "start_byte": 427,
+                      "end_byte": 437
+                    }
+                  },
+                  {
+                    "kind": "retained_template",
+                    "template_decoded": {
+                      "start_byte": 62,
+                      "end_byte": 97
+                    },
+                    "selected_decoded": {
+                      "start_byte": 40,
+                      "end_byte": 75
+                    },
+                    "template_source": {
+                      "start_byte": 215,
+                      "end_byte": 250
+                    },
+                    "selected_source": {
+                      "start_byte": 193,
+                      "end_byte": 228
+                    },
+                    "expression_source": {
+                      "start_byte": 215,
+                      "end_byte": 250
+                    }
+                  }
+                ]
+              },
+              "schema": "gooo/body-codegen-ir-fill-plan/v2",
+              "original_source_digest": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+              "intent": "금액 규칙의 선택 경로를 남긴다",
+              "hole_id": "seed,open",
+              "hole_token": "__GOOO_BODY_HOLE_seed__",
+              "ir_plan_sha256": "sha256:06f8f5cd669c4370d27609980f4b20926d49416ef8d889bf824bc89a0b2c21d3",
+              "proposed_candidate_id": "bounded3607",
+              "proposed_accuracy_percent": 100,
+              "selected_candidate_id": "bounded3607",
+              "selected_expression": "seed=input + 29; open=input \u003c 61",
+              "hole_fills": [
+                {
+                  "hole_id": "seed",
+                  "expression": "input + 29"
+                },
+                {
+                  "hole_id": "open",
+                  "expression": "input \u003c 61"
+                }
+              ],
+              "best_candidate_id": "bounded3607",
+              "best_candidate_accuracy_percent": 100,
+              "selection_regret_percentage_points": 0,
+              "selection_adjustment": "proposal_retained",
+              "decision": {
+                "schema": "gooo/typed-decision-receipt/v1",
+                "mode": "deterministic_fallback",
+                "selected": "bounded3607",
+                "fallback_reason": "NOT_CONFIGURED",
+                "provider": "deterministic",
+                "request_sha256": "sha256:e590f7fed8f7d49e8e8de21da1e6ea2d1bdbb523202b09670cc74b0800a50942"
+              },
+              "candidate_scores": [
+                {
+                  "id": "bounded3607",
+                  "expression": "seed=input + 29; open=input \u003c 61",
+                  "typecheck_passed": true,
+                  "test_cases_passed": 2,
+                  "test_cases_total": 2,
+                  "accuracy_percent": 100
+                },
+                {
+                  "id": "other3607",
+                  "expression": "seed=input + 3; open=input \u003c 9",
+                  "typecheck_passed": true,
+                  "test_cases_passed": 1,
+                  "test_cases_total": 2,
+                  "accuracy_percent": 50
+                }
+              ],
+              "behavioral_probes": {
+                "schema": "gooo/ir-body-fill-behavioral-probe/v1",
+                "probe_inputs": [
+                  18,
+                  20,
+                  44,
+                  45,
+                  46,
+                  70,
+                  72
+                ],
+                "probe_profile_sha256": "sha256:f928a3e0f0b41ab85d319dc402df2b78f868ae6374bb5f68ed1b395498ee19f5",
+                "candidate_profiles": [
+                  {
+                    "candidate_id": "bounded3607",
+                    "outputs": [
+                      47,
+                      49,
+                      73,
+                      74,
+                      75,
+                      53,
+                      55
+                    ]
+                  },
+                  {
+                    "candidate_id": "other3607",
+                    "outputs": [
+                      1,
+                      3,
+                      27,
+                      28,
+                      29,
+                      53,
+                      55
+                    ]
+                  }
+                ],
+                "probe_inputs_total": 7,
+                "probe_inputs_omitted": 0,
+                "candidate_count": 2,
+                "candidate_runs_completed": 2,
+                "candidate_runs_failed": 0,
+                "candidate_pairs_distinguished": 1,
+                "candidate_pairs_evaluated": 1,
+                "candidate_pairs_total": 1,
+                "candidate_pair_distinguishability_percent": 100,
+                "probe_inputs_with_disagreement": 5,
+                "scope": "synthetic integer inputs derived only from training inputs with declared holdout inputs excluded; candidate outputs have no expected-value oracle and measure behavioral distinctions, not intent or correctness"
+              },
+              "test_suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+              "test_cases_passed": 2,
+              "test_cases_total": 2,
+              "functional_accuracy_percent": 100,
+              "holdout_cases_passed": 0,
+              "holdout_cases_total": 0,
+              "holdout_accuracy_percent": null,
+              "local_model_predictions": 0,
+              "external_provider_calls": 0,
+              "external_provider_calls_known": true,
+              "evaluator": "gooo/bodycodegen-int64-ast-interpreter/v2",
+              "selected_case_results": [
+                {
+                  "input": 19,
+                  "expected": 48,
+                  "actual": 48,
+                  "passed": true
+                },
+                {
+                  "input": 71,
+                  "expected": 54,
+                  "actual": 54,
+                  "passed": true
+                }
+              ],
+              "accuracy_scope": "exact observed accuracy over the declared finite test suite; not a full-domain proof",
+              "timing": {
+                "ir_plan_build_ms": 0.44325,
+                "behavioral_probe_ms": 0.075125,
+                "provider_decision_ms": 0.009459,
+                "laya_decision_ms": 0,
+                "tiny_decision_ms": 0,
+                "final_emission_ms": 0.354625,
+                "total_ms": 0.900916,
+                "execution_model": "synchronous_sequential_no_background_codegen_goroutines",
+                "decision_stage": "after_typed_ir_plan_training_scores_and_behavior_probes_before_final_emission"
+              },
+              "local_calls": {
+                "schema": "gooo/local-call-inputs/v1",
+                "status": "RECORDED",
+                "evaluations": [
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                    "activity_id": "urn:origin3607:quote",
+                    "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                    "phase": "fill-training",
+                    "candidate_id": "bounded3607",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 2,
+                    "cases_completed": 2,
+                    "calls": []
+                  },
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:937b096f3a1f82c02f86c5de82747331cb16e4656def19347ed841d4f8157167",
+                    "activity_id": "urn:origin3607:quote",
+                    "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                    "phase": "fill-training",
+                    "candidate_id": "other3607",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 2,
+                    "cases_completed": 2,
+                    "calls": []
+                  },
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                    "activity_id": "urn:origin3607:quote",
+                    "suite_sha256": "sha256:ed871710ccc094bbf40f6a3d72e4732d3852026e9aee0aa5112d2b4f6ec44010",
+                    "phase": "fill-probe",
+                    "candidate_id": "bounded3607",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 7,
+                    "cases_completed": 7,
+                    "calls": []
+                  },
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:937b096f3a1f82c02f86c5de82747331cb16e4656def19347ed841d4f8157167",
+                    "activity_id": "urn:origin3607:quote",
+                    "suite_sha256": "sha256:ed871710ccc094bbf40f6a3d72e4732d3852026e9aee0aa5112d2b4f6ec44010",
+                    "phase": "fill-probe",
+                    "candidate_id": "other3607",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 7,
+                    "cases_completed": 7,
+                    "calls": []
+                  },
+                  {
+                    "schema": "gooo/local-call-inputs/v1",
+                    "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                    "activity_id": "urn:origin3607:quote",
+                    "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                    "phase": "fill-selected-training",
+                    "candidate_id": "bounded3607",
+                    "status": "RECORDED",
+                    "evaluation_completed": true,
+                    "cases_started": 2,
+                    "cases_completed": 2,
+                    "calls": []
+                  }
+                ]
+              }
+            },
+            "body_conditions": [
+              {
+                "activity_id": "urn:origin3607:quote",
+                "native_ordinal": 0,
+                "source_ordinal": 0,
+                "body_sha256": "sha256:747238a568fecd392951b7f563e254db536c313dd8746dde39f99255e017de09",
+                "decoded_start": 28,
+                "decoded_end": 40,
+                "expression": "(input \u003c 61)",
+                "relation": "retained_condition_node"
+              }
+            ],
+            "candidate_routes": [
+              "preserve"
+            ],
+            "equivalence_rule": "source-shape-preserving-v1",
+            "source_constructs": 4,
+            "lowered_constructs": 4,
+            "source_semantic_units": 17,
+            "lowered_semantic_units": 17,
+            "completeness_percent": 100,
+            "route_equivalence": {
+              "schema": "gooo/body-codegen-route-equivalence/v1",
+              "decision": "PASS",
+              "method": "canonical_control_flow_form/v2",
+              "rule": "source-shape-preserving-v1",
+              "source_semantic_digest": "sha256:9ea4d78afb7e2ecf32d2f58632f6eef923914df9bac42a42802ffa4c296bff46",
+              "generated_semantic_digest": "sha256:9ea4d78afb7e2ecf32d2f58632f6eef923914df9bac42a42802ffa4c296bff46",
+              "equivalent": true,
+              "scope": "typechecked, terminating, side-effect-free body-codegen profile; not a proof of unstated user intent"
+            },
+            "typecheck_passed": true,
+            "deterministic_replay": true,
+            "repository_writes": 0,
+            "unsupported_constructs": "calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
+            "completeness_receipt": {
+              "schema": "gooo/metaprogramming-completeness-receipt/v2",
+              "profile_id": "gooo/body-codegen-pure-v1",
+              "decision": "PROGRESS_WITHIN_DECLARED_FIXTURE_SCOPE",
+              "decision_basis": "declaration, generation, source-unit coverage, route equivalence, typecheck, replay, route protocol, provenance, and zero repository writes define the scoped code-generation core; body-fill additionally requires declared-suite functional accuracy; UNKNOWN dimensions remain explicit and are never aggregated",
+              "scope": {
+                "allowed_investment": "compiler-controlled assembly from declared expression candidates, measured finite-suite scores, and an optional Laya proposal; no human approval or authorization is required",
+                "boundary": {
+                  "excluded_effects": [
+                    "generated code execution",
+                    "repository mutation",
+                    "external authority"
+                  ],
+                  "non_authorizing": true,
+                  "non_executing": true
+                },
+                "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+                "decision_mode": "deterministic_fallback",
+                "decision_provider": "deterministic",
+                "domain_scope": "one pure typed Gooo activity body in the closed scalar or declared-record body-codegen profile",
+                "excluded_scope": [
+                  "unstated natural-language intent",
+                  "independently sourced production workflows",
+                  "generated runtime behavior",
+                  "unrestricted Gooo body syntax",
+                  "route clarity or utility"
+                ],
+                "execution_environment": "darwin/arm64",
+                "input_type": "int64",
+                "laya_mode": "deterministic_fallback",
+                "laya_provider": "deterministic",
+                "observed_system_cost": {
+                  "human_actions": 0,
+                  "repository_writes": 0
+                },
+                "output_type": "int64",
+                "plan_sha256": "sha256:5e05a6bc12cbaba0136421aa5f3edebdba40e7623aba09a82d5b58335333e965",
+                "receipt_declaration": {
+                  "declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "generated_declaration_sha256": "c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                  "projection_profile": "gooo/receipt-structure-projection/v1",
+                  "schema": "gooo/metaprogramming-completeness-receipt/v2"
+                },
+                "system_budget": {
+                  "maximum_human_actions": 0,
+                  "maximum_repository_writes": 0
+                },
+                "toolchain": "go1.27.2"
+              },
+              "core_dimensions": [
+                "body_fill_candidate_probe_coverage",
+                "declaration_coverage",
+                "declared_suite_functional_accuracy",
+                "generation_coverage",
+                "internal_replay_coverage",
+                "provenance_integrity",
+                "receipt_schema_binding",
+                "repository_write_boundary",
+                "route_choice_protocol",
+                "route_semantic_equivalence",
+                "source_ast_coverage",
+                "typecheck_coverage"
+              ],
+              "dimensions": [
+                {
+                  "id": "declaration_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "stable activity declarations",
+                  "reason": "Counts the requested activity only when it resolves to a stable semantic ID.",
+                  "evidence": [
+                    "source_digest:sha256:870aac9ecaeddcf829fff36658b3ec7488ff692f9cac10bbe28bd1fd782f8f37",
+                    "activity_id:urn:origin3607:quote"
+                  ]
+                },
+                {
+                  "id": "generation_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated Go functions",
+                  "reason": "Measures whether this accepted activity produced a digest-bound Go projection.",
+                  "evidence": [
+                    "generated_digest:sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                    "report decision:PASS"
+                  ]
+                },
+                {
+                  "id": "source_ast_coverage",
+                  "status": "PASS",
+                  "numerator": 17,
+                  "denominator": 17,
+                  "unit": "source semantic units lowered",
+                  "reason": "Counts supported source-body units represented in the selected Go lowering; it does not estimate unstated intent.",
+                  "evidence": [
+                    "source_semantic_units",
+                    "lowered_semantic_units"
+                  ]
+                },
+                {
+                  "id": "route_semantic_equivalence",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source/generated route pairs",
+                  "reason": "Uses the compiler's closed structural equivalence witness for the selected route.",
+                  "evidence": [
+                    "route_equivalence.schema:gooo/body-codegen-route-equivalence/v1",
+                    "route_equivalence.rule:source-shape-preserving-v1",
+                    "source_semantic_digest:sha256:9ea4d78afb7e2ecf32d2f58632f6eef923914df9bac42a42802ffa4c296bff46",
+                    "generated_semantic_digest:sha256:9ea4d78afb7e2ecf32d2f58632f6eef923914df9bac42a42802ffa4c296bff46"
+                  ]
+                },
+                {
+                  "id": "typecheck_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "generated functions accepted by Go type checking",
+                  "reason": "Counts the generated function only after the compiler's type checker accepts it.",
+                  "evidence": [
+                    "typecheck_passed"
+                  ]
+                },
+                {
+                  "id": "internal_replay_coverage",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "deterministic compiler emission replays",
+                  "reason": "Requires replayed generated bytes to match the selected output digest.",
+                  "evidence": [
+                    "generated_digest:sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                    "replay_digest:sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258"
+                  ]
+                },
+                {
+                  "id": "route_choice_protocol",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "selected routes in the compiler-declared candidate set",
+                  "reason": "The selected lowering must be a route the compiler declared eligible for this source shape.",
+                  "evidence": [
+                    "candidate_routes",
+                    "selected_route:preserve"
+                  ]
+                },
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "numerator": 7,
+                  "denominator": 8,
+                  "unit": "source, body, output, replay, semantic-ID, and compiler-revision bindings",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "evidence": [
+                    "source_digest:sha256:870aac9ecaeddcf829fff36658b3ec7488ff692f9cac10bbe28bd1fd782f8f37",
+                    "program_digest:sha256:747238a568fecd392951b7f563e254db536c313dd8746dde39f99255e017de09",
+                    "generated_digest:sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                    "replay_digest:sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                    "activity_id:urn:origin3607:quote",
+                    "compiler_source_sha:UNBOUND_LOCAL_SOURCE",
+                    "route_equivalence semantic digests"
+                  ]
+                },
+                {
+                  "id": "receipt_schema_binding",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "source-owned receipt schema and generated structure bindings",
+                  "reason": "The receipt data structure is generated from the embedded Gooo declaration with stable entity and field IDs.",
+                  "evidence": [
+                    "receipt_declaration_sha256:c7059936a1fe6b98d6129e9a90a38d09779e8aaa5575868c703ff8a089d184ae",
+                    "projection_profile:gooo/receipt-structure-projection/v1"
+                  ]
+                },
+                {
+                  "id": "repository_write_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "repository writes",
+                  "reason": "The command emits generated source without mutating the repository.",
+                  "evidence": [
+                    "repository_writes:0"
+                  ]
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated package runtime executions",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "evidence": [
+                    "body-codegen does not run generated Go"
+                  ]
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "observed host permission profiles",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "evidence": [
+                    "host permission profile is not observed"
+                  ]
+                },
+                {
+                  "id": "external_network_boundary",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "runs with no Laya provider request",
+                  "reason": "A deterministic fallback caused by an unconfigured provider or ineligible alternative routes records no Laya decision request; other provider/network scope is not audited.",
+                  "evidence": [
+                    "decision.mode:deterministic_fallback",
+                    "decision.provider:deterministic",
+                    "decision.fallback_reason:NOT_CONFIGURED"
+                  ]
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "eligible IR body-fill decisions",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "evidence": [
+                    "body_fill.candidate_scores",
+                    "body_fill.decision.mode:deterministic_fallback",
+                    "body_fill.decision.request_sha256:sha256:e590f7fed8f7d49e8e8de21da1e6ea2d1bdbb523202b09670cc74b0800a50942",
+                    "body_fill.decision.model_revision:"
+                  ]
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independently sourced real workflows",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "evidence": [
+                    "no independent workflow corpus is bound"
+                  ]
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "generated runtime observations mapped back to source",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "evidence": [
+                    "no source-bound reverse-observation trace"
+                  ]
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete input-domain behavior proofs",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "evidence": [
+                    "generated package execution and an independent domain oracle are not part of this command"
+                  ]
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "independent route-clarity or utility criteria",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "evidence": [
+                    "no independent route-quality oracle"
+                  ]
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "complete process resource profiles",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "evidence": [
+                    "route_decision_latency_ms is recorded",
+                    "CPU and peak RSS are not captured"
+                  ]
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible prior resource receipts",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "evidence": [
+                    "no compatible prior resource receipt"
+                  ]
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "numerator": 0,
+                  "denominator": 1,
+                  "unit": "compatible before/after semantic receipts",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "evidence": [
+                    "no comparable prior semantic receipt"
+                  ]
+                },
+                {
+                  "id": "declared_suite_functional_accuracy",
+                  "status": "PASS",
+                  "numerator": 2,
+                  "denominator": 2,
+                  "unit": "declared test cases matched by the emitted body in the bounded AST evaluator",
+                  "reason": "Measures the declared selection suite only; held-out behavior, generated-package execution, and full-domain correctness require separate evidence.",
+                  "evidence": [
+                    "body_fill.evaluator:gooo/bodycodegen-int64-ast-interpreter/v2",
+                    "body_fill.test_suite_sha256:sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                    "body_fill.ir_plan_sha256:sha256:06f8f5cd669c4370d27609980f4b20926d49416ef8d889bf824bc89a0b2c21d3",
+                    "generated_digest:sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258"
+                  ]
+                },
+                {
+                  "id": "body_fill_candidate_probe_coverage",
+                  "status": "PASS",
+                  "numerator": 14,
+                  "denominator": 14,
+                  "unit": "candidate-by-input observations executed over deterministic training-derived integer probes",
+                  "reason": "This measures automatic diagnostic probe execution coverage; candidate disagreement is not correctness or intent evidence.",
+                  "evidence": [
+                    "body_fill.behavioral_probes.schema:gooo/ir-body-fill-behavioral-probe/v1",
+                    "body_fill.behavioral_probes.profile_sha256:sha256:f928a3e0f0b41ab85d319dc402df2b78f868ae6374bb5f68ed1b395498ee19f5",
+                    "body_fill.behavioral_probes.candidate_runs_failed:0",
+                    "body_fill.behavioral_probes.distinguished_pairs:1",
+                    "body_fill.behavioral_probes.probe_inputs_with_disagreement:5"
+                  ]
+                },
+                {
+                  "id": "provider_execution_accounting",
+                  "status": "PASS",
+                  "numerator": 1,
+                  "denominator": 1,
+                  "unit": "body-fill provider executions classified as local predictions or external calls",
+                  "reason": "Counts local model predictions separately from external provider calls; unknown failed request outcomes remain unknown.",
+                  "evidence": [
+                    "body_fill.local_model_predictions:0",
+                    "body_fill.external_provider_calls:0",
+                    "body_fill.external_provider_calls_known:true"
+                  ]
+                }
+              ],
+              "status_counts": {
+                "FAIL_CLOSED": 0,
+                "PASS": 13,
+                "PROGRESS": 1,
+                "UNKNOWN": 10
+              },
+              "aggregate_completeness_score": null,
+              "first_unresolved": {
+                "id": "provenance_integrity",
+                "status": "PROGRESS",
+                "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+              },
+              "unresolved_claims": [
+                {
+                  "id": "provenance_integrity",
+                  "status": "PROGRESS",
+                  "reason": "Binds the source, selected body, generated and replay digests, stable activity ID, route semantic digests, and an unmodified compiler revision when embedded in the binary.",
+                  "next_operation": "EMBED_AND_BIND_THE_EXACT_COMPILER_SOURCE_REVISION"
+                },
+                {
+                  "id": "execution_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "This command typechecks and replays generated source but does not execute the generated package.",
+                  "next_operation": "EXECUTE_GENERATED_CODE_IN_A_SEPARATE_BOUNDED_RUNNER"
+                },
+                {
+                  "id": "permission_boundary",
+                  "status": "UNKNOWN",
+                  "reason": "The report does not capture the caller's operating-system permission profile.",
+                  "next_operation": "RECORD_THE_HOST_PERMISSION_PROFILE_WITHOUT_GRANTING_AUTHORITY"
+                },
+                {
+                  "id": "laya_decision_observation",
+                  "status": "UNKNOWN",
+                  "reason": "Records a model choice only after Gooo has declared multiple typed candidates and the Laya provider supplied the decision.",
+                  "next_operation": "RUN_AN_ELIGIBLE_CASE_WITH_A_PINNED_LAYA_REVISION"
+                },
+                {
+                  "id": "use_case_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "A single source fixture is not evidence of independent real-world workflow coverage.",
+                  "next_operation": "BIND_INDEPENDENTLY_SOURCED_REAL_WORKFLOW_FIXTURES"
+                },
+                {
+                  "id": "reverse_observation_coverage",
+                  "status": "UNKNOWN",
+                  "reason": "No generated runtime is executed or reverse-mapped by this command.",
+                  "next_operation": "MAP_GENERATED_RUNTIME_OBSERVATIONS_BACK_TO_SOURCE_IDS"
+                },
+                {
+                  "id": "full_domain_semantics",
+                  "status": "UNKNOWN",
+                  "reason": "Typechecking and structural equivalence do not prove behavior over the input domain.",
+                  "next_operation": "EXECUTE_A_DOMAIN_PARTITION_OR_PROOF_FOR_THE_DECLARED_INPUT_TYPE"
+                },
+                {
+                  "id": "route_quality",
+                  "status": "UNKNOWN",
+                  "reason": "Semantic equivalence does not rank readability, clarity, or downstream utility.",
+                  "next_operation": "ADD_AN_INDEPENDENT_ROUTE_CLARITY_OR_UTILITY_ORACLE"
+                },
+                {
+                  "id": "resource_observation",
+                  "status": "UNKNOWN",
+                  "reason": "The report records route-decision latency but not process CPU time or peak memory.",
+                  "next_operation": "CAPTURE_WALL_CPU_AND_PEAK_RSS_FOR_THE_COMPILER_PROCESS"
+                },
+                {
+                  "id": "resource_baseline_comparison",
+                  "status": "UNKNOWN",
+                  "reason": "No same-profile, same-toolchain resource baseline is bound.",
+                  "next_operation": "BIND_A_COMPATIBLE_RESOURCE_BASELINE"
+                },
+                {
+                  "id": "semantic_profile_delta",
+                  "status": "UNKNOWN",
+                  "reason": "No same-plan, same-compiler semantic baseline is bound for regression deltas.",
+                  "next_operation": "BIND_A_COMPATIBLE_BASELINE_AND_REPORT_PER_DIMENSION_DELTAS"
+                }
+              ],
+              "not_claimed": [
+                "user-intent completeness",
+                "real-workflow coverage",
+                "generated runtime behavior",
+                "full-domain semantics",
+                "route quality",
+                "universal language completeness"
+              ],
+              "fail_closed_reason": null
+            }
+          },
+          "source": "package origin3607\n\n//gooo:generated:start id=\"urn:origin3607:quote\" kind=\"activity\"\nfunc Quote(input int64) int64 {\n\tvar base = (input + 29)\n\tif input \u003c 61 {\n\t\treturn base\n\t}\n\treturn input - 17\n}\n\n//gooo:generated:end id=\"urn:origin3607:quote\" kind=\"activity\"\n",
+          "gooo_source": "package origin3607\nnamespace origin3607\nentity Integer id \"urn:gooo:type:integer\"\nactivity Quote(Integer) -\u003e Integer id \"urn:origin3607:quote\" computes \"var base = (input + 29); if (input \u003c 61) { return base }; return input - 17\"\n"
+        }
+      }
+    ],
+    "fill_validations": [
+      {
+        "stage": "BODY_PREFLIGHT",
+        "observation": {
+          "schema": "gooo/source-fill-validation/v1",
+          "source_sha256": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+          "activity": "Quote",
+          "activity_id": "urn:origin3607:quote",
+          "completed": true,
+          "local_calls": {
+            "schema": "gooo/local-call-inputs/v1",
+            "status": "RECORDED",
+            "evaluations": [
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                "phase": "fill-training",
+                "candidate_id": "bounded3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 2,
+                "cases_completed": 2,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:937b096f3a1f82c02f86c5de82747331cb16e4656def19347ed841d4f8157167",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                "phase": "fill-training",
+                "candidate_id": "other3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 2,
+                "cases_completed": 2,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ed871710ccc094bbf40f6a3d72e4732d3852026e9aee0aa5112d2b4f6ec44010",
+                "phase": "fill-probe",
+                "candidate_id": "bounded3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 7,
+                "cases_completed": 7,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:937b096f3a1f82c02f86c5de82747331cb16e4656def19347ed841d4f8157167",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ed871710ccc094bbf40f6a3d72e4732d3852026e9aee0aa5112d2b4f6ec44010",
+                "phase": "fill-probe",
+                "candidate_id": "other3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 7,
+                "cases_completed": 7,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                "phase": "fill-selected-training",
+                "candidate_id": "bounded3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 2,
+                "cases_completed": 2,
+                "calls": []
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stage": "ACTIVITY_GENERATION",
+        "observation": {
+          "schema": "gooo/source-fill-validation/v1",
+          "source_sha256": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+          "activity": "Quote",
+          "activity_id": "urn:origin3607:quote",
+          "completed": true,
+          "local_calls": {
+            "schema": "gooo/local-call-inputs/v1",
+            "status": "RECORDED",
+            "evaluations": [
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                "phase": "fill-training",
+                "candidate_id": "bounded3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 2,
+                "cases_completed": 2,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:937b096f3a1f82c02f86c5de82747331cb16e4656def19347ed841d4f8157167",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                "phase": "fill-training",
+                "candidate_id": "other3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 2,
+                "cases_completed": 2,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ed871710ccc094bbf40f6a3d72e4732d3852026e9aee0aa5112d2b4f6ec44010",
+                "phase": "fill-probe",
+                "candidate_id": "bounded3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 7,
+                "cases_completed": 7,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:937b096f3a1f82c02f86c5de82747331cb16e4656def19347ed841d4f8157167",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ed871710ccc094bbf40f6a3d72e4732d3852026e9aee0aa5112d2b4f6ec44010",
+                "phase": "fill-probe",
+                "candidate_id": "other3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 7,
+                "cases_completed": 7,
+                "calls": []
+              },
+              {
+                "schema": "gooo/local-call-inputs/v1",
+                "generated_sha256": "sha256:429065e6e69afd4f56d78227ddb495e88e2ed4378160a5439c02f68e1372d258",
+                "activity_id": "urn:origin3607:quote",
+                "suite_sha256": "sha256:ee488303e44a4193b54d267a88491da447d9e7dd65027390315f0d349c64b4e3",
+                "phase": "fill-selected-training",
+                "candidate_id": "bounded3607",
+                "status": "RECORDED",
+                "evaluation_completed": true,
+                "cases_started": 2,
+                "cases_completed": 2,
+                "calls": []
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "gooo_source": "package origin3607\nnamespace origin3607\nentity Integer id \"urn:gooo:type:integer\"\nactivity Quote(Integer) -\u003e Integer id \"urn:origin3607:quote\" computes \"var base = (input + 29); if (input \u003c 61) { return base }; return input - 17\"\n",
+    "source": "package main\n\n//gooo:generated:start id=\"urn:origin3607:quote\" kind=\"activity\"\nfunc GoooComposedActivity0(input int64) int64 {\n\tvar base = (input + 29)\n\tif input \u003c 61 {\n\t\treturn base\n\t}\n\treturn input - 17\n}\n\n//gooo:generated:end id=\"urn:origin3607:quote\" kind=\"activity\"\n",
+    "driver_source": "package main\n\nimport (\n\t\"encoding/json\"\n\t\"os\"\n)\n\nfunc main() {\n\tvar in [][1]json.RawMessage\n\tif json.NewDecoder(os.Stdin).Decode(\u0026in) != nil || len(in) \u003e 128 {\n\t\tos.Exit(2)\n\t}\n\tout := make([][1]json.RawMessage, len(in))\n\tfor c, row := range in {\n\t\tvar input0 int64\n\t\tif json.Unmarshal(row[0], \u0026input0) != nil {\n\t\t\tos.Exit(2)\n\t\t}\n\t\tv0 := GoooComposedActivity0(input0)\n\t\tout[c][0], _ = json.Marshal(v0)\n\t}\n\tif json.NewEncoder(os.Stdout).Encode(out) != nil {\n\t\tos.Exit(3)\n\t}\n}\n",
+    "elapsed_ns": 9328417,
+    "scope": "source-declared typed value graph; finite activity selection and independently compiled graph execution are separate observations"
+  },
+  "consumer_runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:5e7fc1d7cbf94ea3c6f6315261f10f3f2e35ad25130ec3c45044d4a66c12ba03",
+    "original_source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+    "selected_source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+    "typed_plan_sha256": "sha256:be76d15066011258e857cb89e21e5d10a10534fb8c8aa4a427b277301daeb03a",
+    "generated_sha256": "sha256:be4d090b46642326ce0d2a0e8c14e3829044f4861ca94a8c3131387edd39fcba",
+    "driver_sha256": "sha256:2cd0f29b57d930d0536f6dc1edf384ef97248a50e769cbd3bc5509bd074c5274",
+    "observed_projection_sha256": "sha256:9c7577352f848635bd73287fac63c8f78e4aeebff854c85d671e8ae3a112e754",
+    "observed_driver_sha256": "sha256:d454ee897a358b8f26a5050e4ddeca5ba4854049ddb72c939bf12833c1fe202c",
+    "runtime_suite_sha256": "sha256:99f5865de31ba5457fb134e9406f651446fdaf39b4969f35fd71879a9165e2cf",
+    "executable_sha256": "sha256:8e619cb45586b9fa10a054089c800dac5d914baafb8ce30c08e57b700c5fa6c1",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "explicit",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8432083,
+      "user_ns": 3778000,
+      "system_ns": 2885000,
+      "peak_rss_bytes": 14532608,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1223083,
+        "wait_ns": 7209000,
+        "deadline_remaining_ns": 59986407458,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 119818750,
+      "user_ns": 124370000,
+      "system_ns": 97194000,
+      "peak_rss_bytes": 87752704,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 888750,
+        "wait_ns": 118930000,
+        "deadline_remaining_ns": 59976753416,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 355981125,
+        "user_ns": 3614000,
+        "system_ns": 6473000,
+        "peak_rss_bytes": 5079040,
+        "stdout_sha256": "sha256:39120dd0fa7aaa6b0ffd5b7d0e23015106122c170eb05609f02951b2442aa9df",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 918916,
+          "wait_ns": 355062209,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59855480541,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 8105375,
+        "user_ns": 2758000,
+        "system_ns": 3483000,
+        "peak_rss_bytes": 4947968,
+        "stdout_sha256": "sha256:39120dd0fa7aaa6b0ffd5b7d0e23015106122c170eb05609f02951b2442aa9df",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 2361542,
+          "wait_ns": 5743833,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59498655333,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:originconsumer3607:describe",
+            "input": {
+              "activity_id": "urn:origin3607:quote",
+              "candidate_id": "bounded3607",
+              "category": "declared_candidate",
+              "filename": "기원3607.gooo",
+              "hole_id": "open",
+              "site_id": "sha256:07ccff6b2d46e4a76db1ddef9d5a51431f70e150cd64e12c7b2d681c740ba4b1",
+              "source_end": 437,
+              "source_sha": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+              "source_start": 427
+            },
+            "input_fields": [
+              {
+                "id": "urn:originconsumer3607:site",
+                "name": "site_id",
+                "value": "sha256:07ccff6b2d46e4a76db1ddef9d5a51431f70e150cd64e12c7b2d681c740ba4b1"
+              },
+              {
+                "id": "urn:originconsumer3607:activity",
+                "name": "activity_id",
+                "value": "urn:origin3607:quote"
+              },
+              {
+                "id": "urn:originconsumer3607:candidate",
+                "name": "candidate_id",
+                "value": "bounded3607"
+              },
+              {
+                "id": "urn:originconsumer3607:hole",
+                "name": "hole_id",
+                "value": "open"
+              },
+              {
+                "id": "urn:originconsumer3607:category",
+                "name": "category",
+                "value": "declared_candidate"
+              },
+              {
+                "id": "urn:originconsumer3607:filename",
+                "name": "filename",
+                "value": "기원3607.gooo"
+              },
+              {
+                "id": "urn:originconsumer3607:source",
+                "name": "source_sha",
+                "value": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1"
+              },
+              {
+                "id": "urn:originconsumer3607:start",
+                "name": "source_start",
+                "value": 427
+              },
+              {
+                "id": "urn:originconsumer3607:end",
+                "name": "source_end",
+                "value": 437
+              }
+            ],
+            "actual": "declared",
+            "expected": "declared",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:originconsumer3607:describe",
+            "input": {
+              "activity_id": "",
+              "candidate_id": "",
+              "category": "derived_grammar",
+              "filename": "",
+              "hole_id": "",
+              "site_id": "",
+              "source_end": 0,
+              "source_sha": "",
+              "source_start": 0
+            },
+            "input_fields": [
+              {
+                "id": "urn:originconsumer3607:site",
+                "name": "site_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:activity",
+                "name": "activity_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:candidate",
+                "name": "candidate_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:hole",
+                "name": "hole_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:category",
+                "name": "category",
+                "value": "derived_grammar"
+              },
+              {
+                "id": "urn:originconsumer3607:filename",
+                "name": "filename",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:source",
+                "name": "source_sha",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:start",
+                "name": "source_start",
+                "value": 0
+              },
+              {
+                "id": "urn:originconsumer3607:end",
+                "name": "source_end",
+                "value": 0
+              }
+            ],
+            "actual": "derived",
+            "expected": "derived",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 2,
+        "deliveries": [
+          {
+            "activity_id": "urn:originconsumer3607:describe",
+            "input": {
+              "activity_id": "",
+              "candidate_id": "",
+              "category": "retained_template",
+              "filename": "",
+              "hole_id": "",
+              "site_id": "",
+              "source_end": 0,
+              "source_sha": "",
+              "source_start": 0
+            },
+            "input_fields": [
+              {
+                "id": "urn:originconsumer3607:site",
+                "name": "site_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:activity",
+                "name": "activity_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:candidate",
+                "name": "candidate_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:hole",
+                "name": "hole_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:category",
+                "name": "category",
+                "value": "retained_template"
+              },
+              {
+                "id": "urn:originconsumer3607:filename",
+                "name": "filename",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:source",
+                "name": "source_sha",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:start",
+                "name": "source_start",
+                "value": 0
+              },
+              {
+                "id": "urn:originconsumer3607:end",
+                "name": "source_end",
+                "value": 0
+              }
+            ],
+            "actual": "retained",
+            "expected": "retained",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 3,
+        "deliveries": [
+          {
+            "activity_id": "urn:originconsumer3607:describe",
+            "input": {
+              "activity_id": "",
+              "candidate_id": "",
+              "category": "unknown",
+              "filename": "",
+              "hole_id": "",
+              "site_id": "",
+              "source_end": 0,
+              "source_sha": "",
+              "source_start": 0
+            },
+            "input_fields": [
+              {
+                "id": "urn:originconsumer3607:site",
+                "name": "site_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:activity",
+                "name": "activity_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:candidate",
+                "name": "candidate_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:hole",
+                "name": "hole_id",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:category",
+                "name": "category",
+                "value": "unknown"
+              },
+              {
+                "id": "urn:originconsumer3607:filename",
+                "name": "filename",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:source",
+                "name": "source_sha",
+                "value": ""
+              },
+              {
+                "id": "urn:originconsumer3607:start",
+                "name": "source_start",
+                "value": 0
+              },
+              {
+                "id": "urn:originconsumer3607:end",
+                "name": "source_end",
+                "value": 0
+              }
+            ],
+            "actual": "missing",
+            "expected": "missing",
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          },
+          {
+            "site_index": 1,
+            "value": false
+          },
+          {
+            "site_index": 2,
+            "value": false
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 4,
+    "finite_total": 4,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:2ff4d2e66e1735a3f4c39386ef5237150804eeadbf32a9643cd338c56e100f3f",
+        "root_activity_id": "urn:originconsumer3607:describe",
+        "activity_id": "urn:originconsumer3607:describe",
+        "expression": "input.GoooFieldb5591ad4805514dc775f4631ff705e15a78fa1ff95e8745a2cd46c2a21672dbd == \"declared_candidate\"",
+        "projection_sha256": "sha256:be4d090b46642326ce0d2a0e8c14e3829044f4861ca94a8c3131387edd39fcba",
+        "start": 1356,
+        "end": 1459,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:originconsumer3607:describe",
+            "name": "Describe",
+            "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+            "start_byte": 850,
+            "end_byte": 1150
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+          "body_sha256": "sha256:9ad9f05e94fae006a0aeacbdad86e853ff969790d2218d881ffe053261484e75",
+          "start_byte": 932,
+          "end_byte": 972,
+          "decoded_start": 3,
+          "decoded_end": 41,
+          "source_ordinal": 0,
+          "expression": "input.category == \"declared_candidate\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:originconsumer3607:category",
+                "name": "category",
+                "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+                "start_byte": 459,
+                "end_byte": 535
+              },
+              "entity_id": "urn:originconsumer3607:fact",
+              "field_id": "urn:originconsumer3607:category",
+              "name": "category"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:d8c1f017175e9a8fdc5ed409df93fe3dc4182f593d685d026b5fdac2ebb0ac14",
+        "root_activity_id": "urn:originconsumer3607:describe",
+        "activity_id": "urn:originconsumer3607:describe",
+        "expression": "input.GoooFieldb5591ad4805514dc775f4631ff705e15a78fa1ff95e8745a2cd46c2a21672dbd == \"derived_grammar\"",
+        "projection_sha256": "sha256:be4d090b46642326ce0d2a0e8c14e3829044f4861ca94a8c3131387edd39fcba",
+        "start": 1489,
+        "end": 1589,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:originconsumer3607:describe",
+            "name": "Describe",
+            "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+            "start_byte": 850,
+            "end_byte": 1150
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+          "body_sha256": "sha256:9ad9f05e94fae006a0aeacbdad86e853ff969790d2218d881ffe053261484e75",
+          "start_byte": 1001,
+          "end_byte": 1038,
+          "decoded_start": 68,
+          "decoded_end": 103,
+          "source_ordinal": 1,
+          "expression": "input.category == \"derived_grammar\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:originconsumer3607:category",
+                "name": "category",
+                "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+                "start_byte": 459,
+                "end_byte": 535
+              },
+              "entity_id": "urn:originconsumer3607:fact",
+              "field_id": "urn:originconsumer3607:category",
+              "name": "category"
+            }
+          ]
+        }
+      },
+      {
+        "expression_id": "sha256:4a3ab5cd7d579d1b2ae5780f44fee6973620d135200cd0d525ea9fc41f5ec4ae",
+        "root_activity_id": "urn:originconsumer3607:describe",
+        "activity_id": "urn:originconsumer3607:describe",
+        "expression": "input.GoooFieldb5591ad4805514dc775f4631ff705e15a78fa1ff95e8745a2cd46c2a21672dbd == \"retained_template\"",
+        "projection_sha256": "sha256:be4d090b46642326ce0d2a0e8c14e3829044f4861ca94a8c3131387edd39fcba",
+        "start": 1618,
+        "end": 1720,
+        "source": {
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:originconsumer3607:describe",
+            "name": "Describe",
+            "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+            "start_byte": 850,
+            "end_byte": 1150
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+          "body_sha256": "sha256:9ad9f05e94fae006a0aeacbdad86e853ff969790d2218d881ffe053261484e75",
+          "start_byte": 1066,
+          "end_byte": 1105,
+          "decoded_start": 129,
+          "decoded_end": 166,
+          "source_ordinal": 2,
+          "expression": "input.category == \"retained_template\"",
+          "relation": "retained_condition_node",
+          "fields": [
+            {
+              "declaration": {
+                "status": "MAPPED",
+                "view": "selected_gooo_source",
+                "kind": "field",
+                "stable_id": "urn:originconsumer3607:category",
+                "name": "category",
+                "source_sha256": "sha256:3df441ea33eebade5cb697054a3a0618ce758b5e56357d375338d4c63efa6640",
+                "start_byte": 459,
+                "end_byte": 535
+              },
+              "entity_id": "urn:originconsumer3607:fact",
+              "field_id": "urn:originconsumer3607:category",
+              "name": "category"
+            }
+          ]
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 9,
+      "dropped_events": 0,
+      "sha256": "sha256:d969a3e1ba2f34e2f98e17664beefe622d17a8c9e3de045cbda75dfa8fcffb5e"
+    },
+    "input_separation": {
+      "status": "UNKNOWN",
+      "reason": "UNCLASSIFIED_INPUTS",
+      "unique_inputs": 4,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 0,
+      "disjoint_cases_passed": 0,
+      "unknown_inputs": 4,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 511037500,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "consumer_source": "package originconsumer3607\nnamespace originconsumer3607\nentity Text id \"urn:gooo:type:string\"\nentity Fact id \"urn:originconsumer3607:fact\" fields {\n field site_id id \"urn:originconsumer3607:site\" type string required one\n field activity_id id \"urn:originconsumer3607:activity\" type string required one\n field candidate_id id \"urn:originconsumer3607:candidate\" type string required one\n field hole_id id \"urn:originconsumer3607:hole\" type string required one\n field category id \"urn:originconsumer3607:category\" type string required one\n field filename id \"urn:originconsumer3607:filename\" type string required one\n field source_sha id \"urn:originconsumer3607:source\" type string required one\n field source_start id \"urn:originconsumer3607:start\" type integer required one\n field source_end id \"urn:originconsumer3607:end\" type integer required one\n}\nactivity Describe(Fact) -\u003e Text id \"urn:originconsumer3607:describe\" computes \"if input.category == \\\"declared_candidate\\\" { return \\\"declared\\\" }; if input.category == \\\"derived_grammar\\\" { return \\\"derived\\\" }; if input.category == \\\"retained_template\\\" { return \\\"retained\\\" }; return \\\"missing\\\"\"\n",
+  "facts": [
+    {
+      "site_id": "sha256:07ccff6b2d46e4a76db1ddef9d5a51431f70e150cd64e12c7b2d681c740ba4b1",
+      "activity_id": "urn:origin3607:quote",
+      "candidate_id": "bounded3607",
+      "hole_id": "open",
+      "category": "declared_candidate",
+      "filename": "기원3607.gooo",
+      "source_sha": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+      "source_start": 427,
+      "source_end": 437
+    }
+  ],
+  "interpretation_fixtures": 3,
+  "runtime": {
+    "schema": "gooo/body-composition-runtime/v1",
+    "stage": "COMPLETE",
+    "composition_sha256": "sha256:ecea93d4b911d5ef677ecce11353e2041394535ab37005e487cd2fabf9a9a6e1",
+    "original_source_sha256": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+    "selected_source_sha256": "sha256:5b1394af0d5d4ff67617b40abb5bc6c2bfd2aa57659db656adae948b9be58803",
+    "typed_plan_sha256": "sha256:4ea8e99d6b67afd147e951ddc5e48abdf58ec8bc9e6bc068682ccb4a161bb5a0",
+    "generated_sha256": "sha256:d605d9ebd4cd8c9ee35bf92552bafae75ca9513bd9b9f46a5eded1fecc3b0610",
+    "driver_sha256": "sha256:b60505029d66031b47bc2e849d5fb37f04920d4b8ff01c7dd372ab4dc1395ad2",
+    "observed_projection_sha256": "sha256:221230fd958a5486040dcddc8665286c8bc4d823b8da618f037c62a507a2f3a6",
+    "observed_driver_sha256": "sha256:e2dd0ed64a92992dc957c850fc14f9bbc440e01bdc0b2f55625c526e0dc16c78",
+    "runtime_suite_sha256": "sha256:a6b4f6ab0716e752bb38201be529312e73eb883d35d0afbdf4453fe2e38b92f3",
+    "executable_sha256": "sha256:49031847b31aeb62b88756c1907bb2360a41402cd00946e5908cc55dae73434f",
+    "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "go_tool_selection": "explicit",
+    "go_version": "go version go1.27.2 darwin/arm64",
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "producer_module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "(devel)"
+    },
+    "toolchain": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 8398625,
+      "user_ns": 3747000,
+      "system_ns": 2817000,
+      "peak_rss_bytes": 14467072,
+      "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 1048959,
+        "wait_ns": 7349666,
+        "deadline_remaining_ns": 59984797250,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "build": {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 330648166,
+      "user_ns": 135587000,
+      "system_ns": 95462000,
+      "peak_rss_bytes": 88637440,
+      "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 872375,
+        "wait_ns": 329775791,
+        "deadline_remaining_ns": 59975475666,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    "runs": [
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 359846750,
+        "user_ns": 3146000,
+        "system_ns": 6214000,
+        "peak_rss_bytes": 4980736,
+        "stdout_sha256": "sha256:7e1563d1c50b890609b01ae43f89b6c2d4c75b2610d363b17981a27a7b88921d",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 940500,
+          "wait_ns": 358906250,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59643325833,
+          "context_at_start_return": "ACTIVE"
+        }
+      },
+      {
+        "started": true,
+        "completed": true,
+        "canceled": false,
+        "timed_out": false,
+        "diagnostics_bytes": 0,
+        "output_truncated": false,
+        "exit_code": 0,
+        "wall_ns": 8047083,
+        "user_ns": 2852000,
+        "system_ns": 3659000,
+        "peak_rss_bytes": 5029888,
+        "stdout_sha256": "sha256:7e1563d1c50b890609b01ae43f89b6c2d4c75b2610d363b17981a27a7b88921d",
+        "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timing": {
+          "start_ns": 2364958,
+          "wait_ns": 5682125,
+          "wait_limit_ns": 2000000000,
+          "deadline_remaining_ns": 59282841583,
+          "context_at_start_return": "ACTIVE"
+        }
+      }
+    ],
+    "traces": [
+      {
+        "case_index": 0,
+        "deliveries": [
+          {
+            "activity_id": "urn:origin3607:quote",
+            "input": 23,
+            "actual": 52,
+            "expected": 52,
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": true
+          }
+        ]
+      },
+      {
+        "case_index": 1,
+        "deliveries": [
+          {
+            "activity_id": "urn:origin3607:quote",
+            "input": 83,
+            "actual": 66,
+            "expected": 66,
+            "passed": true
+          }
+        ],
+        "conditions_observed": true,
+        "conditions": [
+          {
+            "site_index": 0,
+            "value": false
+          }
+        ]
+      }
+    ],
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "finite_passed": 2,
+    "finite_total": 2,
+    "condition_sites": [
+      {
+        "expression_id": "sha256:07ccff6b2d46e4a76db1ddef9d5a51431f70e150cd64e12c7b2d681c740ba4b1",
+        "root_activity_id": "urn:origin3607:quote",
+        "activity_id": "urn:origin3607:quote",
+        "expression": "input \u003c 61",
+        "projection_sha256": "sha256:d605d9ebd4cd8c9ee35bf92552bafae75ca9513bd9b9f46a5eded1fecc3b0610",
+        "start": 156,
+        "end": 166,
+        "source": {
+          "construction": {
+            "schema": "gooo/source-fill-condition-origin/v1",
+            "filename": "기원3607.gooo",
+            "view": "assembly_input",
+            "source_sha256": "sha256:d098791e8fe10711be43bc464faf7412491d44371e71986608235ae5a9332fb1",
+            "selected_source_sha256": "sha256:5b1394af0d5d4ff67617b40abb5bc6c2bfd2aa57659db656adae948b9be58803",
+            "selected_body_sha256": "sha256:747238a568fecd392951b7f563e254db536c313dd8746dde39f99255e017de09",
+            "activity_id": "urn:origin3607:quote",
+            "activity_source": {
+              "start_byte": 82,
+              "end_byte": 559
+            },
+            "assembly_source": {
+              "start_byte": 252,
+              "end_byte": 559
+            },
+            "intent": "금액 규칙의 선택 경로를 남긴다",
+            "intent_source": {
+              "start_byte": 286,
+              "end_byte": 329
+            },
+            "candidate_id": "bounded3607",
+            "candidate_source": {
+              "start_byte": 374,
+              "end_byte": 385
+            },
+            "plan_sha256": "sha256:06f8f5cd669c4370d27609980f4b20926d49416ef8d889bf824bc89a0b2c21d3",
+            "fragments": [
+              {
+                "kind": "declared_candidate",
+                "hole_id": "open",
+                "expression": "input \u003c 61",
+                "template_decoded": {
+                  "start_byte": 39,
+                  "end_byte": 62
+                },
+                "selected_decoded": {
+                  "start_byte": 28,
+                  "end_byte": 40
+                },
+                "template_source": {
+                  "start_byte": 192,
+                  "end_byte": 215
+                },
+                "selected_source": {
+                  "start_byte": 181,
+                  "end_byte": 193
+                },
+                "hole_declaration": {
+                  "start_byte": 349,
+                  "end_byte": 360
+                },
+                "expression_source": {
+                  "start_byte": 427,
+                  "end_byte": 437
+                }
+              }
+            ],
+            "condition_decoded": {
+              "start_byte": 28,
+              "end_byte": 40
+            }
+          },
+          "declaration": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "kind": "activity",
+            "stable_id": "urn:origin3607:quote",
+            "name": "Quote",
+            "source_sha256": "sha256:5b1394af0d5d4ff67617b40abb5bc6c2bfd2aa57659db656adae948b9be58803",
+            "start_byte": 82,
+            "end_byte": 229
+          },
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:5b1394af0d5d4ff67617b40abb5bc6c2bfd2aa57659db656adae948b9be58803",
+          "body_sha256": "sha256:747238a568fecd392951b7f563e254db536c313dd8746dde39f99255e017de09",
+          "start_byte": 181,
+          "end_byte": 193,
+          "decoded_start": 28,
+          "decoded_end": 40,
+          "source_ordinal": 0,
+          "expression": "(input \u003c 61)",
+          "relation": "retained_condition_node"
+        }
+      }
+    ],
+    "condition_observation": {
+      "schema": "gooo/native-condition-summary/v1",
+      "status": "COMPLETE",
+      "recorded_events": 2,
+      "dropped_events": 0,
+      "sha256": "sha256:e7740f8f81fe23193cf9dced45cfa92a0c913bdb466099efaef8091bf3fb0859"
+    },
+    "input_separation": {
+      "status": "PASS",
+      "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+      "unique_inputs": 2,
+      "duplicate_rows": 0,
+      "overlapping_inputs": 0,
+      "disjoint_inputs": 2,
+      "disjoint_cases_passed": 2,
+      "unknown_inputs": 0,
+      "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+    },
+    "model_calls": 0,
+    "elapsed_ns": 726940000,
+    "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+  },
+  "source": "package origin3607\nnamespace origin3607\nentity Integer id \"urn:gooo:type:integer\"\nactivity Quote(Integer) -\u003e Integer id \"urn:origin3607:quote\" computes \"let base = __GOOO_BODY_HOLE_seed__; if __GOOO_BODY_HOLE_open__ { return base }; return input - 17\" assembling {\n source_fill intent \"금액 규칙의 선택 경로를 남긴다\" {\n  hole \"seed\"\n  hole \"open\"\n  candidate \"bounded3607\" { fill \"seed\" \"input + 29\" fill \"open\" \"input \u003c 61\" }\n  candidate \"other3607\" { fill \"seed\" \"input + 3\" fill \"open\" \"input \u003c 9\" }\n }\n case \"19\" -\u003e \"48\"\n case \"71\" -\u003e \"54\"\n}\n"
+}

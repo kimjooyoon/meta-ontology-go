@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "app/search", "activity": "Main"},
+  "packages": [
+    {"path": "app/search", "name": "app", "imports": ["gooo/std/search"], "sources": ["app.gooo.fixture"]},
+    {"path": "gooo/std/search", "name": "search", "imports": [], "sources": ["search.gooo.fixture"]}
+  ]
+}

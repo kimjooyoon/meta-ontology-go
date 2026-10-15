@@ -9,7 +9,7 @@ expectations in one declaration. `assembling` is a typed syntax node, preserved 
 bidirectional lowering into semantic IR. It expands through the existing recipe
 arena and optional-model/TDD pipeline.
 
-For multi-hole IR body generation, Gooo can own a finite set of complete
+For IR body generation with one or more holes, Gooo can own a finite set of complete
 assignments or derive expressions and their combinations from a closed grammar.
 A model ranks the complete assignments as one decision; it cannot add expressions
 outside that set. Every selected hole is checked against the declared integer cases,
@@ -183,11 +183,29 @@ activity ... computes <quoted-or-raw-body> assembling {
 Canonical formatting puts each choice on one line. Whitespace/comments separate
 fields. Quoted decimal numbers follow the existing policy grammar. Input and
 expected values span int64. Formatting preserves decoded Korean/English intent.
-`source_fill` requires 2–8 holes, and either 2–16 candidates with exactly one fill
+`source_fill` requires 1–8 holes, and either 2–16 candidates with exactly one fill
 per hole in declaration order, or one bounded `derive` clause with 2–16 expressions
 per hole and 2–16 complete assignments. Manual candidates and `derive` are mutually
 exclusive. It is mutually exclusive with path
 choices, search, checkpoints, sampling seeds, and attempt budgets.
+
+A single hole is useful when the surrounding control flow is already declared
+and only one condition or value remains to be chosen. It uses the same finite
+candidate assignments and typed checks. A counted loop can keep its fixed bound
+and counter update while the fill plan selects its match condition. The selected
+program's supplied-case and holdout counts remain separate from its first choice.
+
+The [single-condition byte search](../examples/body-codegen/source-ir-fill-single-byte.gooo.fixture)
+keeps its loop and return structure in Gooo while choosing one match predicate.
+It has six selection cases and four separate holdout cases. The public
+[0.6.32 compiler](releases/0.6.32-dev.md) supports this grammar. The earlier
+0.6.31 compiler predates the single-hole extension.
+
+```sh
+env -u GOOO_LAYA_URL -u GOOO_LAYA_API_KEY \
+  go run ./cmd/gooo body-codegen --json --activity IndexByte \
+  examples/body-codegen/source-ir-fill-single-byte.gooo.fixture
+```
 
 ### Intermediate conditions
 
@@ -733,3 +751,103 @@ The complete output remains bounded to 128 KiB. A new baseline starts a new plan
 edit `computes`, remove the old `baseline`/`picked` fields, and align the choices
 and cases with that body. Re-generating an existing checkpoint runs fresh bounded
 search; known selections do not skip testing or guarantee broader intent coverage.
+
+## Declare the next observation in source
+
+For Integer typed paths, an `observe` block inside `assembling` carries the same
+bounded candidate-observation operation previously supplied through
+`--path-observation`. It declares 1..32 distinct quoted int64 `input` values,
+`max_candidates` (1..64), `max_rounds` (1..8), and optionally an `oracle` activity
+name. Optional `reuse_outputs` and `resolve_unique` accept quoted `true` or
+`false`. Both default to false. The oracle, when supplied, must be a separate
+pure Integer-to-Integer Gooo activity and agree with every initial case. Its body
+must be fixed; an activity with its own `assembling` choices cannot supply the
+answers. Calls from the reference use the existing fixed pure-call closure.
+
+The source owns this operation across syntax, semantic IR and saved replay.
+External observation options cannot override it. Questions keep their declared
+order, exact integers and limits. Generation retains the original suite and
+records newly acquired answers separately. Without an oracle, it reports the
+next distinguishing question and `ORACLE_UNAVAILABLE`; no answer is invented.
+A candidate cap leaves the remaining alternatives unobserved even if only one
+observed candidate survived.
+
+Caller-guided construction retains the acquired answers as local obligations.
+Each candidate records the original observation digest and the current source's
+reference checks (`gooo/path-candidate/v2`). It checks both initial and acquired
+cases without new questions or ranking. A caller match that loses an acquired
+local answer cannot become a complete construction. The text/Markdown report
+shows how many original and acquired answers the selected candidate retained.
+Original observation receipts remain unchanged when other source slots are
+assembled; the current reference must still agree with the retained finite suite.
+
+See the [source-owned observation example](../examples/source-owned-observation/README.md).
+Integer observation requires at least one original Integer `case`. Record field
+assembly accepts typed `value_input` tuples and an original `value_case` suite;
+see [record source observation](record-source-observation.md). IR search/fill keep
+their existing interfaces.
+A finite match, a unique surviving candidate and a native evaluation are distinct results.
+
+## Keep path evaluation separate from selection
+
+Integer typed paths also accept `holdout_case`. At least one initial `case` is
+required, and all declared output cases together remain bounded to 128. Holdout
+inputs must be unique and disjoint from local `case`, `condition_case` and
+`observe` inputs. External observation options cannot consume a held input.
+
+```gooo
+assembling {
+    choice "direction" operand_order at "0" intent "Choose the subtraction direction."
+    case "47" -> "0"
+    holdout_case "59" -> "-12"
+    attempts "2"
+}
+```
+
+Only the initial cases reach candidate scoring and model input arrays. The held
+suite is evaluated after the local body is chosen. A mismatch is recorded without
+reselection; an evaluator error keeps the score unavailable. Its own suite,
+source and generated-body digests survive checkpoint and saved-result replay.
+The source meaning changes when an evaluation expectation changes, while its
+path selection document and ranking inputs remain unchanged.
+
+`body-construct` records the initial local evaluation and evaluates the final
+caller-selected body again after its candidate loop stops. This final record
+uses `gooo/joint-construction/v8`; each body evaluation uses
+`gooo/typed-path-holdout/v1`. Neither initial nor final holdout scores enter the
+caller chooser, local selection totals or construction stopping decision.
+The final evaluation is outside individual candidate histories.
+
+Actual arguments from all consumed native caller attempts identify held inputs
+already observed during that feedback. Root input 54 can deliver input 59 to a
+helper; the report follows that helper argument. Missing caller traces produce
+unknown exposure. The overlap measure covers native caller attempts; other local
+helper evaluations and model-training exposure remain outside its scope.
+
+[Runnable example and overlapping-input variant](../examples/source-path-holdouts/README.md).
+Separate final native cases remain available after these source evaluations.
+
+
+## Evaluate record field choices after selection
+
+Development source accepts `holdout_value_case` alongside `field_value` and
+`field_update` choices. Selection uses `value_case`; held cases evaluate the
+selected body with separate whole-record and field counts. A continuation or
+caller-guided selection records its own final evaluation. Actual caller input
+overlap is reported separately from the held score.
+
+See [record field holdouts](record-field-holdouts.md) and the
+[complete source example](../examples/record-field-holdouts/README.md) for
+ambiguity at the first selection, later caller requirements and saved replay.
+
+## Record behavior criteria
+
+Record field construction and updates may declare `criteria`: named fixed Gooo
+Boolean activities applied to original inputs and the candidate's actual result.
+Criteria-only selection requires no expected `value_case`. Exact cases may also
+coexist and retain separate case/field denominators.
+
+See [behavior criteria](source-behavior-criteria.md) for source syntax, partial
+and unknown results, deterministic selection order, policy units, caller
+construction, held inputs, and replay. The [refund example](../examples/source-behavior-criteria/README.md)
+shows three source-owned conditions for one body.

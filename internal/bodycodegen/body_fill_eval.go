@@ -17,6 +17,8 @@ type integerBodyEvaluator struct {
 	functions   map[types.Object]*ast.FuncDecl
 	callDepth   int
 	callCount   *int
+	localCalls  *localCallRecorder
+	caseIndex   int
 }
 
 // evaluateIntegerCases interprets only the already typechecked, pure integer
@@ -32,6 +34,19 @@ func evaluateIntegerCases(
 
 func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity string,
 	cases []IRBodyFillTestCase,
+) ([]IRBodyFillCaseResult, int, error) {
+	capture, ok := ctx.Value(localCaptureKey{}).(*searchCallCapture)
+	if fill, present := ctx.Value(fillCaptureKey{}).(*fillCallCapture); present {
+		return fill.integer(ctx, source, activity, cases)
+	}
+	if ok {
+		return capture.evaluate(ctx, source, activity, cases)
+	}
+	return evaluateIntegerCasesRecorded(ctx, source, activity, cases, nil)
+}
+
+func evaluateIntegerCasesRecorded(ctx context.Context, source []byte, activity string,
+	cases []IRBodyFillTestCase, recorder *localCallRecorder,
 ) ([]IRBodyFillCaseResult, int, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, 0, err
@@ -76,10 +91,11 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 	if len(inputs) == 0 || len(inputs) > 16 {
 		return nil, 0, fmt.Errorf("integer evaluator requires 1..16 named inputs")
 	}
-	evaluator := integerBodyEvaluator{context: ctx, information: information, functions: pureEvaluatorFunctions(file, information)}
+	evaluator := integerBodyEvaluator{context: ctx, information: information,
+		functions: pureEvaluatorFunctions(file, information), localCalls: recorder}
 	results := make([]IRBodyFillCaseResult, 0, len(cases))
 	passed := 0
-	for _, testCase := range cases {
+	for caseIndex, testCase := range cases {
 		if err := ctx.Err(); err != nil {
 			return nil, 0, err
 		}
@@ -91,6 +107,10 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 		evaluator.callCount = nil
 		for index, input := range inputs {
 			evaluator.environment[input] = values[index]
+		}
+		evaluator.caseIndex = caseIndex
+		if recorder != nil {
+			recorder.observation.CasesStarted++
 		}
 		value, returned, err := evaluator.evaluateBlock(function.Body)
 		if err := ctx.Err(); err != nil {
@@ -115,6 +135,9 @@ func evaluateIntegerCasesContext(ctx context.Context, source []byte, activity st
 			caseResult.Inputs = append([]int64(nil), values...)
 		}
 		results = append(results, caseResult)
+		if recorder != nil {
+			recorder.observation.CasesCompleted++
+		}
 	}
 	return results, passed, nil
 }
@@ -169,6 +192,8 @@ func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, err
 			return result, err
 		}
 		return e.evaluatePureCall(value)
+	case *ast.IndexExpr:
+		return e.evaluateTextByte(value)
 	case *ast.SliceExpr:
 		return e.evaluateTextSlice(value)
 	case *ast.CompositeLit:
@@ -265,22 +290,27 @@ func coerceBodyValue(value any, valueType types.Type) (any, error) {
 		}
 		return nil, fmt.Errorf("record value differs from nominal type %s", valueType)
 	}
+	if sequence, ok := value.(*recordBodySequence); ok {
+		slice, sliceOK := valueType.Underlying().(*types.Slice)
+		if sliceOK && sequence != nil {
+			kind, optional, err := recordBodyScalarKind(slice.Elem())
+			if err == nil && !optional && kind == sequence.Kind && len(sequence.Values) <= RepeatedFieldLimit {
+				return sequence, nil
+			}
+		}
+		return nil, fmt.Errorf("collection value differs from declared type %s", valueType)
+	}
 	basic, ok := valueType.Underlying().(*types.Basic)
 	if !ok {
 		return nil, fmt.Errorf("unsupported generated value type %s", valueType)
 	}
 	switch basic.Kind() {
-	case types.Int, types.Int32, types.Int64, types.UntypedInt, types.UntypedRune:
+	case types.Int, types.Int32, types.Int64, types.Uint8, types.UntypedInt, types.UntypedRune:
 		number, ok := value.(int64)
 		if !ok {
 			return nil, fmt.Errorf("generated integer value has type %T", value)
 		}
-		if basic.Kind() == types.Int32 {
-			number = int64(int32(number))
-		} else if basic.Kind() == types.Int {
-			number = int64(int(number))
-		}
-		return number, nil
+		return coerceBodyInteger(number, basic.Kind()), nil
 	case types.Bool, types.UntypedBool:
 		if truth, ok := value.(bool); ok {
 			return truth, nil

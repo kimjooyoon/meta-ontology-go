@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "activity": "Inspect",
+    "package_path": "origin/field-source-map"
+  },
+  "packages": [
+    {
+      "path": "origin/field-source-map",
+      "name": "fieldmap",
+      "sources": [
+        "inspect.gooo"
+      ],
+      "imports": []
+    }
+  ]
+}

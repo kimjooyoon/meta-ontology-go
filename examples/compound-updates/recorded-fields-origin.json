@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/record-compound-origin/v1",
+  "source": "../../docs/observations/record-field-updates/first-observations.tar.gz#sources/examples/compound-updates/main.gooo",
+  "source_sha256": "2cbe5bd860286739da0eafdaf67a8c5121864108a2a5a22da1c185742c9d25e1",
+  "runtime_sha256": "6e8529c5359ceb87c4ce362bf8701b3a416a516c09653f6babc13af15328a586",
+  "archive_sha256": "99d542b5c3013a1af47ec2ed226fb441c08ee5bbf0d67d017341321d10999556",
+  "native_cases": 4,
+  "matched_cases": 4,
+  "compound_writes": 16,
+  "model_calls": 0,
+  "scope": "first new record-field update cohort; arithmetic outcomes and prior-field read journal; no general correctness claim",
+  "revision": "repaired canonical port metadata; same four native cases, not four additional cases",
+  "prior_failure": "Gooo origin consumer exposed authored record name in InputPort",
+  "current_example": "fields.gooo",
+  "source_placement": "Saved native cohort used the extended original source. The record example is subsequently registered separately; numeric cohort is retained without replay."
+}

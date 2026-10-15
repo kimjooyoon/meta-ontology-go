@@ -34,6 +34,9 @@ func astShape(file *syntax.File) (string, error) {
 			for _, input := range inputs {
 				fmt.Fprintf(&shape, ",input=%q", input.Name)
 			}
+			for _, name := range value.InputNames {
+				fmt.Fprintf(&shape, ",input-name=%q", name.Name)
+			}
 			fmt.Fprintf(&shape, ",output=%q\n", value.Output)
 		case *syntax.PolicyDecl:
 			fmt.Fprintf(&shape, "policy=%q,%q\n", value.Name, value.ID)

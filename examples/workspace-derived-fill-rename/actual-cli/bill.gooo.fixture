@@ -1,0 +1,12 @@
+package app
+namespace derive148_app
+import rates "derive148/helpers"
+activity Bill(Integer) -> Integer id "urn:derive148:bill" computes "let base=__GOOO_BODY_HOLE_base__; return rates.Add(base)+__GOOO_BODY_HOLE_tip__" assembling {
+ source_fill intent "Derive two data expressions while retaining the helper reference." {
+  hole "base"
+  hole "tip"
+  derive grammar "integer-offset-constant/v1" max_expressions "3" max_candidates "5"
+ }
+ case "1" -> "21"
+ holdout_case "-1" -> "19"
+}

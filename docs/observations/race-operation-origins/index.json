@@ -1,0 +1,20 @@
+{
+  "predecessor_pr": 1569,
+  "predecessor_head": "79b22be30c3efa7e3494c3ed0ee77cbb6fa28bff",
+  "race_job": 115961481366,
+  "race_outcome": "cancelled",
+  "authoritative_annotation": "The job has exceeded the maximum execution time of 20m0s",
+  "orphan_process": "extractor.test",
+  "unit_job": 115961481562,
+  "unit_outcome": "success",
+  "unit_extractor_seconds": 237.681,
+  "race_completed_ok_packages": 180,
+  "unit_completed_ok_packages": 244,
+  "scope": "different original CI jobs;package completion and raw durations only;not test-case accuracy or controlled speed comparison",
+  "deadlock": "unproven",
+  "specific_slow_test": "unknown;ordinary package output omitted active test identities",
+  "change": "Go test JSON events;full ./... selector,race detection,20m limit and canonical check unchanged",
+  "historical_local_reruns": 0,
+  "model_calls": 0,
+  "tests_executed": 0
+}

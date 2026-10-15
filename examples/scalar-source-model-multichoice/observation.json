@@ -1,0 +1,50 @@
+{
+  "schema": "gooo/scalar-source-multichoice-observation/v1",
+  "observed_at": "2026-10-13T12:16:04.726936+09:00",
+  "producer": {
+    "compiler_base": "a94fe484359a60d5dcc518cbf1d21b47c5c550c6",
+    "overlays": [
+      {
+        "path": "internal/bodycodegen/scalar_criteria_model_multichoice_test.go",
+        "sha256": "60d0601e1cb09df2bd72b441ac1ca0d68e0544a8cc449ec0e98a46953f4b324f",
+        "scope": "one new test only; no production overlays"
+      }
+    ],
+    "sdk_version": "v0.2.51-experimental",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "sum_sha256": "5dc58de894f9c305b0d40e46e3e0d64ecf973d7d54d8768189e8b7b2e5d7e67e",
+    "test": "TestScalarSourceModelCombinesAssignmentsAndOrderWithoutSortingChoices",
+    "source_sha256": "sha256:00a173941b4a2b323d6ff71b1df4cb1fb87c24161ce61274edfb6583ecc22b57",
+    "scope": "one distinct new multi-choice source; one synthetic prediction expected; no historical tests/experiments replayed",
+    "started_at": "2026-10-13T03:16:01.096625+00:00"
+  },
+  "observation": {
+    "candidate_count": 4,
+    "choices": 2,
+    "first_proposal_passed": 0,
+    "first_proposal_total": 2,
+    "held_passed": 1,
+    "held_total": 1,
+    "model_calls": 1,
+    "proposed_mask": 3,
+    "ranking": [
+      3,
+      1,
+      2,
+      0
+    ],
+    "scope": "one fresh assignment/order source with intentionally reversed lexical choice names",
+    "selected_mask": 1,
+    "selection_passed": 2,
+    "selection_total": 2,
+    "source_sha256": "sha256:00a173941b4a2b323d6ff71b1df4cb1fb87c24161ce61274edfb6583ecc22b57"
+  },
+  "weights": "synthetic_untrained_shared_second_option_bias",
+  "training_runs": 0,
+  "generated_gooo_native_program_executions": 0,
+  "cpu_utilization": "UNOBSERVED",
+  "process_memory": "UNOBSERVED",
+  "trained_quality": "UNOBSERVED",
+  "replays": 0,
+  "log_sha256": "a7ed9bb6000106dad64090bb08fddcd23413a7d72803d9a5175272d723008638"
+}

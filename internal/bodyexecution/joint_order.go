@@ -10,14 +10,16 @@ import (
 )
 
 type jointSlot struct {
-	activity     string
-	initial      uint16
-	ranking      []uint16
-	searchIDs    []string
-	fillIDs      []string
-	fillRejected bool
-	pathMasks    []uint16
-	pathReceipt  *bodycodegen.BodyPathReceipt
+	recordReceipt *bodycodegen.RecordAssemblyReceipt
+	activity      string
+	initial       uint16
+	ranking       []uint16
+	searchIDs     []string
+	searchReceipt *bodycodegen.IRBodySearchReceipt
+	fillIDs       []string
+	fillRejected  bool
+	pathMasks     []uint16
+	pathReceipt   *bodycodegen.BodyPathReceipt
 }
 
 func jointSlots(ctx context.Context, filename string, source []byte, prior Composition) ([]jointSlot, string, error) {
@@ -44,24 +46,9 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 			continue
 		}
 		if search := step.Generation.Report.BodySearch; search != nil {
-			set, err := bodycodegen.PlanSourceSearchCandidates(ctx, filename, source, step.Generation.Report.Activity)
+			slot, err := jointSearchSlot(ctx, filename, source, step.Generation.Report.Activity, search)
 			if err != nil {
 				return nil, "", err
-			}
-			if search.IRPlanSHA256 != set.PlanSHA256 || search.AttemptBudget == nil || *search.AttemptBudget != set.AttemptBudget || search.CandidateCount != len(set.Candidates) {
-				return nil, "", fmt.Errorf("joint source search contract differs from initial construction")
-			}
-			slot := jointSlot{activity: step.Generation.Report.Activity}
-			found := false
-			for i, candidate := range set.Candidates[:min(set.AttemptBudget, len(set.Candidates))] {
-				slot.searchIDs = append(slot.searchIDs, candidate.ID)
-				slot.ranking = append(slot.ranking, uint16(i))
-				if candidate.ID == search.SelectedCandidateID {
-					slot.initial, found = uint16(i), true
-				}
-			}
-			if !found {
-				return nil, "", fmt.Errorf("initial search selection exceeds the source budget")
 			}
 			slots = append(slots, slot)
 			space.Mul(space, big.NewInt(int64(len(slot.ranking))))
@@ -78,7 +65,7 @@ func jointSlots(ctx context.Context, filename string, source []byte, prior Compo
 		if !slices.Contains(ranking, r.SelectedMask) {
 			return nil, "", fmt.Errorf("initial selection exceeds the source budget")
 		}
-		slots = append(slots, jointSlot{activity: step.Generation.Report.Activity, initial: r.SelectedMask, ranking: ranking})
+		slots = append(slots, jointSlot{activity: step.Generation.Report.Activity, initial: r.SelectedMask, ranking: ranking, recordReceipt: r})
 		space.Mul(space, big.NewInt(int64(len(ranking))))
 	}
 	if len(slots) < 1 || len(slots) > compositionLimit {
@@ -142,7 +129,8 @@ func jointMaskOrder(slots []jointSlot, budget int) [][]uint16 {
 }
 
 func jointLocalComplete(attempt JointAttempt) bool {
-	return attempt.Rejection == nil && attempt.LocalTotal > 0 && attempt.LocalPassed == attempt.LocalTotal
+	return attempt.Rejection == nil && (attempt.LocalTotal > 0 || attempt.CriteriaTotal > 0) &&
+		attempt.LocalPassed == attempt.LocalTotal && attempt.CriteriaPassed == attempt.CriteriaTotal
 }
 
 func jointComplete(attempt JointAttempt) bool {
@@ -160,11 +148,20 @@ func betterJoint(a, b JointAttempt) bool {
 	if hasCompositionFault(a.Runtime) != hasCompositionFault(b.Runtime) {
 		return !hasCompositionFault(a.Runtime)
 	}
-	return a.LocalPassed > b.LocalPassed
+	if a.LocalPassed != b.LocalPassed {
+		return a.LocalPassed > b.LocalPassed
+	}
+	return a.CriteriaPassed > b.CriteriaPassed
 }
 
 func appendJointLocal(attempt *JointAttempt, candidate bodycodegen.RecordCandidate) {
 	attempt.Candidates = append(attempt.Candidates, candidate)
 	attempt.LocalPassed += candidate.Attempt.Passed
 	attempt.LocalTotal += candidate.Attempt.Total
+	if c := candidate.Attempt.Criteria; c != nil {
+		attempt.CriteriaPassed += c.Passed
+		attempt.CriteriaFailed += c.Failed
+		attempt.CriteriaUnknown += c.Unknown
+		attempt.CriteriaTotal += c.Total
+	}
 }

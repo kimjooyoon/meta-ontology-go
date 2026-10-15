@@ -1,0 +1,4 @@
+# github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution [github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution.test]
+/tmp/gooo-construction-origins-20261014/producer9473/internal/bodyexecution/composition_runtime.go:322:14: undefined: bytes
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution [build failed]
+FAIL

@@ -1,0 +1,9 @@
+{
+  "source_sha256": "9d0d2415617309d4c8d3a4e54247ab0666dfe92571d97cab313fd5c8683b5c6a",
+  "generated_sha256": "669fd5b0cd4024c580d6fa3488fcdf0506600cbff600da5916b6e14a7b2ea9fa",
+  "raw_generation_receipt_sha256": "57d567c42d00f552cfde35eec61383c4c4a5c31a80d8b496c16a2392db732468",
+  "decision": "PASS",
+  "scope": "source display roles including actual copy definitions",
+  "compiler_revision": "f6fc6b3a0734cf258332c1cb04e8777f67092564",
+  "compiler_source_state": "UNBOUND_LOCAL_SOURCE"
+}

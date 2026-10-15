@@ -1,0 +1,145 @@
+{
+  "schema": "gooo/source-scalar-criteria-observation/v1",
+  "scope": "two Integer -> Integer programs, fixed Gooo predicates, finite source questions and separate native evaluation",
+  "model_training_performed": false,
+  "performance_measured": false,
+  "observations": {
+    "positive": {
+      "name": "positive",
+      "decision": "COMPLETE_FINITE",
+      "attempts": 1,
+      "criteria": {
+        "passed": 2,
+        "failed": 0,
+        "unknown": 0,
+        "total": 2
+      },
+      "question_status": "ONE_SURVIVING_CANDIDATE",
+      "acquired_inputs": [
+        "[17]"
+      ],
+      "held": {
+        "passed": 1,
+        "failed": 0,
+        "unknown": 0,
+        "total": 1
+      },
+      "caller": [
+        {
+          "finite_passed": 1,
+          "finite_total": 1
+        }
+      ],
+      "evaluation": {
+        "finite_passed": 1,
+        "finite_total": 1
+      },
+      "model_calls": 0,
+      "execution": {
+        "compiler_sha256": "24a717eecbbb807c68dada6f3871da4affc026e56f95f108e877fcc82a5c367e",
+        "source_sha256": "b3c1df7f7aa753b3f4ad9abaeb2f3511fec11ce07fb1d5ef9fa71f1d40129c2e",
+        "construction_cases_sha256": "7cd1c2e3cce7f274b21aa4b3e63557f223c4951f20c99f172af4b222aec31fd6",
+        "evaluation_cases_sha256": "16c57da5cfb2cf4fb010b3180548af45267d9285c5ea2310c2d5ccaeb45f4aa2",
+        "base_sha": "fb3dc26d748404a8987134f349a748f2cc29e062",
+        "overlay_manifest_sha256": "e9d4ed7056760a6d95c965e16558f3591224b9ab88dd5ec78a7f490ff7beeae3",
+        "build_vcs": false,
+        "exit_code": 0,
+        "output_sha256": "8fe237bdb23be1b5bb829e42059bb261acbf1540802f19722ef5e8a3552d7c9b"
+      },
+      "saved_reports": [
+        {
+          "format": "text",
+          "sha256": "5e754550d7be1b60a037e6c31d34b0de73e594cfbec578613ccd0accf6472de3",
+          "exit_code": 0,
+          "program_executions": 0,
+          "model_calls": 0
+        },
+        {
+          "format": "markdown",
+          "sha256": "5c8548752ff265f3698d15fbdc9f90cf527e7cecdb743c452c098f289eedceb8",
+          "exit_code": 0,
+          "program_executions": 0,
+          "model_calls": 0
+        }
+      ]
+    },
+    "insufficient": {
+      "name": "insufficient",
+      "decision": "PARTIAL_FINITE",
+      "attempts": 2,
+      "criteria": {
+        "passed": 1,
+        "failed": 1,
+        "unknown": 0,
+        "total": 2
+      },
+      "question_status": "NO_SURVIVING_CANDIDATE",
+      "acquired_inputs": [
+        "[17]"
+      ],
+      "held": {
+        "passed": 0,
+        "failed": 1,
+        "unknown": 0,
+        "total": 1
+      },
+      "caller": [
+        {
+          "finite_passed": 0,
+          "finite_total": 1
+        },
+        {
+          "finite_passed": 0,
+          "finite_total": 1
+        }
+      ],
+      "evaluation": {
+        "finite_passed": 0,
+        "finite_total": 1
+      },
+      "model_calls": 0,
+      "execution": {
+        "compiler_sha256": "24a717eecbbb807c68dada6f3871da4affc026e56f95f108e877fcc82a5c367e",
+        "source_sha256": "6e4f501483d2194400dafca78cc2502010ee0efa850f44aa54db293ebf015a39",
+        "construction_cases_sha256": "7cd1c2e3cce7f274b21aa4b3e63557f223c4951f20c99f172af4b222aec31fd6",
+        "evaluation_cases_sha256": "16c57da5cfb2cf4fb010b3180548af45267d9285c5ea2310c2d5ccaeb45f4aa2",
+        "base_sha": "fb3dc26d748404a8987134f349a748f2cc29e062",
+        "overlay_manifest_sha256": "e9d4ed7056760a6d95c965e16558f3591224b9ab88dd5ec78a7f490ff7beeae3",
+        "build_vcs": false,
+        "exit_code": 0,
+        "output_sha256": "69b68ea86d1dba041eb718fd54adb3b0f95cdfa8e1d4952d1fb5e2f77ed629f3"
+      },
+      "saved_reports": [
+        {
+          "format": "text",
+          "sha256": "4505d26e8f184b7532cf8cbb074c7897678791ea5f82f7f3cc2342dd7df4f622",
+          "exit_code": 0,
+          "program_executions": 0,
+          "model_calls": 0
+        },
+        {
+          "format": "markdown",
+          "sha256": "48d70442281bfae94113ae6eecfd4a91f73f8a89f91beb71a00ee020cb5b3e46",
+          "exit_code": 0,
+          "program_executions": 0,
+          "model_calls": 0
+        }
+      ]
+    }
+  },
+  "sources": {
+    "main.gooo.fixture": "b3c1df7f7aa753b3f4ad9abaeb2f3511fec11ce07fb1d5ef9fa71f1d40129c2e",
+    "construction-cases.json": "7cd1c2e3cce7f274b21aa4b3e63557f223c4951f20c99f172af4b222aec31fd6",
+    "evaluation.json": "16c57da5cfb2cf4fb010b3180548af45267d9285c5ea2310c2d5ccaeb45f4aa2",
+    "insufficient.gooo.fixture": "6e4f501483d2194400dafca78cc2502010ee0efa850f44aa54db293ebf015a39"
+  },
+  "post_native_change": {
+    "path": "internal/bodycodegen/record_assembly_plan.go",
+    "change": "Extracted the existing record-only case validation block into a helper; scalar preparation returns before this block.",
+    "verification": [
+      "existing record preparation race compatibility passed",
+      "five changed production source projections passed"
+    ],
+    "native_observations_repeated": false
+  }
+}

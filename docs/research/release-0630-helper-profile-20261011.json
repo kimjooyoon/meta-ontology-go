@@ -1,0 +1,81 @@
+{
+  "schema": "gooo/release-preparation-observation/v1",
+  "profile": "helper-fill-history",
+  "date": "2026-10-11",
+  "platform": "darwin-arm64",
+  "scope": "One clean development compiler, one synthetic construction and one saved replay; native release platforms remain pending.",
+  "producer": {
+    "compiler_source_sha": "87caaa692603c0fc1ff5db44010ab157347cce70",
+    "source_status": "CLEAN_VCS",
+    "version": "0.6.30-dev",
+    "go_version": "go1.27.2",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.41-experimental",
+      "replaced": false
+    }
+  },
+  "source_sha256": "sha256:fb5c4c8f4d0346382e5a7c8f5ccfede49ad6947b3a0568ff835189903289fa4b",
+  "construction_decision": "COMPLETE_FINITE",
+  "observations": [
+    {
+      "generated_now": true,
+      "new_model_calls": 0,
+      "native_passed": 3,
+      "native_total": 3,
+      "input_exposure": {
+        "status": "UNKNOWN",
+        "overlapping_inputs": 2,
+        "unknown_inputs": 1,
+        "disjoint_inputs": 0
+      }
+    },
+    {
+      "generated_now": false,
+      "new_model_calls": 0,
+      "native_passed": 3,
+      "native_total": 3,
+      "input_exposure": {
+        "status": "UNKNOWN",
+        "overlapping_inputs": 2,
+        "unknown_inputs": 1,
+        "disjoint_inputs": 0
+      }
+    }
+  ],
+  "failed_first_pass": {
+    "phase": "fill-training",
+    "candidate_id": "fails",
+    "evaluation_completed": false,
+    "cases_started": 2,
+    "cases_completed": 1,
+    "evaluation_error": "inputs [2]: zero divisor for integer operator /",
+    "calls": [
+      {
+        "activity_id": "fillhistory://activity/seed",
+        "case_index": 0,
+        "inputs": [
+          2
+        ]
+      },
+      {
+        "activity_id": "fillhistory://activity/seed",
+        "case_index": 1,
+        "inputs": [
+          0
+        ]
+      }
+    ]
+  },
+  "preflight_stages": [
+    {
+      "stage": "ACTIVITY_GENERATION",
+      "source_sha256": "sha256:57107ef979af54680980f71f9172185c101ef71cc3c53dc58e3bdf4f09476a81",
+      "completed": true
+    }
+  ],
+  "reader_fixtures": [
+    "internal/meta/languagereadiness/toolchainrelease/testdata/helper-fill-history-construct.json.gz",
+    "internal/meta/languagereadiness/toolchainrelease/testdata/helper-fill-history-replay.json.gz"
+  ]
+}

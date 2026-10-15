@@ -1,0 +1,16 @@
+{
+  "command": "gooo format --json main.gooo.fixture",
+  "exit_code": 0,
+  "binary_sha256": "698dffaa6bf58d34b787cbfa05037ab3b0568cf2335ea6847be53c7c15fcb369",
+  "producer_ref": "../qualified-signature-types/observation.json#/producer",
+  "source_sha256": "sha256:47a0b1f1b127055d0f77178e23b8faa412456e01a7b9a53441283f8173c823d7",
+  "source_unchanged": true,
+  "status": "formatted",
+  "retained_import": false,
+  "retained_computes": false,
+  "retained_binding": false,
+  "source_formats": 1,
+  "program_executions": 0,
+  "model_predictions": 0,
+  "training_runs": 0
+}

@@ -1,0 +1,5 @@
+=== RUN   TestPartitionedHistoryContinuesNineRegistrationRoles
+    history_registration_continuation_test.go:56: nine source-owned registration roles; one new hypothetical case; all 27 prior version targets preserved; native/model executions 0
+--- PASS: TestPartitionedHistoryContinuesNineRegistrationRoles (0.18s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.638s

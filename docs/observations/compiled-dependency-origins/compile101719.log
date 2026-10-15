@@ -1,0 +1,7 @@
+=== RUN   TestCompiledBodyOriginsAndFreshHeader101719
+    module_compilation_fresh101719_test.go:90: new compiled input bodies; two metadata calls per stage; fresh source types; wall=203.692417ms
+--- PASS: TestCompiledBodyOriginsAndFreshHeader101719 (0.20s)
+=== RUN   TestInvalidDependencyBodyIsUnresolved101719
+--- PASS: TestInvalidDependencyBodyIsUnresolved101719 (0.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	1.752s

@@ -54,11 +54,14 @@ func validateTerminalFailureMapping(manifest failureManifest, binding failureBin
 		if !isFailureJobName(job.Name) && code != "CI-UNCLASSIFIED-001" {
 			return fmt.Errorf("unmapped terminal job lacks CI-UNCLASSIFIED-001")
 		}
-		if job.Name == "CI policy" && code != "CI-SCOPE-001" && code != "CI-CAPS-001" {
+		if job.Name == "CI policy" && code != "CI-SCOPE-001" && code != "CI-CAPS-001" && code != "CI-CONTRACT-001" {
 			return fmt.Errorf("CI policy terminal failure has a non-deterministic code")
 		}
 		if isCanonicalFailureJob(job.Name) && job.Name != "CI policy" && code != "CI-TEST-001" {
 			return fmt.Errorf("canonical terminal job %q has a non-deterministic code", job.Name)
+		}
+		if job.Name == "CI evidence" && code != "CI-ARTIFACT-001" && code != "CI-TEST-001" {
+			return fmt.Errorf("CI evidence terminal failure has a non-deterministic code")
 		}
 		if job.Name == "CI proof bundle" && code == "CI-UNCLASSIFIED-001" {
 			return fmt.Errorf("proof terminal job has an unclassified code")

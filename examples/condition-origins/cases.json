@@ -1,0 +1,80 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "originusage:Describe": {
+          "site_id": "sha256:d1b877b348993f0c7ca205f11aa50d4c4a59801dc6345ac7792bd0fd193479ed",
+          "selected": true,
+          "original": false,
+          "declaration": true,
+          "ref_count": 2,
+          "located_count": 2
+        }
+      },
+      "expected": {
+        "originusage:Describe": "selected-source"
+      }
+    },
+    {
+      "inputs": {
+        "originusage:Describe": {
+          "site_id": "fixture:original2513",
+          "selected": true,
+          "original": true,
+          "declaration": true,
+          "ref_count": 3,
+          "located_count": 3
+        }
+      },
+      "expected": {
+        "originusage:Describe": "source-retained"
+      }
+    },
+    {
+      "inputs": {
+        "originusage:Describe": {
+          "site_id": "fixture:missing2513",
+          "selected": false,
+          "original": false,
+          "declaration": false,
+          "ref_count": 0,
+          "located_count": 0
+        }
+      },
+      "expected": {
+        "originusage:Describe": "origin-unresolved"
+      }
+    },
+    {
+      "inputs": {
+        "originusage:Describe": {
+          "site_id": "fixture:field2513",
+          "selected": true,
+          "original": false,
+          "declaration": true,
+          "ref_count": 3,
+          "located_count": 2
+        }
+      },
+      "expected": {
+        "originusage:Describe": "origin-unresolved"
+      }
+    },
+    {
+      "inputs": {
+        "originusage:Describe": {
+          "site_id": "fixture:declaration2513",
+          "selected": true,
+          "original": false,
+          "declaration": false,
+          "ref_count": 0,
+          "located_count": 0
+        }
+      },
+      "expected": {
+        "originusage:Describe": "origin-unresolved"
+      }
+    }
+  ]
+}

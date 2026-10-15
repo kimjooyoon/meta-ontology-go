@@ -1,0 +1,25 @@
+{
+  "emitted_members": 9,
+  "execution_binding": {
+    "activity_id": "syntaxregistration://activity/pin-registration-execution-identity",
+    "input_id": "gooo://syntax-registration/request",
+    "output_id": "gooo://syntax-registration/pinned-input",
+    "identity": {
+      "go_version": "go1.27.2",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "executable_sha256": "sha256:e46f45fe6af054e1fca9820b153884ebcf79181cf3e8bd0fbe624eaf94c72947",
+      "go_command_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+      "compiler_sha256": "sha256:8a3add4030b0f724c535afe946a4fcd27ca235ba869d4d4b91091e0ef8a611e2"
+    }
+  },
+  "generated_artifacts": 9,
+  "global_planner_admission": "NOT_IMPLEMENTED",
+  "manual_follow_up_edits": null,
+  "operation": "RegisterSyntaxCapability",
+  "repository_writes": 0,
+  "required_artifacts": 9,
+  "required_members": 9,
+  "semantic_admission": "UNASSESSED",
+  "wall_ms": 92
+}

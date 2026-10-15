@@ -1,0 +1,799 @@
+{
+  "schema": "gooo/body-composition-runtime/v1",
+  "stage": "COMPLETE",
+  "composition_sha256": "sha256:6f79b8cc61524908112502f092076741eaa52a6970e700a7f55fe768473722f6",
+  "original_source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+  "selected_source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+  "typed_plan_sha256": "sha256:6cb15271cddf000c945fc6c9a9edf90dbdd2fe7654638bdc16df1488bd4296a4",
+  "generated_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+  "driver_sha256": "sha256:b60505029d66031b47bc2e849d5fb37f04920d4b8ff01c7dd372ab4dc1395ad2",
+  "observed_projection_sha256": "sha256:b02996c0f189ece1a16ff16618ef0a1fe7f12dfec0c89c5b7142cae6eaaaa93e",
+  "observed_driver_sha256": "sha256:f33f04341fec5c3bfc9182d5d2a7c7727aa0c621c68817646a146472c48de772",
+  "runtime_suite_sha256": "sha256:a13c2053d025207e028b98d94e4fdf58bb5cf8a9776e1eb639894873c4be7ee9",
+  "executable_sha256": "sha256:eeaadfc5a4a064dae56398648f6e74f8b58ae815c41a47496b5aee16007a62fa",
+  "go_tool_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+  "go_tool_selection": "path",
+  "go_version": "go version go1.27.2 darwin/arm64",
+  "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+  "producer_module": {
+    "path": "github.com/kimjooyoon/meta-ontology-go",
+    "version": "(devel)"
+  },
+  "toolchain": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 9340000,
+    "user_ns": 4542000,
+    "system_ns": 2933000,
+    "peak_rss_bytes": 14352384,
+    "stdout_sha256": "sha256:94e911f9fbf3c118f6a0573ab3a13fa546ad13e89ba40cf53df77e468509c92d",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1206542,
+      "wait_ns": 8133458,
+      "deadline_remaining_ns": 59985453333,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "build": {
+    "started": true,
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "diagnostics_bytes": 0,
+    "output_truncated": false,
+    "exit_code": 0,
+    "wall_ns": 328949292,
+    "user_ns": 142100000,
+    "system_ns": 91131000,
+    "peak_rss_bytes": 87523328,
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "timing": {
+      "start_ns": 1088542,
+      "wait_ns": 327860750,
+      "deadline_remaining_ns": 59973178083,
+      "context_at_start_return": "ACTIVE"
+    }
+  },
+  "runs": [
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 378552583,
+      "user_ns": 2210000,
+      "system_ns": 4875000,
+      "peak_rss_bytes": 5079040,
+      "stdout_sha256": "sha256:522c4834ae4a5cbc6aa0c0142dd159a609b07b38b3364978fcf1c1f8930ae576",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 932125,
+        "wait_ns": 377620458,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59642750541,
+        "context_at_start_return": "ACTIVE"
+      }
+    },
+    {
+      "started": true,
+      "completed": true,
+      "canceled": false,
+      "timed_out": false,
+      "diagnostics_bytes": 0,
+      "output_truncated": false,
+      "exit_code": 0,
+      "wall_ns": 9825167,
+      "user_ns": 2167000,
+      "system_ns": 3955000,
+      "peak_rss_bytes": 5128192,
+      "stdout_sha256": "sha256:522c4834ae4a5cbc6aa0c0142dd159a609b07b38b3364978fcf1c1f8930ae576",
+      "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timing": {
+        "start_ns": 4043417,
+        "wait_ns": 5781750,
+        "wait_limit_ns": 2000000000,
+        "deadline_remaining_ns": 59263183750,
+        "context_at_start_return": "ACTIVE"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "case_index": 0,
+      "deliveries": [
+        {
+          "activity_id": "urn:locals10433:prepare",
+          "input": 23,
+          "actual": {
+            "values": [
+              588,
+              583
+            ]
+          },
+          "actual_fields": [
+            {
+              "id": "urn:locals10433:values",
+              "name": "values",
+              "value": [
+                588,
+                583
+              ]
+            }
+          ],
+          "expected": {
+            "values": [
+              588,
+              583
+            ]
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": false
+        }
+      ],
+      "constructions": [
+        {
+          "site_index": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 0,
+              "read_end": 0,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 0,
+              "read_end": 0,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        }
+      ],
+      "local_writes": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 1,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 1,
+          "use_end": 2,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        }
+      ],
+      "local_uses": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "assignment": 0
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "assignment": 1
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "assignment": 1
+        },
+        {
+          "site_index": 4,
+          "frame": 0,
+          "assignment": 2
+        }
+      ],
+      "local_elements": [
+        {
+          "construction": 0,
+          "element": 0,
+          "use_start": 2,
+          "use_end": 3,
+          "uses_dropped": 0
+        },
+        {
+          "construction": 0,
+          "element": 1,
+          "use_start": 3,
+          "use_end": 4,
+          "uses_dropped": 0
+        }
+      ],
+      "local_frames": 1,
+      "reads_observed": true
+    },
+    {
+      "case_index": 1,
+      "deliveries": [
+        {
+          "activity_id": "urn:locals10433:prepare",
+          "input": -181,
+          "actual": {
+            "values": [
+              -24,
+              -19
+            ]
+          },
+          "actual_fields": [
+            {
+              "id": "urn:locals10433:values",
+              "name": "values",
+              "value": [
+                -24,
+                -19
+              ]
+            }
+          ],
+          "expected": {
+            "values": [
+              -24,
+              -19
+            ]
+          },
+          "passed": true
+        }
+      ],
+      "conditions_observed": true,
+      "conditions": [
+        {
+          "site_index": 0,
+          "value": true
+        }
+      ],
+      "constructions": [
+        {
+          "site_index": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "completed": true,
+          "elements": [
+            {
+              "read_start": 0,
+              "read_end": 0,
+              "reads_dropped": 0,
+              "completed": true
+            },
+            {
+              "read_start": 0,
+              "read_end": 0,
+              "reads_dropped": 0,
+              "completed": true
+            }
+          ]
+        }
+      ],
+      "local_writes": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 0,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 0,
+          "use_end": 1,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        },
+        {
+          "site_index": 2,
+          "frame": 0,
+          "read_start": 0,
+          "read_end": 0,
+          "use_start": 1,
+          "use_end": 2,
+          "reads_dropped": 0,
+          "uses_dropped": 0,
+          "completed": true
+        }
+      ],
+      "local_uses": [
+        {
+          "site_index": 0,
+          "frame": 0,
+          "assignment": 0
+        },
+        {
+          "site_index": 1,
+          "frame": 0,
+          "assignment": 1
+        },
+        {
+          "site_index": 3,
+          "frame": 0,
+          "assignment": 1
+        },
+        {
+          "site_index": 4,
+          "frame": 0,
+          "assignment": 2
+        }
+      ],
+      "local_elements": [
+        {
+          "construction": 0,
+          "element": 0,
+          "use_start": 2,
+          "use_end": 3,
+          "uses_dropped": 0
+        },
+        {
+          "construction": 0,
+          "element": 1,
+          "use_start": 3,
+          "use_end": 4,
+          "uses_dropped": 0
+        }
+      ],
+      "local_frames": 1,
+      "reads_observed": true
+    }
+  ],
+  "projection_replayed": true,
+  "runtime_replayed": true,
+  "finite_passed": 2,
+  "finite_total": 2,
+  "condition_sites": [
+    {
+      "expression_id": "sha256:ad2886b1e9d1783fff3b4771a21710fb2c3e4885a5d34828b5adbe9fdd1ef08c",
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "expression": "input < 0",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start": 570,
+      "end": 579,
+      "source": {
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "kind": "activity",
+          "stable_id": "urn:locals10433:prepare",
+          "name": "Prepare",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "start_byte": 201,
+          "end_byte": 405
+        },
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+        "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+        "start_byte": 317,
+        "end_byte": 324,
+        "decoded_start": 42,
+        "decoded_end": 49,
+        "source_ordinal": 0,
+        "expression": "input<0",
+        "relation": "retained_condition_node"
+      }
+    }
+  ],
+  "condition_observation": {
+    "schema": "gooo/native-condition-summary/v1",
+    "status": "COMPLETE",
+    "recorded_events": 2,
+    "dropped_events": 0,
+    "sha256": "sha256:e28a4dc5270bb821c7ff5a8166ddcc6e5c85a9d74934171ec431faa0e8457c85"
+  },
+  "construction_sites": [
+    {
+      "expression_id": "sha256:549cf42770773bdfc447d3a73cb04d87b8f7e84a8e0f360508856fc23b04f55a",
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "native_ordinal": 0,
+      "element_type": "int64",
+      "expression": "[]int64{second, first}",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 795,
+      "end_byte": 817,
+      "source": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+        "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+        "start_byte": 382,
+        "end_byte": 403,
+        "decoded_start": 107,
+        "decoded_end": 128,
+        "expression": "[]int64{second,first}"
+      },
+      "elements": [
+        {
+          "expression": "second",
+          "start_byte": 803,
+          "end_byte": 809,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+            "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+            "start_byte": 390,
+            "end_byte": 396,
+            "decoded_start": 115,
+            "decoded_end": 121,
+            "expression": "second"
+          }
+        },
+        {
+          "expression": "first",
+          "start_byte": 811,
+          "end_byte": 816,
+          "source": {
+            "status": "MAPPED",
+            "view": "selected_gooo_source",
+            "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+            "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+            "start_byte": 397,
+            "end_byte": 402,
+            "decoded_start": 122,
+            "decoded_end": 127,
+            "expression": "first"
+          }
+        }
+      ]
+    }
+  ],
+  "local_sites": [
+    {
+      "expression_id": "sha256:39a46206a5934badd876175ae68e05d49ab9ee472448f59b53beaa4975b5456a",
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "native_ordinal": 0,
+      "variable_ordinal": 0,
+      "name": "first",
+      "kind": "declaration",
+      "operation": "var",
+      "scalar_type": "int64",
+      "expression": "input + 173",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 530,
+      "end_byte": 541,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+          "start_byte": 285,
+          "end_byte": 294,
+          "decoded_start": 10,
+          "decoded_end": 19,
+          "expression": "input+173"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+          "start_byte": 279,
+          "end_byte": 284,
+          "decoded_start": 4,
+          "decoded_end": 9,
+          "expression": "first"
+        }
+      }
+    },
+    {
+      "expression_id": "sha256:498c694aa0eeb71f46e6e023a88e2999c19cfdf86c53f4a8b2086e2f0cbb9766",
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "native_ordinal": 1,
+      "variable_ordinal": 1,
+      "name": "second",
+      "kind": "declaration",
+      "operation": "var",
+      "scalar_type": "int64",
+      "expression": "first * 3",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 556,
+      "end_byte": 565,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+          "start_byte": 306,
+          "end_byte": 313,
+          "decoded_start": 31,
+          "decoded_end": 38,
+          "expression": "first*3"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+          "start_byte": 299,
+          "end_byte": 305,
+          "decoded_start": 24,
+          "decoded_end": 30,
+          "expression": "second"
+        }
+      }
+    },
+    {
+      "expression_id": "sha256:4bf45d619e5638c62142645b6aa7dafee1f0861a92b87e6e6a5708f37acac279",
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "native_ordinal": 2,
+      "variable_ordinal": 0,
+      "name": "first",
+      "kind": "assignment",
+      "operation": "=",
+      "scalar_type": "int64",
+      "expression": "second + 5",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 592,
+      "end_byte": 602,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+          "start_byte": 332,
+          "end_byte": 340,
+          "decoded_start": 57,
+          "decoded_end": 65,
+          "expression": "second+5"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+          "start_byte": 279,
+          "end_byte": 284,
+          "decoded_start": 4,
+          "decoded_end": 9,
+          "expression": "first"
+        }
+      }
+    },
+    {
+      "expression_id": "sha256:ff35adf3d7424612c6a329a134a04264d6940af88f4a6e06a4b8376ba30b719f",
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "native_ordinal": 3,
+      "variable_ordinal": 0,
+      "name": "first",
+      "kind": "assignment",
+      "operation": "=",
+      "scalar_type": "int64",
+      "expression": "second - 5",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 623,
+      "end_byte": 633,
+      "source": {
+        "value": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+          "start_byte": 352,
+          "end_byte": 360,
+          "decoded_start": 77,
+          "decoded_end": 85,
+          "expression": "second-5"
+        },
+        "declaration": {
+          "status": "MAPPED",
+          "view": "selected_gooo_source",
+          "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+          "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+          "start_byte": 279,
+          "end_byte": 284,
+          "decoded_start": 4,
+          "decoded_end": 9,
+          "expression": "first"
+        }
+      }
+    }
+  ],
+  "local_use_sites": [
+    {
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "variable_ordinal": 0,
+      "native_ordinal": 0,
+      "name": "first",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 556,
+      "end_byte": 561,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+        "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+        "start_byte": 279,
+        "end_byte": 284,
+        "decoded_start": 4,
+        "decoded_end": 9,
+        "expression": "first"
+      }
+    },
+    {
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "variable_ordinal": 1,
+      "native_ordinal": 1,
+      "name": "second",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 592,
+      "end_byte": 598,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+        "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+        "start_byte": 299,
+        "end_byte": 305,
+        "decoded_start": 24,
+        "decoded_end": 30,
+        "expression": "second"
+      }
+    },
+    {
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "variable_ordinal": 1,
+      "native_ordinal": 2,
+      "name": "second",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 623,
+      "end_byte": 629,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+        "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+        "start_byte": 299,
+        "end_byte": 305,
+        "decoded_start": 24,
+        "decoded_end": 30,
+        "expression": "second"
+      }
+    },
+    {
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "variable_ordinal": 1,
+      "native_ordinal": 3,
+      "name": "second",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 803,
+      "end_byte": 809,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+        "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+        "start_byte": 299,
+        "end_byte": 305,
+        "decoded_start": 24,
+        "decoded_end": 30,
+        "expression": "second"
+      }
+    },
+    {
+      "root_activity_id": "urn:locals10433:prepare",
+      "activity_id": "urn:locals10433:prepare",
+      "variable_ordinal": 0,
+      "native_ordinal": 4,
+      "name": "first",
+      "scalar_type": "int64",
+      "projection_sha256": "sha256:f7891cecccdf50a2acaf68969d9098f616f9058ab40ac264489902156df00549",
+      "start_byte": 811,
+      "end_byte": 816,
+      "declaration": {
+        "status": "MAPPED",
+        "view": "selected_gooo_source",
+        "source_sha256": "sha256:56a736907ba8799f4412e89d7c5db93c1d0465b23201370edc25f80d4fa01534",
+        "body_sha256": "sha256:e15dd53efd5a67f0fd03234ded1f56c1358cbba290e8ddd3c23ddb98c4d980b6",
+        "start_byte": 279,
+        "end_byte": 284,
+        "decoded_start": 4,
+        "decoded_end": 9,
+        "expression": "first"
+      }
+    }
+  ],
+  "local_observation": {
+    "schema": "gooo/native-local-summary/v1",
+    "status": "COMPLETE",
+    "sha256": "sha256:b6f37088ca10fc0898855f9833c732742ae48307ed21c4c4e0fdf7852b943d99",
+    "recorded_writes": 6,
+    "recorded_uses": 8,
+    "element_windows": 4,
+    "interrupted_writes": 0,
+    "unresolved_uses": 0,
+    "frames": 2,
+    "frames_dropped": 0,
+    "writes_dropped": 0,
+    "uses_dropped": 0,
+    "reads_dropped": 0,
+    "scope": "authored scalar assignments and evaluated uses linked by lexical variable and function invocation; constructor element windows include evaluated helper uses; original use coordinates and complete causal dependencies are not inferred"
+  },
+  "read_observation": {
+    "schema": "gooo/native-read-summary/v2",
+    "status": "COMPLETE",
+    "recorded_reads": 0,
+    "resolved_reads": 0,
+    "recorded_constructions": 2,
+    "unresolved_reads": 0,
+    "dropped_reads": 0,
+    "registration_dropped": 0,
+    "sha256": "sha256:17d213c1313536b4e2e6fd90ae1187ba983db8d0e2f20590723143bac043c5ac",
+    "scope": "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
+  },
+  "input_separation": {
+    "status": "UNKNOWN",
+    "reason": "UNCLASSIFIED_INPUTS",
+    "unique_inputs": 2,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 0,
+    "disjoint_cases_passed": 0,
+    "unknown_inputs": 2,
+    "scope": "unique root-input tuples; actual inputs at graph activities and constructed helper calls compared with source output/condition/holdout cases and recorded probes; all supplied expectations across duplicate rows must match; model-training exposure is unknown"
+  },
+  "model_calls": 0,
+  "elapsed_ns": 748927083,
+  "scope": "two fresh compiled value-graph executions; finite named expectations; explicit edges and ordered actual values; zero inference during replay/execution"
+}

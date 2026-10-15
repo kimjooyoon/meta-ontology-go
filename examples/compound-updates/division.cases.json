@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"examples/compound:Divide.input0": 137, "examples/compound:Divide.input1": 7}, "expected": {"examples/compound:Divide": 19}},
+    {"inputs": {"examples/compound:Divide.input0": -139, "examples/compound:Divide.input1": 7}, "expected": {"examples/compound:Divide": -19}}
+  ]
+}

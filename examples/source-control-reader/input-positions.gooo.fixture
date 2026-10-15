@@ -1,0 +1,10 @@
+package signaturepositions
+namespace signaturepositions
+entity Integer id "urn:gooo:type:integer"
+# 두 입력은 타입이 같아도 서로 다른 자리에 선언되어 있다.
+activity Difference(
+    Integer,
+    Integer
+) -> Integer id "urn:signaturepositions:difference" computes `
+return input0 - input1
+`

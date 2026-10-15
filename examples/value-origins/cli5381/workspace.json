@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "adjustment5381",
+    "activity": "Adjust"
+  },
+  "packages": [
+    {
+      "path": "adjustment5381",
+      "name": "adjustment",
+      "sources": [
+        "할당.gooo.fixture"
+      ]
+    }
+  ]
+}

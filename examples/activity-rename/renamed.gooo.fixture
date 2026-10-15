@@ -1,0 +1,16 @@
+package pricing
+namespace pricing
+entity Integer id "urn:gooo:type:integer"
+entity Boolean id "urn:gooo:type:boolean"
+// Calculate is the original term in this note.
+activity 요금(Integer) -> Integer id "pricing://activity/calculate" computes "return input - 11"
+activity Check(Integer,Integer) -> Boolean computes "return input1 == 요금(input0)"
+activity Select(Integer) -> Integer computes "return 요금(input)" assembling {
+ choice "value" field_value at "0" alternative "요금(input) + 1" intent "Calculate the fee."
+ criteria {
+  predicate "fee" activity "Check"
+  input "[4]"
+  holdout_input "[23]"
+ }
+ attempts "2"
+}

@@ -1,0 +1,5 @@
+=== RUN   TestReturnProfileLegacy21737
+    field_return_legacy_fresh_test.go:36: saved legacy record only;missing return annotations retain old field inventory;no generation,case evaluation,producer execution or model call
+--- PASS: TestReturnProfileLegacy21737 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.515s

@@ -105,12 +105,13 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 	}
 	r.visiting[name] = true
 	defer delete(r.visiting, name)
-	names, err := directPureCalls(body)
+	sites, err := directPureCallSites(body)
 	if err != nil {
 		return 0, err
 	}
 	budget, height := 0, 0
-	for ordinal, callee := range names {
+	for ordinal, site := range sites {
+		callee := site.name
 		// Source-declared activities retain their identity even when their name
 		// shadows a Go primitive. Primitives themselves add no activity edge.
 		if bodyPrimitiveName(callee) && r.ids[callee] == "" {
@@ -122,7 +123,7 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 		}
 		r.edges = append(r.edges, PureCallEdge{CallerID: r.ids[name], CalleeID: r.ids[callee], Ordinal: ordinal})
 		height = max(height, 1+r.heights[callee])
-		budget += 1 + cost
+		budget += site.maximum * (1 + cost)
 		if budget > pureCallLimit {
 			return 0, fmt.Errorf("pure activity closure exceeds %d calls per invocation", pureCallLimit)
 		}

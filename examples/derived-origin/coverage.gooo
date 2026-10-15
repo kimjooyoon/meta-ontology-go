@@ -1,0 +1,64 @@
+package origincoverage
+namespace origincoverage
+
+entity Columns id "urn:gooo:origin-coverage:columns" fields {
+    field selected_source_sha id "urn:gooo:origin-coverage:selected-source" type string required one
+    field recorded_writes id "urn:gooo:origin-coverage:writes" type integer required one
+    field page_complete id "urn:gooo:origin-coverage:page-complete" type boolean required one
+    field recording_complete id "urn:gooo:origin-coverage:recording-complete" type boolean required one
+    field case_indexes id "urn:gooo:origin-coverage:cases" type integer required many
+    field assignments id "urn:gooo:origin-coverage:assignments" type integer required many
+    field kinds id "urn:gooo:origin-coverage:kinds" type string required many
+    field source_shas id "urn:gooo:origin-coverage:sources" type string required many
+    field starts id "urn:gooo:origin-coverage:starts" type integer required many
+    field ends id "urn:gooo:origin-coverage:ends" type integer required many
+}
+
+entity Coverage id "urn:gooo:origin-coverage:result" fields {
+    field selected_source_sha id "urn:gooo:origin-coverage:result-source" type string required one
+    field recorded_writes id "urn:gooo:origin-coverage:result-writes" type integer required one
+    field fragment_rows id "urn:gooo:origin-coverage:rows" type integer required one
+    field mapped_writes id "urn:gooo:origin-coverage:mapped" type integer required one
+    field missing_writes id "urn:gooo:origin-coverage:missing" type integer required one
+    field candidate_fragments id "urn:gooo:origin-coverage:candidates" type integer required one
+    field grammar_fragments id "urn:gooo:origin-coverage:grammars" type integer required one
+    field template_fragments id "urn:gooo:origin-coverage:templates" type integer required one
+    field coverage_basis_points id "urn:gooo:origin-coverage:ratio" type integer required one
+    field status id "urn:gooo:origin-coverage:status" type string required one
+}
+
+activity Invalid(Columns) -> Coverage id "urn:gooo:origin-coverage:invalid" computes `return Coverage{selected_source_sha:input.selected_source_sha,recorded_writes:input.recorded_writes,fragment_rows:int64(len(input.kinds)),mapped_writes:-1,missing_writes:-1,candidate_fragments:0,grammar_fragments:0,template_fragments:0,coverage_basis_points:-1,status:"unusable-input"}`
+
+activity Summarize(Columns) -> Coverage id "urn:gooo:origin-coverage:summarize" computes `if input.recorded_writes<0 || len(input.case_indexes)!=len(input.kinds) || len(input.assignments)!=len(input.kinds) || len(input.source_shas)!=len(input.kinds) || len(input.starts)!=len(input.kinds) || len(input.ends)!=len(input.kinds) {return Invalid(input)}
+let row=0
+let previous_case=-1
+let previous_assignment=-1
+let current_mapped=false
+let mapped=0
+let candidates=0
+let grammars=0
+let templates=0
+for kind in input.kinds {
+    let current_case=input.case_indexes[row]
+    let assignment=input.assignments[row]
+    if current_case<0 || assignment<0 || current_case<previous_case || (current_case==previous_case && assignment<previous_assignment) {return Invalid(input)}
+    if current_case!=previous_case || assignment!=previous_assignment {current_mapped=false;previous_case=current_case;previous_assignment=assignment}
+    let located=input.source_shas[row]!="" && input.starts[row]>=0 && input.ends[row]>input.starts[row]
+    let known=kind=="declared_candidate" || kind=="derived_grammar" || kind=="retained_template"
+    if located && known && !current_mapped {mapped=mapped+1;current_mapped=true}
+    if located && kind=="declared_candidate" {candidates=candidates+1}
+    if located && kind=="derived_grammar" {grammars=grammars+1}
+    if located && kind=="retained_template" {templates=templates+1}
+    row=row+1
+}
+if mapped>input.recorded_writes {return Invalid(input)}
+let missing=-1
+let ratio=-1
+let status="partial-page"
+if input.page_complete && !input.recording_complete {status="partial-recording"}
+if input.page_complete && input.recording_complete {
+    status="complete-recorded"
+    missing=input.recorded_writes-mapped
+    if input.recorded_writes>0 {ratio=mapped*10000/input.recorded_writes}else{status="empty-recording"}
+}
+return Coverage{selected_source_sha:input.selected_source_sha,recorded_writes:input.recorded_writes,fragment_rows:row,mapped_writes:mapped,missing_writes:missing,candidate_fragments:candidates,grammar_fragments:grammars,template_fragments:templates,coverage_basis_points:ratio,status:status}`

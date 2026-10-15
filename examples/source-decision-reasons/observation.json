@@ -1,0 +1,94 @@
+{
+  "schema": "gooo/stock-decision-reasons-observation/v1",
+  "decision": "PASS",
+  "producer": {
+    "compiler_head": "bbfcaebb39a62fd4c7bc1b0f6a0907b4d246d0e8",
+    "compiler_tree": "cdd7a6373db07e33d865c800a3b6f9928c7339e9",
+    "overlays": [],
+    "source_input_hashes": {
+      "cases.json": "121a8f653178925db171de775d7ca0e4fe2032486ca7e1c4dd72d66d27d1b088",
+      "workspace.json": "639b82bb94eb847594076bd2c8c7a0854e7e88ecc188f3bdcd8753cfac67722d",
+      "계약.gooo.fixture": "5447fba1dd7be12d8818447a26720865604093d6e3d9bdd4bf4e220e02fd5ccb",
+      "예약.gooo.fixture": "f57524bd815f35f497485dac266dd6f3d8aefc35aabdfdaa5a9dc75c502fee4e"
+    },
+    "scope": "fresh stock835 decision Boolean, declared reason and request-reference preservation; selection1, separate heldout1, six distinct caller cases; competitor runtimes unexecuted",
+    "created_at": "2026-10-13T08:01:28.043840+00:00"
+  },
+  "binary": {
+    "sha256": "28d9962d0e63d4d4c9a36a9fb3351817af222788d2320539affea4862d995b56",
+    "bytes": 25709506
+  },
+  "binary_removed": true,
+  "input_files_unchanged": true,
+  "execution_source_sha256": "sha256:4c164392f400ab33bde2e70c2a5f2093bd3d5ae8b66465338133f7f6b177fca9",
+  "manifest_digest": "sha256:639b82bb94eb847594076bd2c8c7a0854e7e88ecc188f3bdcd8753cfac67722d",
+  "cases_digest": "sha256:121a8f653178925db171de775d7ca0e4fe2032486ca7e1c4dd72d66d27d1b088",
+  "runtime_source_sha256": "sha256:4c164392f400ab33bde2e70c2a5f2093bd3d5ae8b66465338133f7f6b177fca9",
+  "native_input_cases": 6,
+  "native_passed": 12,
+  "native_total": 12,
+  "decision_records_passed": 6,
+  "decision_records_total": 6,
+  "decision_field_values_passed": 18,
+  "decision_field_values_total": 18,
+  "runtime_replayed": true,
+  "input_separation": {
+    "status": "PASS",
+    "reason": "DISJOINT_EXPECTATIONS_MATCHED",
+    "unique_inputs": 6,
+    "duplicate_rows": 0,
+    "overlapping_inputs": 0,
+    "disjoint_inputs": 6,
+    "disjoint_cases_passed": 6,
+    "unknown_inputs": 0,
+    "scope": "unique root-input tuples; actual inputs at all composing and earlier body-fill activities compared with their selection/holdout cases and probes; duplicate expectations must all match; model-training exposure is unknown",
+    "earlier_stages": [
+      {
+        "activity_id": "urn:stock835:reserve",
+        "source_sha256": "sha256:7febb3d2cec62a463cd2b32a8d1efc78e0b76c0616ef4e34787b5b03700c1647",
+        "plan_sha256": "sha256:7fe43f623cffece1b2dc72080f0b07a37bf1a901310e994617eedd6bfdd81158",
+        "input_set_sha256": "sha256:d62bdab5c78f35258008c68fd3a8f0c3a4fa5f4381395ff1886803cbe9279e02",
+        "unique_inputs": 2
+      }
+    ]
+  },
+  "selected_candidate": "allowed",
+  "selection_passed": 1,
+  "selection_total": 1,
+  "holdout_passed": 1,
+  "holdout_total": 1,
+  "candidate_scores": [
+    {
+      "id": "allowed",
+      "expression": "result=Decision{approved: true, reason: \"capacity_available\", reference: input.reference}",
+      "typecheck_passed": true,
+      "test_cases_passed": 1,
+      "test_cases_total": 1,
+      "accuracy_percent": 100
+    },
+    {
+      "id": "unexplained",
+      "expression": "result=Decision{approved: true, reason: \"unknown\", reference: input.reference}",
+      "typecheck_passed": true,
+      "test_cases_passed": 0,
+      "test_cases_total": 1,
+      "accuracy_percent": 0
+    },
+    {
+      "id": "declined",
+      "expression": "result=Decision{approved: false, reason: \"capacity_available\", reference: input.reference}",
+      "typecheck_passed": true,
+      "test_cases_passed": 0,
+      "test_cases_total": 1,
+      "accuracy_percent": 0
+    }
+  ],
+  "model_predictions": 0,
+  "external_provider_calls": 0,
+  "wall_ns": 1527537750,
+  "children_user_seconds": 0.179873,
+  "children_system_seconds": 0.186325,
+  "competitor_executions": 0,
+  "scope": "one fresh stock835 CLI; explicit decision/reason/reference fields, not an automatically derived rule proof or a language-wide correctness claim",
+  "capture_note": "CLI returned0/PASS; metadata wrapper looked up an absent source_sha256 key. This record recovered once from the original stdout without executing or evaluating the source again."
+}

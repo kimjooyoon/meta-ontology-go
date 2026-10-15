@@ -24,7 +24,9 @@ blocked_by. Duplicate case IDs or paths are REFUTED.
 Generation coordinates exactly nine semantic artifact roles: corpus JSON, native registry,
 syntax counters, syntax conformance expectations, denominator admission,
 denominator selection, digest pin, one new denominator JSON, and migration tests.
-The canonical acceptance case still requires exactly nine physical member files.
+The canonical ordinary registration writes exactly nine physical member files.
+A canonical meta-source promotion writes ten: its case literal and MetaSources
+list have distinct source owners. The nine semantic artifact roles are unchanged.
 After repository projection, one role can own several physical files and a file
 can participate in several roles. All nine activity/output bindings remain
 mandatory; emitted/required physical members are the complete distinct write set,
@@ -94,6 +96,31 @@ Request example, with observed values filled by the caller:
 
 ## Internal meta source registration
 
+### Canonical capability profiles
+
+The request selects one canonical profile. `ordered_collections: true` already
+includes record fields; combining it with `entity_fields: true` is rejected by
+the existing case contract before any candidate member is written.
+
+| Required surface | Case flags |
+| --- | --- |
+| Ordinary body | Neither flag |
+| V1 required single Text record fields | `entity_fields: true` |
+| V5 Text/Boolean/Integer, optional fields or ordered collections | `ordered_collections: true` only |
+
+The local-version reader's first request recorded this combination error. Its
+corrected source-bound request generated the complete nine-member proposal.
+Both attempts and their separate authority boundaries are retained in the
+[observation record](observations/local-version-origins/observations.json).
+
+The flag names are historical profile selectors. V1 covers required single Text
+fields; an Integer field needs the V5 selector even if the program uses no
+collections. The Text-origin example retained its original V1 rejection and
+subsequent V5 request. Source fields were preserved throughout. Use the exact
+profile table before pinning an execution request.
+
+### Register an internal source
+
 An explicit request may also name an existing `internal/meta/**/*.gooo`
 source. This is the same VALID LANGUAGE_CAPABILITY registration operation,
 not a meta-source exemption or a smaller denominator. Lexical traversal,
@@ -149,7 +176,8 @@ separate. These are synthetic compiler regressions, not external utility.
 
 ## Native evidence and remaining integration
 
-The dedicated Actions job retains the canonical nine-file end-to-end case.
+The dedicated Actions job retains the canonical nine-file ordinary registration
+and ten-file meta-source promotion end-to-end cases.
 The repository-projection job additionally uses its actual authorized transformed
 workspace, copies it with source links dereferenced, generates the complete
 candidate twice, applies every member only to that CI temporary copy, and runs
@@ -177,8 +205,42 @@ This pins three executable identities, not the entire environment, toolchain
 publisher authenticity or semantic correctness. The new identity requirement is
 an explicit experimental request-ABI change: version-only requests are no longer
 accepted. Native reports carry the actual binding; existing nine-role and
-canonical/projected conformance obligations are unchanged.
+canonical/projected conformance obligations remain bound to the complete write set.
 Issue #742 remains open until those input/identity/executor integrations and all
 six original acceptance obligations are supported by exact-head native evidence.
 Neither candidate byte equality nor the backend tests close product utility or
 the entire language's self-improvement goal.
+
+## Registry helpers and declaration origins
+
+The native `Cases` field may hold a direct case-slice literal or a local
+zero-argument helper. A helper may return another such helper or assemble a
+sequence using one local declaration, ordered `append(sequence, helper()...)`
+assignments, and a final return. Each reachable helper and literal has one use.
+The final literal owns the insertion; earlier groups and unrelated literals
+retain their bytes. Inline literal punctuation and real token-file paths are
+preserved, including source units carrying line directives.
+
+Branches, cycles, repeated helper paths, external calls, arguments, named return
+bindings and shadowed append/helper bindings remain unresolved. Generation
+returns no candidate for those shapes. This is a finite source observation used
+by the Gooo `GenerateNativeRegistry` activity. It does not evaluate arbitrary
+Go or use a model to invent registry members.
+
+The [recorded source cohorts](observations/registry-source-origins/README.md)
+include the failed inline punctuation case and its changed-source successor.
+Full native canonical/projected acceptance belongs to the submitted head's own
+original Actions runs.
+
+## Historical targets during continued generation
+
+Generating the next corpus version pins the previous syntax target as an
+explicit source case before the current capability count grows. Historical
+migration checks compare their own immutable evidence, while current checks
+follow the selected source version. This keeps a v72 observation at108 when
+v73/v74 use109/110. Original source-case membership, the other five boundaries
+and all thirteen link obligations are preserved.
+
+[Recorded continuation](observations/refactor-type-origins/README.md) contains
+actual compiled two-step decoder observations and the standard-type reader
+lifetime used by Gooo function decomposition.

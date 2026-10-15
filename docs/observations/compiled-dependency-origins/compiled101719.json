@@ -1,0 +1,24 @@
+{
+  "first": {
+    "ImportPath": "experiment.compilation101719/dep",
+    "BuildID": "AoDquqOsxzlGuVokWokD/hcRfTgt_MokHmS1gLDYo",
+    "ExportSHA256": "a70c253cc085d17992b4d50e6e88c19a824d3bb6bf59e2c0f0b8766db87ea40f",
+    "SourceSHA256": "999a87e359903108d7f0e2df7afb5ddf4e9cc6d2fa6e9aaa95f2db2f9a1aa370",
+    "ContextSHA256": "0948fe6b09f2ce1a9f9c99240d7fd1d249087c5ff5fc2db82bbb8ad3c70ec346",
+    "SourceFiles": 1
+  },
+  "first_list_calls": 2,
+  "historical_cohort_reruns": 0,
+  "next": {
+    "ImportPath": "experiment.compilation101719/dep",
+    "BuildID": "qauIjOSIayzqtEImHrof/0N7Q9C-KYsO8yWyDBrXi",
+    "ExportSHA256": "d79a840eda833b3fea448d6d768311fff258c4f77eeb5971f72236ff088a0de1",
+    "SourceSHA256": "e1d010d7755ae8b2df4123670402a5010c029bcf9843efc5737f2b76ffb02998",
+    "ContextSHA256": "0948fe6b09f2ce1a9f9c99240d7fd1d249087c5ff5fc2db82bbb8ad3c70ec346",
+    "SourceFiles": 1
+  },
+  "next_list_calls": 2,
+  "shared_standard_identity": true,
+  "source_type_transition": "int -\u003e float64",
+  "wall_ns": 203430709
+}

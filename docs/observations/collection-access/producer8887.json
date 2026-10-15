@@ -1,0 +1,58 @@
+{
+  "baseline": "674c5b63ab49e633524e81bc899d91e545518e9d",
+  "files": [
+    {
+      "path": "cmd/gooo/package_value_origins.go",
+      "sha256": "52839d66329410ff99b9924ec3d5f47926443ddf3cf4fed670fb8cf7e2bf89e8"
+    },
+    {
+      "path": "internal/bodycodegen/body_fill_record.go",
+      "sha256": "536b425bfc7ec57fccb1b62d9830c4cbdd93e949e924eb5eb25435c289915b02"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_access.go",
+      "sha256": "118bfb283f8f11e122f3b3cf1bb163dd795c239f81a1afe0fd686d4697fb78e4"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_access_test.go",
+      "sha256": "07e38d979f27452b71957708c270f1ac0476a659a9bb100cbf0aa1cd81babe42"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_expr.go",
+      "sha256": "8a87b2f97a8c547af481a39b1d6e2b2bf9ea9752d085190ecbb8faa8d91e6677"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_transfer.go",
+      "sha256": "15f8148183839d051307d9548861974542df9bcf777108bae5e21f17a391e192"
+    },
+    {
+      "path": "internal/bodycodegen/record_assembly_eval.go",
+      "sha256": "061dbacde4fb6a5da2ebb280aa015a9e1f31dd70a352841e0041173403ed2235"
+    },
+    {
+      "path": "internal/bodycodegen/record_criteria_eval.go",
+      "sha256": "5fdfeed5a6cf7a63272da2b90714162ff465132b9d514a2102df7ded2b177437"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/scalar_record_fill_test.go",
+      "sha256": "068ce133e0464fc8b9cc2a4311f7fa705b849b98486bf68abae9c101ad286bda"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_access_facts.go",
+      "sha256": "a690f5f416fbb98166c239501704da62a7a53afcf2cadc1c3d96fdde0e400b82"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_access_native_test.go",
+      "sha256": "8c63cfd0f47c2a5e206d8556904fb5d716185b90e2500de71c3588fe89f368bc"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_transfer_query.go",
+      "sha256": "79ab17e4eadb6d0912b45dfa82cfa274ac2f92a3b9c513b0163365017c3f119f"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_transfer_walk.go",
+      "sha256": "646644f68fd48703a1146d6534227c2909eecb05f4e4427a1c798311b69834ea"
+    }
+  ],
+  "purpose": "New native8887 source/inputs only; prior cohorts not rerun"
+}

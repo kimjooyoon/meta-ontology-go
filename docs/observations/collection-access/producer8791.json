@@ -1,0 +1,34 @@
+{
+  "baseline": "674c5b63ab49e633524e81bc899d91e545518e9d",
+  "files": [
+    {
+      "path": "internal/bodycodegen/body_value_access.go",
+      "sha256": "118bfb283f8f11e122f3b3cf1bb163dd795c239f81a1afe0fd686d4697fb78e4"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_access_test.go",
+      "sha256": "07e38d979f27452b71957708c270f1ac0476a659a9bb100cbf0aa1cd81babe42"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_origin_expr.go",
+      "sha256": "8a87b2f97a8c547af481a39b1d6e2b2bf9ea9752d085190ecbb8faa8d91e6677"
+    },
+    {
+      "path": "internal/bodycodegen/body_value_transfer.go",
+      "sha256": "15f8148183839d051307d9548861974542df9bcf777108bae5e21f17a391e192"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_access_facts.go",
+      "sha256": "07abf0040eae0718803fe49e5957031b51d6d6f4ad0a6ef3da5777581db143be"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_access_native_test.go",
+      "sha256": "5b9a63487c6519716efe9f2da30877aa128eb7af198e9d26006bf698aa0267f3"
+    },
+    {
+      "path": "internal/packageruntime/workspaceexecution/value_transfer_query.go",
+      "sha256": "c63d70ad89c58249cd800c13cdc66a3a7be932935de0d259328fae56a38fac6b"
+    }
+  ],
+  "purpose": "Fresh access8753/budget8761/native8791 sources only; no historical cohort"
+}

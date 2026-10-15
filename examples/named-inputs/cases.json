@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"named/inputs:Credit": 101, "named/inputs:Net.input1": 29},
+     "expected": {"named/inputs:Credit": 124, "named/inputs:Net": 95}},
+    {"inputs": {"named/inputs:Credit": -53, "named/inputs:Net.input1": 11},
+     "expected": {"named/inputs:Credit": -30, "named/inputs:Net": -41}}
+  ]
+}

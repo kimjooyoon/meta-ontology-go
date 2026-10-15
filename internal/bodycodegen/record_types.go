@@ -10,6 +10,9 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
+// RecordFieldLimit bounds both interpreted value slots and native record inputs.
+const RecordFieldLimit = 32
+
 // RecordType retains source names, stable identities and the typed value layout.
 type RecordType struct {
 	Name   string        `json:"name"`
@@ -19,11 +22,12 @@ type RecordType struct {
 }
 
 type RecordField struct {
-	Name     string `json:"name"`
-	ID       string `json:"id"`
-	TypeID   string `json:"type_id"`
-	GoName   string `json:"go_name"`
-	Presence string `json:"presence,omitempty"`
+	Name        string `json:"name"`
+	ID          string `json:"id"`
+	TypeID      string `json:"type_id"`
+	GoName      string `json:"go_name"`
+	Presence    string `json:"presence,omitempty"`
+	Cardinality string `json:"cardinality,omitempty"`
 }
 
 // RecordTypesFromModel accepts a model already validated under the body profile.
@@ -37,8 +41,8 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 		if ScalarEntityKind(node.Name, string(node.ID)) != "" {
 			return nil, fmt.Errorf("scalar entity %q cannot also declare record fields", node.Name)
 		}
-		if !recordIdentifier(node.Name) || len(node.Fields) > 16 || len(result) >= 16 {
-			return nil, fmt.Errorf("record bodies require 1..16 records, 1..16 fields and identifier names")
+		if !recordIdentifier(node.Name) || len(node.Fields) > RecordFieldLimit || len(result) >= 16 {
+			return nil, fmt.Errorf("record bodies require 1..16 records, 1..%d fields and identifier names", RecordFieldLimit)
 		}
 		record := RecordType{Name: node.Name, ID: string(node.ID), GoName: recordGoName("Record", string(node.ID))}
 		for _, field := range node.Fields {
@@ -57,7 +61,7 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 				presence = string(field.Presence)
 			}
 			record.Fields = append(record.Fields, RecordField{Name: field.Name, ID: string(field.ID),
-				TypeID: typeID, GoName: recordGoName("Field", string(field.ID)), Presence: presence})
+				TypeID: typeID, GoName: recordGoName("Field", string(field.ID)), Presence: presence, Cardinality: repeatedCardinality(field.Cardinality)})
 		}
 		result = append(result, record)
 	}
@@ -128,6 +132,9 @@ func resolveBodyModel(file *syntax.File) (bidir.Model, []RecordType, error) {
 }
 
 func bodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
+	if support := syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV3Support()); support.Profile.ID == syntax.EntityFieldsV5ProfileID {
+		return support
+	}
 	for _, declaration := range file.Declarations {
 		entity, ok := declaration.(*syntax.EntityDecl)
 		if !ok {
@@ -146,4 +153,11 @@ func bodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
 // fields, keeping existing required-field body fingerprints on V3.
 func BodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
 	return bodyEntityFieldsSupport(file)
+}
+
+func repeatedCardinality(cardinality semantic.Cardinality) string {
+	if cardinality == semantic.Many {
+		return "many"
+	}
+	return ""
 }

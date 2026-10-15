@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-14T08:11:38.463057+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "build",
+    "-p=1",
+    "-overlay",
+    "/private/tmp/gooo-length-assembly-origin-20261014/registration22501-overlay.json",
+    "-o",
+    "/private/tmp/gooo-length-assembly-origin-20261014/syntax-registration22501",
+    "./cmd/syntax-registration-candidate"
+  ],
+  "source_head": "a6baec86ca7c29e9ea573ad72d9479d3bbf6df66"
+}

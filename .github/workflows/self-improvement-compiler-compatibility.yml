@@ -68,7 +68,7 @@ jobs:
           test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
 
       - name: Install exact Go 1.27.2
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.27.2'
           cache: false
@@ -200,10 +200,13 @@ jobs:
           work="$RUNNER_TEMP/compiler-compatibility"
           contract="examples/self-improvement-observation/observation.gooo"
           input="examples/self-improvement-observation/input.fixture"
+          consumption_status=0
           go run ./cmd/gooo generate "$input" \
             --out "$work/compatibility-consumption" \
             --compatibility-certificate "$work/compatibility-certificate.json" \
-            --json > "$work/compatibility-cli.json"
+            --json > "$work/compatibility-cli.json" || consumption_status=$?
+          cat "$work/compatibility-cli.json"
+          test "$consumption_status" -eq 0
           jq -e '
             .schema == "gooo/compiler-successor-compatibility-report/v1" and
             .decision == "CLOSED" and
@@ -216,6 +219,7 @@ jobs:
             "$work/compatibility-consumption/generation-report.json" >/dev/null
           test -s "$work/compatibility-consumption/semantic.gooo.go"
           test -s "$work/compatibility-consumption/semantic.gooo.manifest.jsonl"
+          git status --porcelain -- . ':(exclude)predecessor'
           test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
 
       - name: Verify strict default remains the ordinary path
@@ -277,4 +281,20 @@ jobs:
           name: compiler-toolchain-transition-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/compiler-compatibility/toolchain-transition.json
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Preserve the original compatibility attempt diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compiler-compatibility-attempt-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/compiler-compatibility/predecessor-receipt.json
+            ${{ runner.temp }}/compiler-compatibility/successor-receipt.json
+            ${{ runner.temp }}/compiler-compatibility/successor-identity.json
+            ${{ runner.temp }}/compiler-compatibility/authorization.json
+            ${{ runner.temp }}/compiler-compatibility/compatibility-certificate.json
+            ${{ runner.temp }}/compiler-compatibility/compatibility-cli.json
+            ${{ runner.temp }}/compiler-compatibility/compatibility-consumption/generation-report.json
+          if-no-files-found: warn
           retention-days: 30

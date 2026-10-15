@@ -1,0 +1,5 @@
+=== RUN   TestGoooCandidateFieldSources16703
+    package_field_candidate_sources_fresh_test.go:115: new assembly-origin input cohort:Gooo field anchors26/26;candidate2,template8,cross-fragment unresolved values2;producer executions0;model0;input-only finite0
+--- PASS: TestGoooCandidateFieldSources16703 (0.53s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.020s

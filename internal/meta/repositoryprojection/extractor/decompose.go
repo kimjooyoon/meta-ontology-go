@@ -95,6 +95,7 @@ type typeEvidence struct {
 	root                   string
 	contractSourceDigest   string
 	contractSemanticDigest string
+	standard               *standardImportSession
 }
 
 type returnTailHelperProof struct {
@@ -126,6 +127,7 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 	currentSet, currentFile := fset, file
 	evidence := make([]StrategyEvidence, 0)
 	helperProofs := make(map[string]returnTailHelperProof)
+	standard := newStandardImportSession()
 	for {
 		selection, err := firstOversizedFunction(currentSet, currentFile, current)
 		if err != nil {
@@ -135,7 +137,7 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 			return current, evidence, nil
 		}
 		function := selection.function
-		prepared, strategyEvidence, err := decomposeFunction(root, logical, current, currentSet, currentFile, function, selection.observations, helperProofs)
+		prepared, strategyEvidence, err := decomposeFunctionWithStandard(root, logical, current, currentSet, currentFile, function, selection.observations, standard, helperProofs)
 		if err != nil {
 			return nil, nil, withRenderedCapacityDiagnostics(err, selection.observations)
 		}
@@ -392,6 +394,10 @@ func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
 }
 
 func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, preflight []renderedCapacityObservation, helperProofRegistry ...map[string]returnTailHelperProof) ([]byte, *StrategyEvidence, error) {
+	return decomposeFunctionWithStandard(root, logical, source, fset, file, function, preflight, newStandardImportSession(), helperProofRegistry...)
+}
+
+func decomposeFunctionWithStandard(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, preflight []renderedCapacityObservation, standard *standardImportSession, helperProofRegistry ...map[string]returnTailHelperProof) ([]byte, *StrategyEvidence, error) {
 	if function.Recv != nil {
 		return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "METHOD_SUFFIX_DECOMPOSITION_UNSAFE", "KNOWN_CONTRADICTION", "report-contradiction", []string{
 			"declaration=" + functionIdentity(fset, function),
@@ -402,7 +408,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 			"declaration=" + functionIdentity(fset, function),
 		})
 	}
-	evidence, err := checkTypes(root, logical, fset, file, function)
+	evidence, err := checkTypesWithStandard(root, logical, fset, file, function, standard)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -641,6 +647,10 @@ func suffixFreeObjects(statements []ast.Stmt, function *ast.FuncDecl, inside map
 				return true
 			}
 			object := info.Uses[identifier]
+			// Struct fields are selected through their receiver, never lexical arguments.
+			if field, ok := object.(*types.Var); ok && field.IsField() {
+				return true
+			}
 			if object == nil || inside[object] || object.Pos() == token.NoPos ||
 				object.Pos() >= statements[0].Pos() ||
 				object.Pos() < function.Pos() || object.Pos() >= function.End() {

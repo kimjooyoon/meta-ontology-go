@@ -9,12 +9,14 @@ func scoreSourceFillCandidate(ctx context.Context, filename string, source []byt
 	plan IRBodyFillPlan, r *FillCandidate) error {
 	if plan.Schema != bodyFillRecordPlanSchema {
 		var err error
-		r.CaseResults, r.TestCasesPassed, err = evaluateIntegerCasesContext(ctx, []byte(generated), activity, plan.TestCases)
+		r.CaseResults, r.TestCasesPassed, err = evaluateIntegerCasesContext(localCallPhase(ctx, "fill-caller-training", r.CandidateID),
+			[]byte(generated), activity, plan.TestCases)
 		if err != nil {
 			r.CaseResults, r.TestCasesPassed = nil, 0
 			return rejectSourceFillCandidate(ctx, r, "TRAINING_EVALUATION", err)
 		}
-		r.HoldoutCaseResults, r.HoldoutCasesPassed, err = evaluateIntegerCasesContext(ctx, []byte(generated), activity, plan.HoldoutTestCases)
+		r.HoldoutCaseResults, r.HoldoutCasesPassed, err = evaluateIntegerCasesContext(localCallPhase(ctx, "fill-caller-holdout", r.CandidateID),
+			[]byte(generated), activity, plan.HoldoutTestCases)
 		r.TestCasesTotal, r.HoldoutCasesTotal = len(plan.TestCases), len(plan.HoldoutTestCases)
 		return err
 	}
@@ -26,12 +28,14 @@ func scoreSourceFillCandidate(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return err
 	}
-	r.ValueCaseResults, err = evaluateRecordAssembly(ctx, []byte(generated), activity, records, plan.ValueCases)
+	r.ValueCaseResults, err = evaluateRecordAssembly(localCallPhase(ctx, "fill-caller-training", r.CandidateID),
+		[]byte(generated), activity, records, plan.ValueCases)
 	if err != nil {
 		r.ValueCaseResults = nil
 		return rejectSourceFillCandidate(ctx, r, "TRAINING_EVALUATION", err)
 	}
-	r.ValueHoldoutResults, err = evaluateRecordAssembly(ctx, []byte(generated), activity, records, plan.ValueHoldoutCases)
+	r.ValueHoldoutResults, err = evaluateRecordAssembly(localCallPhase(ctx, "fill-caller-holdout", r.CandidateID),
+		[]byte(generated), activity, records, plan.ValueHoldoutCases)
 	if err != nil {
 		return err
 	}

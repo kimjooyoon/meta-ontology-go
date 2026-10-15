@@ -1,0 +1,29 @@
+package localfilereader
+namespace localfilereader
+entity Text id "urn:gooo:type:string"
+entity Location id "urn:gooo:local-file-reader:location" fields {
+    field case_index id "urn:gooo:local-file-reader:case_index" type integer required one
+    field event_index id "urn:gooo:local-file-reader:event_index" type integer required one
+    field assignment_index id "urn:gooo:local-file-reader:assignment_index" type integer required one
+    field frame id "urn:gooo:local-file-reader:frame" type integer required one
+    field variable_ordinal id "urn:gooo:local-file-reader:variable_ordinal" type integer required one
+    field source_start id "urn:gooo:local-file-reader:source_start" type integer required one
+    field source_end id "urn:gooo:local-file-reader:source_end" type integer required one
+    field event_kind id "urn:gooo:local-file-reader:event_kind" type string required one
+    field root_activity_id id "urn:gooo:local-file-reader:root_activity_id" type string required one
+    field activity_id id "urn:gooo:local-file-reader:activity_id" type string required one
+    field variable_name id "urn:gooo:local-file-reader:variable_name" type string required one
+    field scalar_type id "urn:gooo:local-file-reader:scalar_type" type string required one
+    field category id "urn:gooo:local-file-reader:category" type string required one
+    field mapping id "urn:gooo:local-file-reader:mapping" type string required one
+    field reason id "urn:gooo:local-file-reader:reason" type string required one
+    field package_path id "urn:gooo:local-file-reader:package_path" type string required one
+    field filename id "urn:gooo:local-file-reader:filename" type string required one
+    field original_activity_id id "urn:gooo:local-file-reader:original_activity_id" type string required one
+    field source_sha256 id "urn:gooo:local-file-reader:source_sha256" type string required one
+    field expression id "urn:gooo:local-file-reader:expression" type string required one
+    field candidate_id id "urn:gooo:local-file-reader:candidate_id" type string required one
+    field hole_id id "urn:gooo:local-file-reader:hole_id" type string required one
+    field grammar id "urn:gooo:local-file-reader:grammar" type string required one
+}
+activity Describe(Location) -> Text id "urn:gooo:local-file-reader:describe" computes `if input.mapping=="MAPPED" {return input.filename+":"+input.event_kind+":"+input.category};return input.mapping+":"+input.reason`

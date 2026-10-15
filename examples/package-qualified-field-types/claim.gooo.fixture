@@ -1,0 +1,8 @@
+package app
+namespace field270_app
+import data "field270/flags"
+entity Claim id "urn:field270:claim" fields {
+ field eligible id "urn:field270:eligible" type data.Count required one
+}
+activity Decide(Ledger) -> Claim id "urn:field270:decide" computes "return Claim{eligible: input.amount >= 31}"
+bind Pass.result -> Decide.input

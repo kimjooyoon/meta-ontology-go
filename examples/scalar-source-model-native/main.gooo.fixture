@@ -1,0 +1,16 @@
+package nativedecision
+namespace nativedecision
+entity Integer id "urn:nativedecision:integer"
+entity Boolean id "urn:nativedecision:boolean"
+activity Fee(Integer) -> Integer id "urn:nativedecision:fee" computes "if input < 0 { return 0 } else { if input > 60 { return input*2 } else { return 120 } }" assembling {
+ choice "cap" branch_layout at "1" intent "Cap the nonnegative doubled fee at 120."
+ choice "negative" branch_layout at "0" intent "Keep the negative input fee at zero."
+ criteria {
+  predicate "required" activity "RequiredFee"
+  input "[-9]" input "[12]"
+  holdout_input "[-15]" holdout_input "[60]" holdout_input "[61]"
+ }
+ attempts "2"
+}
+activity RequiredFee(Integer,Integer) -> Boolean id "urn:nativedecision:required" computes "if input0 < 0 { return input1 == 0 } else { if input0 > 60 { return input1 == 120 } else { return input1 == input0*2 } }"
+activity Main(Integer) -> Integer id "urn:nativedecision:main" computes "return Fee(input+1)"

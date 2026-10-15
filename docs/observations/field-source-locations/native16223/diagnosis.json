@@ -1,0 +1,8 @@
+{
+  "result": "source_validation_failed_before_native_execution",
+  "cause": "counted loop requires counter=counter+1; ++ update rejected by current language profile",
+  "native_producer_executions": 0,
+  "models": 0,
+  "next": "distinct16301 source/cases uses exact documented counter assignment;never rerun16223",
+  "usability_followup": "evaluate Gooo for-let initializer and increment sugar with accurate source maps"
+}

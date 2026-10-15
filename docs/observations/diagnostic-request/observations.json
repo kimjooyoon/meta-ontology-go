@@ -1,0 +1,39 @@
+{
+  "exit_code": 0,
+  "wall_seconds": 1.437451334,
+  "argv": [
+    "<go1.27.2>/bin/go",
+    "test",
+    "-p=1",
+    "./scripts/action-runtime",
+    "-run",
+    "^TestDiagnosticRequestOwnsHistoricalSubject$",
+    "-count=1"
+  ],
+  "parent_revision": "7d33a97bbd69e564c27eeb731bae8c7c5a9f2b68",
+  "scope": "new current-implementation contract test; bash -n only; historical subjects/artifacts/native/model not executed or queried",
+  "source_sha256": {
+    "scripts/action-runtime/diagnostic_request_test.go": "865c566e35913b495f5411f65f57e557bd8ea84c2924d0d769bc886dac79015c",
+    ".github/workflows/function-extractor-diagnostic.yml": "2452adb9d3ba26a3973841931cc6a2a0e6ce20a797e5f3d36519abb081449da7"
+  },
+  "schema": "gooo/diagnostic-request-origin/v1",
+  "date": "2026-10-15",
+  "predecessor_pr": 1583,
+  "predecessor_head": "7d33a97bbd69e564c27eeb731bae8c7c5a9f2b68",
+  "failed_original_diagnostic": 38686263487,
+  "failed_job": 116261691754,
+  "historical_subject": "e86c8183a6afde47cee848fb567ece317345dd23",
+  "historical_source_run": 33969275768,
+  "historical_artifact_id": 9970866969,
+  "failure": "source artifact metadata query HTTP 404; no helper sampling occurred",
+  "current_pr_implementation_check": "exact PR checkout, required diagnostic input bindings, every multiline shell body bash -n",
+  "diagnostic_execution": "explicit workflow_dispatch request; four inputs required, no defaults; existing exact artifact/archive/plan validation retained",
+  "program_executions": 0,
+  "model_calls": 0,
+  "original_pr_run_scope": "other original source workflows still in progress at this observation; no final outcome inferred",
+  "files": {
+    "contract-first.tar.gz": "b8335dd2f2ccff3622db8e87c45cf3368a57eb705cbc7048ab916321d3ce1562",
+    "extractor-original-failed.log.gz": "c0a9d175876cd9695006288556bfe404d497b25e6508522f404409b23caf6271",
+    "extractor-original.json.gz": "be3ea3542de318ca03cf911e0a5fffcf4451b4d732b38fe6d41dc36380ca07e5"
+  }
+}

@@ -1,0 +1,18 @@
+package pricing
+namespace retained_surface
+import 규칙 "example/rules"
+entity Integer id "urn:retained:integer"
+entity Boolean id "urn:retained:boolean"
+activity Imported(규칙.Amount) -> 규칙.Amount id "urn:retained:imported" computes "return 규칙.요금(input)"
+activity Delivered(규칙.Amount) -> 규칙.Amount id "urn:retained:delivered" computes "return input"
+bind Imported.result -> Delivered.input
+activity Adjust(Integer) -> Integer id "urn:retained:adjust" computes "return input - 4" assembling {
+ choice "direction" operand_order at "0" intent "입력에서 4를 뺀다. Subtract four from the input."
+ criteria {
+  predicate "positive" activity "Nonnegative"
+  input "[9]"
+  holdout_input "[13]"
+ }
+ attempts "2"
+}
+activity Nonnegative(Integer,Integer) -> Boolean id "urn:retained:nonnegative" computes "return input1 >= 0"

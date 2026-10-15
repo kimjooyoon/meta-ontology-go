@@ -3,12 +3,20 @@ package bodycodegen
 import (
 	"encoding/json"
 
+	"github.com/kimjooyoon/gooo-decision-runtime/criteriadecision"
 	"github.com/kimjooyoon/gooo-decision-runtime/jointdecision"
 )
 
 const recordAssemblySchema = "gooo/record-field-assembly/v1"
+const scalarCriteriaAssemblySchema = "gooo/scalar-criteria-assembly/v1"
 
 type RecordAssemblyReceipt struct {
+	ChoiceOrigins        []RecordChoiceOrigin           `json:"choice_origins,omitempty"`
+	CriteriaQuestions    *CriteriaQuestionReceipt       `json:"criteria_questions,omitempty"`
+	Criteria             *RecordCriteriaEvidence        `json:"criteria,omitempty"`
+	CriteriaHoldout      *RecordCriteriaEvidence        `json:"criteria_holdout,omitempty"`
+	Observation          *RecordObservationReceipt      `json:"observation,omitempty"`
+	Holdout              *RecordHoldoutReceipt          `json:"holdout,omitempty"`
 	Schema               string                         `json:"schema"`
 	OriginalSourceSHA256 string                         `json:"original_source_sha256"`
 	SelectedSourceSHA256 string                         `json:"selected_source_sha256"`
@@ -29,6 +37,7 @@ type RecordAssemblyReceipt struct {
 	PredictNS            int64                          `json:"predict_ns"`
 	Model                *RetainedModelInfo             `json:"model,omitempty"`
 	Context              *RecordOrdinalContext          `json:"model_context,omitempty"`
+	ScalarPrediction     *criteriadecision.Prediction   `json:"scalar_criteria_prediction,omitempty"`
 	Prediction           *jointdecision.ThreePrediction `json:"prediction,omitempty"`
 	Ranking              []uint16                       `json:"ranking"`
 	RankingSourceSHA256  string                         `json:"ranking_source_sha256,omitempty"`
@@ -55,14 +64,26 @@ type RecordValueChoice struct {
 }
 
 type RecordAssemblyAttempt struct {
-	Mask         uint16 `json:"mask"`
-	Status       string `json:"status,omitempty"`
-	Reason       string `json:"reason,omitempty"`
-	Passed       int    `json:"passed"`
-	Total        int    `json:"total"`
-	FieldsPassed int    `json:"fields_passed"`
-	FieldsTotal  int    `json:"fields_total"`
+	Criteria     *RecordCriteriaEvidence `json:"criteria,omitempty"`
+	LocalCalls   *LocalCallObservation   `json:"local_calls,omitempty"`
+	Mask         uint16                  `json:"mask"`
+	Status       string                  `json:"status,omitempty"`
+	Reason       string                  `json:"reason,omitempty"`
+	Passed       int                     `json:"passed"`
+	Total        int                     `json:"total"`
+	FieldsPassed int                     `json:"fields_passed"`
+	FieldsTotal  int                     `json:"fields_total"`
 }
+
+// RecordAssemblyError retains a bounded attempted prefix even when no candidate
+// can be emitted. Caller cancellation remains available through errors.Is.
+type RecordAssemblyError struct {
+	Receipt *RecordAssemblyReceipt
+	Cause   error
+}
+
+func (e *RecordAssemblyError) Error() string { return e.Cause.Error() }
+func (e *RecordAssemblyError) Unwrap() error { return e.Cause }
 
 type RecordAssemblyCase struct {
 	Inputs   json.RawMessage       `json:"inputs"`

@@ -20,16 +20,19 @@ type ActivityRef struct {
 }
 
 type Program struct {
-	Schema          string               `json:"schema"`
-	Workspace       packageruntime.Image `json:"workspace_image"`
-	Entry           ActivityRef          `json:"entry"`
-	Activities      []ActivityRef        `json:"activities"`
-	Source          string               `json:"lowered_gooo_source"`
-	Scope           string               `json:"scope"`
-	EntityAliases   []EntityAlias        `json:"entity_aliases,omitempty"`
-	PureCalls       *WorkspacePureCalls  `json:"pure_calls,omitempty"`
-	sourceFillSpecs map[string]*assemblyspec.Spec
-	recordNames     workspaceRecordNames
+	ActivityOrigins  []WorkspaceActivityOrigin  `json:"activity_origins,omitempty"`
+	ConditionOrigins []WorkspaceConditionOrigin `json:"condition_origins,omitempty"`
+	Schema           string                     `json:"schema"`
+	Workspace        packageruntime.Image       `json:"workspace_image"`
+	Entry            ActivityRef                `json:"entry"`
+	Activities       []ActivityRef              `json:"activities"`
+	Source           string                     `json:"lowered_gooo_source"`
+	Scope            string                     `json:"scope"`
+	EntityAliases    []EntityAlias              `json:"entity_aliases,omitempty"`
+	PureCalls        *WorkspacePureCalls        `json:"pure_calls,omitempty"`
+	sourceFillSpecs  map[string]*assemblyspec.Spec
+	fillInputs       map[string]workspaceFillInput
+	recordNames      workspaceRecordNames
 }
 
 // Prepare validates the package manifest and flattens its reachable package
@@ -60,9 +63,9 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		sources := append([]packageruntime.Source(nil), spec.Sources...)
 		sort.Slice(sources, func(i, j int) bool { return sources[i].Filename < sources[j].Filename })
 		for _, source := range sources {
-			file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(source.Filename, source.Content, syntax.EntityFieldsV4Support())
-			if diagnostics.HasErrors() || file == nil {
-				return Program{}, fmt.Errorf("workspace source %q has syntax errors", source.Filename)
+			file, err := packageruntime.ParseResolvedPackageSource(image, spec.Path, source)
+			if err != nil {
+				return Program{}, err
 			}
 			files[spec.Path] = append(files[spec.Path], file)
 			for _, declaration := range file.Declarations {
@@ -187,6 +190,15 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 	if len(needed) > 1 && len(bindings) == 0 {
 		return Program{}, fmt.Errorf("workspace body execution requires at least one explicit activity binding")
 	}
+	conditionOrigins, err := prepareWorkspaceConditionSources(manifest, callNames, recordNames, allNeeded)
+	if err != nil {
+		return Program{}, err
+	}
+	activityOrigins, err := prepareWorkspaceActivityOrigins(manifest, callNames, allNeeded)
+	if err != nil {
+		return Program{}, err
+	}
+	fillInputs := prepareWorkspaceFillInputs(manifest, callNames, recordNames, allNeeded)
 	sourceFillSpecs := make(map[string]*assemblyspec.Spec)
 	for _, key := range activityOrder {
 		if !needed[key] {
@@ -202,7 +214,7 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		Namespace: &syntax.NamespaceDecl{Name: "gooo_workspace"},
 		Decls:     declarations, Declarations: declarations, Bindings: bindings,
 	}
-	source, err := syntax.FormatWithEntityFieldsSupport(flattened, syntax.EntityFieldsV4Support())
+	source, err := syntax.FormatWithEntityFieldsSupport(flattened, syntax.EntityFieldsSupportForFile(flattened, syntax.EntityFieldsV4Support()))
 	if err != nil {
 		return Program{}, fmt.Errorf("format lowered workspace graph: %w", err)
 	}
@@ -218,8 +230,8 @@ func Prepare(manifest packageruntime.Manifest) (Program, error) {
 		scope = "entry and explicit bind producers with source-resolved pure activity calls; original package identities map to lowered names; finite native observations"
 	}
 	return Program{Schema: "gooo/workspace-body-program/v1", Workspace: image, Entry: entry,
-		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs,
-		EntityAliases: recordNames.aliases, recordNames: recordNames, PureCalls: pureCalls,
+		Activities: activities, Source: source, sourceFillSpecs: sourceFillSpecs, ConditionOrigins: conditionOrigins, ActivityOrigins: activityOrigins,
+		EntityAliases: recordNames.aliases, recordNames: recordNames, PureCalls: pureCalls, fillInputs: fillInputs,
 		Scope: scope}, nil
 }
 

@@ -1,0 +1,4 @@
+=== RUN   TestHistoryDeclarationWithoutBodyProducesNoEdits
+--- PASS: TestHistoryDeclarationWithoutBodyProducesNoEdits (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.464s

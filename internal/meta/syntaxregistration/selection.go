@@ -6,45 +6,12 @@ import (
 )
 
 func generateSelection(source *goSource, version, capability int) error {
-	for _, item := range []struct{ function, result string }{
-		{"activeDenominator", evidenceName(version)},
-		{"activeDenominatorDigest", digestName(version)},
+	for _, item := range []struct{ function, result, kind, empty string }{
+		{"activeDenominator", evidenceName(version), "[]byte", "nil"},
+		{"activeDenominatorDigest", digestName(version), "string", `""`},
 	} {
-		function, err := source.function(item.function)
-		if err != nil {
+		if err := extendSelection(source, item.function, item.result, item.kind, item.empty, capability); err != nil {
 			return err
-		}
-		count := 0
-		ast.Inspect(function, func(node ast.Node) bool {
-			selection, ok := node.(*ast.SwitchStmt)
-			if !ok || selection.Tag == nil || source.text(selection.Tag) != "languagesyntax.FixedCapabilityTotal" {
-				return true
-			}
-			matched := false
-			for _, statement := range selection.Body.List {
-				clause, ok := statement.(*ast.CaseClause)
-				if !ok {
-					continue
-				}
-				for _, expression := range clause.List {
-					value, literal := integer(expression)
-					if literal && value == capability+1 {
-						count = -100
-						return false
-					}
-					if literal && value == capability {
-						matched = true
-					}
-				}
-			}
-			if matched {
-				source.insert(selection.Body.Rbrace, fmt.Sprintf("\ncase %d:\nreturn %s\n", capability+1, item.result))
-				count++
-			}
-			return false
-		})
-		if count != 1 {
-			return fmt.Errorf("denominator selection %s lacks one exact baseline", item.function)
 		}
 	}
 	var anchor ast.Node
@@ -70,5 +37,41 @@ func generateSelection(source *goSource, version, capability int) error {
 		return err
 	}
 	source.appendAt(anchor, fmt.Sprintf("\n//go:embed evidence/denominator-v%d.json\nvar %s []byte\n", version, evidenceName(version)))
+	return nil
+}
+
+func extendSelection(source *goSource, name, result, kind, empty string, capability int) error {
+	root, err := source.function(name)
+	if err != nil {
+		return err
+	}
+	entries, helpers, err := selectionEntries(source, root, kind, empty)
+	if err != nil {
+		return err
+	}
+	baseline := 0
+	seen := map[int]bool{}
+	for _, entry := range entries {
+		if seen[entry.capability] {
+			return fmt.Errorf("denominator selection %s repeats capability", name)
+		}
+		seen[entry.capability] = true
+		if entry.capability == capability+1 {
+			return fmt.Errorf("denominator selection %s already contains new capability", name)
+		}
+		if entry.capability == capability {
+			baseline++
+		}
+	}
+	if baseline != 1 {
+		return fmt.Errorf("denominator selection %s lacks one exact baseline", name)
+	}
+	entries = append(entries, selectionEntry{capability + 1, result})
+	wrapper, chunks := renderSelection(name, kind, empty, entries)
+	source.replace(root, wrapper)
+	for _, helper := range helpers {
+		source.replace(helper, "")
+	}
+	source.appendAt(root, chunks)
 	return nil
 }

@@ -1,0 +1,61 @@
+package scopedcoverage
+namespace scopedcoverage
+entity Columns id "urn:gooo:scoped-origin-coverage:columns" fields {
+ field selected_source_sha id "urn:gooo:scoped-origin-coverage:input:selected_source_sha" type string required one
+ field recorded_writes id "urn:gooo:scoped-origin-coverage:input:recorded_writes" type integer required one
+ field page_complete id "urn:gooo:scoped-origin-coverage:input:page_complete" type boolean required one
+ field recording_complete id "urn:gooo:scoped-origin-coverage:input:recording_complete" type boolean required one
+ field case_indexes id "urn:gooo:scoped-origin-coverage:input:case_indexes" type integer required many
+ field assignments id "urn:gooo:scoped-origin-coverage:input:assignments" type integer required many
+ field kinds id "urn:gooo:scoped-origin-coverage:input:kinds" type string required many
+ field source_shas id "urn:gooo:scoped-origin-coverage:input:source_shas" type string required many
+ field starts id "urn:gooo:scoped-origin-coverage:input:starts" type integer required many
+ field ends id "urn:gooo:scoped-origin-coverage:input:ends" type integer required many
+}
+entity Coverage id "urn:gooo:scoped-origin-coverage:result" fields {
+ field status id "urn:gooo:scoped-origin-coverage:result:status" type string required one
+ field selected_source_sha id "urn:gooo:scoped-origin-coverage:result:selected_source_sha" type string required one
+ field recorded_writes id "urn:gooo:scoped-origin-coverage:result:recorded_writes" type integer required one
+ field fragment_rows id "urn:gooo:scoped-origin-coverage:result:fragment_rows" type integer required one
+ field mapped_rows id "urn:gooo:scoped-origin-coverage:result:mapped_rows" type integer required one
+ field missing_rows id "urn:gooo:scoped-origin-coverage:result:missing_rows" type integer required one
+ field template_rows id "urn:gooo:scoped-origin-coverage:result:template_rows" type integer required one
+ field candidate_rows id "urn:gooo:scoped-origin-coverage:result:candidate_rows" type integer required one
+ field grammar_rows id "urn:gooo:scoped-origin-coverage:result:grammar_rows" type integer required one
+ field row_mapping_basis_points id "urn:gooo:scoped-origin-coverage:result:row_mapping_basis_points" type integer required one
+ field whole_recording id "urn:gooo:scoped-origin-coverage:result:whole_recording" type boolean required one
+}
+activity Inspect(Columns)->Coverage id "urn:gooo:scoped-origin-coverage:inspect" computes `let valid=input.recorded_writes>=0 && len(input.case_indexes)==len(input.kinds) && len(input.assignments)==len(input.kinds) && len(input.source_shas)==len(input.kinds) && len(input.starts)==len(input.kinds) && len(input.ends)==len(input.kinds)
+let rows=0
+let mapped=0
+let templates=0
+let candidates=0
+let grammars=0
+if valid {
+ for let row=0;row<256;row++ {
+  if row<int64(len(input.kinds)) {
+   rows=rows+1
+   let kind=input.kinds[row]
+   let known=kind=="retained_template" || kind=="declared_candidate" || kind=="derived_grammar"
+   let located=input.source_shas[row]!="" && input.starts[row]>=0 && input.ends[row]>input.starts[row]
+   if known && located && input.case_indexes[row]>=0 && input.assignments[row]>=0 {mapped=mapped+1}
+   if kind=="retained_template" {templates=templates+1}
+   if kind=="declared_candidate" {candidates=candidates+1}
+   if kind=="derived_grammar" {grammars=grammars+1}
+  }
+ }
+}
+let ratio=-1
+let whole=false
+let status="INVALID_INPUT"
+if valid {
+ status="PARTIAL_PAGE"
+ if rows>0 {ratio=mapped*10000/rows}
+ if input.page_complete && !input.recording_complete {status="PARTIAL_RECORDING"}
+ if input.page_complete && input.recording_complete {
+  whole=true
+  status="RECORDED_FRAGMENTS"
+  if rows==0 {status="EMPTY_FRAGMENTS"}
+ }
+}
+return Coverage{status:status,selected_source_sha:input.selected_source_sha,recorded_writes:input.recorded_writes,fragment_rows:rows,mapped_rows:mapped,missing_rows:rows-mapped,template_rows:templates,candidate_rows:candidates,grammar_rows:grammars,row_mapping_basis_points:ratio,whole_recording:whole}`

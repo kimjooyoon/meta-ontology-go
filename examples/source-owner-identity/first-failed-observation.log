@@ -1,0 +1,6 @@
+=== RUN   TestSourceOwnerURISpellingAndNativeOrigin2867
+    composition_owner_origin_test.go:56: authored IDs changed &{0x774b35e4a180 <nil> MAPPED  selected_gooo_source sha256:3080c12bb85967c7d750d1b3648dfe779c4abbbd8fcad9180136a4b12bd1dcf4 sha256:8e2f1eb6b7d5e1198992877e78ca987012cda7e8b6ea373120917c192dd8c5c1 325 342 19 36 0 input.amount < 97 retained_condition_node [{0x774b35e4a100 OWNER2867://Domain/Packet OWNER2867://Field/Amount amount}]}
+--- FAIL: TestSourceOwnerURISpellingAndNativeOrigin2867 (0.66s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.080s
+FAIL

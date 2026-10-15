@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"strings"
 )
 
 func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (Declaration, error) {
@@ -20,7 +21,7 @@ func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (De
 		declaration.ID = ID(id)
 	}
 	if activity.ValueProgramPresent || activity.ValueProgram != "" {
-		declaration.Attributes = map[string]string{ActivityValueProgramAttribute: activity.ValueProgram}
+		declaration.Attributes = map[string]string{ActivityValueProgramAttribute: strings.TrimSpace(activity.ValueProgram)}
 	}
 	if activity.Assembly != nil {
 		if declaration.Attributes == nil {
@@ -34,6 +35,12 @@ func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (De
 	}
 	if len(activity.Inputs) == 0 && len(activity.Parameters) != 0 {
 		return Declaration{}, fmt.Errorf("activity %q uses unsupported legacy-only Parameters; canonical Inputs is required", activity.Name)
+	}
+	if _, err := syntax.ActivityInputNames(activity); err != nil {
+		return Declaration{}, err
+	}
+	for _, name := range activity.InputNames {
+		declaration.InputNames = append(declaration.InputNames, Reference{Name: name.Name, Span: toSourceSpan(name.Span)})
 	}
 	for _, input := range activity.Inputs {
 		if err := checkLowerContext(ctx); err != nil {

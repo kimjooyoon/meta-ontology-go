@@ -1,0 +1,14 @@
+=== RUN   TestRecordInputScalarFill8851
+=== RUN   TestRecordInputScalarFill8851/text
+=== RUN   TestRecordInputScalarFill8851/boolean
+=== NAME  TestRecordInputScalarFill8851
+    scalar_record_fill_test.go:73: 8851: source type identities resolve Text/Boolean aliases; each selects requested index1/1, holdout1/1, rejects wrong-typed index; native4/4; model0
+--- PASS: TestRecordInputScalarFill8851 (1.43s)
+    --- PASS: TestRecordInputScalarFill8851/text (0.87s)
+    --- PASS: TestRecordInputScalarFill8851/boolean (0.57s)
+=== RUN   TestWorkspaceCollectionAccess8837
+    value_access_native_test.go:86: missing access fact index_access:input.readings[input.pick] [{return:7:36: urn:access8837:at field_access input.pick sha256:416b80b418c919b556d889d0dd409591181cc0d77d8002fa078edba3cbfeb768 21 31 false} {return:7:36: urn:access8837:take field_access input.pick sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d 107 117 false} {return:7:36: urn:access8837:take slice_access input.readings[시작:끝] sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d 73 99 false} {return:7:36: urn:access8837:take slice_low 시작 sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d 88 94 false} {return:7:36: urn:access8837:take field_access input.lower sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d 13 24 false} {return:7:36: urn:access8837:take slice_high 끝 sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d 95 98 false} {return:7:36: urn:access8837:take field_access input.upper sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d 36 47 false} {return:7:36: urn:access8837:take access_base input.readings sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d 73 87 false} {return:7:36: urn:access8837:take field_access input.readings sha256:0aec0d99e7c12af6864a67eb7e24db4334cf205ca2e415692bedd15bc772507d 73 87 false}]
+--- FAIL: TestWorkspaceCollectionAccess8837 (0.58s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	2.633s
+FAIL

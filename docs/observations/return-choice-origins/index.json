@@ -1,0 +1,177 @@
+{
+  "source_base": "a6baec86ca7c29e9ea573ad72d9479d3bbf6df66",
+  "at": "2026-10-14T08:20:42.119683+00:00",
+  "cohorts": [
+    {
+      "cohort": "assembly21511",
+      "end": {
+        "ended": "2026-10-14T07:20:52.326492+00:00",
+        "exit_code": 1
+      },
+      "source_archive_sha256": "0b175064992d945b1a2574438ee0c08af6abdfd7b000211e11c2b5b7449db010"
+    },
+    {
+      "cohort": "returns21641",
+      "end": {
+        "ended": "2026-10-14T07:34:04.264233+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "38a2c741c0a960ad78df00510ec59473cc206cc3e13950c5ce5650e055058c8a"
+    },
+    {
+      "cohort": "legacy21673",
+      "end": {
+        "ended": "2026-10-14T07:37:53.248890+00:00",
+        "exit_code": 1
+      },
+      "source_archive_sha256": "beb465071776d6c6bbfeaa1ba250ed40a388338d91c96999fbb519549d9d5cb7"
+    },
+    {
+      "cohort": "legacy21737",
+      "end": {
+        "ended": "2026-10-14T07:39:58.084229+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "79d1c998e5136122f25018719518dbbc7e46eb5578c43ff9cec12eec4cf31cac"
+    },
+    {
+      "cohort": "native21809",
+      "end": {
+        "ended": "2026-10-14T07:41:53.090044+00:00",
+        "exit_code": 1
+      },
+      "source_archive_sha256": "77a2b80529e008a8a876bcc12746b0ae64cc161fe8382b34823ba4d80e3b2034"
+    },
+    {
+      "cohort": "native21917",
+      "end": {
+        "ended": "2026-10-14T07:44:48.618632+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "79272704f29a0212cee5a6ddbdab014e3d3399f8b8bc99c3298e7ea3490d316b"
+    },
+    {
+      "cohort": "assembly22049",
+      "end": {
+        "ended": "2026-10-14T07:55:46.234999+00:00",
+        "exit_code": 1
+      },
+      "source_archive_sha256": "f833b33e8c2aeac73bbb5ac6754d99f9a8de3c3baf24a26074082f1b8b96e097"
+    },
+    {
+      "cohort": "assembly22133",
+      "end": {
+        "ended": "2026-10-14T07:57:06.987338+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "c55a098a2d1d3a24942f37810bae1852a83aab6b78e45303df5dd1f2c675c34d"
+    },
+    {
+      "cohort": "presence21983",
+      "end": {
+        "ended": "2026-10-14T07:57:42.066631+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "885e722c8f6928dfdcdcac2236865eceeef414f4a215eb5f8d3993ab092132e4"
+    },
+    {
+      "cohort": "consistency22217",
+      "end": {
+        "ended": "2026-10-14T08:08:43.173447+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "424d8be770f17344fed9d0b9ce8348deba60a9f4caf7b35d5fb4cc9f86b44c0e"
+    },
+    {
+      "cohort": "reader22291",
+      "end": {
+        "ended": "2026-10-14T08:09:48.965362+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "49a060db36bd56ae914c9b8c51046224e8a541773b25357ebdabda890025bc79"
+    },
+    {
+      "cohort": "capacity22373",
+      "end": {
+        "ended": "2026-10-14T08:11:09.739365+00:00",
+        "exit_code": 1
+      },
+      "source_archive_sha256": "7db5dae002460343c44fcf16cc06fdb0b8525ed27b05b4077352e227a3eba467"
+    },
+    {
+      "cohort": "native22613",
+      "end": {
+        "ended": "2026-10-14T08:15:43.887481+00:00",
+        "exit_code": 1
+      },
+      "source_archive_sha256": "2aba7ab4dbb6232d7761023052dcddc64e1854e07b07d91f1af9762aba9bb098"
+    },
+    {
+      "cohort": "capacity22681",
+      "end": {
+        "ended": "2026-10-14T08:15:35.310582+00:00",
+        "exit_code": 1
+      },
+      "source_archive_sha256": "6bbebb703ebdb418ec1fd3a20dc74d84569c4d014ee4d7d992c184c10633bee3"
+    },
+    {
+      "cohort": "native22741",
+      "end": {
+        "ended": "2026-10-14T08:16:13.491978+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "acf4de5c575ec76977f4a87853d2a528394e27128d1e41112230b948ac6476ac"
+    },
+    {
+      "cohort": "capacity22789",
+      "end": {
+        "ended": "2026-10-14T08:16:14.016234+00:00",
+        "exit_code": 0
+      },
+      "source_archive_sha256": "8d710260ebf6e049ea7f18b7cb2a80570120b710c141326a3b2373c373a3744d"
+    },
+    {
+      "cohort": "static22861",
+      "end": {
+        "at": "2026-10-14T08:19:03.953064+00:00",
+        "exit": 0,
+        "diff_bytes": 0,
+        "stderr_bytes": 0,
+        "tests_executed": 0,
+        "go_files": 142
+      },
+      "source_archive_sha256": "53fe6860850380e003f8581b7fe09876625bf777909f259a70a547b8e923b20f"
+    }
+  ],
+  "registrations": [
+    {
+      "version": [
+        69,
+        70
+      ],
+      "roles": 9,
+      "members": 9,
+      "generated_bytes_unchanged": true,
+      "wall_ms": 99,
+      "models": 0,
+      "native_program_executions": 0
+    },
+    {
+      "version": [
+        70,
+        71
+      ],
+      "roles": 9,
+      "members": 9,
+      "generated_bytes_unchanged": true,
+      "wall_ms": 96,
+      "models": 0,
+      "native_program_executions": 0
+    }
+  ],
+  "historical_local_reruns": 0,
+  "model_calls": 0,
+  "new_worktrees": 0,
+  "native_denominators": "each producer cohort independent;selection1/1,holdout1/1,native3/3 for22133;reader9/27",
+  "local_source_binding": "frozen overlay source archive and manifest;full submitted source requires its own original CI"
+}

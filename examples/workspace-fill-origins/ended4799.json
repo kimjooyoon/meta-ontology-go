@@ -1,0 +1,31 @@
+{
+  "binary_sha256": "aa494a816d213eb175498586bce2007f6b875d1924e8749cd78d7fd2c9abaa2a",
+  "binary_bytes": 25885250,
+  "execute": {
+    "exit_code": 0,
+    "wall_ns": 1291955125,
+    "native_passed": 2,
+    "native_total": 2,
+    "original_filename": "배송.gooo.fixture",
+    "original_candidate": "cycle4799",
+    "model_calls": 0
+  },
+  "read_new_inputs": {
+    "exit_code": 0,
+    "wall_ns": 293508250,
+    "native_passed": 2,
+    "native_total": 2,
+    "original_filename": "배송.gooo.fixture",
+    "original_candidate": "cycle4799",
+    "model_calls": 0
+  },
+  "sources_unchanged": true,
+  "historical_local_replays": 0,
+  "distinct_runtime_inputs": [
+    16,
+    18,
+    19,
+    20
+  ],
+  "binary_removed": true
+}

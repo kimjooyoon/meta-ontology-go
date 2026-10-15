@@ -1,0 +1,40 @@
+{
+  "schema": "gooo/activity-rename-observation/v1",
+  "compiler_source_base": "3d23e560ea79daf43775682e9b15982df635a370",
+  "compiler_overlay_files_sha256": {
+    "cmd/gooo/emit_dispatch.go": "cf0529d10b610c9d7d0e50716e69a4297866d4486f42b3ed676fb9cdd2ed12dd",
+    "cmd/gooo/source_refactor.go": "cbbb99fefab730151d6ce456603f763ae70d2dad9f735a909272568b0b5b2b99",
+    "cmd/gooo/usage.go": "d4f6c35d0982bea2d28c03d0b99758dbc78533974f6b9314dd1a7a016008c024",
+    "cmd/gooo/usage_topics_4.go": "0fadc07b9087523f693cfb07551ef021b57d0a2948f263fbf447a9dc916617ab",
+    "internal/bodycodegen/rename_assembly.go": "785f8a96ef4f4529e7c0d2985b8e115bfc93b23246bb5ada6e8752704512d08b",
+    "internal/bodycodegen/rename_body.go": "647f14834d72b7708ac748d83a7e7006597f586688eefa92b18051dbb27c64c9",
+    "internal/bodycodegen/source_rename.go": "291f45d7fa5d78adc12deed70ca447914f838fdd863e08835ab230e9ea5a9151",
+    "internal/lsp/activity_rename.go": "54de9dabacb4d1be320c4261da5b60b8f998b6398af4b0a3dbcba3990e670dc4",
+    "internal/lsp/rename_part01.go": "140163ac51319c0bfe5b583adca54abd51fd2ef80e60aa1109e40d40785f130e"
+  },
+  "compiler_binary_sha256": "d8d3c888f9cd87211260f7d54cf62575b60935049066360fa3b09af931142b8e",
+  "command": [
+    "gooo",
+    "refactor",
+    "rename-activity",
+    "--from",
+    "Calculate",
+    "--to",
+    "요금",
+    "--json",
+    "main.gooo.fixture"
+  ],
+  "source_transformations": 1,
+  "program_executions": 0,
+  "model_predictions": 0,
+  "training_runs": 0,
+  "path_was_empty": true,
+  "input_unchanged": true,
+  "activity_id": "pricing://activity/calculate",
+  "source_call_sites_updated": 3,
+  "files_sha256": {
+    "main.gooo.fixture": "082cf531b461e4a2fbee71822e5929ee0b12590019ee0a23f4e677f1253741f1",
+    "rename.json": "abfe54ee6e32e065654cd224087e94d51e1765bed650000c439ad8ed1815ed3b",
+    "renamed.gooo.fixture": "23ae8170a9b17869fa4b2c6a0171ff9128adeb45d5349f26abfe33a86aec4c5d"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "base": "02e325d353b2ee2f9207eeccb3b1e76273037f49",
+  "files": [
+    {
+      "path": "cmd/gooo/body_derived_origins.go",
+      "bytes": 1179,
+      "sha256": "3b00be9587badef0935d54861c2e22661e10b3058506e4801ae7c1ad252d218e"
+    },
+    {
+      "path": "cmd/gooo/body_fill_candidate_origins.go",
+      "bytes": 1013,
+      "sha256": "e4260c2f800955c57d911afb7b74cba7eb36de96ec15afe2002b6d05ab9fa79b"
+    },
+    {
+      "path": "cmd/gooo/body_origins.go",
+      "bytes": 2632,
+      "sha256": "85f50a6555a4359533876512bc8b77d5648d8035ceb5001398512f9a957ffb12"
+    },
+    {
+      "path": "cmd/gooo/body_origins_help.go",
+      "bytes": 2398,
+      "sha256": "02b583d45a93498d0968c9a75455f517181e043c5b8809ab2608524f05d2f629"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_derived_inputs.go",
+      "bytes": 2100,
+      "sha256": "65d3d52c9e26363e2719f5b8b9f5d72f2a0c3ff6a727b9c9c62be3e10c0cdb78"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_derived_origins.go",
+      "bytes": 4641,
+      "sha256": "45e31b2723b1682adf1ae1da6bbcf3310747edd8c1a392ed526341e486d5d7c3"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_derived_origins_fresh_test.go",
+      "bytes": 4975,
+      "sha256": "02d1648a9c17e8455fdc73f540df09510e50c874bd4e2de708a73fe725fa5227"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_origin_candidates.go",
+      "bytes": 2456,
+      "sha256": "00b4348d6c4422014ae2281ca700c37a587f0fa95cc0bb898ceb1e78a8c095b1"
+    }
+  ]
+}

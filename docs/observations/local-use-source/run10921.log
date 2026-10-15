@@ -1,0 +1,10 @@
+=== RUN   TestLocalOriginRefactor10943
+    composition_local_refactor_fresh_test.go:42: fresh range/local-copy/helper/result-array source3/3;selected Gooo uses mapped;observation COMPLETE;source recorder refactoring preserves fresh finite results
+--- PASS: TestLocalOriginRefactor10943 (0.71s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.225s
+=== RUN   TestLocalOriginRenderedCapacity10921
+    local_origin_capacity_fresh_test.go:73: 12 local-origin routines observed by declaration identity;maximum rendered helper56 lines;no source program executions
+--- PASS: TestLocalOriginRenderedCapacity10921 (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.402s

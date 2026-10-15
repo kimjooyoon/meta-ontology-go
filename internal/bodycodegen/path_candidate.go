@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/bits"
-	"slices"
 
 	"github.com/kimjooyoon/gooo-decision-runtime/bodyplan"
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
@@ -22,22 +21,23 @@ type SourcePathCandidateSet struct {
 }
 
 type PathCandidate struct {
-	Schema               string                 `json:"schema"`
-	Activity             string                 `json:"activity"`
-	ActivityID           string                 `json:"activity_id"`
-	InputSourceSHA256    string                 `json:"input_source_sha256"`
-	SelectedSourceSHA256 string                 `json:"selected_source_sha256,omitempty"`
-	DocumentSHA256       string                 `json:"document_sha256"`
-	PlanSHA256           string                 `json:"plan_sha256"`
-	Mask                 uint16                 `json:"mask"`
-	Choices              map[string]string      `json:"choices"`
-	CandidateSet         SourcePathCandidateSet `json:"candidate_set"`
-	Stage                string                 `json:"stage"`
-	Failure              string                 `json:"failure,omitempty"`
-	Cases                []IRBodyFillCaseResult `json:"case_results,omitempty"`
-	Passed               int                    `json:"local_passed"`
-	Total                int                    `json:"local_total"`
-	Conditions           *PathConditionReceipt  `json:"conditions,omitempty"`
+	Schema               string                    `json:"schema"`
+	Activity             string                    `json:"activity"`
+	ActivityID           string                    `json:"activity_id"`
+	InputSourceSHA256    string                    `json:"input_source_sha256"`
+	SelectedSourceSHA256 string                    `json:"selected_source_sha256,omitempty"`
+	DocumentSHA256       string                    `json:"document_sha256"`
+	PlanSHA256           string                    `json:"plan_sha256"`
+	Mask                 uint16                    `json:"mask"`
+	Choices              map[string]string         `json:"choices"`
+	CandidateSet         SourcePathCandidateSet    `json:"candidate_set"`
+	Stage                string                    `json:"stage"`
+	Failure              string                    `json:"failure,omitempty"`
+	Cases                []IRBodyFillCaseResult    `json:"case_results,omitempty"`
+	Passed               int                       `json:"local_passed"`
+	Total                int                       `json:"local_total"`
+	Conditions           *PathConditionReceipt     `json:"conditions,omitempty"`
+	Observation          *PathCandidateObservation `json:"observation,omitempty"`
 }
 
 type SourcePathCandidateRejection struct{ cause error }
@@ -115,30 +115,16 @@ func PlanSourcePathCandidates(ctx context.Context, filename string, source []byt
 // Model receipts and original source are never rewritten by this observation.
 func RealizeSourcePathCandidate(ctx context.Context, filename string, source []byte, activity string,
 	prior *BodyPathReceipt, mask uint16) (PathCandidate, []byte, error) {
-	var result PathCandidate
-	set, err := PlanSourcePathCandidates(ctx, filename, source, activity, prior)
+	result, prepared, document, err := prepareSourcePathCandidate(ctx, filename, source, activity, prior, mask)
 	if err != nil {
 		return result, nil, err
 	}
-	if !slices.Contains(set.Masks, mask) {
-		return result, nil, fmt.Errorf("typed path mask exceeds the source attempt cap")
-	}
-	document, err := DecodeSourcePathDocument(ctx, filename, source, activity, nil)
+	choices := result.Choices
+	effectiveCases, err := sourcePathCandidateCases(ctx, filename, source, activity, document, prior, &result)
 	if err != nil {
-		return result, nil, err
+		return rejectPathCandidate(ctx, result, err)
 	}
-	prepared, err := document.Prepare()
-	if err != nil || int(mask) >= 1<<len(document.Plan.Decisions) {
-		return result, nil, fmt.Errorf("typed path candidate exceeds its source palette: %v", err)
-	}
-	choices := make(map[string]string, len(document.Plan.Decisions))
-	for i, choice := range document.Plan.Decisions {
-		choices[choice.ID] = choice.Options[(mask>>i)&1].Label
-	}
-	raw, _ := json.Marshal(document)
-	result = PathCandidate{Schema: "gooo/path-candidate/v1", Activity: activity, ActivityID: document.Plan.Base.ID,
-		InputSourceSHA256: digest(source), DocumentSHA256: digest(raw), PlanSHA256: prepared.PlanSHA256(),
-		Mask: mask, Choices: choices, CandidateSet: set, Stage: "TYPE_CHECK"}
+	result.Stage = "TYPE_CHECK"
 	selected, err := prepared.Compile(choices)
 	if err != nil {
 		return rejectPathCandidate(ctx, result, err)
@@ -169,7 +155,7 @@ func RealizeSourcePathCandidate(ctx context.Context, filename string, source []b
 	if err != nil {
 		return result, nil, err
 	}
-	result, err = scoreSourcePathCandidate(ctx, []byte(projection.Source), activity, selected, document.TestCases, result)
+	result, err = scoreSourcePathCandidate(ctx, []byte(projection.Source), activity, selected, effectiveCases, result)
 	if err != nil {
 		return result, nil, err
 	}

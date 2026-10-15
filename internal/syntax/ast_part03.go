@@ -43,7 +43,10 @@ type ActivityDecl struct {
 
 	// Inputs and Output are the compact grammar-facing names. Parameters and
 	// Result retain descriptive names for newer consumers.
-	Inputs     []NameRef
+	Inputs []NameRef
+	// InputNames is aligned with Inputs when any authored input name is present.
+	// An empty entry retains the positional name; its span locates only a name.
+	InputNames []NameRef `json:"InputNames,omitempty"`
 	Output     string
 	Parameters []NameRef
 	Result     NameRef

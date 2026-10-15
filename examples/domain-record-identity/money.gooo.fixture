@@ -1,0 +1,6 @@
+package money
+namespace domain438_money
+entity Value id "urn:domain438:money" fields {
+ field value id "urn:domain438:money-value" type "urn:gooo:type:integer" required one
+}
+activity Keep(Value) -> Value id "urn:domain438:keep-money" computes "return input"

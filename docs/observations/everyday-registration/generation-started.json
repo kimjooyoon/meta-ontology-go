@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-14T19:23:25.231928+00:00",
+  "operation": "RegisterSyntaxCapability",
+  "base_version": 72,
+  "case_id": "everyday-local-condition-origins",
+  "input_source_head": "8d057a805d284653cf68c5dcf4efc8cc415d1d5a",
+  "scope": "new source-bound registration request;finite native rows/full historical conformance/model fits not executed"
+}

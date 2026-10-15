@@ -1,0 +1,36 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "review/app",
+    "activity": "Main"
+  },
+  "packages": [
+    {
+      "path": "review/rules",
+      "name": "rules",
+      "sources": [
+        "rules.gooo.fixture"
+      ]
+    },
+    {
+      "path": "review/peer",
+      "name": "peer",
+      "sources": [
+        "peer.gooo.fixture"
+      ]
+    },
+    {
+      "path": "review/app",
+      "name": "app",
+      "imports": [
+        "review/rules",
+        "review/peer"
+      ],
+      "sources": [
+        "app.gooo.fixture",
+        "unused.gooo.fixture",
+        "other.gooo.fixture"
+      ]
+    }
+  ]
+}

@@ -140,3 +140,13 @@ separately versioned improvement. This change adds no trained weights.
 · [Field assembly and finite completeness](record-field-assembly.md)
 · [Ordered operators and source values in model input](record-graph-model-input.md)
 · [Preregistered representation study plan](https://github.com/kimjooyoon/gooo-neural-decision-experiments/blob/main/docs/local-value-origin-plan.ko.md)
+
+## Inspect source-written requirements
+
+Activities with `criteria` also expose optional `criteria_flow` through the same
+`--value-flow` command. It records the fixed Boolean predicates, original-input
+and candidate-result roles, typed operations and helper provenance. Scalar
+criteria include their typed candidate plan alongside the predicates. Finite
+inputs and observed outcomes stay separate. See the
+[criteria source guide](criteria-source-flow.ko.md) for the data contract and
+current model limits.

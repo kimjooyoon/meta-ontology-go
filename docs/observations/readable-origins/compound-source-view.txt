@@ -1,0 +1,122 @@
+Activity: urn:gooo:compound:adjust
+Source: examples/compound-updates/main.gooo
+Source digest: sha256:f23a5757af7ae605321ed368d3f3115cf4fe3dabe43a02d9bb72dc19f223a442
+Status: RESOLVED
+Scope: possible source dependencies
+return <- #27
+
+#1 input port [input] input0
+  source location: INPUT_PORT_IDENTITY
+
+#2 input port [input] input1
+  source location: INPUT_PORT_IDENTITY
+
+#3 input port [input] input2
+  source location: INPUT_PORT_IDENTITY
+
+#4 value read [read]
+  at 8:14 "input0"
+  data <- #1
+
+#5 local definition [copy]
+  at 8:5 "amount = input0"
+  data <- #4
+
+#6 value read [read]
+  at 9:11 "input1"
+  data <- #2
+
+#7 value read [read]
+  at 9:1 "amount"
+  data <- #5
+
+#8 operation [expression]
+  at 9:1 "amount += input1"
+  data <- #7
+  data <- #6
+
+#9 local update [write]
+  at 9:1 "amount += input1"
+  data <- #8
+
+#10 value read [read]
+  at 10:4 "input2"
+  data <- #3
+
+#11 branch condition [guard]
+  at 10:4 "input2"
+  data <- #10
+
+#12 branch condition [guard]
+  at 10:4 "input2"
+  data <- #10
+
+#13 literal [literal]
+  at 11:12 "2"
+  control <- #11
+
+#14 value read [read]
+  at 11:2 "amount"
+  data <- #9
+  control <- #11
+
+#15 operation [expression]
+  at 11:2 "amount *= 2"
+  data <- #14
+  data <- #13
+  control <- #11
+
+#16 local update [write]
+  at 11:2 "amount *= 2"
+  data <- #15
+  control <- #11
+
+#17 literal [literal]
+  at 13:12 "3"
+  control <- #12
+
+#18 value read [read]
+  at 13:2 "amount"
+  data <- #9
+  control <- #12
+
+#19 operation [expression]
+  at 13:2 "amount -= 3"
+  data <- #18
+  data <- #17
+  control <- #12
+
+#20 local update [write]
+  at 13:2 "amount -= 3"
+  data <- #19
+  control <- #12
+
+#21 possible value merge [join]
+  at 10:1 "if input2 {  amount *= 2 } else {  amount -= 3 }"
+  data <- #16
+  data <- #20
+  condition <- #10
+
+#22 literal [literal]
+  at 15:11 "2"
+
+#23 value read [read]
+  at 15:1 "amount"
+  data <- #21
+
+#24 operation [expression]
+  at 15:1 "amount /= 2"
+  data <- #23
+  data <- #22
+
+#25 local update [write]
+  at 15:1 "amount /= 2"
+  data <- #24
+
+#26 value read [read]
+  at 16:8 "amount"
+  data <- #25
+
+#27 return value [return]
+  at 16:1 "return amount"
+  data <- #26

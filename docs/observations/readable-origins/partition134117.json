@@ -1,0 +1,11 @@
+{
+  "cohort": "partition134117",
+  "scope": "new authored inputs only",
+  "original_local_execution": true,
+  "local_reruns": 0,
+  "exit_code": 0,
+  "wall_seconds": 3.8820531368255615,
+  "producer_manifest_sha256": "e0c7877b68bba91072b5ae359da7af1831971e77ac60150cc4200c4c06d6c07c",
+  "stdout_sha256": "83ada1bb37e6a2292def9977412c4c76cbd6f955ce04354381d5b63ad87acf34",
+  "whole_compiler_ci": false
+}

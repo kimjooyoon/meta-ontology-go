@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-14T19:58:24.159662+00:00",
+  "command": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "fix",
+    "-diff",
+    "-overlay",
+    "/private/tmp/gooo-stable-registered-origin-20261015/static69317/overlay.json",
+    "./cmd/gooo",
+    "./internal/bodycodegen",
+    "./internal/bodyexecution",
+    "./internal/cliobservations",
+    "./internal/meta/languageassurance/verticalsliceclosureshadow",
+    "./internal/meta/languagereadiness/languagesyntax",
+    "./internal/meta/languagereadiness/languagesyntax/conformance",
+    "./internal/meta/repositoryprojection/extractor",
+    "./internal/meta/syntaxregistration",
+    "./internal/verify"
+  ],
+  "tests_executed": 0
+}

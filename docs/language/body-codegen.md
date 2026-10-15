@@ -14,10 +14,34 @@ all selected checkpoints and records actual intermediate values across Integer,
 Boolean and Text bodies. Optional local ranking is retained across integer
 assembly activities; saved composition replay needs no model calls.
 Ordinary bodies accept 1..16 scalar or declared record inputs in source order. Use
-`input` for one input and `input0`, `input1`, ... for several; each parameter is
-read-only while local `let` values may be assigned. See the
+`input` for one unnamed input and `input0`, `input1`, ... for several. The
+development source also accepts `Difference(minuend Integer, subtrahend Integer)`
+and uses those [authored names](named-inputs.ko.md) in the body. Wire ports keep
+their source positions. Each parameter is read-only while local `let` values
+may be assigned. See the
 [multiple-input example and case keys](../native-body-composition.md) and
 [record construction and actual value delivery](../native-record-values.md).
+
+### Ordered record collections
+
+Record fields can declare ordered scalar values with `many`. Gooo `for item in
+input.items` lowers to a typed bounded loop, while candidate evaluation and
+native execution retain the same input order. The development profile supports
+Integer, Text and Boolean elements, up to 256 per field, with original source
+positions for conditions and calls. See the [collection guide](ordered-collections.ko.md)
+and its separate construction, holdout, native and source-origin observations.
+
+Body expressions can also construct bounded scalar collections with `[]int64{...}`,
+`[]string{...}` and `[]bool{...}`. Empty collections are supported. Native
+composition records successful index and range reads, linking shared input
+elements through slice views, record copies, binds and calls. The selected Gooo
+expression retains its own source range. Constructed collections carry separate
+instance and element origins, including reads performed while evaluating each
+element. Earlier scalar-local dependencies remain outside that dynamic window.
+See [construction origins](../observations/construction-origins/README.md) for
+source-filled elements, interrupted construction and Gooo consumers of these facts.
+See [native read origins](../observations/native-read-origins/README.md) for
+separate output and origin coverage counts, Gooo consumers and saved failures.
 
 ### Text length and slicing
 
@@ -122,7 +146,14 @@ operation, focused hole, model timings, finite accuracy, and the two retained
 assignments out of the four declared combinations. A model proposal that scores
 below another candidate is still replaced by Gooo's best-scoring choice.
 Record body fill supports required single string, boolean and integer fields,
-one declared record result, and pure body expressions.
+ordered scalar `many` fields, and pure body expressions. Explicit `source_fill`
+candidates can return a declared record or an Integer, Boolean or Text value.
+For example, a record can carry a list and an index while the activity returns
+the selected element directly. Type checking rejects an index of the wrong
+type; selection cases and separate holdout cases retain independent totals.
+Derived record grammars still require a declared record output. See the
+[collection access observations](../observations/collection-access/README.md)
+for native scalar results, selected index origins, and the original failures.
 
 For external model experiments, set `GOOO_LAYA_URL` to a Laya `/v1/systemone`
 endpoint. Its request includes the typed Gooo body, candidate summaries and
@@ -624,16 +655,44 @@ it does not turn the declared user suite into a full-domain proof.
 This path is deliberately sequential: Gooo creates and scores the typed IR
 plan, then makes one synchronous Laya call, then fills and emits the final
 body. No body-emission goroutines run beside the model request. The request
-inherits cancellation and has an eight-second decision budget for the larger
-IR-and-test context; a timeout or unavailable provider records deterministic
-fallback, then the same score gate picks the best declared candidate. The report records IR preparation,
-decision, final-emission, and total wall latency. Tests cover the blocking
-call order, provider cancellation, exact functional percentages, and disconnected
-replay. The eight seconds bounds provider work only; parsing, candidate scoring,
-and final emission do not have an operation-wide deadline. An expired provider
-request still allows deterministic fallback and emission to finish.
+inherits the caller's context and has an eight-second decision budget for the
+larger IR-and-test context. Provider failure or an exhausted provider-only budget
+allows deterministic fallback while the caller's context is active. The same
+score gate then picks the best declared candidate. Cancellation or expiry of the
+caller context stops the operation and returns an error with no completed fill
+receipt. Candidate scoring, scalar/vector behavioral probes, and the selected
+training and holdout evaluations all inherit that context. An interrupted probe
+does not become a candidate-failure count or functional score.
+
+The report records IR preparation, decision, final-emission and total wall
+latency. Tests cover blocking call order, caller deadline, mid-probe and selected
+evaluation cancellation, provider failure fallback, finite case scores and
+disconnected replay. The eight seconds bounds provider work only. A caller can
+supply an earlier deadline; synchronous parsing and typechecking finish their
+current bounded step before the next cancellation check. Gooo does not add a
+separate operation-wide timer in this path.
 This bounded evaluator accepts only the existing pure expression and
 statement profile; it does not run arbitrary model-authored source.
+
+Body-fill candidates can call fixed pure activities declared in the same Gooo
+source. Calls can occur in the body skeleton or inside a hole assignment. The
+compiler includes each candidate's actual helper closure during typechecking,
+training and behavioral probes, then binds the selected closure in the emitted
+report. Integer, multiple-argument and declared record signatures follow the
+existing pure-call rules and bounds. Composition realizes required assembled
+helpers before evaluating the dependent fill. See the
+[runnable helper-fill example](../../examples/caller-fill-calls/README.md).
+The `body_fill.local_calls` history records candidate training, scalar/vector
+probes, selected training and selected holdout passes against each actual helper
+closure. Record fill records its value-case passes. Failed evaluations retain
+their entered prefix; caller-selected assignments retain their own local passes.
+See [fill history](../../examples/caller-fill-history/README.md) and the
+[recording contract](../local-call-observations.md). Composition also retains
+`fill_validations` from the original independent-body and prepared-helper checks.
+Their replay repeats bounded deterministic preflight scoring without a model.
+Path preflight and other construction boundaries still have incomplete capture.
+Input-exposure metrics count recorded overlaps while retaining `UNKNOWN` for
+missing coverage.
 
 The evidence sent in this call is candidate-level TDD data computed before
 emission, not a GitHub Actions result. CI runs after a generated revision

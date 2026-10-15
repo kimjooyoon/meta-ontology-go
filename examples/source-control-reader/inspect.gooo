@@ -1,0 +1,343 @@
+package sourcecontrol
+namespace sourcecontrol
+entity Text id "urn:gooo:type:text"
+
+entity Columns id "urn:gooo:source-control:columns" fields {
+    field schema id "urn:gooo:source-control:columns:schema" type string required one
+    field scope id "urn:gooo:source-control:columns:scope" type string required one
+    field source_sha256 id "urn:gooo:source-control:columns:source_sha256" type string required one
+    field activity_id id "urn:gooo:source-control:columns:activity_id" type string required one
+    field graph_sha256 id "urn:gooo:source-control:columns:graph_sha256" type string required one
+    field count id "urn:gooo:source-control:columns:count" type integer required one
+    field ids id "urn:gooo:source-control:columns:ids" type integer required many
+    field bits id "urn:gooo:source-control:columns:bits" type integer required many
+    field parent_a id "urn:gooo:source-control:columns:parent_a" type integer required many
+    field parent_b id "urn:gooo:source-control:columns:parent_b" type integer required many
+    field guards id "urn:gooo:source-control:columns:guards" type integer required many
+    field conditions id "urn:gooo:source-control:columns:conditions" type integer required many
+    field kinds id "urn:gooo:source-control:columns:kinds" type string required many
+    field operators id "urn:gooo:source-control:columns:operators" type string required many
+    field known_truth id "urn:gooo:source-control:columns:known_truth" type string required many
+    field node_activities id "urn:gooo:source-control:columns:node_activities" type string required many
+    field field_ids id "urn:gooo:source-control:columns:field_ids" type string required many
+    field input_ports id "urn:gooo:source-control:columns:input_ports" type string required many
+}
+
+entity Summary id "urn:gooo:source-control:summary" fields {
+    field source_sha256 id "urn:gooo:source-control:summary:source_sha256" type string required one
+    field activity_id id "urn:gooo:source-control:summary:activity_id" type string required one
+    field graph_sha256 id "urn:gooo:source-control:summary:graph_sha256" type string required one
+    field scope id "urn:gooo:source-control:summary:scope" type string required one
+    field status id "urn:gooo:source-control:summary:status" type string required one
+    field reason id "urn:gooo:source-control:summary:reason" type string required one
+    field nodes id "urn:gooo:source-control:summary:nodes" type integer required one
+    field guard_count id "urn:gooo:source-control:summary:guard_count" type integer required one
+    field join_count id "urn:gooo:source-control:summary:join_count" type integer required one
+    field out_of_scope_nodes id "urn:gooo:source-control:summary:out_of_scope_nodes" type integer required one
+    field known_true id "urn:gooo:source-control:summary:known_true" type integer required one
+    field known_false id "urn:gooo:source-control:summary:known_false" type integer required one
+    field unknown id "urn:gooo:source-control:summary:unknown" type integer required one
+    field true_scope_bits id "urn:gooo:source-control:summary:true_scope_bits" type integer required one
+    field false_scope_bits id "urn:gooo:source-control:summary:false_scope_bits" type integer required one
+}
+
+# Validate the complete projected graph before reporting any guard counts.
+activity Validate(Columns) -> Text id "urn:gooo:source-control:validate" computes `
+if input.schema != "gooo/source-control-columns/v1" || input.scope != "retained_source_graph" {
+    return "SOURCE_SCHEMA_MISMATCH"
+}
+if input.source_sha256 == "" || input.activity_id == "" || input.graph_sha256 == "" {
+    return "SOURCE_IDENTITY_MISSING"
+}
+if input.count < 1 || input.count > 60 { return "SOURCE_NODE_BOUND" }
+if int64(len(input.ids)) != input.count ||
+   len(input.bits) != len(input.ids) ||
+   len(input.parent_a) != len(input.ids) ||
+   len(input.parent_b) != len(input.ids) ||
+   len(input.guards) != len(input.ids) ||
+   len(input.conditions) != len(input.ids) ||
+   len(input.kinds) != len(input.ids) ||
+   len(input.operators) != len(input.ids) ||
+   len(input.known_truth) != len(input.ids) ||
+   len(input.node_activities) != len(input.ids) ||
+   len(input.field_ids) != len(input.ids) ||
+   len(input.input_ports) != len(input.ids) {
+    return "SOURCE_COLUMNS_MISMATCH"
+}
+let bit = 1
+let index = 0
+for id in input.ids {
+    if id != index + 1 || input.bits[index] != bit { return "SOURCE_NODE_IDENTITY_INVALID" }
+    if input.parent_a[index] < 0 || input.parent_a[index] >= id ||
+       input.parent_b[index] < 0 || input.parent_b[index] >= id ||
+       input.guards[index] < 0 || input.guards[index] >= id ||
+       input.conditions[index] < 0 || input.conditions[index] >= id { return "SOURCE_REFERENCE_INVALID" }
+    let truth = input.known_truth[index]
+    if truth != "" && truth != "true" && truth != "false" { return "SOURCE_TRUTH_INVALID" }
+    if input.kinds[index] == "" { return "SOURCE_KIND_MISSING" }
+    let a = input.parent_a[index]
+    let b = input.parent_b[index]
+    if input.kinds[index] == "guard" {
+        if input.node_activities[index] == "" { return "SOURCE_GUARD_OWNER_MISSING" }
+        if a == 0 || (input.operators[index] != "true" && input.operators[index] != "false") {
+            return "SOURCE_GUARD_INVALID"
+        }
+        if input.kinds[a-1] == "guard" || input.kinds[a-1] == "guard_join" { return "SOURCE_CONDITION_INVALID" }
+        if b > 0 && input.kinds[b-1] != "guard" && input.kinds[b-1] != "guard_join" { return "SOURCE_GUARD_PARENT_INVALID" }
+    }
+    if input.kinds[index] == "guard_join" {
+        if input.node_activities[index] == "" { return "SOURCE_GUARD_OWNER_MISSING" }
+        if input.operators[index] != "or" { return "SOURCE_JOIN_INVALID" }
+        if a > 0 && input.kinds[a-1] != "guard" && input.kinds[a-1] != "guard_join" { return "SOURCE_JOIN_PARENT_INVALID" }
+        if b > 0 && input.kinds[b-1] != "guard" && input.kinds[b-1] != "guard_join" { return "SOURCE_JOIN_PARENT_INVALID" }
+    }
+    bit = bit * 2
+    index = index + 1
+}
+return ""
+`
+
+# Static truth describes guard/join source nodes; other nodes are counted separately.
+activity Inspect(Columns) -> Summary id "urn:gooo:source-control:inspect" computes `
+let result = Summary{
+    source_sha256: input.source_sha256, activity_id: input.activity_id, graph_sha256: input.graph_sha256,
+    scope: "guard_and_join_nodes", status: "UNRESOLVED_SOURCE_FACTS", reason: "",
+    nodes: 0, guard_count: 0, join_count: 0, out_of_scope_nodes: 0,
+    known_true: 0, known_false: 0, unknown: 0, true_scope_bits: 0, false_scope_bits: 0,
+}
+let reason = Validate(input)
+if reason != "" { result.reason = reason; return result }
+let true_bits = 0
+let false_bits = 0
+let index = 0
+for id in input.ids {
+    let a = input.parent_a[index]
+    let b = input.parent_b[index]
+    if input.kinds[index] == "guard" {
+        result.guard_count = result.guard_count + 1
+        let parent_true = b == 0
+        let parent_false = false
+        if b > 0 {
+            parent_true = (true_bits / input.bits[b-1]) % 2 == 1
+            parent_false = (false_bits / input.bits[b-1]) % 2 == 1
+        }
+        let truth = input.known_truth[a-1]
+        let local_true = truth != "" && truth == input.operators[index]
+        let local_false = truth != "" && truth != input.operators[index]
+        if parent_false || local_false {
+            false_bits = false_bits + input.bits[index]
+            result.known_false = result.known_false + 1
+        } else {
+            if parent_true && local_true {
+                true_bits = true_bits + input.bits[index]
+                result.known_true = result.known_true + 1
+            } else { result.unknown = result.unknown + 1 }
+        }
+    } else {
+        if input.kinds[index] == "guard_join" {
+            result.join_count = result.join_count + 1
+            let a_true = a == 0
+            let b_true = b == 0
+            let a_false = false
+            let b_false = false
+            if a > 0 {
+                a_true = (true_bits / input.bits[a-1]) % 2 == 1
+                a_false = (false_bits / input.bits[a-1]) % 2 == 1
+            }
+            if b > 0 {
+                b_true = (true_bits / input.bits[b-1]) % 2 == 1
+                b_false = (false_bits / input.bits[b-1]) % 2 == 1
+            }
+            if a_true || b_true { true_bits = true_bits + input.bits[index] } else {
+                if a_false && b_false { false_bits = false_bits + input.bits[index] }
+            }
+        } else { result.out_of_scope_nodes = result.out_of_scope_nodes + 1 }
+    }
+    index = index + 1
+}
+result.nodes = input.count
+result.true_scope_bits = true_bits
+result.false_scope_bits = false_bits
+result.status = "STATIC_TRUTH_COMPLETE"
+if result.guard_count == 0 { result.status = "NO_RETAINED_GUARDS" } else {
+    if result.unknown > 0 { result.status = "STATIC_TRUTH_PARTIAL" }
+}
+return result
+`
+
+entity InputDeclarations id "urn:gooo:source-control:input-declarations" fields {
+    field schema id "urn:gooo:input-declarations:schema" type string required one
+    field scope id "urn:gooo:input-declarations:scope" type string required one
+    field source_sha256 id "urn:gooo:input-declarations:source" type string required one
+    field activity_id id "urn:gooo:input-declarations:activity" type string required one
+    field count id "urn:gooo:input-declarations:count" type integer required one
+    field indices id "urn:gooo:input-declarations:indices" type integer required many
+    field ports id "urn:gooo:input-declarations:ports" type string required many
+    field type_names id "urn:gooo:input-declarations:type-names" type string required many
+    field type_ids id "urn:gooo:input-declarations:type-ids" type string required many
+    field starts id "urn:gooo:input-declarations:starts" type integer required many
+    field ends id "urn:gooo:input-declarations:ends" type integer required many
+}
+
+entity InputSummary id "urn:gooo:source-control:input-summary" fields {
+    field source_sha256 id "urn:gooo:input-summary:source" type string required one
+    field activity_id id "urn:gooo:input-summary:activity" type string required one
+    field scope id "urn:gooo:input-summary:scope" type string required one
+    field status id "urn:gooo:input-summary:status" type string required one
+    field reason id "urn:gooo:input-summary:reason" type string required one
+    field inputs id "urn:gooo:input-summary:inputs" type integer required one
+    field same_type_pairs id "urn:gooo:input-summary:same-type-pairs" type integer required one
+}
+
+# Type identity can repeat while each authored signature position remains distinct.
+activity InspectInputs(InputDeclarations) -> InputSummary id "urn:gooo:source-control:inspect-inputs" computes `
+let result = InputSummary{
+    source_sha256: input.source_sha256, activity_id: input.activity_id, scope: "activity_signature",
+    status: "INVALID_INPUT", reason: "", inputs: 0, same_type_pairs: 0,
+}
+if input.schema != "gooo/input-declaration-columns/v1" || input.scope != "activity_signature" {
+    result.reason = "SOURCE_SCHEMA_MISMATCH"
+    return result
+}
+if input.source_sha256 == "" || input.activity_id == "" {
+    result.reason = "SOURCE_IDENTITY_MISSING"
+    return result
+}
+if input.count < 1 || input.count > 16 || int64(len(input.indices)) != input.count ||
+   len(input.ports) != len(input.indices) || len(input.type_names) != len(input.indices) ||
+   len(input.type_ids) != len(input.indices) || len(input.starts) != len(input.indices) ||
+   len(input.ends) != len(input.indices) {
+    result.reason = "SIGNATURE_COLUMNS_MISMATCH"
+    return result
+}
+let index = 0
+let previous_end = 0
+for position in input.indices {
+    if position != index || input.ports[index] == "" || input.type_names[index] == "" ||
+       input.starts[index] < previous_end || input.ends[index] <= input.starts[index] {
+        result.reason = "SIGNATURE_POSITION_INVALID"
+        return result
+    }
+    if input.type_ids[index] == "" {
+        result.reason = "SIGNATURE_TYPE_ID_MISSING"
+        return result
+    }
+    previous_end = input.ends[index]
+    index += 1
+}
+let pairs = 0
+for left in input.indices {
+    for right in input.indices {
+        if right < left {
+            if input.ports[left] == input.ports[right] {
+                result.reason = "SIGNATURE_PORT_REPEATED"
+                return result
+            }
+            if input.type_ids[left] == input.type_ids[right] { pairs += 1 }
+        }
+    }
+}
+result.status = "DECLARED_INPUTS"
+if pairs > 0 { result.status = "SHARED_TYPE_DISTINCT_POSITIONS" }
+result.inputs = input.count
+result.same_type_pairs = pairs
+return result
+`
+
+entity NamedInputDeclarations id "urn:gooo:source-control:named-input-declarations" fields {
+    field schema id "urn:gooo:named-inputs:schema" type string required one
+    field scope id "urn:gooo:named-inputs:scope" type string required one
+    field source_sha256 id "urn:gooo:named-inputs:source" type string required one
+    field activity_id id "urn:gooo:named-inputs:activity" type string required one
+    field count id "urn:gooo:named-inputs:count" type integer required one
+    field indices id "urn:gooo:named-inputs:indices" type integer required many
+    field ports id "urn:gooo:named-inputs:ports" type string required many
+    field type_names id "urn:gooo:named-inputs:type-names" type string required many
+    field type_ids id "urn:gooo:named-inputs:type-ids" type string required many
+    field starts id "urn:gooo:named-inputs:starts" type integer required many
+    field ends id "urn:gooo:named-inputs:ends" type integer required many
+    field names id "urn:gooo:named-inputs:names" type string required many
+    field name_starts id "urn:gooo:named-inputs:name-starts" type integer required many
+    field name_ends id "urn:gooo:named-inputs:name-ends" type integer required many
+}
+
+entity InputDescriptions id "urn:gooo:source-control:input-descriptions" fields {
+    field source_sha256 id "urn:gooo:input-descriptions:source" type string required one
+    field activity_id id "urn:gooo:input-descriptions:activity" type string required one
+    field status id "urn:gooo:input-descriptions:status" type string required one
+    field reason id "urn:gooo:input-descriptions:reason" type string required one
+    field total id "urn:gooo:input-descriptions:total" type integer required one
+    field named id "urn:gooo:input-descriptions:named" type integer required one
+    field named_bps id "urn:gooo:input-descriptions:named-bps" type integer required one
+    field labels id "urn:gooo:input-descriptions:labels" type string required one
+}
+
+# Read name presence and construct documentation from original signature facts.
+activity DescribeInputs(declared NamedInputDeclarations) -> InputDescriptions id "urn:gooo:source-control:describe-inputs" computes `
+let result = InputDescriptions{
+    source_sha256: declared.source_sha256, activity_id: declared.activity_id,
+    status: "INVALID_INPUT", reason: "", total: 0, named: 0, named_bps: 0, labels: "",
+}
+if declared.schema != "gooo/input-declaration-columns/v2" {
+    result.reason = "SOURCE_SCHEMA_MISMATCH"
+    return result
+}
+let positions = InspectInputs(InputDeclarations{
+    schema: "gooo/input-declaration-columns/v1", scope: declared.scope,
+    source_sha256: declared.source_sha256, activity_id: declared.activity_id,
+    count: declared.count, indices: declared.indices, ports: declared.ports,
+    type_names: declared.type_names, type_ids: declared.type_ids,
+    starts: declared.starts, ends: declared.ends,
+})
+if positions.status == "INVALID_INPUT" {
+    result.reason = positions.reason
+    return result
+}
+if len(declared.names) != len(declared.indices) ||
+   len(declared.name_starts) != len(declared.indices) || len(declared.name_ends) != len(declared.indices) {
+    result.reason = "NAME_COLUMNS_MISMATCH"
+    return result
+}
+let named = 0
+let previous_end = 0
+for index in declared.indices {
+    if declared.names[index] == "" {
+        if declared.name_starts[index] != 0 || declared.name_ends[index] != 0 {
+            result.reason = "UNNAMED_POSITION_HAS_NAME_SPAN"
+            return result
+        }
+    } else {
+        if declared.name_starts[index] < previous_end || declared.name_ends[index] <= declared.name_starts[index] ||
+           declared.name_ends[index] > declared.starts[index] {
+            result.reason = "NAME_POSITION_INVALID"
+            return result
+        }
+        named += 1
+    }
+    previous_end = declared.ends[index]
+}
+for left in declared.indices {
+    for right in declared.indices {
+        if right != left && declared.names[left] != "" {
+            if declared.names[left] == declared.names[right] || declared.names[left] == declared.ports[right] {
+                result.reason = "NAME_BINDING_CONFLICT"
+                return result
+            }
+        }
+    }
+}
+for index in declared.indices {
+    let label = declared.ports[index]
+    if declared.names[index] != "" { label = declared.names[index] }
+    if index > 0 { result.labels = result.labels + "\n" }
+    result.labels = result.labels + label + ": " + declared.type_names[index] + " [" + declared.ports[index] + "]"
+}
+result.total = declared.count
+result.named = named
+result.named_bps = named * 10000 / declared.count
+result.status = "ALL_INPUTS_NAMED"
+if named == 0 { result.status = "POSITIONAL_INPUTS" } else {
+    if named < declared.count { result.status = "PARTIALLY_NAMED" }
+}
+return result
+`

@@ -1,6 +1,8 @@
 package main
 
-const modelsHelp = `Use a local decision model with Gooo
+const modelsHelp = modelsCoreHelp + modelsSourceRelativeHelp + modelsSourceRelativeV2Help + modelsSourceRelativeV3Help + modelsFinishHelp
+
+const modelsCoreHelp = `Use a local decision model with Gooo
 
 Gooo declares the available code paths and required output/condition cases.
 A compatible local model proposes candidate order; Gooo checks each candidate.
@@ -8,8 +10,8 @@ Omit --path-model (body-codegen) or --model (body-construct/body-compose)
 for deterministic order. A supplied unreadable or incompatible file is an error.
 
 Check the compiler's included SDK with gooo version --build --json.
-This 0.6.28 candidate includes SDK 0.2.40 and supports the ordered-source and
-canonical models described below. The earlier public 0.6.27 includes SDK 0.2.37.
+This source checkout includes the explicitly versioned V3 output-relation connection.
+The public compiler 0.6.33 includes SDK 0.2.42 and the V2 connection.
 
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum
@@ -66,7 +68,23 @@ Canonical direct-return and assignment source, research model:
   retain a decline reason and continue deterministic search with zero predictions.
   The paired study reports weak first-choice results; existing defaults remain unchanged.
 
-Included record-field example:
+`
+
+const modelsSourceRelativeHelp = `Source-relative comparison conditions, research model:
+  The source-relative artifact on Hugging Face is supported by this checkout.
+  See docs/source-relative-contract-model.md for the pinned file and checksum.
+
+  gooo body-context --activity Choose --model model-relative.json \
+    examples/body-codegen/source-relative-batch.gooo.fixture
+
+  source_relative_features holds the exact 528 inputs used for ranking.
+  source_relative_conditions explains the 16 relation cells at [192:208].
+  One prediction precedes candidate execution; later steps reuse the finite queue.
+  The guide includes native construction, deterministic use and model-free replay.
+
+`
+
+const modelsFinishHelp = `Included record-field example:
   gooo body-context --activity Describe \
     --model examples/scalar-identity/model/model.json examples/scalar-identity/source.gooo.fixture
   See gooo help body-compose for record assembly and saved replay.
@@ -77,4 +95,26 @@ caller case results measure the constructed program. Saved replay makes zero
 new predictions. Native execution requires Go1.27.2 on the host.
 
 See docs/declared-contract-model.md and docs/record-model-preflight.md.
+`
+
+const modelsSourceRelativeV2Help = `V2 source-relative return-layout model:
+  See docs/source-relative-v2-contract-model.md for the pinned new model.
+  This source connection supports fixed Integer division in typed choices.
+
+  gooo body-context --activity Choose --model model-v2.json \
+    examples/body-codegen/source-division-layout-cases.gooo.fixture
+
+  V2 metadata selects the V2 input encoder. V1 retains its original meaning.
+  Omit the model for deterministic order. A supplied incompatible model is an error.
+  Recorded first-choice accuracy and checked completion are reported separately.
+
+`
+
+const modelsSourceRelativeV3Help = `Experimental V3 source/output relationship model:
+  See docs/source-relative-v3-contract-model.md for pinned model files and results.
+  V3 metadata selects its own 528-cell encoder and declared-output relationships.
+  The fresh study had first completion18/64 versus V2 21/64; keep it an explicit option.
+  Inspection predicts zero times. Construction predicts once before finite checking.
+  Omitting a model retains deterministic traversal; saved replay makes zero new predictions.
+
 `

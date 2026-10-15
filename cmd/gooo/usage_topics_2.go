@@ -25,22 +25,27 @@ See docs/language/capability-discovery.md.
 	"init": `Create a starter project
 
 Usage:
-  gooo init [--template app|library|diagnostic] [--module <path>] <new-directory>
+  gooo init [--template app|library|diagnostic|origins] [--module <path>] <new-directory>
 
 Examples:
   gooo init hello-gooo
   gooo init --template library my-library
   gooo init --template library --module github.com/acme/my-library my-library
   gooo init --template diagnostic my-diagnostic
+  gooo init --template origins my-origins
 
 Then check and generate:
   cd hello-gooo
   gooo check main.gooo
   gooo body-codegen --json --activity Clamp main.gooo
 
-The starters work without a model. Library and diagnostic module paths customize
-the generated workspace and source identity. The diagnostic starter assembles a
+The starters work without a model. Library, diagnostic and origins module paths customize
+the generated workspace and source identity. Each starter includes a local
+AGENTS.md guide for supported source forms, inspection, finite cases and replay.
+The diagnostic starter assembles a
 Gooo tool from declared choices and includes saved-program replay instructions.
+The origins starter creates a Gooo reader for saved field-source rows; it includes
+small practice cases and accepts --origin-receipt with field-input-locations.
 `,
 	"check": `Check Gooo source
 

@@ -11,10 +11,67 @@ gooo package resolve gooo.workspace.json
 gooo package execute --json --cases cases.json gooo.workspace.json
 ```
 
+## Project-local guidance for development agents
+
+The development compiler writes an `AGENTS.md` beside the README for all four
+starters. It links the source-owned editing workflow to installed CLI help,
+stable IDs, finite expectations and saved replay. The app instructions use
+`inspect` and the bounded `context` view; workspace instructions use `package
+resolve` and `package interface` to include imports and record fields.
+
+This is a small text file embedded in the executable. Creating the project
+requires no model or network request. Existing destinations remain unchanged.
+The guide describes deterministic construction when no provider is configured,
+and keeps source-declared model choices and evaluation cases visible to agents.
+
+## Start an origin reader
+
+The development compiler adds an `origins` starter for metaprograms that inspect
+where recorded fields and choices came from:
+
+```sh
+gooo init --template origins --module example.org/team/origins my-origins
+cd my-origins
+gooo package execute --cases cases.json gooo.workspace.json
+```
+
+Six local files include a Gooo reader, workspace, four practice cases, an editable
+input, README and AGENTS guide. `inspect.gooo` owns the conditions and output;
+Go only embeds the starting files and transports primitive rows. The default
+module is `origins`; `--module` binds workspace paths and stable semantic IDs.
+Existing destinations are preserved. No model or endpoint is created.
+
+The practice cases use explicitly fictional source identities and coordinates.
+Their four expected results cover a declared alternative, a field name, a
+missing template and an invalid range. After editing the input-only example:
+
+```sh
+gooo package execute --inputs inputs.json gooo.workspace.json
+```
+
+Successful input-only execution prints one entry value per input row. Start with
+the returned status, source field and location. Add `--json` to either command
+when you need the complete source, generation and execution record.
+
+To inspect an actual saved execution instead:
+
+```sh
+gooo package execute \
+  --origin-receipt /path/to/execution.json \
+  --origin-kind field-input-locations --origin-limit 9 \
+  gooo.workspace.json
+```
+
+The original producer and model are not run again. The origin-input report
+retains the full/returned row counts and page truncation; the Gooo output
+retains original activity/record/field IDs and UTF-8 file ranges. Input-only
+results have `finite_total=0`. Treat unmapped locations and partial pages as
+their recorded scope. See [return and choice origins](return-choice-origins.ko.md).
+
 ## Start a reusable diagnostic tool
 
 The `diagnostic` starter creates a Gooo tool that turns counts and diagnostic
-text into a suggested next operation. Its six files are embedded in the CLI:
+text into a suggested next operation. Its source, inputs and guides are embedded in the CLI:
 
 ```sh
 gooo init --template diagnostic my-diagnostic

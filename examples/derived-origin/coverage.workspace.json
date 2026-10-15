@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "gooo/tools/origin-coverage", "activity": "Summarize"},
+  "packages": [
+    {"path": "gooo/tools/origin-coverage", "name": "origincoverage", "imports": [], "sources": ["coverage.gooo"]}
+  ]
+}

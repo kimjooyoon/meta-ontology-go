@@ -1,0 +1,1 @@
+"package legacy2357\nnamespace legacy2357\nentity Integer id \"legacy2357://integer\"\nactivity Shift(Integer) -\u003e Integer id \"legacy2357://shift\" computes \"if input \u003c= 17 { return input * 2 }; return input - 9\"\n"

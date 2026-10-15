@@ -1,0 +1,8 @@
+{
+  "source": "capacity22373/source",
+  "failed_subject": "internal/bodycodegen#replayTypedPathProjection",
+  "rendered_cap": 75,
+  "observed_source_lines": 121,
+  "repair": "logical stage splits;all44 original production declarations retained in new56-subject cohort22789",
+  "historical_reruns": 0
+}

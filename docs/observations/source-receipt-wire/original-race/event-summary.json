@@ -1,0 +1,43 @@
+{
+  "event_counts": {
+    "('start', False)": 431,
+    "('run', True)": 8042,
+    "('output', True)": 18435,
+    "('pass', True)": 8023,
+    "('output', False)": 674,
+    "('pass', False)": 242,
+    "('skip', False)": 187,
+    "('skip', True)": 17,
+    "('fail', False)": 2,
+    "('pause', True)": 2,
+    "('cont', True)": 2
+  },
+  "failures": [
+    {
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Elapsed": 600.05
+    },
+    {
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Elapsed": 600.116
+    }
+  ],
+  "timeouts": [
+    {
+      "Package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor",
+      "Test": "TestDerivedCandidateCapacity27593",
+      "Time": "2026-10-14T20:01:14.761234098Z",
+      "Output": "panic: test timed out after 10m0s\n"
+    },
+    {
+      "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "Test": "TestPackageStringOperationsExecuteAndReplay",
+      "Time": "2026-10-14T20:01:26.178899017Z",
+      "Output": "panic: test timed out after 10m0s\n"
+    }
+  ],
+  "timeout_package_starts": {
+    "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor": "2026-10-14T19:51:14.738566419Z",
+    "github.com/kimjooyoon/meta-ontology-go/cmd/gooo": "2026-10-14T19:51:26.105084986Z"
+  }
+}

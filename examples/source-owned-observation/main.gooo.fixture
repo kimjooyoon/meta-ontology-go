@@ -1,0 +1,21 @@
+package signedfee
+namespace signedfee
+entity Integer id "signed-fee://integer"
+
+activity Fee(Integer) -> Integer id "signed-fee://fee" computes "return input - 11" assembling {
+    choice "direction" operand_order at "0" intent "11에서 입력을 뺀다. Subtract the input from eleven."
+    case "11" -> "0"
+    observe {
+        input "17"
+        input "-5"
+        oracle "ExpectedFee"
+        max_candidates "2"
+        max_rounds "1"
+        reuse_outputs "true"
+        resolve_unique "true"
+    }
+    attempts "2"
+}
+
+activity ExpectedFee(Integer) -> Integer id "signed-fee://reference" computes "return 11 - input"
+activity Main(Integer) -> Integer id "signed-fee://main" computes "return Fee(input)"

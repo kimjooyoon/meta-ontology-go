@@ -1,0 +1,9 @@
+{
+  "state": "UNPUBLISHED_PROPOSAL_REPLACED",
+  "reason": "Gooo traversal now retains known field/local origins alongside untracked collection RHS reads",
+  "source_operation_retained": "registration15437-*",
+  "restore_members_from": "registration15401-output/candidate.json",
+  "denominator65_reused_byte_exact": true,
+  "next_operation": "registration15901 new source digest at base65",
+  "historical_local_reruns": 0
+}

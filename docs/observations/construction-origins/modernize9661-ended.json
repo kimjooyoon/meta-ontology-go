@@ -1,0 +1,14 @@
+{
+  "exit_code": 0,
+  "elapsed_seconds": 0.71866525,
+  "stdout_bytes": 0,
+  "stderr_bytes": 0,
+  "args": [
+    "go",
+    "fix",
+    "-diff",
+    "-overlay=/tmp/gooo-construction-origins-20261014/overlay9661.json",
+    "./internal/bodycodegen",
+    "./internal/bodyexecution"
+  ]
+}

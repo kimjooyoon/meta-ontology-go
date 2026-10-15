@@ -1,0 +1,25 @@
+=== RUN   TestHistoryCapacityCurrentSourceNormalizationProposal
+    history_capacity_repair_test.go:163: normalization: 27 historical targets preserved; 2 helpers; no corpus or denominator evidence edits
+--- PASS: TestHistoryCapacityCurrentSourceNormalizationProposal (0.01s)
+=== RUN   TestHistoryNormalizationFollowsDeclarationOwners
+=== RUN   TestHistoryNormalizationFollowsDeclarationOwners/1
+    history_normalization_layout_test.go:75: 1 owned units; 73 targets retained; unrelated unit unchanged; native/model executions 0
+=== RUN   TestHistoryNormalizationFollowsDeclarationOwners/2
+    history_normalization_layout_test.go:75: 2 owned units; 73 targets retained; unrelated unit unchanged; native/model executions 0
+=== RUN   TestHistoryNormalizationFollowsDeclarationOwners/5
+    history_normalization_layout_test.go:75: 5 owned units; 73 targets retained; unrelated unit unchanged; native/model executions 0
+--- PASS: TestHistoryNormalizationFollowsDeclarationOwners (0.00s)
+    --- PASS: TestHistoryNormalizationFollowsDeclarationOwners/1 (0.00s)
+    --- PASS: TestHistoryNormalizationFollowsDeclarationOwners/2 (0.00s)
+    --- PASS: TestHistoryNormalizationFollowsDeclarationOwners/5 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.470s
+=== RUN   TestHistoryNormalizationOwnershipDeclarationCapacity
+    history_normalization_capacity_test.go:17: internal/meta/syntaxregistration#historyNormalizationUnits rendered 26
+    history_normalization_capacity_test.go:17: internal/meta/syntaxregistration#historyNormalizationLayout rendered 39
+    history_normalization_capacity_test.go:17: internal/meta/syntaxregistration#TestHistoryNormalizationFollowsDeclarationOwners rendered 41
+    history_normalization_capacity_test.go:17: internal/meta/syntaxregistration#TestHistoryCapacityCurrentSourceNormalizationProposal rendered 64
+    history_normalization_capacity_test.go:17: internal/meta/repositoryprojection/extractor#TestHistoryNormalizationOwnershipDeclarationCapacity rendered 18
+--- PASS: TestHistoryNormalizationOwnershipDeclarationCapacity (0.02s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.417s

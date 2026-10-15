@@ -1,0 +1,8 @@
+=== RUN   TestGoooConsumesSavedValuePathFacts6781
+    value_transfer_consumer_test.go:77: 6781: new Gooo consumer4/4, four actual saved path/location facts, original program execution0, model0
+--- PASS: TestGoooConsumesSavedValuePathFacts6781 (0.74s)
+=== RUN   TestIntegerTupleDifferenceAndHoldout6763
+    value_transfer_consumer_test.go:113: 6763: new two-Integer source value_case selects subtraction, separate holdout retained, new native inputs2/2, original candidate location present, model0
+--- PASS: TestIntegerTupleDifferenceAndHoldout6763 (0.51s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.773s

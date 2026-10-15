@@ -1,0 +1,126 @@
+{
+  "source_revision": "fc968e7d205031947ce50750bdf844523a5bf718",
+  "jobs": [
+    {
+      "job": "format",
+      "original_command_count": 5,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "1af7fc8c4e955b531a86201675cf50b8198d4a9ce97e72e254a73fc81f4add88",
+        "2f04cd5b6e086bcbc1eea901980fcda61add3ade712d62b151f4ec0d8f39ebf2",
+        "a8ccd820ec899abfc650723fa8978577b11a2719dc1f64d2e128d908fccf3a84",
+        "e78fa189671f42a895601b9caedae4d2e6e774930ec73294a361d6929f68cfa5",
+        "5a8e3debf706e36a457b7a319a1e8761cd6921670ef4faa12bbf81671765d054"
+      ]
+    },
+    {
+      "job": "vet",
+      "original_command_count": 1,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "3d4b424f6fcd11f530525ddea9a46aeaffec7c883b6c04b6baf7df36bf47800b"
+      ]
+    },
+    {
+      "job": "test",
+      "original_command_count": 1,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "1bb497e3e13a1105cf24e3359fa3ef75de08b66ff8a2839cd7f9ea97824d9eb3"
+      ]
+    },
+    {
+      "job": "race",
+      "original_command_count": 1,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "fc2b3f1263084d2b2c8eddcd12aadf461683a6aeb8370d5a9f41c83f1987063b"
+      ]
+    },
+    {
+      "job": "semantic",
+      "original_command_count": 1,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "ea67f9b7adc24f39d7060610657ea8bf63c2bfeda88e9be9b17519d28c1944c5"
+      ]
+    },
+    {
+      "job": "policy",
+      "original_command_count": 13,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "b39099cfb084262ea9696885555ea990f9693b49ab096be91422d5988a50edf4",
+        "d0f8ae2abbc17854dcf9ace0712d85c94fff3ded8863c0bf43e38de950442c23",
+        "07499d8ea32fefe4c4fb2a0abf1152e29b1f631bed404298f22583c9128b92cc",
+        "d156fe8b9cc31f08185e9d80d6626882d3f44ee52b4a48c6e973c8f5ecaec802",
+        "c5a58d84ec9cf4e2bafb4830f35068cbc17b8e8ea4c9015e2d297a8e21dc6355",
+        "01c2a0203f3e4de19ed08a9782fcb630e8d23f9ae656c98e5555404d6570512c",
+        "80c61029e6fccfa56a8eaa055d0a9c4b0b9deb6e40f3c54bd977c9f99152d0eb",
+        "dc89bc85222181ea7c593d2ba84a24d3150c36e6b065d389befb97ee247f7f28",
+        "f5a8341030984772ef0f268ea22298b2631d7ad04d06ded727ccf30bd1446d56",
+        "25dd5d286309adc4115675a4257e8b3a116985e6159e41b7459d24e7cdc090e9",
+        "fcd14f3832dbe8a6bfdb00bfc83aede1caf7aa531c990b7d0d886cfbab24607d",
+        "8e42f63ff0ced84c055daa054ab9be1bd8d0d20090a9de081f270c257bf351c0",
+        "fcd14f3832dbe8a6bfdb00bfc83aede1caf7aa531c990b7d0d886cfbab24607d"
+      ]
+    },
+    {
+      "job": "evidence",
+      "original_command_count": 4,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "74520b64bbadcd0407812cd72046b8b86f98559bd5be541cf3415d41c49c7f9e",
+        "bde27edf15b872fec1e34dac96644289f1a1b24b60a30f7cbaf6d96e8149c5df",
+        "287881104cd86d3b275d7490e1f0b2559e0fa7decbdc7f2a84c0d8f4f0c4c060",
+        "82f2cc1d08541c1bc35542c3356a6c93ac1f7a4cb93025512cfdc6dbe3254c9c"
+      ]
+    },
+    {
+      "job": "proof",
+      "original_command_count": 3,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "10bfb70280c172b8f4ed28a494f8b2872a90db42f2e13093f8e7b50802d7d8f7",
+        "f1b1d8c3927d3643ce14bc75e6bd32278009222a1be3eff6c9db73df6e02c500",
+        "3c519162212f6e6e0d6f1aa35222f17339d63709dd03ddc7def119565023a1f3"
+      ]
+    },
+    {
+      "job": "failure-report",
+      "original_command_count": 1,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "e64592ed6396f373eb103b62ffac96841eda0743ebf5c84710f30ec979663445"
+      ]
+    },
+    {
+      "job": "feedback-predecessor",
+      "original_command_count": 4,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "b842fba0d92775742b42084cbf8d4538bdaf2a353d195d29b7af2b1be442932b",
+        "060dd71a6dedf166d2a2f80f1ec03ad8443e87ceba4d3619ce82fba70a728e21",
+        "5fdf866a3eddd138ebafb9505b0d3e0b9dfb32a3ee1f0d2585f26928dc7b70fc",
+        "05c45c7cfabb2761e32485f52f0c52c28dba5b21cadd6e682c6c4194457eec30"
+      ]
+    },
+    {
+      "job": "language-package-execution",
+      "original_command_count": 1,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "5121b36bac0a8e46a4420a4ffd19f579282e986cef5f698e66efd0f623d66582"
+      ]
+    },
+    {
+      "job": "coherence-boundary-probe",
+      "original_command_count": 1,
+      "command_bodies_preserved": true,
+      "original_command_body_sha256": [
+        "546d6f0a10eed636e32ecc4329d379f7b06231482077eb55fa83d66144d46351"
+      ]
+    }
+  ],
+  "scope": "immutable original workflow command bodies"
+}

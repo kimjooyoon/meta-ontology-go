@@ -23,11 +23,12 @@ Gooo declares the permitted choices and checks their results. An optional local 
 can propose their order. Omitting the model selects deterministic candidate order.
 
 Commands:
-  init             Create an app or library starter
+  init             Create an app, library, diagnostic or origins starter
   check            Parse and validate a Gooo source file
   test             Check declared activity-output test markers
   run              Resolve an activity or execute a supported value plan
   body-codegen     Fill declared IR holes and generate Go
+  body-origins     Inspect typed field origins or export Gooo ancestry inputs
   body-context     Inspect source input and local model compatibility
   body-plan        List caller inputs and assembly dependencies without execution
   body-compose     Assemble, compile and execute a typed program
@@ -35,15 +36,18 @@ Commands:
   body-outcomes-delta Compare saved outputs and changed requirements by input
   generate         Generate a project from Gooo declarations
   discover         Map a natural-language question to a source-bound capability
+  refactor         Rename a source activity with its stable ID and local references
   format, fix      Format or repair Gooo source
   inspect, query   Inspect declarations and semantic relationships
+  context          Read a bounded semantic neighborhood by stable ID
+  impact           Explain source changes and declarations to recheck
   package          Check and execute a multi-file Gooo workspace
   version          Show the compiler version and build information
 
 Use ` + "`gooo help <topic>`" + ` for guides and examples.
-Topics: start, language, models, body-codegen, body-context, body-plan, body-compose, body-construct,
+Topics: start, language, models, body-codegen, body-origins, body-context, body-plan, body-compose, body-construct,
         body-outcomes-delta, discover, init, check, test, run,
-        generate, format, package, inspect, query, version, commands
+        generate, refactor, format, package, inspect, query, context, impact, version, commands
 `
 
 func printUsage(writer io.Writer) {
@@ -54,6 +58,12 @@ func runHelp(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		fmt.Fprint(stdout, rootHelp)
 		return exitOK
+	}
+	if len(args) > 1 {
+		if content, ok := topicHelp[strings.Join(args, " ")]; ok {
+			fmt.Fprint(stdout, content)
+			return exitOK
+		}
 	}
 	if len(args) != 1 {
 		fmt.Fprintln(stderr, "usage: gooo help [topic]")

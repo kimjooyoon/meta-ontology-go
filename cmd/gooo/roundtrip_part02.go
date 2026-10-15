@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -30,28 +31,29 @@ func evaluateRoundTripWithDeadline(file *syntax.File, timeout time.Duration) (ro
 	}
 }
 func evaluateRoundTrip(file *syntax.File) (roundTripResult, error) {
-	original, err := bidir.Lower(file)
+	support := syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV4Support())
+	original, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, support)
 	if err != nil {
 		return roundTripResult{}, fmt.Errorf("semantic lowering: %w", err)
 	}
-	document, err := bidir.DocumentFromSyntax(file)
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, support)
 	if err != nil {
 		return roundTripResult{}, fmt.Errorf("document adaptation: %w", err)
 	}
-	model, err := bidir.Get(document)
+	model, err := bidir.GetWithEntityFieldsSupport(document, support)
 	if err != nil {
 		return roundTripResult{}, fmt.Errorf("Get: %w", err)
 	}
-	written, err := bidir.Put(document, model)
+	written, err := bidir.PutWithEntityFieldsSupport(document, model, support)
 	if err != nil {
 		return roundTripResult{}, fmt.Errorf("Put: %w", err)
 	}
-	roundTripped, err := bidir.LowerDocument(written)
+	roundTripped, err := bidir.LowerDocumentWithEntityFieldsSupport(written, support)
 	if err != nil {
 		return roundTripResult{}, fmt.Errorf("lower written document: %w", err)
 	}
-	getPutErr := bidir.CheckGetPut(document)
-	putGetErr := bidir.CheckPutGet(document, model)
+	getPutErr := bidir.CheckGetPutWithEntityFieldsSupport(document, support)
+	putGetErr := bidir.CheckPutGetWithEntityFieldsSupport(document, model, support)
 	return roundTripResult{
 		original: original, roundTripped: roundTripped,
 		equivalent: bidir.EquivalentAfterRoundTrip(original, roundTripped),

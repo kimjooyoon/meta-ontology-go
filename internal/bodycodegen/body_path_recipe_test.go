@@ -25,6 +25,23 @@ func recipeBytes(choices string) []byte {
 
 const recipeOperand = `{"id":"operands","kind":"operand_order","occurrence":0,"intent":"2에서 입력을 뺀다. Subtract input from two."}`
 
+func TestSourceRecipeFixedIntegerDivisionIsSupported(t *testing.T) {
+	source := recipeSource("return input / 2")
+	doc, err := DecodeSourcePathDocument(context.Background(), "division.gooo", source, "Assemble", recipeBytes(recipeOperand))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Plan.Base.Expressions[doc.Plan.Decisions[0].Target].Operation != "divide" {
+		t.Fatal("division did not enter the fixed typed arena")
+	}
+	doc.TestCases = []pathplan.TestCase{{Input: -9, Expected: -4}, {Input: 0, Expected: 0}, {Input: 9, Expected: 4}}
+	result, err := GenerateWithTypedPaths(context.Background(), "division.gooo", source, "Assemble", doc, "")
+	if err != nil || result.Report.BodyPaths.FunctionalCompleteness != 100 || result.Report.BodyPaths.Search.Selection.ModelCalls != 0 ||
+		!strings.Contains(result.Source, " / ") {
+		t.Fatal("fixed division did not complete deterministically", err)
+	}
+}
+
 func TestSourceRecipeComposesExistingSourceAndFullDocument(t *testing.T) {
 	source := recipeSource("return input - 2")
 	doc, err := DecodeSourcePathDocument(context.Background(), "source.gooo", source, "Assemble", recipeBytes(recipeOperand))
@@ -96,7 +113,7 @@ func TestSourceRecipeStrictRejection(t *testing.T) {
 			t.Fatal("invalid recipe accepted", raw)
 		}
 	}
-	for _, body := range []string{"return +input", "return input / 2", "var local int8 = 1; return input + (0 * 1)",
+	for _, body := range []string{"return +input", "return input % 2", "var local int8 = 1; return input + (0 * 1)",
 		"let value = input - 2; return value"} {
 		raw := recipeBytes(recipeOperand)
 		if strings.HasPrefix(body, "let") {

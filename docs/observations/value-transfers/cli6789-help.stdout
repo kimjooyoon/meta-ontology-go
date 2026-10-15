@@ -1,0 +1,23 @@
+Read where a selected candidate reaches a condition or return
+
+usage: gooo package origins --receipt <execution.json> [--activity <id>] [--candidate <id>] [--limit <1..128>] [--follow] [--json]
+
+Reads a saved package execution record. Paths run from a condition/return back
+to a filled hole, with value inputs and controlling conditions distinguished.
+Each root/hole pair shows one shortest recorded static path. Other paths may
+exist. The query reads only the selected construction in this receipt.
+
+--follow derives a static value path across selected pure calls and binds.
+With --follow, --activity selects the root activity (default: workspace entry);
+call arguments keep their own invocation context. This includes original
+activity declarations and external input boundaries where retained.
+
+Without --follow, --activity filters the recorded assembly activity ID. --candidate filters a
+candidate ID within matching activities. The default limit is 32 rows; inspect
+truncated when using JSON. PARTIAL and missing graphs retain their reasons.
+Original package file locations appear where they were recorded; otherwise the
+assembly input location is shown. Source views and hashes accompany locations.
+
+This command reads records and source snippets. It makes zero body, candidate or
+model executions. Current source comparison is available through gooo impact.
+See docs/language/recorded-origin-queries.ko.md.

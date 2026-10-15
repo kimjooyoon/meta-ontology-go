@@ -1,0 +1,76 @@
+{
+  "compiler_head": "6715f8fb19ec96bb92085b924e29f649d0f1b59a",
+  "overlays": [
+    {
+      "path": "internal/bodycodegen/body_condition_fields.go",
+      "sha256": "33cbcb87c1b63febd2e04eb194ff19f8e2cffab7577624b75df8fba6acfdbaac"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_origin.go",
+      "sha256": "0baa53e7c7db0a700e615f121bae8ff7396e9ee366cb7bcebf77be0613b66908"
+    },
+    {
+      "path": "internal/bodycodegen/body_condition_source.go",
+      "sha256": "1c3bde582c48626d1013401724f06f2aa99604382d0d1312aa28d879a17df29f"
+    },
+    {
+      "path": "internal/bodycodegen/body_paths_replay.go",
+      "sha256": "53670ce681a9e02177af4a7067b29870d7265145a2ae54f0d49632da22a0b0ad"
+    },
+    {
+      "path": "internal/bodycodegen/body_projection.go",
+      "sha256": "470a313b2ca4f4b41c3ff4f461cdb37a228fe59325e59d85da7f20119aa0723b"
+    },
+    {
+      "path": "internal/bodycodegen/body_search_replay.go",
+      "sha256": "f1ad4c20aef71fdebed587b91f88c18a534f55ad7822be3b0c4db0cdbfea7815"
+    },
+    {
+      "path": "internal/bodycodegen/bodycodegen.go",
+      "sha256": "7a45203466b5e2e50d4785e7f26e466dc48b62c55eab8082011ea4cb82d8e16f"
+    },
+    {
+      "path": "internal/bodycodegen/record_assembly_replay.go",
+      "sha256": "cd5822a27b1988051777c8725aa0f95e8f2eeca6a4d1c60fd835df225fbe364e"
+    },
+    {
+      "path": "internal/bodycodegen/record_projection.go",
+      "sha256": "213ad87d1dbf8bc184e5aa0ea7529b96bab4440a05a3e7e9f3f3ae21b3b69030"
+    },
+    {
+      "path": "internal/bodycodegen/source_fill_replay.go",
+      "sha256": "4dba97267a64d2cecaed88e295a4053741c1add9f2f974710ed49182ffe6c24b"
+    },
+    {
+      "path": "internal/bodyexecution/composition.go",
+      "sha256": "237be29b8566a471d23487833dc202c24954684280008a609e020f44c114318c"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_projection.go",
+      "sha256": "511ed39ab2dc53a91680dca9543e0750c4a16d8407a72a86c3bac5f8ad30cd5f"
+    },
+    {
+      "path": "internal/bodyexecution/composition_condition_source.go",
+      "sha256": "65b56c7b0bea7415ebcf1c86a782a03d3d2872b47f2f6a9c686ba2ae3a397432"
+    },
+    {
+      "path": "internal/bodyexecution/composition_conditions.go",
+      "sha256": "2c34c493e5f6b00801d3d56fe6fd07e4909db78b2b870c6a822fa25895d70add"
+    },
+    {
+      "path": "internal/bodyexecution/composition_source_anchor_requirement_test.go",
+      "sha256": "8f140e978bddc8d554a7103ea0101ade8d79646e3682305abb1f7d7f24be9359"
+    },
+    {
+      "path": "internal/bodyexecution/composition_source_anchors_test.go",
+      "sha256": "662adda2d2d88f670d8a3078a7afc9d6ffa5b8cb8202f60e52131d5f0a785ded"
+    }
+  ],
+  "fresh_sources": [
+    "unicode1567",
+    "helpers1627"
+  ],
+  "historical_replays": 0,
+  "model_predictions": 0,
+  "snapshot_root": "/tmp/gooo-native-source-anchors-20261013/observed-producer1567"
+}

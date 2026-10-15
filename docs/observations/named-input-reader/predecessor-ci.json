@@ -1,0 +1,50 @@
+{
+  "schema": "gooo/named-reader-predecessor-ci/v1",
+  "pr": 1591,
+  "head": "d6ae2d8ab6ba4dda6b02059dd6b79f2c3091c21a",
+  "original_runs": 33,
+  "success": 30,
+  "failed": [
+    {
+      "conclusion": "failure",
+      "id": 38721165445,
+      "name": "Transformation effect ledger",
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "id": 38721165597,
+      "name": "Repository projection conformance",
+      "run_attempt": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "failure",
+      "id": 38721165466,
+      "name": "CI [PR authoritative]",
+      "run_attempt": 1,
+      "status": "completed"
+    }
+  ],
+  "logs": [
+    {
+      "filename": "effect-ledger-failed.log",
+      "sha256": "6f31c52ebd156e8045708ded7ec5e164d58a3bd14bd6c841e140c17715f8ff80",
+      "finding": "artifact upload DNS failure"
+    },
+    {
+      "filename": "projection-failed.log",
+      "sha256": "9419236a4ad7d1a942b08f7d80c7ca04f552e727a1b85439670b19d96b028a9a",
+      "finding": "source-path assertion after declaration relocation"
+    },
+    {
+      "filename": "predecessor-core-failed.log",
+      "sha256": "c6bf912555ba36a9bf37fc8c63ed8476a7b6bb3e88b0033cd5097c979a8a3d02",
+      "finding": "same relocated-declaration test; downstream policy/evidence/proof fail"
+    }
+  ],
+  "repair": "locate required declarations by package and declaration identity across source partitioning; require unique presence and actual rendered helper capacity",
+  "retries": 0,
+  "overrides": 0
+}

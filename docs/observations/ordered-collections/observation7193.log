@@ -1,0 +1,5 @@
+=== RUN   TestCollectionSourceEntries7193
+    composition_collection_surface_test.go:58: collection7193: native6/6, ordered Text and exact Integer collections; Korean condition source range and collection-input origin; model0
+--- PASS: TestCollectionSourceEntries7193 (1.25s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	1.854s

@@ -1,0 +1,5 @@
+=== RUN   TestOriginalLocalFiles12421
+    package_local_files_fresh_test.go:51: new multi-package producer2/2;three static writes/three use sites;24 original-file facts;call and record renaming reversed;escaped Korean declaration/use ranges retained;Gooo reader24outputs matched;original producer/model calls during read0
+--- PASS: TestOriginalLocalFiles12421 (1.28s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.829s

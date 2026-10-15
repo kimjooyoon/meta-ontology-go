@@ -35,6 +35,7 @@ func generateIRBodySearchCandidatesForSource(ctx context.Context, filename strin
 	if ctx == nil {
 		return nil, fmt.Errorf("hole candidate construction requires a context")
 	}
+	ctx = localCallPhase(ctx, "candidate-generation", "")
 	if err := validateIRBodySearchCandidateGeneration(*plan.CandidateGeneration); err != nil {
 		return nil, err
 	}
@@ -49,19 +50,19 @@ func generateIRBodySearchCandidatesForSource(ctx context.Context, filename strin
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	file, _, id, body, err := prepareBodySearch(filename, source, activity, plan.HoleID)
+	p, err := prepareSearchBody(filename, source, activity, plan.HoleID)
 	if err != nil {
 		return nil, err
 	}
-	programs := holeProbePrograms(file.Package.Name, activity, id, body, plan.HoleID)
+	programs := holeProbePrograms(p, plan.HoleID)
 	training, _ := json.Marshal(plan.TestCases)
-	observation := &IRBodyHoleContext{Schema: "gooo/integer-hole-context/v1", BodySHA256: digest([]byte(body)),
+	observation := &IRBodyHoleContext{Schema: "gooo/integer-hole-context/v1", BodySHA256: digest([]byte(p.body)),
 		TrainingSuiteSHA256: digest(training), Probes: make([]IRBodyHoleProbe, 0, len(plan.TestCases)),
 		Scope: "pure typed-body outputs with the hole set to zero and one on training inputs; exact integer residual proposals; nonlinear and wrapped behavior still requires full candidate scoring"}
 	var negative []byte
 	quadratic := isQuadraticHoleGrammar(plan.CandidateGeneration.Grammar)
 	if quadratic {
-		negative = holeProbeProgram(file.Package.Name, activity, id, body, plan.HoleID, -1)
+		negative = holeProbeProgram(p, plan.HoleID, -1)
 		observation.Schema = "gooo/integer-hole-context/v2"
 		observation.Scope = "training-only minus-one/zero/one outputs; exact integer roots of a three-point quadratic fit are proposals; branches, higher-degree expressions and wrapped arithmetic require whole-body scoring"
 	}
@@ -88,20 +89,20 @@ func generateIRBodySearchCandidatesForSource(ctx context.Context, filename strin
 	return retainIRBodySearchCandidates(plan, expressions, observation)
 }
 
-func holeProbePrograms(packageName, activity, id, body, hole string) [2][]byte {
+func holeProbePrograms(p preparedBody, hole string) [2][]byte {
 	var programs [2][]byte
 	for value := range programs {
-		programs[value] = holeProbeProgram(packageName, activity, id, body, hole, value)
+		programs[value] = holeProbeProgram(p, hole, value)
 	}
 	return programs
 }
 
-func holeProbeProgram(packageName, activity, id, body, hole string, value int) []byte {
-	filled, err := replaceIdentifier(body, bodyFillHoleToken(hole), strconv.Itoa(value))
+func holeProbeProgram(p preparedBody, hole string, value int) []byte {
+	filled, err := replaceIdentifier(p.body, bodyFillHoleToken(hole), strconv.Itoa(value))
 	if err != nil {
 		return nil
 	}
-	generated, err := generateRoute(packageName, activity, id, "int64", "int64", filled, preserveRoute)
+	generated, err := p.generateBody(filled, preserveRoute)
 	if err != nil {
 		return nil
 	}

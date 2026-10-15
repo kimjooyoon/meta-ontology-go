@@ -1,0 +1,12 @@
+package ledger
+namespace record_surface
+import 규칙 "example/rules"
+
+entity Invoice id "urn:record-format:invoice" fields {
+    field caption id "urn:record-format:caption" type "urn:gooo:type:string" required one
+    field approved id "urn:record-format:approved" type "urn:gooo:type:boolean" required one
+    field discount id "urn:record-format:discount" type "urn:gooo:type:integer" optional one
+}
+activity Capture(Invoice) -> Invoice id "urn:record-format:capture" computes "return input"
+activity Store(Invoice) -> Invoice id "urn:record-format:store" computes "// source body remains literal\nreturn input"
+bind Capture.result -> Store.input

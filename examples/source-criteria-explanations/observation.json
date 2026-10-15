@@ -1,0 +1,138 @@
+{
+  "schema": "gooo/source-criteria-explanation-observation/v1",
+  "scope": "two source-declared candidate sets for one finite quote program; revised alternative authored directly",
+  "model_training_performed": false,
+  "performance_measured": false,
+  "observations": {
+    "insufficient": {
+      "execution": {
+        "compiler_sha256": "0fa93e8c880041b8f908a3ee9079fb85e1ed3e8b96d20e2c214a17f411cb649a",
+        "source_sha256": "9e34df7ab245a8a0d81431ace68c962e4803971d38e21b5e5b6d2d57854ccfbb",
+        "construction_cases_sha256": "e14720fa1caa447a5c11a97079d5e954d411977d0b94bff7e20f8f24b11d91aa",
+        "evaluation_cases_sha256": "db73fac130154b5d3007f24cd8120d9a17250d943a31bb1ff1640763821ba169",
+        "base_sha": "e7afe9142b6fe5977e0eea4f990ed3c911df8246",
+        "overlay_manifest_sha256": "04432d9075058d19e971b9c2d66cfbf2e3e46a4877d4c93c10fda9dc450dc8fb",
+        "build_vcs": false,
+        "exit_code": 0,
+        "output_sha256": "3069711b83f236ffb73d08ddc4f79da0437edc8c063c168401a4d6edfde22ec2"
+      },
+      "construction_decision": "PARTIAL_FINITE",
+      "construction_stop_reason": "DECLARED_SPACE_EXHAUSTED",
+      "attempts": 2,
+      "question_status": "NO_SURVIVING_CANDIDATE",
+      "acquired_inputs": null,
+      "selected_local_criteria": {
+        "criteria_passed": 1,
+        "criteria_failed": 1,
+        "criteria_unknown": 0,
+        "criteria_total": 2
+      },
+      "caller_selection": {
+        "stage": "COMPLETE",
+        "finite_passed": 0,
+        "finite_total": 1
+      },
+      "final_held_criteria": [
+        {
+          "passed": 1,
+          "failed": 1,
+          "unknown": 0,
+          "total": 2
+        }
+      ],
+      "native_evaluation": {
+        "stage": "COMPLETE",
+        "finite_passed": 0,
+        "finite_total": 1
+      },
+      "model_calls": 0,
+      "evaluation_new_model_calls": 0,
+      "saved_report_reads": [
+        {
+          "format": "text",
+          "exit_code": 0,
+          "report_sha256": "fa49b83c11a7ef017f10eb212c0e6ba6b654f69fbf7c4e8f9a45ac8c2de2bbca",
+          "execution": "read saved observation; PATH empty; no source/model/native execution"
+        },
+        {
+          "format": "markdown",
+          "exit_code": 0,
+          "report_sha256": "c409bda58880146d393fa20793b91cb64872df2aad5b1cc47d9a2876e802bf0d",
+          "execution": "read saved observation; PATH empty; no source/model/native execution"
+        }
+      ]
+    },
+    "expanded": {
+      "execution": {
+        "compiler_sha256": "0fa93e8c880041b8f908a3ee9079fb85e1ed3e8b96d20e2c214a17f411cb649a",
+        "source_sha256": "1ddd896c18bb9d946df7a60b400692e886ddeebbdda0d6e7759e3a74b0c7c560",
+        "construction_cases_sha256": "e14720fa1caa447a5c11a97079d5e954d411977d0b94bff7e20f8f24b11d91aa",
+        "evaluation_cases_sha256": "db73fac130154b5d3007f24cd8120d9a17250d943a31bb1ff1640763821ba169",
+        "base_sha": "e7afe9142b6fe5977e0eea4f990ed3c911df8246",
+        "overlay_manifest_sha256": "04432d9075058d19e971b9c2d66cfbf2e3e46a4877d4c93c10fda9dc450dc8fb",
+        "build_vcs": false,
+        "exit_code": 0,
+        "output_sha256": "6df4f88e74d375c8e0ae8df4bbe6a1c75c2fe36363bc4147195f90a49c7aa033"
+      },
+      "construction_decision": "COMPLETE_FINITE",
+      "construction_stop_reason": "LOCAL_AND_CALLER_CASES_MATCHED",
+      "attempts": 1,
+      "question_status": "ONE_SURVIVING_CANDIDATE",
+      "acquired_inputs": [
+        "[12]"
+      ],
+      "selected_local_criteria": {
+        "criteria_passed": 4,
+        "criteria_failed": 0,
+        "criteria_unknown": 0,
+        "criteria_total": 4
+      },
+      "caller_selection": {
+        "stage": "COMPLETE",
+        "finite_passed": 1,
+        "finite_total": 1
+      },
+      "final_held_criteria": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "unknown": 0,
+          "total": 2
+        }
+      ],
+      "native_evaluation": {
+        "stage": "COMPLETE",
+        "finite_passed": 1,
+        "finite_total": 1
+      },
+      "model_calls": 0,
+      "evaluation_new_model_calls": 0,
+      "saved_report_reads": [
+        {
+          "format": "text",
+          "exit_code": 0,
+          "report_sha256": "c94e58f996c98b70d0173514b2bd474b59d76382c77fe6a94d23d103686c89ec",
+          "execution": "read saved observation; PATH empty; no source/model/native execution"
+        },
+        {
+          "format": "markdown",
+          "exit_code": 0,
+          "report_sha256": "f7db82918103e448a585aa4b2278d1ef171b6abfd523c1d987b7160bdabc6c3e",
+          "execution": "read saved observation; PATH empty; no source/model/native execution"
+        }
+      ]
+    }
+  },
+  "sources": {
+    "main.gooo.fixture": "9e34df7ab245a8a0d81431ace68c962e4803971d38e21b5e5b6d2d57854ccfbb",
+    "expanded.gooo.fixture": "1ddd896c18bb9d946df7a60b400692e886ddeebbdda0d6e7759e3a74b0c7c560",
+    "construction-cases.json": "e14720fa1caa447a5c11a97079d5e954d411977d0b94bff7e20f8f24b11d91aa",
+    "evaluation.json": "db73fac130154b5d3007f24cd8120d9a17250d943a31bb1ff1640763821ba169"
+  },
+  "post_native_change": {
+    "path": "internal/syntax/assembly_observation.go",
+    "scope": "Use explicit literal 1..64 candidate and 1..8 round checks immediately before integer conversions. These are the existing language limits; candidate selection and predicate evaluation are unchanged.",
+    "native_execution_repeated": false,
+    "regression": "TestObservationBudgetConversionsHaveExplicitLanguageBounds: ten accepted/rejected boundary cases; two existing strategy/parser compatibility tests also passed with race detection."
+  }
+}

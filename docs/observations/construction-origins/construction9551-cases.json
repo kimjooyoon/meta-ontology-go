@@ -1,0 +1,33 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Build": {
+          "values": [
+            577,
+            587
+          ],
+          "divisor": 0
+        }
+      },
+      "expected": {
+        "Read": 0
+      }
+    },
+    {
+      "inputs": {
+        "Build": {
+          "values": [
+            599,
+            601
+          ],
+          "divisor": 3
+        }
+      },
+      "expected": {
+        "Read": 200
+      }
+    }
+  ]
+}

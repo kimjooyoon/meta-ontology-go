@@ -1,0 +1,20 @@
+{
+  "native_passed": 2,
+  "native_total": 2,
+  "actual_runtime_inputs": [
+    79,
+    59
+  ],
+  "not_yet_executed_inputs": [
+    83,
+    61
+  ],
+  "model_calls": 0,
+  "relation": "static_dependency",
+  "analysis_status": "MAPPED",
+  "original_filename": "할당.gooo.fixture",
+  "candidate": "minimum5381",
+  "harness_outcome": "execution succeeded; report reader expected top-level runtime but CLI wraps it in result; stopped before saved-construction read",
+  "original_failure_record": "ended5381.json",
+  "binary_removed": true
+}

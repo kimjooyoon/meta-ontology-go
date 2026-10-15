@@ -1,0 +1,92 @@
+{
+  "original_pr": 1527,
+  "original_head": "4569d4920c0c3acb923f53ca32485e22262a71dd",
+  "original_family": 21,
+  "original_failure": "native condition events overflowed unchanged 64KiB stdout bound in existing Gooo search/string loops",
+  "diagnostic_source": "original CI logs, not local reproduction",
+  "probe_producer": {
+    "compiler_head": "4569d4920c0c3acb923f53ca32485e22262a71dd",
+    "overlays": [
+      {
+        "path": "internal/bodyexecution/composition_condition_driver.go",
+        "sha256": "e337103f29e545c0bfe7133f96235a2432f6be3c12c37a66a6b95e544e708711"
+      },
+      {
+        "path": "internal/bodyexecution/composition_condition_rows.go",
+        "sha256": "59b19e4601d2ba516d9501f85cb82f1337db193075e572a9b53b155bc94b9a3f"
+      },
+      {
+        "path": "internal/bodyexecution/composition_condition_transport_test.go",
+        "sha256": "f9f22890074e1f87f374e961df9239653dcba3787bcf5a3691836544fe74dc1a"
+      },
+      {
+        "path": "internal/bodyexecution/composition_conditions.go",
+        "sha256": "e5e10020a873b3a8d3b78f8f4e1d4ca60d3da343b4432b4c4a4253288dcecd2d"
+      },
+      {
+        "path": "internal/bodyexecution/composition_runtime.go",
+        "sha256": "669ff57c1ec4e97624126db26e1c289975827b5ce7534368505bb0509fb9f314"
+      },
+      {
+        "path": "internal/bodyexecution/joint_replay.go",
+        "sha256": "3936c6b94bab09d343c521760298c7327badb3d6b85d86aa66d6703e5436ab7d"
+      }
+    ],
+    "scope": "fresh loops1213 capture-limit and thresholds1247 complete-path programs; original/historical source/test replay0; original CI reruns0"
+  },
+  "probe_execution": {
+    "exit_code": 0,
+    "elapsed_ns": 3976101000,
+    "stdout_sha256": "9be7689541801ca86d31390fd5c8cedfd06fd87aa96f8edc3ffd239fa7c30ab1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "overlay_files": 6,
+    "never_locally_replay": true
+  },
+  "cli_producer": {
+    "compiler_head": "4569d4920c0c3acb923f53ca32485e22262a71dd",
+    "overlays": [
+      {
+        "path": "internal/bodyexecution/composition_condition_driver.go",
+        "sha256": "e337103f29e545c0bfe7133f96235a2432f6be3c12c37a66a6b95e544e708711"
+      },
+      {
+        "path": "internal/bodyexecution/composition_condition_rows.go",
+        "sha256": "59b19e4601d2ba516d9501f85cb82f1337db193075e572a9b53b155bc94b9a3f"
+      },
+      {
+        "path": "internal/bodyexecution/composition_condition_transport_test.go",
+        "sha256": "f9f22890074e1f87f374e961df9239653dcba3787bcf5a3691836544fe74dc1a"
+      },
+      {
+        "path": "internal/bodyexecution/composition_conditions.go",
+        "sha256": "e5e10020a873b3a8d3b78f8f4e1d4ca60d3da343b4432b4c4a4253288dcecd2d"
+      },
+      {
+        "path": "internal/bodyexecution/composition_runtime.go",
+        "sha256": "669ff57c1ec4e97624126db26e1c289975827b5ce7534368505bb0509fb9f314"
+      },
+      {
+        "path": "internal/bodyexecution/joint_replay.go",
+        "sha256": "3936c6b94bab09d343c521760298c7327badb3d6b85d86aa66d6703e5436ab7d"
+      }
+    ],
+    "scope": "one new quota1289 CLI program with separate native condition file channel; final source producer4569+6; no historical or prior original local replay",
+    "source_input_hashes": {
+      "cases.json": "8215f523840819f36a9eb5dc0a21d19cb2979eef1011847a0cc7d28bfd2bb3bb",
+      "workspace.json": "69f51a5e68b07803159a892f70d1297fb3783a1ae66ed24817c4038189900e17",
+      "계약.gooo.fixture": "41d460abc49389b5a2b190c7bd31c223010a063417bc607132a7e4836654887f",
+      "승인.gooo.fixture": "7e0b8155b2bc5cc4a7c23ec16225170102500371fcd63c7e2310cba8fe0c0415"
+    }
+  },
+  "cli_execution": {
+    "exit_code": 0,
+    "wall_ns": 1504456583,
+    "children_user_seconds": 0.18531899999999998,
+    "children_system_seconds": 0.182248
+  },
+  "historical_replays": 0,
+  "ci_reruns": 0,
+  "model_predictions": 0,
+  "training_runs": 0,
+  "source_observations": "new loops1213, thresholds1247, quota1289; original successful/failing programs not replayed locally"
+}

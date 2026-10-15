@@ -1,0 +1,5 @@
+=== RUN   TestPartialOriginColumns12317
+    package_origin_partial_columns_fresh_test.go:57: new helper-loop producer1/1;4096 writes retained/1027 dropped;Gooo partial-recording keeps ratio and missing population unspecified;original producer/model calls during read0
+--- PASS: TestPartialOriginColumns12317 (1.12s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	1.677s

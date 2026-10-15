@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Nondecreasing": 4
+      },
+      "expected": {
+        "Nondecreasing": true
+      }
+    }
+  ]
+}

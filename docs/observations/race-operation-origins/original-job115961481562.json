@@ -1,0 +1,112 @@
+{
+  "job": {
+    "id": 115961481562,
+    "run_id": 38595625467,
+    "workflow_name": "CI [PR authoritative]",
+    "head_branch": "agent/projected-source-origins-20261015",
+    "run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/runs/38595625467",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOT1omE88AAAAa_9fJWg",
+    "head_sha": "79b22be30c3efa7e3494c3ed0ee77cbb6fa28bff",
+    "url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/actions/jobs/115961481562",
+    "html_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38595625467/job/115961481562",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-14T16:09:19Z",
+    "started_at": "2026-10-14T16:13:31Z",
+    "completed_at": "2026-10-14T16:21:55Z",
+    "name": "go test",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-14T16:13:32Z",
+        "completed_at": "2026-10-14T16:13:33Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-14T16:13:33Z",
+        "completed_at": "2026-10-14T16:13:38Z"
+      },
+      {
+        "name": "Run actions/setup-go@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-14T16:13:38Z",
+        "completed_at": "2026-10-14T16:13:46Z"
+      },
+      {
+        "name": "Materialize exact logical workspace",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-14T16:13:46Z",
+        "completed_at": "2026-10-14T16:13:56Z"
+      },
+      {
+        "name": "Run go test ./...",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-14T16:13:56Z",
+        "completed_at": "2026-10-14T16:21:48Z"
+      },
+      {
+        "name": "Post Run actions/setup-go@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9,
+        "started_at": "2026-10-14T16:21:48Z",
+        "completed_at": "2026-10-14T16:21:48Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10,
+        "started_at": "2026-10-14T16:21:48Z",
+        "completed_at": "2026-10-14T16:21:48Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11,
+        "started_at": "2026-10-14T16:21:48Z",
+        "completed_at": "2026-10-14T16:21:48Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/kimjooyoon/meta-ontology-go/check-runs/115961481562",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000369712,
+    "runner_name": "GitHub Actions 1000369712",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  },
+  "at": "2026-10-14T16:36:44.932711+00:00",
+  "bytes": 236658,
+  "sha256": "5dbc65d94c5c3c4dbb01be392e4a8d6c42087c04820b992916c4289471a3d3e2",
+  "annotations": [
+    {
+      "path": ".github",
+      "blob_href": "https://github.com/kimjooyoon/meta-ontology-go/blob/79b22be30c3efa7e3494c3ed0ee77cbb6fa28bff/.github",
+      "start_line": 1,
+      "start_column": null,
+      "end_line": 1,
+      "end_column": null,
+      "annotation_level": "notice",
+      "title": "",
+      "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+      "raw_details": ""
+    }
+  ],
+  "downloaded_once": true
+}

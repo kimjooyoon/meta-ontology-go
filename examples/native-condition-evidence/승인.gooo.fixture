@@ -1,0 +1,13 @@
+package app
+namespace units1067_app
+import 계약 "units1067/contract"
+activity Authorize(계약.Request) -> 계약.Decision id "urn:units1067:authorize" computes "if input.units < 2 { return 계약.Decision{approved:false, reason: \"invalid_units\", reference:input.reference} }; if input.units > input.capacity { return 계약.Decision{approved:false, reason: \"capacity_exceeded\", reference:input.reference} }; return __GOOO_BODY_HOLE_result__" assembling {
+ source_fill intent "Carry approval, its source-declared reason and request reference together." {
+  hole "result"
+  candidate "fit" { fill "result" "계약.Decision{approved:true, reason: \"capacity_available\", reference:input.reference}" }
+  candidate "mislabel" { fill "result" "계약.Decision{approved:true, reason: \"unknown\", reference:input.reference}" }
+ }
+ value_case "[{\"units\":8,\"capacity\":21,\"reference\":\"selection1067\"}]" -> "{\"approved\":true,\"reason\":\"capacity_available\",\"reference\":\"selection1067\"}"
+ holdout_value_case "[{\"units\":13,\"capacity\":31,\"reference\":\"held1067\"}]" -> "{\"approved\":true,\"reason\":\"capacity_available\",\"reference\":\"held1067\"}"
+}
+bind 계약.Receive.result -> Authorize.input

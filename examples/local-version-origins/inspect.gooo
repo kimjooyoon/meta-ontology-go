@@ -1,0 +1,246 @@
+package localversions
+namespace localversions
+
+entity Text id "urn:gooo:type:string"
+entity Columns id "urn:gooo:local-versions:columns" fields {
+ field source_sha256 id "urn:gooo:local-versions:source" type string required one
+ field journal_sha256 id "urn:gooo:local-versions:journal" type string required one
+ field file_sources_sha256 id "urn:gooo:local-versions:file-sources" type string required one
+ field declaration_scope id "urn:gooo:local-versions:declaration-scope" type string required one
+ field offset id "urn:gooo:local-versions:offset" type integer required one
+ field total_rows id "urn:gooo:local-versions:total" type integer required one
+ field frames_dropped id "urn:gooo:local-versions:frame-drops" type integer required one
+ field writes_dropped id "urn:gooo:local-versions:write-drops" type integer required one
+ field cases id "urn:gooo:local-versions:cases" type integer required many
+ field frames id "urn:gooo:local-versions:frames" type integer required many
+ field assignments id "urn:gooo:local-versions:assignments" type integer required many
+ field roots id "urn:gooo:local-versions:roots" type string required many
+ field activities id "urn:gooo:local-versions:activities" type string required many
+ field declaration_sha256 id "urn:gooo:local-versions:declaration-sources" type string required many
+ field declaration_starts id "urn:gooo:local-versions:declaration-starts" type integer required many
+ field declaration_ends id "urn:gooo:local-versions:declaration-ends" type integer required many
+ field declaration_mapped id "urn:gooo:local-versions:mapped" type boolean required many
+ field completed id "urn:gooo:local-versions:completed" type boolean required many
+ field declaration_packages id "urn:gooo:local-versions:declaration-packages" type string required many
+ field declaration_filenames id "urn:gooo:local-versions:declaration-filenames" type string required many
+ field declaration_activities id "urn:gooo:local-versions:declaration-activities" type string required many
+}
+
+entity Summary id "urn:gooo:local-versions:summary" fields {
+ field source_sha256 id "urn:gooo:local-versions:summary-source" type string required one
+ field journal_sha256 id "urn:gooo:local-versions:summary-journal" type string required one
+ field file_sources_sha256 id "urn:gooo:local-versions:summary-file-sources" type string required one
+ field declaration_scope id "urn:gooo:local-versions:summary-declaration-scope" type string required one
+ field offset id "urn:gooo:local-versions:summary-offset" type integer required one
+ field total_rows id "urn:gooo:local-versions:summary-total" type integer required one
+ field returned_rows id "urn:gooo:local-versions:summary-returned" type integer required one
+ field page_declarations id "urn:gooo:local-versions:summary-declarations" type integer required one
+ field page_write_calls id "urn:gooo:local-versions:summary-calls" type integer required one
+ field page_completed_versions id "urn:gooo:local-versions:summary-versions" type integer required one
+ field page_interrupted_writes id "urn:gooo:local-versions:summary-interrupted" type integer required one
+ field page_unmapped_writes id "urn:gooo:local-versions:summary-unmapped" type integer required one
+ field frames_dropped id "urn:gooo:local-versions:summary-frame-drops" type integer required one
+ field writes_dropped id "urn:gooo:local-versions:summary-write-drops" type integer required one
+ field page_complete id "urn:gooo:local-versions:summary-page-complete" type boolean required one
+ field identity_recording_complete id "urn:gooo:local-versions:summary-recording-complete" type boolean required one
+ field source_mapping_complete id "urn:gooo:local-versions:summary-source-complete" type boolean required one
+ field status id "urn:gooo:local-versions:summary-status" type string required one
+}
+
+activity Invalid(Columns) -> Summary id "urn:gooo:local-versions:invalid" computes `
+return Summary{
+ source_sha256:input.source_sha256,
+ journal_sha256:input.journal_sha256,
+ file_sources_sha256:input.file_sources_sha256,
+ declaration_scope:input.declaration_scope,
+ offset:input.offset,
+ total_rows:input.total_rows,
+ returned_rows:int64(len(input.cases)),
+ page_declarations:-1,
+ page_write_calls:-1,
+ page_completed_versions:-1,
+ page_interrupted_writes:-1,
+ page_unmapped_writes:-1,
+ frames_dropped:input.frames_dropped,
+ writes_dropped:input.writes_dropped,
+ page_complete:false,
+ identity_recording_complete:false,
+ source_mapping_complete:false,
+ status:"INVALID_INPUT",
+}
+`
+
+# Identities are scoped to this saved journal and its source snapshot.
+# A declaration may occur in several calls; a call may create several versions.
+activity Summarize(Columns) -> Summary id "urn:gooo:local-versions:summarize" computes `
+let count=int64(len(input.cases))
+if input.source_sha256=="" || input.journal_sha256=="" || input.declaration_scope!="original_file" || count>32 ||
+ input.offset<0 || input.total_rows<count || input.frames_dropped<0 ||
+ input.writes_dropped<0 {return Invalid(input)}
+if input.offset>input.total_rows-count || (count==0 && (input.offset!=0 || input.total_rows!=0)) {return Invalid(input)}
+if len(input.frames)!=len(input.cases) || len(input.assignments)!=len(input.cases) ||
+ len(input.roots)!=len(input.cases) || len(input.activities)!=len(input.cases) ||
+ len(input.declaration_sha256)!=len(input.cases) || len(input.declaration_starts)!=len(input.cases) ||
+ len(input.declaration_ends)!=len(input.cases) || len(input.declaration_mapped)!=len(input.cases) ||
+ len(input.completed)!=len(input.cases) || len(input.declaration_packages)!=len(input.cases) ||
+ len(input.declaration_filenames)!=len(input.cases) ||
+ len(input.declaration_activities)!=len(input.cases) {return Invalid(input)}
+let declarations=0
+let calls=0
+let versions=0
+let interrupted=0
+let unmapped=0
+let previous_case=-1
+let previous_assignment=-1
+let row=0
+for case_index in input.cases {
+ let assignment=input.assignments[row]
+ if case_index<0 || input.frames[row]<0 || assignment<0 || input.roots[row]=="" || input.activities[row]=="" ||
+  case_index<previous_case || (case_index==previous_case &&
+  assignment<=previous_assignment) {return Invalid(input)}
+ let mapped=input.declaration_mapped[row]
+ if mapped {
+  if input.file_sources_sha256=="" || input.declaration_packages[row]=="" || input.declaration_filenames[row]=="" ||
+   input.declaration_activities[row]=="" || input.declaration_sha256[row]=="" || input.declaration_starts[row]<0 ||
+   input.declaration_ends[row]<=input.declaration_starts[row] {return Invalid(input)}
+ }else{
+  if input.declaration_packages[row]!="" || input.declaration_filenames[row]!="" ||
+   input.declaration_activities[row]!="" || input.declaration_sha256[row]!="" || input.declaration_starts[row]!=0 ||
+   input.declaration_ends[row]!=0 {return Invalid(input)}
+  unmapped+=1
+ }
+ let declaration_seen=false
+ let call_seen=false
+ let prior=0
+ for prior_case in input.cases {
+  if prior<row {
+   if prior_case==case_index && input.frames[prior]==input.frames[row] {
+    if input.roots[prior]!=input.roots[row] || input.activities[prior]!=input.activities[row] {return Invalid(input)}
+    call_seen=true
+   }
+   if mapped && input.declaration_mapped[prior] &&
+    input.declaration_activities[prior]==input.declaration_activities[row] &&
+    input.declaration_packages[prior]==input.declaration_packages[row] &&
+    input.declaration_filenames[prior]==input.declaration_filenames[row] &&
+    input.declaration_sha256[prior]==input.declaration_sha256[row] &&
+    input.declaration_starts[prior]==input.declaration_starts[row] &&
+    input.declaration_ends[prior]==input.declaration_ends[row] {declaration_seen=true}
+  }
+  prior+=1
+ }
+ if mapped && !declaration_seen {declarations+=1}
+ if !call_seen {calls+=1}
+ if input.completed[row] {versions+=1}else{interrupted+=1}
+ previous_case=case_index
+ previous_assignment=assignment
+ row+=1
+}
+let page_complete=input.offset==0 && count==input.total_rows
+let recording_complete=input.frames_dropped==0 && input.writes_dropped==0
+let mapping_complete=unmapped==0
+let status="SCOPED_RECORDED_LOCAL_IDENTITIES"
+if !page_complete || !recording_complete || !mapping_complete {status="PARTIAL_RECORDED_LOCAL_IDENTITIES"}
+return Summary{
+ source_sha256:input.source_sha256,
+ journal_sha256:input.journal_sha256,
+ file_sources_sha256:input.file_sources_sha256,
+ declaration_scope:input.declaration_scope,
+ offset:input.offset,
+ total_rows:input.total_rows,
+ returned_rows:count,
+ page_declarations:declarations,
+ page_write_calls:calls,
+ page_completed_versions:versions,
+ page_interrupted_writes:interrupted,
+ page_unmapped_writes:unmapped,
+ frames_dropped:input.frames_dropped,
+ writes_dropped:input.writes_dropped,
+ page_complete:page_complete,
+ identity_recording_complete:recording_complete,
+ source_mapping_complete:mapping_complete,
+ status:status,
+}
+`
+
+entity GenerationClaim id "urn:gooo:local-versions:generation-claim" fields {
+ field source_sha256 id "urn:gooo:local-versions:generation-source" type string required one
+ field journal_sha256 id "urn:gooo:local-versions:generation-journal" type string required one
+ field file_sources_sha256 id "urn:gooo:local-versions:generation-files" type string required one
+ field relation_iri id "urn:gooo:local-versions:generation-relation" type string required one
+ field case_index id "urn:gooo:local-versions:generation-case" type integer required one
+ field assignment_index id "urn:gooo:local-versions:generation-assignment" type integer required one
+ field frame id "urn:gooo:local-versions:generation-frame" type integer required one
+ field root_activity_id id "urn:gooo:local-versions:generation-root" type string required one
+ field activity_id id "urn:gooo:local-versions:generation-activity" type string required one
+ field original_activity_id id "urn:gooo:local-versions:generation-original" type string required one
+ field package_path id "urn:gooo:local-versions:generation-package" type string required one
+ field filename id "urn:gooo:local-versions:generation-filename" type string required one
+ field declaration_sha256 id "urn:gooo:local-versions:generation-declaration-source" type string required one
+ field declaration_start id "urn:gooo:local-versions:generation-declaration-start" type integer required one
+ field declaration_end id "urn:gooo:local-versions:generation-declaration-end" type integer required one
+ field completed id "urn:gooo:local-versions:generation-completed" type boolean required one
+ field source_mapped id "urn:gooo:local-versions:generation-mapped" type boolean required one
+ field identity_recording_complete id "urn:gooo:local-versions:generation-recording" type boolean required one
+ field status id "urn:gooo:local-versions:generation-status" type string required one
+}
+
+# A retained completed write identifies a value version generated in its call.
+# Selection and recording completeness remain separate from that one claim.
+activity Generation(Columns) -> GenerationClaim id "urn:gooo:local-versions:generation" computes `
+let summary=Summarize(input)
+let relation=""
+let status="SELECT_ONE_WRITE"
+let case_index=-1
+let assignment=-1
+let frame=-1
+let root=""
+let activity=""
+let original=""
+let package_path=""
+let filename=""
+let declaration=""
+let start=-1
+let end=-1
+let completed=false
+let mapped=false
+if summary.status=="INVALID_INPUT" {status="INVALID_INPUT"}else{
+ if len(input.cases)==1 {
+  case_index=input.cases[0]
+  assignment=input.assignments[0]
+  frame=input.frames[0]
+  root=input.roots[0]
+  activity=input.activities[0]
+  original=input.declaration_activities[0]
+  package_path=input.declaration_packages[0]
+  filename=input.declaration_filenames[0]
+  declaration=input.declaration_sha256[0]
+  start=input.declaration_starts[0]
+  end=input.declaration_ends[0]
+  completed=input.completed[0]
+  mapped=input.declaration_mapped[0]
+  status="INCOMPLETE_WRITE"
+  if completed {relation="http://www.w3.org/ns/prov#wasGeneratedBy";status="RECORDED_GENERATION_CLAIM"}
+ }
+}
+return GenerationClaim{
+ source_sha256:input.source_sha256,
+ journal_sha256:input.journal_sha256,
+ file_sources_sha256:input.file_sources_sha256,
+ relation_iri:relation,
+ case_index:case_index,
+ assignment_index:assignment,
+ frame:frame,
+ root_activity_id:root,
+ activity_id:activity,
+ original_activity_id:original,
+ package_path:package_path,
+ filename:filename,
+ declaration_sha256:declaration,
+ declaration_start:start,
+ declaration_end:end,
+ completed:completed,
+ source_mapped:mapped,
+ identity_recording_complete:summary.identity_recording_complete,
+ status:status,
+}
+`

@@ -1,0 +1,22 @@
+=== RUN   TestLiteralEditPreservesSourceAndEscapesReplacement
+--- PASS: TestLiteralEditPreservesSourceAndEscapesReplacement (0.00s)
+=== RUN   TestLiteralEditRejectsInvalidRangesAndTokens
+--- PASS: TestLiteralEditRejectsInvalidRangesAndTokens (0.00s)
+=== RUN   TestLiteralReplacementSizeChecksBeforeAllocation
+--- PASS: TestLiteralReplacementSizeChecksBeforeAllocation (0.00s)
+=== RUN   TestAssemblyIntegerBoundsRetainOnlyValidValues
+    string_literal_edit_test.go:72: [bounds.gooo:4:61-7:2: error parse.unexpected-token: assembly requires 1..16 choices, 1..128 cases and 1..64 attempts]
+--- FAIL: TestAssemblyIntegerBoundsRetainOnlyValidValues (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/syntax	0.445s
+=== RUN   TestIntegerWidthKeepsTypedWrapSemantics
+--- PASS: TestIntegerWidthKeepsTypedWrapSemantics (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen	0.432s
+=== RUN   TestMeasurementEditsSelectedLiteralWithRepeatedAndEscapedText
+--- PASS: TestMeasurementEditsSelectedLiteralWithRepeatedAndEscapedText (0.00s)
+=== RUN   TestMeasurementRejectsStaleAmbiguousAndUnmatchedSources
+--- PASS: TestMeasurementRejectsStaleAmbiguousAndUnmatchedSources (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/valueexecution	0.379s
+FAIL

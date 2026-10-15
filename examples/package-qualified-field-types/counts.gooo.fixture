@@ -1,0 +1,4 @@
+package counts
+namespace field270_counts
+entity Count id "urn:gooo:type:integer"
+entity Label id "urn:gooo:type:string"

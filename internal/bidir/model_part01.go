@@ -60,6 +60,7 @@ type Declaration struct {
 	Name       string
 	Fields     []Field
 	Inputs     []Reference
+	InputNames []Reference `json:"InputNames,omitempty"`
 	Outputs    []Reference
 	Attributes map[string]string
 	Span       SourceSpan
@@ -87,5 +88,6 @@ type Node struct {
 	Fields        []Field
 	Attributes    map[string]string
 	InputSequence []Reference `json:"InputSequence,omitempty"`
+	InputNames    []Reference `json:"InputNames,omitempty"`
 	Span          SourceSpan
 }

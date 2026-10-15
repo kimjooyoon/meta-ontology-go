@@ -1,0 +1,60 @@
+{
+  "schema": "gooo/qualified-record-constructor-observation/v1",
+  "outcome": "PASS",
+  "producer": {
+    "compiler_base": "45439469b8cd9e788298ace488b8b01611f9eafd",
+    "overlays": [
+      {
+        "path": "internal/packageruntime/workspaceexecution/body_fill.go",
+        "sha256": "854224cf00b5bb981fa1309338e6ec9c86096a7c035e5251390620ecdcbda7e3"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_record_constructor_scope_test.go",
+        "sha256": "a946d7b3d818ee1df8995f1fc9301365b44d2d4b5ea4e5d937d4c5eb9a1ac8e3"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_record_constructor_test.go",
+        "sha256": "2d1dc0e47841e098c5be838ade5c0f87dbcdd7fc828e5a63cd26ff22efb9312c"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_fill_scope.go",
+        "sha256": "3641103c98b286e18d00219d146814a71b9b88c2341488b898be967378f4342c"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_names.go",
+        "sha256": "1707f3e96dc8b721f91317f0a61d4fce13a8a62c5f82ec187ad609dfce1c98d1"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_constructor_scope.go",
+        "sha256": "223fbbe01d41c85a0ffd0619eea8aaa6595f6f99e345494d04d2b7d5185b4a25"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "sha256": "811cd772229bf73d04c770c65c4acae824c4a957208c2e4e0b11b46ad8de1b19"
+      }
+    ],
+    "scope": "fresh constructor641 same alias in two source files, two domain IDs, three constructor sites and three scope declines, two native cases",
+    "created_at": "2026-10-13T07:24:35.529794+00:00"
+  },
+  "observation": {
+    "domain_names": {
+      "urn:constructor641:money": "GoooEntity8abc8df37b068c3d0325a0fda70a5d68a26d66eafc2569a693d9087f67638471",
+      "urn:constructor641:quantity": "GoooEntity2f9a9563fe56a3429e7a790e1cc7f0199886e1e99e208d9662104dbf6e22f608"
+    },
+    "file_local_alias_domains": 2,
+    "finite_passed": 8,
+    "finite_total": 8,
+    "input_cases": 2,
+    "invalid_scope_declines": 3,
+    "model_calls": 0,
+    "partial_programs_accepted": 0,
+    "qualified_constructor_sites": 3,
+    "runtime_replayed": true,
+    "source_sha256": "sha256:5836a50dfaa2181cddf3aa17237f5dbb3f36cf63d7aa05da100e7a2331ba87f5",
+    "source_unchanged": true,
+    "strings_and_comments_preserved": true
+  },
+  "scope": "fresh constructor641, two domains, three literal constructor sites, three scope declines, two finite native cases; not a general domain-correctness measure",
+  "historical_local_replays": 0,
+  "training_runs": 0
+}

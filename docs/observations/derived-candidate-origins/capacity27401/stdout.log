@@ -1,0 +1,35 @@
+=== RUN   TestDerivedCandidateCapacity27401
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#hasPackageOriginQueryOptions rendered 11
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#packageOriginQuery rendered 58
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#parsePackageExecuteArgs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#runBodyOrigins rendered 68
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#selectStarterFiles rendered 29
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyDerivedCandidateOrigins rendered 28
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyFillCandidateOrigins rendered 32
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writeBodyFillOriginCandidates rendered 19
+    derived_candidate_capacity_fresh_test.go:14: cmd/gooo#writePackageOriginInput rendered 34
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillCandidateOrigins rendered 32
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillDerivedOrigins rendered 42
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#InspectSourceFillOriginCandidates rendered 26
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#IsSourceFillDerivation rendered 8
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#SourceFillCandidateOriginInputs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#SourceFillDerivedOriginInputs rendered 35
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#sourceFillCandidateOriginRow rendered 25
+    derived_candidate_capacity_fresh_test.go:14: internal/bodycodegen#sourceFillDerivedOriginRow rendered 25
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#NativeOriginQuery.hasSubjectSelection rendered 5
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#ValidateNativeOriginQuery rendered 19
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.addField rendered 12
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.fieldFileLocation rendered 34
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#nativeOriginPage.visitFields rendered 22
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#selectRecordedNativeOrigins rendered 64
+    derived_candidate_capacity_fresh_test.go:14: internal/bodyexecution#validateOriginSubjectSelection rendered 10
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#activeDenominatorChunk2 rendered 37
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#activeDenominatorDigestChunk2 rendered 37
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#decodeDenominator rendered 28
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#expectedBoundarySpecsForVersion rendered 34
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languageassurance/verticalsliceclosureshadow#validateDenominator rendered 55
+    derived_candidate_capacity_fresh_test.go:14: internal/meta/languagereadiness/languagesyntax#expectedRegistry in /private/tmp/gooo-derived-candidate-origins-20261014/capacity27401/source/internal/meta/languagereadiness/languagesyntax/registry.go: {declaration:0x5e96561e1320 subject:func:expectedRegistry receiver: functionStart:/private/tmp/gooo-derived-candidate-origins-20261014/capacity27401/source/internal/meta/languagereadiness/languagesyntax/registry.go:14:1 functionEnd:/private/tmp/gooo-derived-candidate-origins-20261014/capacity27401/source/internal/meta/languagereadiness/languagesyntax/registry.go:175:2 declarationStart:/private/tmp/gooo-derived-candidate-origins-20261014/capacity27401/source/internal/meta/languagereadiness/languagesyntax/registry.go:14:1 declarationEnd:/private/tmp/gooo-derived-candidate-origins-20261014/capacity27401/source/internal/meta/languagereadiness/languagesyntax/registry.go:175:2 sourceDigest:sha256:5dc6a7703a41c139c0275e375a0e7f85bb51d10686377d3e32c1fc6f7cadb7b8 functionLines:162 functionOverage:87 functionStatus:OVER_CAP helperLines:0x5e965612f870 helperOverage:0x5e965612f878 helperStatus:OVER_CAP helperFailure:<nil>}
+--- FAIL: TestDerivedCandidateCapacity27401 (0.01s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.523s
+FAIL

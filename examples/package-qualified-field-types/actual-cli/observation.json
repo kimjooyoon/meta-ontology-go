@@ -1,0 +1,121 @@
+{
+  "schema": "gooo/fresh-qualified-field-cli-observation/v1",
+  "producer": {
+    "compiler_base": "c34bae45a8935f398c1be1d35397ab60bb99cd96",
+    "module_sha256": "67ae979bbcf4e6ceef260e50115e004134785f34077917d8659f21067fb1c0f5",
+    "overlays": [
+      {
+        "path": "internal/packageruntime/bindings.go",
+        "sha256": "4cbb3bed62341a4ed2b9b3e7fd94722414695f707de16b38e58aeb6a5a32c786"
+      },
+      {
+        "path": "internal/packageruntime/compile.go",
+        "sha256": "ff6712e7f5ed98ed449892b6c07e2e9b4a7d7648d38e484372a6a06b5ff299d3"
+      },
+      {
+        "path": "internal/packageruntime/compile_source.go",
+        "sha256": "287057f48897d076e0cb9e275dbfdb6c93277f1c7f6742eb07f2e43dfb10bd73"
+      },
+      {
+        "path": "internal/packageruntime/model.go",
+        "sha256": "f540a21f64312cc738cbe5faa9f32e2e7b01db04046d14eb2b33ead6f4e5db8d"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_decline_test.go",
+        "sha256": "28849ced762fef5c7556cfac3f39b7e5850072e52d8e81b96ecac7885fb5be74"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_profile_test.go",
+        "sha256": "4661b1b855f8dc1b35b7e98301ad65c513ee3818e1bb510b9fcb87469b05583c"
+      },
+      {
+        "path": "internal/packageruntime/qualified_field_types_test.go",
+        "sha256": "0473647ac7406ed46b4c9066994c65dda60a73d501f0cc16da4f5ac02fea12e5"
+      },
+      {
+        "path": "internal/packageruntime/source_field_types.go",
+        "sha256": "0a398384b4f3fa0a95606c4a14b07e400075dc65c0f8e2dcdb6a77d693c39eef"
+      },
+      {
+        "path": "internal/packageruntime/source_local_bindings.go",
+        "sha256": "4b0f0eea3ba081acb29bdce379815bd603ee5b2a44432779ba3081095390b1bb"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/program.go",
+        "sha256": "d3266a8fd45971ba3b388676cdf31dfaccaa04ffa0c8671e32fe0226f79a5eaa"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_cross_file_test.go",
+        "sha256": "462898fafdbfd6229d4312c9a1ef24152e84bc54a20a81dfb7fd3581a43d8403"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_module_test.go",
+        "sha256": "59dbd95e7cfafb30ca24548226587e24ff74eb4f8823d81a3c157d52725e4881"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_native_test.go",
+        "sha256": "987afad829afa16aeecce69e90d776a0c5d50473cd0d3f88eefa98da507e0291"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_transport_test.go",
+        "sha256": "406c936002cdafcc789f981e20b2be17df4e61505746012c65c6f7ea41783298"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/qualified_field_values_test.go",
+        "sha256": "81cd6d87ec76eb2dc4db7782a529c27da976538ec34d92ba677a1de4a00f2abd"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/record_namespaces.go",
+        "sha256": "cab84a6189981e28bbf35a8dff1823a589233162460f81f3b4646a78119061a2"
+      },
+      {
+        "path": "internal/packageruntime/workspaceexecution/scalar_type_names.go",
+        "sha256": "3d86e5dcba129a5c05275a2c770c4b13674e2c54b29639a29d85552c7f302e0b"
+      },
+      {
+        "path": "internal/syntax/entity_fields_parser_part02.go",
+        "sha256": "34896893ea66c445c874b30c88d6c9898dfaa5e53cfe693062ecb87db319350d"
+      },
+      {
+        "path": "internal/syntax/format_part03.go",
+        "sha256": "64d42fd548d90959876e5dc5c1a7dee22f230d02e445a520bd17e06d1711f2c7"
+      }
+    ],
+    "scope": "distinct field270 threshold31 native scalar aliases and cross-file local binding; original source/model/test cohorts not repeated",
+    "created_at": "2026-10-13T05:44:52.230082+00:00"
+  },
+  "binary_sha256": "0788ec41cc649514a8e6c3e34446c7c59c3e15c98e205bde3fa173216500221c",
+  "binary_bytes": 25674674,
+  "argv": [
+    "/tmp/gooo-qualified-field-types-20261013/actual-cli-observation/gooo",
+    "package",
+    "resolve",
+    "--json",
+    "workspace.json"
+  ],
+  "input_sha256": {
+    "workspace.json": "f1fb81933f5b2978049b4b48b600a41b5c0ade545ad5f765205c991edc7248d0",
+    "flags.gooo.fixture": "db6dd00aec1d6794edb0049596e31b56e4d56a156e48200ab3495865a0cce4c9",
+    "ledger.gooo.fixture": "6ce1ee14046745610dd0597aeab954d1faf681f44d704ba7f6e2d278f33fc9ed",
+    "claim.gooo.fixture": "23e95c3bb50843a2270927cd2e112d12096df520947a9eb7c74baa90cd4f6e5a",
+    "counts.gooo.fixture": "f47f4319918e725e574c9c3b83d80d2297eacf1e191680552d5baafaed222673"
+  },
+  "decision": "PASS",
+  "source_references": 3,
+  "source_reference_total": 3,
+  "source_binding_edges": 1,
+  "field_type_ids": [
+    "urn:gooo:type:boolean",
+    "urn:gooo:type:integer",
+    "urn:gooo:type:string"
+  ],
+  "original_source_ranges_verified": true,
+  "input_files_unchanged": true,
+  "cli_processes": 1,
+  "source_program_executions": 0,
+  "model_predictions": 0,
+  "wall_ns_including_process_start": 585400583,
+  "binary_removed_after_observation": true,
+  "observed_at": "2026-10-13T05:51:00.608050+00:00",
+  "historical_replays": 0
+}

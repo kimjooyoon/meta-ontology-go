@@ -1,0 +1,8 @@
+=== RUN   TestAccessFactBudget8941
+    value_access_bounds_test.go:35: 8941: structural budget check caps access records at256, deduplicates visits, omits candidate-filtered inventory and diagnoses invalid range
+--- PASS: TestAccessFactBudget8941 (0.00s)
+=== RUN   TestGoooExplainsSavedAccess8933
+    value_access_consumer_test.go:82: 8933: Gooo describes16 actual saved source access occurrences; original program executions0, model0; detached facts preserve saved report
+--- PASS: TestGoooExplainsSavedAccess8933 (0.72s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.151s

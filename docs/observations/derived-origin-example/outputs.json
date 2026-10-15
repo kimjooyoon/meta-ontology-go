@@ -1,0 +1,29 @@
+[
+  {
+    "name": "producer11903",
+    "raw_sha256": "a4816e228ccb51dbcca305f8e93fb66ab85251676555ad977cf08569f1bdaea4",
+    "extracted_field": "$.result.runtime",
+    "extracted_sha256": "d3067245772b55da0b85f3d921a01616318063c5f936aeb64bcd27da90416bbf",
+    "finite_passed": 3,
+    "finite_total": 3,
+    "model_calls": 0
+  },
+  {
+    "name": "consumer11903",
+    "raw_sha256": "cb19670f4965d39061c5d003a5bd435fc5201ad85d9988631003674c1d5efdfe",
+    "extracted_field": "$.result.runtime",
+    "extracted_sha256": "2d8198b32b690bbcbc446b9a987605207804b33eff34ce7296b62dfb7eeb0eab",
+    "finite_passed": 0,
+    "finite_total": 0,
+    "model_calls": 0
+  },
+  {
+    "name": "coverage11983",
+    "raw_sha256": "4f7eae5243064ed2f57590b5313e1423317a89ef1c5f9c9ad3abed5df6daee12",
+    "extracted_field": "$.result.runtime",
+    "extracted_sha256": "3c34bc0a6ff07b2545775d87e6fbaad8f0c1eb7b42a3cbef5b4507c0f8b1f9d4",
+    "finite_passed": 8,
+    "finite_total": 8,
+    "model_calls": 0
+  }
+]

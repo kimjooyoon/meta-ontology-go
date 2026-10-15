@@ -1,0 +1,10 @@
+{
+  "source_sha256": "f1fd8f3a8b8a8b65b269f82925877bed1bd70dd8054bb48cd759a4d1637c4bef",
+  "generated_sha256": "e1d8c3e9bb7cfb1133114b8cd8bfb31199781c2f6722def1a31384e3de359a9e",
+  "raw_generation_receipt_sha256": "21329f6cb1faafb84de2703ed2f3641e0018608791389ac926ed025635557ddc",
+  "compiler_revision": "fe20d126ab31758fea27aabc07e3c968bfd2ba32",
+  "compiler_source_state": "RECORDED_COMPILER_REVISION_WITH_PRIVATE_POLICY_INPUT",
+  "decision": "PASS",
+  "projection_operation": "first body-codegen JoinElse closure; byte-exact tool output copied without generated-region edits",
+  "scope": "four named lexical facts, Gooo ClassifyElse decision and Gooo primitive host bridge; actual compiler adoption is new local source pending original CI"
+}

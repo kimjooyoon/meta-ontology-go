@@ -47,6 +47,8 @@ func ResumeWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 		return Result{}, err
 	}
 	result.Runtime, err = bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, composition, translated, goBinary)
+	bindWorkspaceConditionSources(program, &result.Runtime, result.BodyFills)
+	bindWorkspaceLocalFileSources(program, &result.Runtime, composition, result.BodyFills)
 	if err == nil {
 		result.Runtime.InputSeparation = measureWorkspaceInputs(ctx, current, result, translated)
 	}
@@ -70,10 +72,12 @@ func resumedWorkspaceResult(program Program, prior Result, policy *WorkspaceAsse
 	if err := json.Unmarshal(raw, &history); err != nil {
 		return Result{}, err
 	}
-	return Result{Schema: prior.Schema, Program: program, BodyFills: prior.BodyFills, SourceSHA256: prior.SourceSHA256,
+	result := Result{Schema: prior.Schema, Program: program, BodyFills: prior.BodyFills, SourceSHA256: prior.SourceSHA256,
 		Composition: composition, AssemblyPolicy: policy, PolicyHistory: history,
 		Continuation: &ContinuationEvidence{Schema: "gooo/workspace-body-continuation/v1", PriorResultSHA256: sourceSHA256(encoded),
 			BodyFillsReplayed: len(prior.BodyFills), SavedPolicyStages: len(history),
 			Scope: "source and historical policy packages reconstructed; retained and rechecked candidates keep the original cumulative budget; zero new predictions"},
-		Scope: "continued package record construction with two fresh native executions; finite expectations or input-only observations"}, nil
+		Scope: "continued package record construction with two fresh native executions; finite expectations or input-only observations"}
+	result.FillOrigins, result.FillOriginIssue = collectWorkspaceFillOrigins(program, result)
+	return result, nil
 }

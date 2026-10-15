@@ -1,0 +1,6 @@
+=== RUN   TestDirectRecordReturns21809
+    direct_record_return_fresh_test.go:83: original constructor file range {write 7 {MAPPED  workspace_input_file origin/directreturn21809 직접반환21809.gooo urn:directreturn21809:make sha256:fd58a3ae6a0671cad571018b691afd9978638fc1b39cd0e1023480802af3fdd9 382 385 tag} {MAPPED  workspace_input_file origin/directreturn21809 직접반환21809.gooo urn:directreturn21809:make sha256:fd58a3ae6a0671cad571018b691afd9978638fc1b39cd0e1023480802af3fdd9 386 396 "helper"} <nil>}
+--- FAIL: TestDirectRecordReturns21809 (0.71s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution	1.232s
+FAIL

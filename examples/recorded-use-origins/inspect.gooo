@@ -1,0 +1,348 @@
+package recordeduse
+namespace recordeduse
+
+entity Columns id "urn:gooo:recorded-use:columns" fields {
+    field receipt_sha256 id "urn:gooo:recorded-use:columns:receipt_sha256" type string required one
+    field source_sha256 id "urn:gooo:recorded-use:columns:source_sha256" type string required one
+    field journal_sha256 id "urn:gooo:recorded-use:columns:journal_sha256" type string required one
+    field offset id "urn:gooo:recorded-use:columns:offset" type integer required one
+    field total_rows id "urn:gooo:recorded-use:columns:total_rows" type integer required one
+    field frames_dropped id "urn:gooo:recorded-use:columns:frames_dropped" type integer required one
+    field writes_dropped id "urn:gooo:recorded-use:columns:writes_dropped" type integer required one
+    field uses_dropped id "urn:gooo:recorded-use:columns:uses_dropped" type integer required one
+    field cases id "urn:gooo:recorded-use:columns:cases" type integer required many
+    field use_indices id "urn:gooo:recorded-use:columns:use_indices" type integer required many
+    field frames id "urn:gooo:recorded-use:columns:frames" type integer required many
+    field assignments id "urn:gooo:recorded-use:columns:assignments" type integer required many
+    field roots id "urn:gooo:recorded-use:columns:roots" type string required many
+    field activities id "urn:gooo:recorded-use:columns:activities" type string required many
+    field resolved id "urn:gooo:recorded-use:columns:resolved" type boolean required many
+    field reasons id "urn:gooo:recorded-use:columns:reasons" type string required many
+    field version_frames id "urn:gooo:recorded-use:columns:version_frames" type integer required many
+    field version_activities id "urn:gooo:recorded-use:columns:version_activities" type string required many
+    field version_completed id "urn:gooo:recorded-use:columns:version_completed" type boolean required many
+    field read_sha256 id "urn:gooo:recorded-use:columns:read_sha256" type string required many
+    field read_starts id "urn:gooo:recorded-use:columns:read_starts" type integer required many
+    field read_ends id "urn:gooo:recorded-use:columns:read_ends" type integer required many
+    field read_mappings id "urn:gooo:recorded-use:columns:read_mappings" type string required many
+    field names id "urn:gooo:recorded-use:columns:names" type string required many
+    field ordinals id "urn:gooo:recorded-use:columns:ordinals" type integer required many
+    field scalar_types id "urn:gooo:recorded-use:columns:scalar_types" type string required many
+}
+
+entity UsageClaim id "urn:gooo:recorded-use:usageclaim" fields {
+    field receipt_sha256 id "urn:gooo:recorded-use:usageclaim:receipt_sha256" type string required one
+    field source_sha256 id "urn:gooo:recorded-use:usageclaim:source_sha256" type string required one
+    field journal_sha256 id "urn:gooo:recorded-use:usageclaim:journal_sha256" type string required one
+    field receipt_scope id "urn:gooo:recorded-use:usageclaim:receipt_scope" type string required one
+    field generation_relation_iri id "urn:gooo:recorded-use:usageclaim:generation_relation_iri" type string required one
+    field use_relation_iri id "urn:gooo:recorded-use:usageclaim:use_relation_iri" type string required one
+    field case_index id "urn:gooo:recorded-use:usageclaim:case_index" type integer required one
+    field use_index id "urn:gooo:recorded-use:usageclaim:use_index" type integer required one
+    field frame id "urn:gooo:recorded-use:usageclaim:frame" type integer required one
+    field assignment_index id "urn:gooo:recorded-use:usageclaim:assignment_index" type integer required one
+    field root_activity_id id "urn:gooo:recorded-use:usageclaim:root_activity_id" type string required one
+    field activity_id id "urn:gooo:recorded-use:usageclaim:activity_id" type string required one
+    field version_frame id "urn:gooo:recorded-use:usageclaim:version_frame" type integer required one
+    field version_activity_id id "urn:gooo:recorded-use:usageclaim:version_activity_id" type string required one
+    field variable_name id "urn:gooo:recorded-use:usageclaim:variable_name" type string required one
+    field variable_ordinal id "urn:gooo:recorded-use:usageclaim:variable_ordinal" type integer required one
+    field scalar_type id "urn:gooo:recorded-use:usageclaim:scalar_type" type string required one
+    field read_sha256 id "urn:gooo:recorded-use:usageclaim:read_sha256" type string required one
+    field read_start id "urn:gooo:recorded-use:usageclaim:read_start" type integer required one
+    field read_end id "urn:gooo:recorded-use:usageclaim:read_end" type integer required one
+    field read_mapping id "urn:gooo:recorded-use:usageclaim:read_mapping" type string required one
+    field local_records_dropped id "urn:gooo:recorded-use:usageclaim:local_records_dropped" type boolean required one
+    field reason id "urn:gooo:recorded-use:usageclaim:reason" type string required one
+    field status id "urn:gooo:recorded-use:usageclaim:status" type string required one
+}
+
+# Claims are scoped to the exact saved JSON bytes, source and local journal.
+# A generation and a use can be observed without asserting a derived output.
+activity Inspect(Columns) -> UsageClaim id "urn:gooo:recorded-use:inspect" computes `
+let claim = UsageClaim{
+    receipt_sha256: input.receipt_sha256,
+    source_sha256: input.source_sha256,
+    journal_sha256: input.journal_sha256,
+    receipt_scope: "saved_json_bytes",
+    generation_relation_iri: "",
+    use_relation_iri: "",
+    case_index: -1,
+    use_index: -1,
+    frame: -1,
+    assignment_index: -1,
+    root_activity_id: "",
+    activity_id: "",
+    version_frame: -1,
+    version_activity_id: "",
+    variable_name: "",
+    variable_ordinal: -1,
+    scalar_type: "",
+    read_sha256: "",
+    read_start: 0,
+    read_end: 0,
+    read_mapping: "UNMAPPED",
+    local_records_dropped: false,
+    reason: "",
+    status: "INVALID_INPUT",
+}
+let count = int64(len(input.cases))
+if input.receipt_sha256 == "" || input.source_sha256 == "" || input.journal_sha256 == "" ||
+   input.offset < 0 || input.total_rows < count || input.offset > input.total_rows - count ||
+   input.frames_dropped < 0 || input.writes_dropped < 0 || input.uses_dropped < 0 {
+    return claim
+}
+if len(input.use_indices) != len(input.cases) ||
+   len(input.frames) != len(input.cases) ||
+   len(input.assignments) != len(input.cases) ||
+   len(input.roots) != len(input.cases) ||
+   len(input.activities) != len(input.cases) ||
+   len(input.resolved) != len(input.cases) ||
+   len(input.reasons) != len(input.cases) ||
+   len(input.version_frames) != len(input.cases) ||
+   len(input.version_activities) != len(input.cases) ||
+   len(input.version_completed) != len(input.cases) ||
+   len(input.read_sha256) != len(input.cases) ||
+   len(input.read_starts) != len(input.cases) ||
+   len(input.read_ends) != len(input.cases) ||
+   len(input.read_mappings) != len(input.cases) ||
+   len(input.names) != len(input.cases) ||
+   len(input.ordinals) != len(input.cases) ||
+   len(input.scalar_types) != len(input.cases) {
+    return claim
+}
+if count != 1 {
+    claim.status = "SELECT_ONE_USE"
+    return claim
+}
+if input.cases[0] < 0 || input.use_indices[0] < 0 || input.frames[0] < 0 ||
+   input.roots[0] == "" || input.activities[0] == "" || input.names[0] == "" ||
+   input.ordinals[0] < 0 || input.scalar_types[0] == "" {
+    return claim
+}
+if input.read_mappings[0] == "MAPPED" {
+    if input.read_sha256[0] == "" || input.read_starts[0] < 0 || input.read_ends[0] <= input.read_starts[0] {
+        return claim
+    }
+} else {
+    if input.read_mappings[0] != "UNMAPPED" || input.read_sha256[0] != "" ||
+       input.read_starts[0] != 0 || input.read_ends[0] != 0 {
+        return claim
+    }
+}
+if input.resolved[0] {
+    if input.assignments[0] < 0 || input.reasons[0] != "" || !input.version_completed[0] ||
+       input.version_frames[0] != input.frames[0] || input.version_activities[0] != input.activities[0] {
+        return claim
+    }
+    claim.generation_relation_iri = "http://www.w3.org/ns/prov#wasGeneratedBy"
+    claim.use_relation_iri = "http://www.w3.org/ns/prov#used"
+    claim.status = "RECORDED_GENERATION_AND_USAGE"
+} else {
+    if input.version_frames[0] != -1 || input.version_activities[0] != "" || input.version_completed[0] {
+        return claim
+    }
+    let known_reason = input.assignments[0] == -1 && input.reasons[0] == "NO_RECORDED_ASSIGNMENT"
+    if input.assignments[0] == -2 && input.reasons[0] == "WRITE_LIMIT" && input.writes_dropped > 0 {
+        known_reason = true
+    }
+    if !known_reason { return claim }
+    claim.status = "UNRESOLVED_LOCAL_USE"
+}
+claim.case_index = input.cases[0]
+claim.use_index = input.use_indices[0]
+claim.frame = input.frames[0]
+claim.assignment_index = input.assignments[0]
+claim.root_activity_id = input.roots[0]
+claim.activity_id = input.activities[0]
+claim.version_frame = input.version_frames[0]
+claim.version_activity_id = input.version_activities[0]
+claim.variable_name = input.names[0]
+claim.variable_ordinal = input.ordinals[0]
+claim.scalar_type = input.scalar_types[0]
+claim.read_sha256 = input.read_sha256[0]
+claim.read_start = input.read_starts[0]
+claim.read_end = input.read_ends[0]
+claim.read_mapping = input.read_mappings[0]
+claim.local_records_dropped = input.frames_dropped > 0 || input.writes_dropped > 0 || input.uses_dropped > 0
+claim.reason = input.reasons[0]
+return claim
+`
+
+entity Text id "urn:gooo:type:text"
+
+# The saved-record policy decides the relation; this activity explains its result.
+activity Explain(Columns) -> Text id "urn:gooo:recorded-use:explain" computes `
+let claim = Inspect(input)
+if claim.status == "SELECT_ONE_USE" {
+    return "읽기 한 건을 선택해 조회해 주세요."
+}
+if claim.status == "INVALID_INPUT" {
+    return "기록을 연결하는 입력이 서로 맞지 않습니다."
+}
+if claim.status == "UNRESOLVED_LOCAL_USE" {
+    if claim.reason == "NO_RECORDED_ASSIGNMENT" {
+        return "이 읽기에 연결된 대입이 보관되어 있지 않습니다."
+    }
+    if claim.reason == "WRITE_LIMIT" {
+        return "대입 기록 한도로 값 버전의 기원을 확인하지 못했습니다."
+    }
+    return "보관된 기록에서 읽기의 기원을 확인하지 못했습니다."
+}
+if claim.status == "RECORDED_GENERATION_AND_USAGE" {
+    let message = "호출이 기록된 값 버전을 읽었습니다."
+    if len(claim.variable_name) <= 128 {
+        message = "호출이 '" + claim.variable_name + "'의 기록된 값 버전을 읽었습니다."
+    }
+    message = message + " 같은 기록에서 이 버전의 대입 완료를 확인했습니다."
+    if claim.read_mapping == "UNMAPPED" {
+        message = message + " 기록된 읽기의 소스 위치는 미확정입니다."
+    }
+    if claim.local_records_dropped {
+        message = message + " 기록 한도에 걸린 부분이 있습니다."
+    }
+    return message
+}
+return "이 판정 상태의 설명이 아직 정의되지 않았습니다."
+`
+
+entity Integer id "urn:gooo:type:integer"
+entity Boolean id "urn:gooo:type:boolean"
+
+# Coordinates remain decimal, including the signed Integer boundary.
+activity Decimal(Integer) -> Text id "urn:gooo:recorded-use:decimal" computes `
+let value = input
+let negative = value < 0
+if value > 0 { value = -value }
+let digits = "0123456789"
+let result = ""
+for let step = 0; step < 19; step = step + 1 {
+    let digit = -(value % 10)
+    result = digits[digit:digit+1] + result
+    value = value / 10
+    if value == 0 {
+        if negative { return "-" + result }
+        return result
+    }
+}
+return ""
+`
+
+activity IsSHA256(Text) -> Boolean id "urn:gooo:recorded-use:sha256-shape" computes `
+if len(input) != 71 || input[:7] != "sha256:" { return false }
+for let index = 0; index < 64; index = index + 1 {
+    let code = int64(input[index+7])
+    if code < 48 || code > 57 {
+        if code < 97 || code > 102 { return false }
+    }
+}
+return true
+`
+
+# N-Triples quoted text, bounded so one emitted line fits the Text contract.
+activity RDFLiteral(Text) -> Text id "urn:gooo:recorded-use:rdf-literal" computes `
+if len(input) > 128 { return "" }
+let result = "\""
+let hex = "0123456789ABCDEF"
+for let index = 0; index < 128; index = index + 1 {
+    if index >= int64(len(input)) { return result + "\"" }
+    let code = int64(input[index])
+    if code == 34 { result = result + "\\\"" } else {
+        if code == 92 { result = result + "\\\\" } else {
+            if code < 32 || code == 127 {
+                let high = code / 16
+                let low = code % 16
+                result = result + "\\u00" + hex[high:high+1] + hex[low:low+1]
+            } else { result = result + input[index:index+1] }
+        }
+    }
+}
+return result + "\""
+`
+
+entity RDFUsage id "urn:gooo:recorded-use:rdf-usage" fields {
+    field schema id "urn:gooo:recorded-use:rdf:schema" type string required one
+    field scope id "urn:gooo:recorded-use:rdf:scope" type string required one
+    field status id "urn:gooo:recorded-use:rdf:status" type string required one
+    field reason id "urn:gooo:recorded-use:rdf:reason" type string required one
+    field receipt_sha256 id "urn:gooo:recorded-use:rdf:receipt" type string required one
+    field source_sha256 id "urn:gooo:recorded-use:rdf:source" type string required one
+    field journal_sha256 id "urn:gooo:recorded-use:rdf:journal" type string required one
+    field call_iri id "urn:gooo:recorded-use:rdf:call" type string required one
+    field value_iri id "urn:gooo:recorded-use:rdf:value" type string required one
+    field usage_iri id "urn:gooo:recorded-use:rdf:usage" type string required one
+    field records_dropped id "urn:gooo:recorded-use:rdf:drops" type boolean required one
+    field lines id "urn:gooo:recorded-use:rdf:lines" type string required many
+}
+
+# The graph describes one retained use within exact saved JSON bytes.
+activity ExportNTriples(Columns) -> RDFUsage id "urn:gooo:recorded-use:export-ntriples" computes `
+let claim = Inspect(input)
+let result = RDFUsage{
+    schema: "gooo/recorded-use-rdf/v1", scope: "saved_json_bytes",
+    status: claim.status, reason: claim.reason,
+    receipt_sha256: claim.receipt_sha256, source_sha256: claim.source_sha256,
+    journal_sha256: claim.journal_sha256, call_iri: "", value_iri: "", usage_iri: "",
+    records_dropped: claim.local_records_dropped, lines: []string{},
+}
+if claim.status != "RECORDED_GENERATION_AND_USAGE" { return result }
+if !IsSHA256(claim.receipt_sha256) || !IsSHA256(claim.source_sha256) || !IsSHA256(claim.journal_sha256) {
+    result.status = "UNRESOLVED_EXPORT_IDENTITY"
+    result.reason = "SHA256_IDENTITY_REQUIRED"
+    return result
+}
+if claim.read_mapping == "MAPPED" && !IsSHA256(claim.read_sha256) {
+    result.status = "UNRESOLVED_EXPORT_IDENTITY"
+    result.reason = "READ_SHA256_IDENTITY_REQUIRED"
+    return result
+}
+if len(claim.activity_id) > 128 || len(claim.root_activity_id) > 128 ||
+   len(claim.variable_name) > 128 || len(claim.scalar_type) > 128 {
+    result.status = "EXPORT_TEXT_BOUND"
+    result.reason = "METADATA_EXCEEDS_128_BYTES"
+    return result
+}
+let base = "urn:gooo:saved:" + claim.receipt_sha256 + ":case:" + Decimal(claim.case_index)
+result.call_iri = base + ":frame:" + Decimal(claim.frame)
+result.value_iri = base + ":version:" + Decimal(claim.assignment_index)
+result.usage_iri = base + ":use:" + Decimal(claim.use_index)
+let call = "<" + result.call_iri + ">"
+let value = "<" + result.value_iri + ">"
+let usage = "<" + result.usage_iri + ">"
+let rdf_type = " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "
+let prov = " <http://www.w3.org/ns/prov#"
+let own = " <urn:gooo:recorded-use:"
+let integer = "^^<http://www.w3.org/2001/XMLSchema#integer> ."
+let dropped = "false"
+if claim.local_records_dropped { dropped = "true" }
+result.lines = []string{
+    call + rdf_type + "<http://www.w3.org/ns/prov#Activity> .",
+    value + rdf_type + "<http://www.w3.org/ns/prov#Entity> .",
+    usage + rdf_type + "<http://www.w3.org/ns/prov#Usage> .",
+    call + prov + "qualifiedUsage> " + usage + " .",
+    usage + prov + "entity> " + value + " .",
+    call + prov + "used> " + value + " .",
+    value + prov + "wasGeneratedBy> " + call + " .",
+    call + own + "receiptSha256> " + RDFLiteral(claim.receipt_sha256) + " .",
+    value + own + "receiptSha256> " + RDFLiteral(claim.receipt_sha256) + " .",
+    usage + own + "receiptSha256> " + RDFLiteral(claim.receipt_sha256) + " .",
+    call + own + "caseIndex> \"" + Decimal(claim.case_index) + "\"" + integer,
+    call + own + "frame> \"" + Decimal(claim.frame) + "\"" + integer,
+    value + own + "assignmentIndex> \"" + Decimal(claim.assignment_index) + "\"" + integer,
+    usage + own + "useIndex> \"" + Decimal(claim.use_index) + "\"" + integer,
+    call + own + "activityDefinitionId> " + RDFLiteral(claim.activity_id) + " .",
+    call + own + "rootDefinitionId> " + RDFLiteral(claim.root_activity_id) + " .",
+    usage + own + "sourceSha256> " + RDFLiteral(claim.source_sha256) + " .",
+    usage + own + "journalSha256> " + RDFLiteral(claim.journal_sha256) + " .",
+    usage + own + "readMapping> " + RDFLiteral(claim.read_mapping) + " .",
+    usage + own + "selectedSourceSha256> " + RDFLiteral(claim.read_sha256) + " .",
+    usage + own + "selectedStart> \"" + Decimal(claim.read_start) + "\"" + integer,
+    usage + own + "selectedEnd> \"" + Decimal(claim.read_end) + "\"" + integer,
+    usage + own + "localRecordsDropped> \"" + dropped + "\"^^<http://www.w3.org/2001/XMLSchema#boolean> .",
+    value + own + "variableName> " + RDFLiteral(claim.variable_name) + " .",
+    value + own + "variableOrdinal> \"" + Decimal(claim.variable_ordinal) + "\"" + integer,
+    value + own + "scalarType> " + RDFLiteral(claim.scalar_type) + " .",
+}
+result.status = "RDF_READY"
+return result
+`

@@ -1,0 +1,5 @@
+=== RUN   TestRecordedFileAnchors12591
+    native_local_file_contract_fresh_test.go:75: saved record read only;6 contradictory annotations rejected even with recomputed digest;24 absent historical file claims stay UNMAPPED;native/model executions0
+--- PASS: TestRecordedFileAnchors12591 (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution	0.512s

@@ -1,0 +1,11 @@
+package eligibility
+namespace eligibility5107
+entity Integer id "urn:gooo:type:integer"
+activity Calculate(Integer) -> Integer id "urn:eligibility5107:calculate" computes "let eligible = input > __GOOO_BODY_HOLE_floor__; let amount = input; if eligible { amount = input + 17 } else { amount = input - 4 }; return amount" assembling {
+ source_fill intent "기준보다 크면 금액에 17을 더하고, 그렇지 않으면 4를 뺀다" {
+  hole "floor"
+  candidate "floor5107" { fill "floor" "53" }
+  candidate "other5107" { fill "floor" "153" }
+ }
+ case "61" -> "78"
+}

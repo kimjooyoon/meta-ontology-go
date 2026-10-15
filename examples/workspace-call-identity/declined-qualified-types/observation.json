@@ -1,0 +1,28 @@
+{
+  "schema": "gooo/workspace-source-decline-observation/v1",
+  "command": "gooo package inspect --json workspace.json",
+  "producer_ref": "../observation.json#/producer",
+  "source_inputs": [
+    {
+      "path": "workspace.json",
+      "sha256": "sha256:beac50a58280ab38d4f0d2a52d10518d6d4280ef9d790236bd6a5fe929ed92c4"
+    },
+    {
+      "path": "core.gooo.fixture",
+      "sha256": "sha256:c6f047c998e30ce6dc814c93e9cb2b685b78927e1eaa024fdf2f15a5a76cac43"
+    },
+    {
+      "path": "app.gooo.fixture",
+      "sha256": "sha256:a23331137d915b3105a693afc604a267a6d85520b7652e1aff939bc538679671"
+    }
+  ],
+  "output_sha256": "sha256:172e504000f90d27070651bcac6dc9de5999a4dadca0cf64b704ae8f90647fee",
+  "decision": "FAIL_CLOSED",
+  "source_inspections": 1,
+  "source_unchanged": true,
+  "program_executions": 0,
+  "model_predictions": 0,
+  "training_runs": 0,
+  "cause": "Qualified types in activity signatures are unsupported; use visible imported entity names for the current profile. The qualified computes call remains in both fixtures.",
+  "scope": "first source fixture and its original rejection retained; this fixture was not replayed"
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "constructor716/app", "activity": "Quote"},
+  "packages": [
+    {"path": "constructor716/money", "name": "money", "sources": ["가격.gooo.fixture"]},
+    {"path": "constructor716/count", "name": "count", "sources": ["개수.gooo.fixture"]},
+    {"path": "constructor716/app", "name": "app", "imports": ["constructor716/money", "constructor716/count"], "sources": ["견적.gooo.fixture", "보정.gooo.fixture"]}
+  ]
+}

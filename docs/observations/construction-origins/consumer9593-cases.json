@@ -1,0 +1,557 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "instance_index": 0,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 1,
+          "read_end": 3,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 880,
+          "source_end": 892,
+          "expression": "Inner(input)",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "instance_index": 0,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 3,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 893,
+          "source_end": 924,
+          "expression": "input.values[0]+input.values[1]",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "instance_index": 0,
+          "element_index": 2,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 925,
+          "source_end": 935,
+          "expression": "previous+2",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "instance_index": 1,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:inner",
+          "completed": true,
+          "read_start": 1,
+          "read_end": 2,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 731,
+          "source_end": 746,
+          "expression": "input.values[1]",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "instance_index": 2,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 957,
+          "source_end": 966,
+          "expression": "\"start\"",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "instance_index": 2,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 967,
+          "source_end": 974,
+          "expression": "\"끝\"",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "instance_index": 3,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 996,
+          "source_end": 1000,
+          "expression": "true",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 0,
+          "instance_index": 3,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 1001,
+          "source_end": 1006,
+          "expression": "false",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 1,
+          "instance_index": 0,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 1,
+          "read_end": 3,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 880,
+          "source_end": 892,
+          "expression": "Inner(input)",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 1,
+          "instance_index": 0,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 3,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 893,
+          "source_end": 924,
+          "expression": "input.values[0]+input.values[1]",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 1,
+          "instance_index": 0,
+          "element_index": 2,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 925,
+          "source_end": 935,
+          "expression": "previous+2",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 1,
+          "instance_index": 1,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:inner",
+          "completed": true,
+          "read_start": 1,
+          "read_end": 2,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 731,
+          "source_end": 746,
+          "expression": "input.values[1]",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 1,
+          "instance_index": 2,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 957,
+          "source_end": 966,
+          "expression": "\"start\"",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 1,
+          "instance_index": 2,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 967,
+          "source_end": 974,
+          "expression": "\"끝\"",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 1,
+          "instance_index": 3,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 996,
+          "source_end": 1000,
+          "expression": "true",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 1,
+          "instance_index": 3,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 1001,
+          "source_end": 1006,
+          "expression": "false",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "instance_index": 0,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 1,
+          "read_end": 3,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 880,
+          "source_end": 892,
+          "expression": "Inner(input)",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "instance_index": 0,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 3,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 893,
+          "source_end": 924,
+          "expression": "input.values[0]+input.values[1]",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "instance_index": 0,
+          "element_index": 2,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 925,
+          "source_end": 935,
+          "expression": "previous+2",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "instance_index": 1,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:inner",
+          "completed": true,
+          "read_start": 1,
+          "read_end": 2,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 731,
+          "source_end": 746,
+          "expression": "input.values[1]",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "계산 중 읽기 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "instance_index": 2,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 957,
+          "source_end": 966,
+          "expression": "\"start\"",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "instance_index": 2,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 967,
+          "source_end": 974,
+          "expression": "\"끝\"",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "instance_index": 3,
+          "element_index": 0,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 996,
+          "source_end": 1000,
+          "expression": "true",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    },
+    {
+      "inputs": {
+        "Explain": {
+          "case_index": 2,
+          "instance_index": 3,
+          "element_index": 1,
+          "root_activity_id": "urn:make9533:build",
+          "activity_id": "urn:make9533:build",
+          "completed": true,
+          "read_start": 5,
+          "read_end": 5,
+          "reads_dropped": 0,
+          "source_sha256": "sha256:72027aefe0dc73a62d86f6fc2d4bb480e7c40a5902d1ce49e8ec03fb84cd90dc",
+          "source_start": 1001,
+          "source_end": 1006,
+          "expression": "false",
+          "mapping": "MAPPED"
+        }
+      },
+      "expected": {
+        "Explain": "표현 위치 연결"
+      }
+    }
+  ]
+}

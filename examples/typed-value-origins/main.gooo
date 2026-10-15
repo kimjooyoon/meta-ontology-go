@@ -1,0 +1,19 @@
+package typedorigins
+namespace typedorigins
+
+entity Integer id "urn:gooo:type:integer"
+entity Boolean id "urn:gooo:type:boolean"
+entity Pair id "urn:gooo:typed-origins:pair" fields {
+    field left id "urn:gooo:typed-origins:left" type integer required one
+    field right id "urn:gooo:typed-origins:right" type integer required one
+}
+
+activity Keep(Pair) -> Integer id "urn:gooo:typed-origins:keep" computes `return input.right`
+activity Compute(Pair, Integer) -> Integer id "urn:gooo:typed-origins:compute" computes `let original=input0
+let copied=original
+copied.left=input1+1371
+return Keep(copied)`
+
+activity Select(Pair, Integer, Boolean) -> Integer id "urn:gooo:typed-origins:select" computes `let copied=input0
+if input2 {copied.right=input1+1399}
+return Keep(copied)`

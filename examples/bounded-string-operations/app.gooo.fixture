@@ -1,0 +1,10 @@
+package app
+namespace stringops_app
+
+import stringops "gooo/std/stringops"
+
+activity Main(Query) -> Report id "gooo://stringops/app/main" computes `return Report{
+    index: stringops.Index(input.text, input.needle),
+    count: stringops.Count(input.text, input.needle),
+    runes: stringops.RuneCount(input.text),
+}`

@@ -1,0 +1,25 @@
+{
+  "runs": [
+    {
+      "query": "all",
+      "exit_code": 0,
+      "elapsed_ms": 674.3755
+    },
+    {
+      "query": "take",
+      "exit_code": 0,
+      "elapsed_ms": 14.511917000000096
+    },
+    {
+      "query": "candidate",
+      "exit_code": 0,
+      "elapsed_ms": 12.582499999999719
+    }
+  ],
+  "original_program_executions": 0,
+  "model_calls": 0,
+  "receipt_unchanged": true,
+  "binary_sha256": "e14f538076048b36efd1f04402d71f3ae2a56cafbaebc5ea6f3bdca06711de70",
+  "binary_bytes": 26162306,
+  "binary_removed": true
+}

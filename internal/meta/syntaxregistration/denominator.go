@@ -63,7 +63,7 @@ func denominatorID(version int) string {
 func digestName(version int) string   { return fmt.Sprintf("DenominatorMigrationV%dDigest", version) }
 func evidenceName(version int) string { return fmt.Sprintf("embeddedDenominatorV%d", version) }
 
-func generateAdmission(source *goSource, version int) error {
+func generateAdmission(source *goSource, version, capability int) error {
 	decode, err := source.function("decodeDenominator")
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func generateAdmission(source *goSource, version int) error {
 	if digests != 1 || headers != 1 {
 		return fmt.Errorf("denominator admission anchors are not exact")
 	}
-	return nil
+	return pinPreviousSyntaxTarget(source, version-1, capability)
 }
 
 func generateDigest(source *goSource, previous []byte, version int, next []byte) error {

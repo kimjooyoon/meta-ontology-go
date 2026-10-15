@@ -214,10 +214,10 @@ jq -e --slurpfile contract "$contract_file" --arg contract_digest "$contract_dig
 
 phase="INVENTORY"
 inventory_files=()
-while IFS= read -r inventory_path; do
+while IFS= read -r -d '' inventory_path; do
   test "$inventory_path" = "README.md" && continue
   inventory_files+=("$inventory_path")
-done < <(git ls-files)
+done < <(git ls-files -z)
 regular_files="${#inventory_files[@]}"
 descendant_directories="$(printf '%s\n' "${inventory_files[@]}" | awk -F/ 'NF>1 {for (i=1; i<NF; i++) {d=$1; for (j=2; j<=i; j++) d=d "/" $j; print d}}' | sort -u | wc -l | tr -d '[:space:]')"
 physical_lines=0

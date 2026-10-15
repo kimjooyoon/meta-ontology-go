@@ -1,0 +1,46 @@
+[
+  {
+    "case": "constructions",
+    "base_version": 49,
+    "version": 50,
+    "artifact_roles": 9,
+    "members": 9,
+    "wall_ms": 100,
+    "candidate_sha256": "2c45dfa3d9c7b00e2929b97fc4217a9668b65356788b5832c3a9ddf5eb8685d3",
+    "native_consumer_executions": 0,
+    "model_calls": 0
+  },
+  {
+    "case": "elements",
+    "base_version": 50,
+    "version": 51,
+    "artifact_roles": 9,
+    "members": 9,
+    "wall_ms": 98,
+    "candidate_sha256": "1940ae4b323e2ea6cda7bb209efe959d404967fbc1a34817ca5f7c4267a348a6",
+    "native_consumer_executions": 0,
+    "model_calls": 0
+  },
+  {
+    "case": "links",
+    "base_version": 51,
+    "version": 52,
+    "artifact_roles": 9,
+    "members": 9,
+    "wall_ms": 96,
+    "candidate_sha256": "78767ced8c158fc9af1c1b6465c603d05df64303bf45adef87487791a4d7fb3a",
+    "native_consumer_executions": 0,
+    "model_calls": 0
+  },
+  {
+    "case": "reads",
+    "base_version": 52,
+    "version": 53,
+    "artifact_roles": 9,
+    "members": 9,
+    "wall_ms": 99,
+    "candidate_sha256": "99aff4283f2824db7c0e0087fda429211c5f816d2c2c84559ad4d698140cd3cb",
+    "native_consumer_executions": 0,
+    "model_calls": 0
+  }
+]
