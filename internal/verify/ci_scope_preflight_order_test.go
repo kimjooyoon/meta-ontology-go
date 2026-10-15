@@ -32,7 +32,7 @@ func TestScopePreflightRunsBeforeExpensiveEvidenceAndKeepsFinalCheck(t *testing.
 	preflight := workflow[positions[0]:positions[1]]
 	for _, required := range []string{
 		"if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' }}",
-		"timeout-minutes: 5",
+		"timeout-minutes: 10",
 		"GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}",
 		"GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}",
 		"GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",

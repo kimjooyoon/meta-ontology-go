@@ -21,6 +21,12 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        if [[ -n "${GOOO_CI_STARTED_AT:-}" && -z "${GOOO_MATERIALIZATION_BOUNDED:-}" ]]; then
+          remaining=$((GOOO_CI_BUDGET_MS / 1000 - ($(date +%s) - $(date -d "$GOOO_CI_STARTED_AT" +%s))))
+          test "$remaining" -gt 0
+          export GOOO_MATERIALIZATION_BOUNDED=1
+          exec timeout --signal=KILL "${remaining}s" /bin/bash --noprofile --norc -e -o pipefail "$0"
+        fi
         work="$RUNNER_TEMP/repository-materialize-$GITHUB_JOB"
         projector_work="$work/projector"
         materializer_work="$work/materializer"
@@ -67,4 +73,7 @@ runs:
           echo "GIT_DIR=$git_dir"
           echo "GIT_WORK_TREE=$GITHUB_WORKSPACE"
           echo "GIT_INDEX_FILE=$git_index"
+          if [[ -n "${GOOO_CI_DOMAIN:-}" ]]; then
+            echo "GOOO_CI_ACTIVATION_ORIGIN=$activation_evidence"
+          fi
         } >> "$GITHUB_ENV"

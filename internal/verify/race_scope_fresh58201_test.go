@@ -21,7 +21,7 @@ func TestRacePackageOrderRetainsFullScope58201(t *testing.T) {
 	}
 	body, _, found = strings.Cut(body, "\n  semantic:\n")
 	if !found || !strings.Contains(body, "    name: go test -race\n") ||
-		!strings.Contains(body, "    timeout-minutes: 20\n") ||
+		!strings.Contains(body, "    timeout-minutes: 10\n") ||
 		!strings.Contains(body, "          cache: false\n") {
 		t.Fatal("race identity, time budget or fresh-build boundary changed")
 	}
