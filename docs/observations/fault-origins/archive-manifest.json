@@ -1,6 +1,5 @@
 {
   "archive": "first-observations.tar.gz",
-  "sha256": "8a771f94d667e3da82b9ee35215d4888550801a83ca29c46d8b9b00c75738f78",
   "members": [
     {
       "path": "commands/consumer-first/command.json",
@@ -372,5 +371,7 @@
       "bytes": 590,
       "sha256": "6c40a9e2de805ab6c2235b96fcda499b0265e53b8d05deb287f9390c6538296c"
     }
-  ]
+  ],
+  "archive_sha256": "8a771f94d667e3da82b9ee35215d4888550801a83ca29c46d8b9b00c75738f78",
+  "bytes": 152210
 }
