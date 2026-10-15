@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"origin/versionproducer:Combine": 5}, "expected": {"origin/versionproducer:Combine": 41}},
+    {"inputs": {"origin/versionproducer:Combine": -36}, "expected": {"origin/versionproducer:Combine": 0}},
+    {"inputs": {"origin/versionproducer:Combine": 5}, "expected": {"origin/versionproducer:Combine": 41}},
+    {"inputs": {"origin/versionproducer:Combine": 31}, "expected": {"origin/versionproducer:Combine": 67}}
+  ]
+}

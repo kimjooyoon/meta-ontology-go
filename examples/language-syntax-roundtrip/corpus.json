@@ -1050,6 +1050,25 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "local-version-identity-reader",
+      "path": "examples/local-version-origins/inspect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
+    },
+    {
+      "id": "same-value-local-version-producer",
+      "path": "examples/local-version-origins/producer/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     }
   ],
   "package_units": [

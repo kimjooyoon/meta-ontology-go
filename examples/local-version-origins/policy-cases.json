@@ -1,0 +1,1109 @@
+{
+ "schema": "gooo/body-composition-cases/v1",
+ "cases": [
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": 1,
+     "page_write_calls": 1,
+     "page_completed_versions": 2,
+     "page_interrupted_writes": 0,
+     "page_unmapped_writes": 0,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": true,
+     "identity_recording_complete": true,
+     "source_mapping_complete": true,
+     "status": "SCOPED_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      10
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": 1,
+     "page_write_calls": 2,
+     "page_completed_versions": 2,
+     "page_interrupted_writes": 0,
+     "page_unmapped_writes": 0,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": true,
+     "identity_recording_complete": true,
+     "source_mapping_complete": true,
+     "status": "SCOPED_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      31
+     ],
+     "declaration_ends": [
+      19,
+      39
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": 2,
+     "page_write_calls": 1,
+     "page_completed_versions": 2,
+     "page_interrupted_writes": 0,
+     "page_unmapped_writes": 0,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": true,
+     "identity_recording_complete": true,
+     "source_mapping_complete": true,
+     "status": "SCOPED_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      5
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": 1,
+     "page_write_calls": 2,
+     "page_completed_versions": 2,
+     "page_interrupted_writes": 0,
+     "page_unmapped_writes": 0,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": true,
+     "identity_recording_complete": true,
+     "source_mapping_complete": true,
+     "status": "SCOPED_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      ""
+     ],
+     "declaration_starts": [
+      11,
+      0
+     ],
+     "declaration_ends": [
+      19,
+      0
+     ],
+     "declaration_mapped": [
+      true,
+      false
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      ""
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      ""
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      ""
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": 1,
+     "page_write_calls": 1,
+     "page_completed_versions": 2,
+     "page_interrupted_writes": 0,
+     "page_unmapped_writes": 1,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": true,
+     "identity_recording_complete": true,
+     "source_mapping_complete": false,
+     "status": "PARTIAL_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      false
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": 1,
+     "page_write_calls": 1,
+     "page_completed_versions": 1,
+     "page_interrupted_writes": 1,
+     "page_unmapped_writes": 0,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": true,
+     "identity_recording_complete": true,
+     "source_mapping_complete": true,
+     "status": "SCOPED_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 1,
+     "total_rows": 3,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 1,
+     "total_rows": 3,
+     "returned_rows": 2,
+     "page_declarations": 1,
+     "page_write_calls": 1,
+     "page_completed_versions": 2,
+     "page_interrupted_writes": 0,
+     "page_unmapped_writes": 0,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": false,
+     "identity_recording_complete": true,
+     "source_mapping_complete": true,
+     "status": "PARTIAL_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 1,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": 1,
+     "page_write_calls": 1,
+     "page_completed_versions": 2,
+     "page_interrupted_writes": 0,
+     "page_unmapped_writes": 0,
+     "frames_dropped": 1,
+     "writes_dropped": 0,
+     "page_complete": true,
+     "identity_recording_complete": false,
+     "source_mapping_complete": true,
+     "status": "PARTIAL_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      7
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": -1,
+     "page_write_calls": -1,
+     "page_completed_versions": -1,
+     "page_interrupted_writes": -1,
+     "page_unmapped_writes": -1,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": false,
+     "identity_recording_complete": false,
+     "source_mapping_complete": false,
+     "status": "INVALID_INPUT",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:other"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": -1,
+     "page_write_calls": -1,
+     "page_completed_versions": -1,
+     "page_interrupted_writes": -1,
+     "page_unmapped_writes": -1,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": false,
+     "identity_recording_complete": false,
+     "source_mapping_complete": false,
+     "status": "INVALID_INPUT",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      3
+     ],
+     "frames": [
+      9,
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": -1,
+     "page_write_calls": -1,
+     "page_completed_versions": -1,
+     "page_interrupted_writes": -1,
+     "page_unmapped_writes": -1,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": false,
+     "identity_recording_complete": false,
+     "source_mapping_complete": false,
+     "status": "INVALID_INPUT",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [
+      4,
+      4
+     ],
+     "frames": [
+      9
+     ],
+     "assignments": [
+      7,
+      8
+     ],
+     "roots": [
+      "urn:controlled:root",
+      "urn:controlled:root"
+     ],
+     "activities": [
+      "urn:controlled:activity",
+      "urn:controlled:activity"
+     ],
+     "declaration_sha256": [
+      "controlled-declaration",
+      "controlled-declaration"
+     ],
+     "declaration_starts": [
+      11,
+      11
+     ],
+     "declaration_ends": [
+      19,
+      19
+     ],
+     "declaration_mapped": [
+      true,
+      true
+     ],
+     "completed": [
+      true,
+      true
+     ],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [
+      "controlled/pkg",
+      "controlled/pkg"
+     ],
+     "declaration_filenames": [
+      "main.gooo",
+      "main.gooo"
+     ],
+     "declaration_activities": [
+      "urn:controlled:original",
+      "urn:controlled:original"
+     ]
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 2,
+     "returned_rows": 2,
+     "page_declarations": -1,
+     "page_write_calls": -1,
+     "page_completed_versions": -1,
+     "page_interrupted_writes": -1,
+     "page_unmapped_writes": -1,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": false,
+     "identity_recording_complete": false,
+     "source_mapping_complete": false,
+     "status": "INVALID_INPUT",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  },
+  {
+   "inputs": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 0,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "cases": [],
+     "frames": [],
+     "assignments": [],
+     "roots": [],
+     "activities": [],
+     "declaration_sha256": [],
+     "declaration_starts": [],
+     "declaration_ends": [],
+     "declaration_mapped": [],
+     "completed": [],
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file",
+     "declaration_packages": [],
+     "declaration_filenames": [],
+     "declaration_activities": []
+    }
+   },
+   "expected": {
+    "origin/localversions:Summarize": {
+     "source_sha256": "controlled-source",
+     "journal_sha256": "controlled-journal",
+     "offset": 0,
+     "total_rows": 0,
+     "returned_rows": 0,
+     "page_declarations": 0,
+     "page_write_calls": 0,
+     "page_completed_versions": 0,
+     "page_interrupted_writes": 0,
+     "page_unmapped_writes": 0,
+     "frames_dropped": 0,
+     "writes_dropped": 0,
+     "page_complete": true,
+     "identity_recording_complete": true,
+     "source_mapping_complete": true,
+     "status": "SCOPED_RECORDED_LOCAL_IDENTITIES",
+     "file_sources_sha256": "controlled-file-annotations",
+     "declaration_scope": "original_file"
+    }
+   }
+  }
+ ]
+}

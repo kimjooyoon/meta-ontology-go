@@ -24,22 +24,10 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 		query.Kind = flags["--origin-kind"]
 	}
 	shape := flags["--origin-shape"]
-	if shape != "" && shape != "rows" && shape != "local-fill-columns" && shape != "field-lineage-columns" && shape != "field-local-columns" {
-		return query, fmt.Errorf("origin shape must be rows, local-fill-columns, field-lineage-columns or field-local-columns")
-	}
-	if shape == "local-fill-columns" {
-		if flags["--origin-kind"] == "" {
-			query.Kind = "local-fill-fragments"
-		}
-		if query.Kind != "local-fill-fragments" {
-			return query, fmt.Errorf("local-fill-columns requires local-fill-fragments")
-		}
-	}
-	if shape == "field-lineage-columns" || shape == "field-local-columns" {
-		if flags["--origin-kind"] == "" {
-			query.Kind = "field-uses"
-		}
-		query.Limit = 1
+	var err error
+	query, err = configurePackageOriginShape(query, shape, flags["--origin-kind"] == "")
+	if err != nil {
+		return query, err
 	}
 	for _, option := range []struct {
 		key    string
@@ -53,13 +41,44 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 			*option.target = n
 		}
 	}
+	return query, validatePackageOriginShape(query, shape)
+}
+
+func configurePackageOriginShape(query bodyexecution.NativeOriginQuery, shape string, defaultKind bool) (bodyexecution.NativeOriginQuery, error) {
+	if shape != "" && shape != "rows" && shape != "local-fill-columns" && shape != "field-lineage-columns" && shape != "field-local-columns" && shape != "local-version-columns" {
+		return query, fmt.Errorf("origin shape must be rows, local-fill-columns, field-lineage-columns, field-local-columns or local-version-columns")
+	}
+	if shape == "local-version-columns" && defaultKind {
+		query.Kind = "local-writes"
+	}
+	if shape == "local-fill-columns" {
+		if defaultKind {
+			query.Kind = "local-fill-fragments"
+		}
+		if query.Kind != "local-fill-fragments" {
+			return query, fmt.Errorf("local-fill-columns requires local-fill-fragments")
+		}
+	}
+	if shape == "field-lineage-columns" || shape == "field-local-columns" {
+		if defaultKind {
+			query.Kind = "field-uses"
+		}
+		query.Limit = 1
+	}
+	return query, nil
+}
+
+func validatePackageOriginShape(query bodyexecution.NativeOriginQuery, shape string) error {
 	if shape == "field-local-columns" && query.Kind != "field-uses" {
-		return query, fmt.Errorf("field-local-columns requires field-uses")
+		return fmt.Errorf("field-local-columns requires field-uses")
 	}
 	if shape == "field-lineage-columns" && (query.Kind != "field-uses" || query.Limit != 1) {
-		return query, fmt.Errorf("%s requires field-uses and limit1", shape)
+		return fmt.Errorf("%s requires field-uses and limit1", shape)
 	}
-	return query, bodyexecution.ValidateNativeOriginQuery(query)
+	if shape == "local-version-columns" && query.Kind != "local-writes" {
+		return fmt.Errorf("local-version-columns requires local-writes")
+	}
+	return bodyexecution.ValidateNativeOriginQuery(query)
 }
 
 func packageOriginInputs(raw []byte, target packageruntime.EntrySpec, query bodyexecution.NativeOriginQuery) ([]byte, *bodyexecution.NativeOriginInput, error) {
@@ -73,7 +92,15 @@ func packageOriginInputsWithShape(raw []byte, target packageruntime.EntrySpec, q
 	}
 	var rows []json.RawMessage
 	var origin *bodyexecution.NativeOriginInput
-	if shape == "field-local-columns" {
+	if shape == "local-version-columns" {
+		var columns bodyexecution.LocalVersionColumns
+		columns, origin, err = bodyexecution.SelectRecordedLocalVersions(runtime, query)
+		if err == nil {
+			var row []byte
+			row, err = json.Marshal(columns)
+			rows = []json.RawMessage{row}
+		}
+	} else if shape == "field-local-columns" {
 		var columns []bodyexecution.BridgeLineageColumns
 		columns, origin, err = bodyexecution.SelectRecordedBridgeLineagePage(runtime, query)
 		if err == nil {
@@ -107,6 +134,10 @@ func packageOriginInputsWithShape(raw []byte, target packageruntime.EntrySpec, q
 	if err != nil {
 		return nil, origin, err
 	}
+	return encodePackageOriginInputs(raw, target, query.Limit, rows, origin)
+}
+
+func encodePackageOriginInputs(raw []byte, target packageruntime.EntrySpec, limit int, rows []json.RawMessage, origin *bodyexecution.NativeOriginInput) ([]byte, *bodyexecution.NativeOriginInput, error) {
 	origin.ReceiptSHA256 = workspaceDigest(raw)
 	input := struct {
 		Schema string                       `json:"schema"`
@@ -117,7 +148,7 @@ func packageOriginInputsWithShape(raw []byte, target packageruntime.EntrySpec, q
 	}
 	encoded, err := json.Marshal(input)
 	if err == nil && len(encoded) > 32<<10 {
-		return nil, origin, fmt.Errorf("selected origin inputs exceed 32768 bytes; lower --origin-limit (currently %d)", query.Limit)
+		return nil, origin, fmt.Errorf("selected origin inputs exceed 32768 bytes; lower --origin-limit (currently %d)", limit)
 	}
 	return encoded, origin, err
 }

@@ -56,6 +56,7 @@ and where retained values came from.
 | Read a declared construction choice | [Declared fill origins](examples/fill-candidate-origins/README.md) |
 | Read the finite palette of a source grammar | [Derived candidate origins](examples/derived-candidate-origins/README.md) |
 | Group recorded origins in Gooo | [Derived-origin reader](examples/derived-origin/README.md), [scoped-counter coverage](examples/scoped-origin-coverage/README.md) |
+| Distinguish declarations, calls and completed value versions | [Recorded local identities and PROV generation](examples/local-version-origins/README.md) (development source) |
 | Assemble a bounded collection summary | [Length-aware summary](examples/length-aware-summary/README.md), [three-field assembly](examples/assembled-length-summary/README.md) |
 
 These links describe development source. Each example reports its finite cases
