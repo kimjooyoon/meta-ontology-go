@@ -97,3 +97,10 @@ gooo package execute --inputs /tmp/gooo-signature-inputs.json \
 별도의 실제 소스 내보내기에서도 두 입력의 선언 위치를 유지했습니다.
 모델 호출은 0회입니다. [실행 기록](../../docs/observations/input-declarations/observations.json)에
 실패한 초안과 수정 후 첫 실행의 원본 기록을 함께 보관합니다.
+
+현재 판독기는 `for left in input.indices` 안에서 같은 목록의 `right`를
+순회합니다. 두 목록의 위치를 비교하는 의도를 그대로 읽을 수 있습니다.
+이 배열 중첩 순회는 기존 문법이며, 횟수를 지정하는 중첩 반복문에는
+별도의 지원 제약이 있습니다. [현재 소스의 관찰](../../docs/observations/input-declarations/collection-observations.json)에서도
+같은 16개 사례가 모두 통과했고, 보관한 이전 수정본과 출력이 일치했습니다.
+두 수정본에서 확인한 사례의 분모는 각각 16개입니다.

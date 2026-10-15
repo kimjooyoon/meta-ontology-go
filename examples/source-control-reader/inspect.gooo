@@ -226,16 +226,15 @@ for position in input.indices {
     index += 1
 }
 let pairs = 0
-// Read the lower triangle of the bounded 16-by-16 signature-position table.
-for let pair = 0; pair < 256; pair = pair + 1 {
-    let left = pair / 16
-    let right = pair % 16
-    if left < input.count && right < left {
-        if input.ports[left] == input.ports[right] {
-            result.reason = "SIGNATURE_PORT_REPEATED"
-            return result
+for left in input.indices {
+    for right in input.indices {
+        if right < left {
+            if input.ports[left] == input.ports[right] {
+                result.reason = "SIGNATURE_PORT_REPEATED"
+                return result
+            }
+            if input.type_ids[left] == input.type_ids[right] { pairs += 1 }
         }
-        if input.type_ids[left] == input.type_ids[right] { pairs += 1 }
     }
 }
 result.status = "DECLARED_INPUTS"

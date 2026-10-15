@@ -231,7 +231,7 @@
   },
   "limitations": [
     "Input indices are source-scoped positions; authored parameter names and role IDs remain future language work.",
-    "Current counted-loop profile refuses nested loops. The final consumer traverses a bounded 16-by-16 table with one loop.",
+    "The counted-loop profile refused the first nested-counted draft. Its corrected flat draft is archived here; the current readable nested-collection revision has separate collection-observations.json records.",
     "The first flat draft used a declaration comment inside a computes body; the corrected body uses // comments.",
     "Wall times are one local command observation on darwin/arm64, including Go startup; no latency distribution or model benchmark is claimed.",
     "Source bytes are bound by the compiler inspection; a caller-supplied columns document is only supplied facts."
