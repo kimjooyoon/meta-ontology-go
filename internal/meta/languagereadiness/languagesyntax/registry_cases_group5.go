@@ -26,5 +26,7 @@ func expectedSyntaxCaseGroup5() []CaseDefinition {
 		{ID: "json-text-escape-policy", Path: "internal/meta/textinput/escapes.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false},
 
 		{ID: "json-text-raw-and-decoded-origins", Path: "examples/text-input-origins/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
+
+		{ID: "recorded-local-use-relations", Path: "examples/recorded-use-origins/inspect.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
 	}
 }

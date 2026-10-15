@@ -45,8 +45,14 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 }
 
 func configurePackageOriginShape(query bodyexecution.NativeOriginQuery, shape string, defaultKind bool) (bodyexecution.NativeOriginQuery, error) {
-	if shape != "" && shape != "rows" && shape != "local-fill-columns" && shape != "field-lineage-columns" && shape != "field-local-columns" && shape != "local-version-columns" {
-		return query, fmt.Errorf("origin shape must be rows, local-fill-columns, field-lineage-columns, field-local-columns or local-version-columns")
+	if shape != "" && shape != "rows" && shape != "local-fill-columns" && shape != "field-lineage-columns" && shape != "field-local-columns" && shape != "local-version-columns" && shape != "local-use-columns" {
+		return query, fmt.Errorf("origin shape must be rows, local-fill-columns, field-lineage-columns, field-local-columns, local-version-columns or local-use-columns")
+	}
+	if shape == "local-use-columns" {
+		if defaultKind {
+			query.Kind = "local-uses"
+		}
+		query.Limit = 1
 	}
 	if shape == "local-version-columns" && defaultKind {
 		query.Kind = "local-writes"
@@ -78,6 +84,9 @@ func validatePackageOriginShape(query bodyexecution.NativeOriginQuery, shape str
 	if shape == "local-version-columns" && query.Kind != "local-writes" {
 		return fmt.Errorf("local-version-columns requires local-writes")
 	}
+	if shape == "local-use-columns" && query.Kind != "local-uses" {
+		return fmt.Errorf("local-use-columns requires local-uses")
+	}
 	return bodyexecution.ValidateNativeOriginQuery(query)
 }
 
@@ -92,7 +101,15 @@ func packageOriginInputsWithShape(raw []byte, target packageruntime.EntrySpec, q
 	}
 	var rows []json.RawMessage
 	var origin *bodyexecution.NativeOriginInput
-	if shape == "local-version-columns" {
+	if shape == "local-use-columns" {
+		var columns bodyexecution.LocalUseColumns
+		columns, origin, err = bodyexecution.SelectRecordedLocalUses(runtime, query, workspaceDigest(raw))
+		if err == nil {
+			var row []byte
+			row, err = json.Marshal(columns)
+			rows = []json.RawMessage{row}
+		}
+	} else if shape == "local-version-columns" {
 		var columns bodyexecution.LocalVersionColumns
 		columns, origin, err = bodyexecution.SelectRecordedLocalVersions(runtime, query)
 		if err == nil {

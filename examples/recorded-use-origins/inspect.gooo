@@ -1,0 +1,170 @@
+package recordeduse
+namespace recordeduse
+
+entity Columns id "urn:gooo:recorded-use:columns" fields {
+    field receipt_sha256 id "urn:gooo:recorded-use:columns:receipt_sha256" type string required one
+    field source_sha256 id "urn:gooo:recorded-use:columns:source_sha256" type string required one
+    field journal_sha256 id "urn:gooo:recorded-use:columns:journal_sha256" type string required one
+    field offset id "urn:gooo:recorded-use:columns:offset" type integer required one
+    field total_rows id "urn:gooo:recorded-use:columns:total_rows" type integer required one
+    field frames_dropped id "urn:gooo:recorded-use:columns:frames_dropped" type integer required one
+    field writes_dropped id "urn:gooo:recorded-use:columns:writes_dropped" type integer required one
+    field uses_dropped id "urn:gooo:recorded-use:columns:uses_dropped" type integer required one
+    field cases id "urn:gooo:recorded-use:columns:cases" type integer required many
+    field use_indices id "urn:gooo:recorded-use:columns:use_indices" type integer required many
+    field frames id "urn:gooo:recorded-use:columns:frames" type integer required many
+    field assignments id "urn:gooo:recorded-use:columns:assignments" type integer required many
+    field roots id "urn:gooo:recorded-use:columns:roots" type string required many
+    field activities id "urn:gooo:recorded-use:columns:activities" type string required many
+    field resolved id "urn:gooo:recorded-use:columns:resolved" type boolean required many
+    field reasons id "urn:gooo:recorded-use:columns:reasons" type string required many
+    field version_frames id "urn:gooo:recorded-use:columns:version_frames" type integer required many
+    field version_activities id "urn:gooo:recorded-use:columns:version_activities" type string required many
+    field version_completed id "urn:gooo:recorded-use:columns:version_completed" type boolean required many
+    field read_sha256 id "urn:gooo:recorded-use:columns:read_sha256" type string required many
+    field read_starts id "urn:gooo:recorded-use:columns:read_starts" type integer required many
+    field read_ends id "urn:gooo:recorded-use:columns:read_ends" type integer required many
+    field read_mappings id "urn:gooo:recorded-use:columns:read_mappings" type string required many
+    field names id "urn:gooo:recorded-use:columns:names" type string required many
+    field ordinals id "urn:gooo:recorded-use:columns:ordinals" type integer required many
+    field scalar_types id "urn:gooo:recorded-use:columns:scalar_types" type string required many
+}
+
+entity UsageClaim id "urn:gooo:recorded-use:usageclaim" fields {
+    field receipt_sha256 id "urn:gooo:recorded-use:usageclaim:receipt_sha256" type string required one
+    field source_sha256 id "urn:gooo:recorded-use:usageclaim:source_sha256" type string required one
+    field journal_sha256 id "urn:gooo:recorded-use:usageclaim:journal_sha256" type string required one
+    field receipt_scope id "urn:gooo:recorded-use:usageclaim:receipt_scope" type string required one
+    field generation_relation_iri id "urn:gooo:recorded-use:usageclaim:generation_relation_iri" type string required one
+    field use_relation_iri id "urn:gooo:recorded-use:usageclaim:use_relation_iri" type string required one
+    field case_index id "urn:gooo:recorded-use:usageclaim:case_index" type integer required one
+    field use_index id "urn:gooo:recorded-use:usageclaim:use_index" type integer required one
+    field frame id "urn:gooo:recorded-use:usageclaim:frame" type integer required one
+    field assignment_index id "urn:gooo:recorded-use:usageclaim:assignment_index" type integer required one
+    field root_activity_id id "urn:gooo:recorded-use:usageclaim:root_activity_id" type string required one
+    field activity_id id "urn:gooo:recorded-use:usageclaim:activity_id" type string required one
+    field version_frame id "urn:gooo:recorded-use:usageclaim:version_frame" type integer required one
+    field version_activity_id id "urn:gooo:recorded-use:usageclaim:version_activity_id" type string required one
+    field variable_name id "urn:gooo:recorded-use:usageclaim:variable_name" type string required one
+    field variable_ordinal id "urn:gooo:recorded-use:usageclaim:variable_ordinal" type integer required one
+    field scalar_type id "urn:gooo:recorded-use:usageclaim:scalar_type" type string required one
+    field read_sha256 id "urn:gooo:recorded-use:usageclaim:read_sha256" type string required one
+    field read_start id "urn:gooo:recorded-use:usageclaim:read_start" type integer required one
+    field read_end id "urn:gooo:recorded-use:usageclaim:read_end" type integer required one
+    field read_mapping id "urn:gooo:recorded-use:usageclaim:read_mapping" type string required one
+    field local_records_dropped id "urn:gooo:recorded-use:usageclaim:local_records_dropped" type boolean required one
+    field reason id "urn:gooo:recorded-use:usageclaim:reason" type string required one
+    field status id "urn:gooo:recorded-use:usageclaim:status" type string required one
+}
+
+# Claims are scoped to the exact saved JSON bytes, source and local journal.
+# A generation and a use can be observed without asserting a derived output.
+activity Inspect(Columns) -> UsageClaim id "urn:gooo:recorded-use:inspect" computes `
+let claim = UsageClaim{
+    receipt_sha256: input.receipt_sha256,
+    source_sha256: input.source_sha256,
+    journal_sha256: input.journal_sha256,
+    receipt_scope: "saved_json_bytes",
+    generation_relation_iri: "",
+    use_relation_iri: "",
+    case_index: -1,
+    use_index: -1,
+    frame: -1,
+    assignment_index: -1,
+    root_activity_id: "",
+    activity_id: "",
+    version_frame: -1,
+    version_activity_id: "",
+    variable_name: "",
+    variable_ordinal: -1,
+    scalar_type: "",
+    read_sha256: "",
+    read_start: 0,
+    read_end: 0,
+    read_mapping: "UNMAPPED",
+    local_records_dropped: false,
+    reason: "",
+    status: "INVALID_INPUT",
+}
+let count = int64(len(input.cases))
+if input.receipt_sha256 == "" || input.source_sha256 == "" || input.journal_sha256 == "" ||
+   input.offset < 0 || input.total_rows < count || input.offset > input.total_rows - count ||
+   input.frames_dropped < 0 || input.writes_dropped < 0 || input.uses_dropped < 0 {
+    return claim
+}
+if len(input.use_indices) != len(input.cases) ||
+   len(input.frames) != len(input.cases) ||
+   len(input.assignments) != len(input.cases) ||
+   len(input.roots) != len(input.cases) ||
+   len(input.activities) != len(input.cases) ||
+   len(input.resolved) != len(input.cases) ||
+   len(input.reasons) != len(input.cases) ||
+   len(input.version_frames) != len(input.cases) ||
+   len(input.version_activities) != len(input.cases) ||
+   len(input.version_completed) != len(input.cases) ||
+   len(input.read_sha256) != len(input.cases) ||
+   len(input.read_starts) != len(input.cases) ||
+   len(input.read_ends) != len(input.cases) ||
+   len(input.read_mappings) != len(input.cases) ||
+   len(input.names) != len(input.cases) ||
+   len(input.ordinals) != len(input.cases) ||
+   len(input.scalar_types) != len(input.cases) {
+    return claim
+}
+if count != 1 {
+    claim.status = "SELECT_ONE_USE"
+    return claim
+}
+if input.cases[0] < 0 || input.use_indices[0] < 0 || input.frames[0] < 0 ||
+   input.roots[0] == "" || input.activities[0] == "" || input.names[0] == "" ||
+   input.ordinals[0] < 0 || input.scalar_types[0] == "" {
+    return claim
+}
+if input.read_mappings[0] == "MAPPED" {
+    if input.read_sha256[0] == "" || input.read_starts[0] < 0 || input.read_ends[0] <= input.read_starts[0] {
+        return claim
+    }
+} else {
+    if input.read_mappings[0] != "UNMAPPED" || input.read_sha256[0] != "" ||
+       input.read_starts[0] != 0 || input.read_ends[0] != 0 {
+        return claim
+    }
+}
+if input.resolved[0] {
+    if input.assignments[0] < 0 || input.reasons[0] != "" || !input.version_completed[0] ||
+       input.version_frames[0] != input.frames[0] || input.version_activities[0] != input.activities[0] {
+        return claim
+    }
+    claim.generation_relation_iri = "http://www.w3.org/ns/prov#wasGeneratedBy"
+    claim.use_relation_iri = "http://www.w3.org/ns/prov#used"
+    claim.status = "RECORDED_GENERATION_AND_USAGE"
+} else {
+    if input.version_frames[0] != -1 || input.version_activities[0] != "" || input.version_completed[0] {
+        return claim
+    }
+    let known_reason = input.assignments[0] == -1 && input.reasons[0] == "NO_RECORDED_ASSIGNMENT"
+    if input.assignments[0] == -2 && input.reasons[0] == "WRITE_LIMIT" && input.writes_dropped > 0 {
+        known_reason = true
+    }
+    if !known_reason { return claim }
+    claim.status = "UNRESOLVED_LOCAL_USE"
+}
+claim.case_index = input.cases[0]
+claim.use_index = input.use_indices[0]
+claim.frame = input.frames[0]
+claim.assignment_index = input.assignments[0]
+claim.root_activity_id = input.roots[0]
+claim.activity_id = input.activities[0]
+claim.version_frame = input.version_frames[0]
+claim.version_activity_id = input.version_activities[0]
+claim.variable_name = input.names[0]
+claim.variable_ordinal = input.ordinals[0]
+claim.scalar_type = input.scalar_types[0]
+claim.read_sha256 = input.read_sha256[0]
+claim.read_start = input.read_starts[0]
+claim.read_end = input.read_ends[0]
+claim.read_mapping = input.read_mappings[0]
+claim.local_records_dropped = input.frames_dropped > 0 || input.writes_dropped > 0 || input.uses_dropped > 0
+claim.reason = input.reasons[0]
+return claim
+`
