@@ -1,0 +1,213 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": false,
+          "inserted_linebreak": false,
+          "closing_brace": false,
+          "whitespace_gap": false
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": true,
+          "inserted_linebreak": false,
+          "closing_brace": false,
+          "whitespace_gap": false
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": false,
+          "inserted_linebreak": true,
+          "closing_brace": false,
+          "whitespace_gap": false
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": true,
+          "inserted_linebreak": true,
+          "closing_brace": false,
+          "whitespace_gap": false
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": false,
+          "inserted_linebreak": false,
+          "closing_brace": true,
+          "whitespace_gap": false
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": true,
+          "inserted_linebreak": false,
+          "closing_brace": true,
+          "whitespace_gap": false
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": false,
+          "inserted_linebreak": true,
+          "closing_brace": true,
+          "whitespace_gap": false
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": true,
+          "inserted_linebreak": true,
+          "closing_brace": true,
+          "whitespace_gap": false
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": false,
+          "inserted_linebreak": false,
+          "closing_brace": false,
+          "whitespace_gap": true
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": true,
+          "inserted_linebreak": false,
+          "closing_brace": false,
+          "whitespace_gap": true
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": false,
+          "inserted_linebreak": true,
+          "closing_brace": false,
+          "whitespace_gap": true
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": true,
+          "inserted_linebreak": true,
+          "closing_brace": false,
+          "whitespace_gap": true
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": false,
+          "inserted_linebreak": false,
+          "closing_brace": true,
+          "whitespace_gap": true
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": true,
+          "inserted_linebreak": false,
+          "closing_brace": true,
+          "whitespace_gap": true
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": false,
+          "inserted_linebreak": true,
+          "closing_brace": true,
+          "whitespace_gap": true
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": false
+      }
+    },
+    {
+      "inputs": {
+        "syntax/surface-record:ClassifyElse": {
+          "else_token": true,
+          "inserted_linebreak": true,
+          "closing_brace": true,
+          "whitespace_gap": true
+        }
+      },
+      "expected": {
+        "syntax/surface-record:ClassifyElse": true
+      }
+    }
+  ]
+}
