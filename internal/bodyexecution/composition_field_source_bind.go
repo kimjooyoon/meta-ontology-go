@@ -88,7 +88,7 @@ func (p *compositionFieldProjection) bindSources(file *ast.File, prior Compositi
 	for _, node := range p.nodes {
 		index := node.first
 		switch node.kind {
-		case "write", "part":
+		case "write", "part", "compound_write":
 		case "use":
 			index += len(p.sites)
 		default:
@@ -109,7 +109,7 @@ func (p *compositionFieldProjection) bindSources(file *ast.File, prior Compositi
 		site := sites[node.first]
 		binding := p.inventory.bindings[site.Binding]
 		population := populations[fieldSourceKey{key.root, key.activity, key.kind, 0}]
-		if source.origin.NativePopulation != population || source.origin.RecordID != binding.Record.ID || source.origin.FieldID != binding.Record.Fields[site.Field].ID || source.origin.Kind != site.Kind {
+		if source.origin.NativePopulation != population || source.origin.RecordID != binding.Record.ID || source.origin.FieldID != binding.Record.Fields[site.Field].ID || source.origin.Kind != site.Kind || source.origin.Operation != site.Operation {
 			missing := bodycodegen.UnmappedReadSource(sourceSHA, "TYPED_FIELD_PROJECTION_DIFFERS")
 			bindings[index].Source = bodycodegen.BodyFieldSource{Value: missing, Target: missing}
 			continue

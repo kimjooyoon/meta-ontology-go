@@ -52,7 +52,7 @@ func observedCompositionLocalEvidence(prior Composition) (o compositionObservedS
 		return o, err
 	}
 	if len(fieldBindings.bindings) > 0 {
-		o.projection, o.fields, err = observedCompositionFieldProjection(o.projection, prefix, prior)
+		o.projection, o.fields, err = observedCompositionFieldProjectionWithFaults(o.projection, prefix, prior, o.faults)
 		if err != nil {
 			return o, err
 		}

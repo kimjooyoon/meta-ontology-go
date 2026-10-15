@@ -38,7 +38,8 @@ func TestStage0SyntaxContractPreservesSemanticShape(t *testing.T) {
 	}
 }
 func TestStage0SyntaxContractDiagnosticsAreDeterministic(t *testing.T) {
-	source := "package p\nnamespace n\nactivity Pay(Order Missing) -> Order"
+	// Two identifiers now form a named input; a third still requires a comma.
+	source := "package p\nnamespace n\nactivity Pay(order Order Missing) -> Order"
 	firstFile, firstDiagnostics := ParseFile("invalid.gooo", source)
 	secondFile, secondDiagnostics := ParseFile("invalid.gooo", source)
 	if !reflect.DeepEqual(firstFile, secondFile) || !reflect.DeepEqual(firstDiagnostics, secondDiagnostics) {

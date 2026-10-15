@@ -14,7 +14,7 @@ import (
 
 type arithmeticProjectionSite struct {
 	CompositionFaultSite
-	node *ast.BinaryExpr
+	node ast.Node
 }
 
 type arithmeticProjection struct {
@@ -76,6 +76,9 @@ func arithmeticCompositionProjection(prior Composition) (string, []CompositionFa
 
 func (p *arithmeticProjection) collect(function *ast.FuncDecl, ids [2]string, info *types.Info) {
 	ast.Inspect(function.Body, func(node ast.Node) bool {
+		if assignment, ok := node.(*ast.AssignStmt); ok {
+			p.collectFieldDivision(assignment, ids, info)
+		}
 		expression, ok := node.(*ast.BinaryExpr)
 		if !ok || expression.Op != token.QUO && expression.Op != token.REM {
 			return true
@@ -103,12 +106,19 @@ func (p arithmeticProjection) render(start, end int) string {
 			continue
 		}
 		out.WriteString(p.source[cursor:site.Start])
+		if assign, ok := site.node.(*ast.AssignStmt); ok {
+			start := p.fset.Position(assign.Rhs[0].Pos()).Offset
+			out.WriteString(p.source[site.Start:start] + p.render(start, site.End))
+			cursor = site.End
+			continue
+		}
+		expression := site.node.(*ast.BinaryExpr)
 		name := p.prefix + "Quotient"
 		if site.Operator == "%" {
 			name = p.prefix + "Remainder"
 		}
-		left := p.render(p.fset.Position(site.node.X.Pos()).Offset, p.fset.Position(site.node.X.End()).Offset)
-		right := p.render(p.fset.Position(site.node.Y.Pos()).Offset, p.fset.Position(site.node.Y.End()).Offset)
+		left := p.render(p.fset.Position(expression.X.Pos()).Offset, p.fset.Position(expression.X.End()).Offset)
+		right := p.render(p.fset.Position(expression.Y.Pos()).Offset, p.fset.Position(expression.Y.End()).Offset)
 		out.WriteString(name + "(" + left + "," + right + "," + strconv.Itoa(i) + ")")
 		cursor = site.End
 	}

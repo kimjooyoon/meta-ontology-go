@@ -79,10 +79,11 @@ func (e *integerBodyEvaluator) evaluateAssignment(value *ast.AssignStmt) error {
 		return fmt.Errorf("unsupported generated assignment")
 	}
 	if field, ok := value.Lhs[0].(*ast.SelectorExpr); ok {
-		if compound {
-			return fmt.Errorf("compound assignment requires a direct existing local")
+		assigned, err := e.evaluateAssignmentValue(value)
+		if err != nil {
+			return err
 		}
-		return e.evaluateRecordUpdate(field, value.Rhs[0])
+		return e.assignRecordField(field, assigned)
 	}
 	name, ok := value.Lhs[0].(*ast.Ident)
 	if !ok {

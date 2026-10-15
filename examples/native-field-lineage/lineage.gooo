@@ -98,7 +98,7 @@ for ignored in input.completion_order {
                 if input.kinds[assignment]=="parameter" && input.input_kinds[assignment]=="root_input" {
                     if input.activities[assignment]=="" || input.ports[assignment]=="" || input.field_ids[assignment]=="" {unresolved=unresolved+1}
                 }else{
-                    if input.modes[assignment]=="scalar_rhs" {
+                    if input.modes[assignment]=="scalar_rhs" || input.modes[assignment]=="compound_update" {
                         scalar=scalar+1
                         use_row=0
                         for prior in input.use_assignments {
@@ -112,7 +112,7 @@ for ignored in input.completion_order {
                             }
                             use_row=use_row+1
                         }
-                        if input.write_drops[assignment]>0 {unresolved=unresolved+1}
+                        if input.write_drops[assignment]>0 || (input.modes[assignment]=="compound_update" && input.use_starts[assignment]==input.use_ends[assignment]) {unresolved=unresolved+1}
                     }else{
                         unresolved=unresolved+1
                         if input.modes[assignment]=="shared_rhs" {shared=shared+1}

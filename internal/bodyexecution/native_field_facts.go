@@ -30,6 +30,7 @@ type CompositionFieldFact struct {
 	InputFrom            string `json:"input_from_activity_id"`
 	SiteKind             string `json:"site_kind"`
 	DependencyMode       string `json:"dependency_mode"`
+	Operation            string `json:"operation,omitempty"`
 	AssignmentKind       string `json:"assignment_kind"`
 	Reason               string `json:"reason"`
 	ProjectionSHA256     string `json:"projection_sha256"`
@@ -52,7 +53,7 @@ func fieldFact(runtime CompositionRuntime, site CompositionFieldSite, c, event, 
 	return CompositionFieldFact{CaseIndex: c, EventIndex: event, Frame: frame, VariableOrdinal: binding.VariableOrdinal, BindingIndex: site.Binding,
 		RootActivityID: binding.RootActivityID, ActivityID: binding.ActivityID, VariableName: binding.Name,
 		RecordID: binding.Record.ID, FieldID: field.ID, FieldName: field.Name, ScalarTypeID: field.TypeID,
-		BindingKind: kind, InputPort: binding.InputPort, InputFrom: binding.InputFrom, SiteKind: site.Kind, DependencyMode: site.DependencyMode,
+		BindingKind: kind, InputPort: binding.InputPort, InputFrom: binding.InputFrom, SiteKind: site.Kind, DependencyMode: site.DependencyMode, Operation: site.Operation,
 		ProjectionSHA256: runtime.FieldProjectionSHA256, ProjectionStart: site.Start, ProjectionEnd: site.End, ProjectionExpression: site.Expression,
 		ParentAssignment: -1, AssignmentIndex: -1, Completion: -1}
 }
@@ -82,4 +83,5 @@ func fillFieldFactWrite(fact *CompositionFieldFact, write CompositionFieldWrite,
 	fact.UseStart, fact.UseEnd, fact.UsesDropped = write.UseStart, write.UseEnd, write.UsesDropped
 	fact.Completed, fact.Completion, fact.ParentAssignment = write.Completed, write.Completion, write.ParentAssignment
 	fact.AssignmentKind, fact.DependencyMode = site.Kind, site.DependencyMode
+	fact.Operation = site.Operation
 }

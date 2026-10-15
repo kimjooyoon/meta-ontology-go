@@ -75,6 +75,9 @@ func validateNativeFieldCase(writes, uses [][]int, p *compositionFieldProjection
 		if row[3] < 0 || row[4] < row[3] || row[4] > len(uses) || row[5] < 0 || (row[6] != 0 && row[6] != 1) || row[7] < -2 || row[7] >= len(writes) {
 			return fmt.Errorf("field write window, completion or parent differs")
 		}
+		if err := validateCompoundFieldReadWindow(row, uses, p); err != nil {
+			return err
+		}
 		if row[6] == 1 {
 			completed = append(completed, i)
 		} else if row[8] != -1 {

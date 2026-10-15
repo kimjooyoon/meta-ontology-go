@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"slices"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
@@ -116,10 +117,5 @@ func isActivityInput(name string, count int, declared ...string) bool {
 	if err != nil {
 		return false
 	}
-	for _, binding := range names {
-		if name == binding {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(names, name)
 }

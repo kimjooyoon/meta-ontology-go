@@ -11,6 +11,7 @@ type CompositionFieldSite struct {
 	Field          int    `json:"field"`
 	Kind           string `json:"kind"`
 	DependencyMode string `json:"dependency_mode"`
+	Operation      string `json:"operation,omitempty"`
 	Start          int    `json:"projection_start"`
 	End            int    `json:"projection_end"`
 	Expression     string `json:"projection_expression"`
@@ -22,6 +23,7 @@ type compositionFieldNode struct {
 	kind           string
 	binding, first int
 	field, mode    int
+	fault          int
 	function       int
 	parents        []int
 }
@@ -39,6 +41,7 @@ type compositionFieldFunction struct {
 
 type compositionFieldProjection struct {
 	sourceSHA256 string
+	faultPrefix  string
 	sources      *CompositionFieldSources
 	inventory    compositionFieldInventory
 	sites        []CompositionFieldSite

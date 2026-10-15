@@ -22,7 +22,7 @@ func (p bodyProjection) captureFieldOrigins(activityID, body string) map[ast.Nod
 			value, valid := capture.span(slot.Value)
 			target, targetValid := capture.span(slot.Target)
 			if valid && targetValid {
-				result[slot.Node] = BodyFieldOrigin{ActivityID: ids[fn.Name.Name], Kind: slot.Kind, BodySHA256: digest([]byte(capture.text)), Value: value, Target: target}
+				result[slot.Node] = BodyFieldOrigin{ActivityID: ids[fn.Name.Name], Kind: slot.Kind, Operation: slot.Operation, BodySHA256: digest([]byte(capture.text)), Value: value, Target: target}
 			}
 		})
 	}

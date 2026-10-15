@@ -148,6 +148,8 @@ Gooo는 기존 `InspectInputs`로 선언 위치를 확인하고 이름 열을 �
 [첫 실행 기록](../../docs/observations/named-input-reader/observations.json)에
 실패한 초안의 진단과 수정 후 관찰을 함께 보관합니다.
 
-이번 구현은 문자열을 이어 설명을 만듭니다. 컬렉션 `append`와 레코드 필드의
-복합 대입은 아직 지원되지 않아, `result.labels = result.labels + ...`로
-작성했습니다. 현재 범위는 1~16개 입력, 내보내기 32KiB입니다.
+이번 구현은 `result.labels = result.labels + ...`로 문자열을 이어 설명을
+만듭니다. 이후 추가된 [필드 갱신](../compound-updates/README.md)은 문자열
+필드의 `+=`도 지원합니다. 이 판독기의 보관된 관찰은 기존 표기의 소스에
+연결돼 있습니다. 컬렉션 `append`는 후속 항목입니다.
+현재 범위는 1~16개 입력, 내보내기 32KiB입니다.

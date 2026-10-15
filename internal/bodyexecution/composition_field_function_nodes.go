@@ -16,26 +16,13 @@ func (p *compositionFieldProjection) collectFunctionWrites(fn *ast.FuncDecl, cur
 				p.collectLocalRecordWrite(n, value, binding, objects, functions, fset, source)
 			}
 		}
-		if assign, ok := n.(*ast.AssignStmt); ok && len(assign.Lhs) == 1 && len(assign.Rhs) == 1 {
-			if id, ok := assign.Lhs[0].(*ast.Ident); ok && id.Name == "_" {
+		if assign, ok := n.(*ast.AssignStmt); ok {
+			if id, ok := singleAssignmentTarget(assign).(*ast.Ident); ok && id.Name == "_" {
 				return false
 			}
-			if selector, ok := assign.Lhs[0].(*ast.SelectorExpr); ok {
-				if id, ok := selector.X.(*ast.Ident); ok {
-					skipped[id] = true
-					if binding, found := objects[id.Obj]; found {
-						for field, descriptor := range p.inventory.bindings[binding].Record.Fields {
-							if descriptor.GoName == selector.Sel.Name {
-								first := len(p.sites)
-								start, end := fset.Position(assign.Rhs[0].Pos()).Offset, fset.Position(assign.Rhs[0].End()).Offset
-								p.sites = append(p.sites, CompositionFieldSite{Binding: binding, Field: field, Kind: "field_assignment", DependencyMode: "scalar_rhs", Start: start, End: end, Expression: source[start:end]})
-								p.addNode(assign, assign.Rhs[0], "write", binding, first, field, fset)
-							}
-						}
-					}
-				}
-			}
+			p.collectFieldAssignment(assign, skipped, objects, fset, source)
 		}
+
 		if ret, ok := n.(*ast.ReturnStmt); ok && current.recordOut && !nestedReturns[ret] && len(ret.Results) == 1 {
 			if binding, found := current.returns[ret]; found {
 				p.collectReturnWrite(ret, binding, objects, functions, fset, source)
@@ -62,7 +49,7 @@ func (p *compositionFieldProjection) collectFunctionReads(fn *ast.FuncDecl, skip
 			}
 		}
 		if selector, ok := n.(*ast.SelectorExpr); ok {
-			if id, ok := selector.X.(*ast.Ident); ok {
+			if id, ok := ast.Unparen(selector.X).(*ast.Ident); ok {
 				if binding, found := objects[id.Obj]; found {
 					if !skipped[id] {
 						for field, descriptor := range p.inventory.bindings[binding].Record.Fields {

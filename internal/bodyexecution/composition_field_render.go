@@ -17,6 +17,14 @@ type compositionFieldRenderer struct {
 }
 
 func observedCompositionFieldProjection(source, prefix string, prior Composition) (string, *compositionFieldProjection, error) {
+	_, faults, err := arithmeticCompositionProjection(prior)
+	if err != nil {
+		return "", nil, err
+	}
+	return observedCompositionFieldProjectionWithFaults(source, prefix, prior, faults)
+}
+
+func observedCompositionFieldProjectionWithFaults(source, prefix string, prior Composition, faults []CompositionFaultSite) (string, *compositionFieldProjection, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "observed-fields.go", source, 0)
 	if err != nil {
@@ -24,6 +32,10 @@ func observedCompositionFieldProjection(source, prefix string, prior Composition
 	}
 	plan, err := buildCompositionFieldProjection(file, fset, source, prior, prefix)
 	if err != nil {
+		return "", nil, err
+	}
+	plan.faultPrefix = arithmeticObservationPrefix(prior.Source)
+	if err := plan.bindFieldFaults(faults); err != nil {
 		return "", nil, err
 	}
 	slices.SortStableFunc(plan.nodes, func(a, b compositionFieldNode) int {
@@ -37,7 +49,7 @@ func observedCompositionFieldProjection(source, prefix string, prior Composition
 			switch s {
 			case "scope":
 				return 0
-			case "write", "part", "record_write", "return", "return_write":
+			case "write", "part", "compound_write", "record_write", "return", "return_write":
 				return 1
 			case "call":
 				return 2
@@ -94,6 +106,8 @@ func (r compositionFieldRenderer) node(n compositionFieldNode) string {
 		return r.recordWrite(n)
 	case "write", "part":
 		return r.scalarWrite(n)
+	case "compound_write":
+		return r.compoundWrite(n)
 	case "use":
 		return r.call("FieldUse", strconv.Itoa(n.first), frame, r.slot(n.binding)+"["+strconv.Itoa(n.field)+"]", r.source[n.start:n.end])
 	case "record_use":
@@ -136,6 +150,15 @@ func (r compositionFieldRenderer) recordWrite(n compositionFieldNode) string {
 }
 
 func (r compositionFieldRenderer) scalarWrite(n compositionFieldNode) string {
+	value := r.scalarValue(n, r.render(n.start, n.end, n.node))
+	if n.kind == "part" {
+		return r.call("FieldPart", strconv.Itoa(n.first), value)
+	}
+	return r.call("FieldAssign", strconv.Itoa(n.first), r.prefix+"FieldScope",
+		"&"+r.slot(n.binding)+"["+strconv.Itoa(n.field)+"]", value)
+}
+
+func (r compositionFieldRenderer) scalarValue(n compositionFieldNode, expression string) string {
 	typeName := "int64"
 	switch r.plan.inventory.bindings[n.binding].Record.Fields[n.field].TypeID {
 	case "urn:gooo:type:boolean":
@@ -143,12 +166,7 @@ func (r compositionFieldRenderer) scalarWrite(n compositionFieldNode) string {
 	case "urn:gooo:type:string":
 		typeName = "string"
 	}
-	value := "func() " + typeName + " {return " + r.render(n.start, n.end, n.node) + "}"
-	if n.kind == "part" {
-		return r.call("FieldPart", strconv.Itoa(n.first), value)
-	}
-	return r.call("FieldAssign", strconv.Itoa(n.first), r.prefix+"FieldScope",
-		"&"+r.slot(n.binding)+"["+strconv.Itoa(n.field)+"]", value)
+	return "func() " + typeName + " {return " + expression + "}"
 }
 
 func (r compositionFieldRenderer) helperCall(n compositionFieldNode) string {

@@ -2,6 +2,7 @@ package bodyexecution
 
 import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/inputbinding"
 	"go/ast"
 	"go/types"
 )
@@ -17,7 +18,7 @@ func (r *compositionFieldInventory) addParameters(fn *ast.FuncDecl, ids [2]strin
 				objects[info.ObjectOf(name)] = len(r.bindings)
 				kind, from := fieldInputKind(prior, ids, port)
 				r.bindings = append(r.bindings, CompositionFieldBinding{RootActivityID: ids[0], ActivityID: ids[1],
-					VariableOrdinal: key.Ordinal, Name: name.Name, InputPort: name.Name, InputKind: kind, InputFrom: from, Record: record})
+					VariableOrdinal: key.Ordinal, Name: name.Name, InputPort: inputbinding.PositionName(fn.Type.Params.NumFields(), port), InputKind: kind, InputFrom: from, Record: record})
 			}
 			port++
 		}

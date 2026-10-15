@@ -122,7 +122,7 @@ for ignored in input.completion_order {
      if input.ports[assignment]=="" {unresolved=unresolved+1}
     }else{
      if input.modes[assignment]=="literal" {literals=literals+1}else{
-      if input.modes[assignment]=="scalar_rhs" || input.modes[assignment]=="collection_rhs" {
+      if input.modes[assignment]=="scalar_rhs" || input.modes[assignment]=="compound_update" || input.modes[assignment]=="collection_rhs" {
        if input.modes[assignment]=="collection_rhs" {collections=collections+1;unresolved=unresolved+1}else{scalar=scalar+1}
        use_row=0
        for prior in input.use_assignments {
@@ -136,7 +136,7 @@ for ignored in input.completion_order {
         }
         use_row=use_row+1
        }
-       if input.write_drops[assignment]>0 || (input.modes[assignment]=="scalar_rhs" && input.use_starts[assignment]==input.use_ends[assignment] && input.other_starts[assignment]==input.other_ends[assignment]) {unresolved=unresolved+1}
+       if input.write_drops[assignment]>0 || ((input.modes[assignment]=="scalar_rhs" || input.modes[assignment]=="compound_update") && input.use_starts[assignment]==input.use_ends[assignment] && input.other_starts[assignment]==input.other_ends[assignment]) {unresolved=unresolved+1}
       }else{
        unresolved=unresolved+1
        if input.modes[assignment]=="shared_rhs" {shared=shared+1}
