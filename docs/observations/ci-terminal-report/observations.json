@@ -1,0 +1,69 @@
+{
+  "decision": "DIAGNOSTIC_ONLY_POST_SOURCE_OBSERVER_FAILURE",
+  "merge_authorized": false,
+  "pr": 1581,
+  "head": "02ecfb6773e5d4aa93d5238e25ecd9c7dcf882ab",
+  "base": "56f2d701f1b8fd9ed0d5349017f4faa322ebed20",
+  "original_run": 38677700320,
+  "attempt": 1,
+  "check_suite": 104809989305,
+  "canonical_checks": {
+    "gofmt": 116235571370,
+    "go vet": 116235571322,
+    "go test": 116235571291,
+    "go test -race": 116235571399,
+    "Semantic conformance": 116235571335,
+    "CI policy": 116241999819
+  },
+  "source_workflows_succeeded": 35,
+  "proof_bundle_digest": "afc8d6b9473554687742925abaa230bf240ed0af81d3e86543f05e8d80f85670",
+  "proof_artifact_digest": "sha256:e597f8d74a7678ca42d2bbf76c365d7a817e93f476fb547989f0239bb6febcd7",
+  "proof_artifact_id": 11948531428,
+  "native_decision": "CONFORMANT",
+  "head_and_body_unchanged": true,
+  "source_original_workflows": 36,
+  "original_workflow_conclusion": "failure",
+  "terminal_failure": {
+    "job": "CI failure summary",
+    "job_id": 116246258870,
+    "source_started_at": "2026-10-15T03:44:59Z",
+    "materialize_started_at": "2026-10-15T04:24:58Z",
+    "exit_code": 137,
+    "failure_manifest_error": "context deadline exceeded",
+    "budget_ms": 2400000,
+    "scope": "post-source failure reporter ran after six canonical checks and proof bundle passed"
+  },
+  "correction": "All-success runs retain the original CI proof and provenance receipt; failure reporting is admitted for any non-successful dependency. Shared source budget, canonical obligations and failure manifest semantics remain unchanged.",
+  "artifacts": [
+    {
+      "path": "original-proof.zip",
+      "bytes": 11458,
+      "sha256": "e597f8d74a7678ca42d2bbf76c365d7a817e93f476fb547989f0239bb6febcd7"
+    },
+    {
+      "path": "failure-summary-original.log.gz",
+      "bytes": 35713,
+      "sha256": "1a396e1ae73464326344447b3e90a680723eddcd4c9fe65fe1af12c13914c836"
+    }
+  ],
+  "fresh_admission_cohort": {
+    "exit_code": 0,
+    "wall_seconds": 0.31418999999999997,
+    "source_state": "UNBOUND_LOCAL_SOURCE",
+    "parent_revision": "b377c8d89527f90ed940aebf5c215fbb93291299",
+    "source_sha256": {
+      ".github/workflows/ci.yml": "014bfd62cd79fb0628a4ae8ba858ad8aa6350348ae57480c77fc46a51dbd96a7",
+      "scripts/ci-proof/failure_capture_test.js": "1a8100df125d103e12fefc1692b4d8fab83735cc63826fd9e3f5cda6a5baf022",
+      "docs/ci-work-domain.ko.md": "b523e7b30c4a12bb8137e5c403f8945180ce765db338daf026d949623b5c9aad"
+    },
+    "scope": "new admission predicates; four successful routes and all seven dependencies across failure/skipped/cancelled/unknown with unchanged workflow cancellation and route guards; prior capture tests filtered out",
+    "native_program_executions": 0,
+    "model_calls": 0
+  },
+  "fresh_admission_archive": {
+    "path": "admission-first.tar.gz",
+    "bytes": 27461,
+    "sha256": "655d5236daf2e2cf0ae9a08a6a16df0f9139607a180f74256ab0b26edc26620f"
+  },
+  "source_state": "Original PR source is exact head; subsequent local admission change is UNBOUND_LOCAL_SOURCE."
+}

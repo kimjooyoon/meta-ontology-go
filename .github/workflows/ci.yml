@@ -1305,7 +1305,14 @@ jobs:
   failure-report:
     name: CI failure summary
     needs: [format, vet, test, race, semantic, policy, proof]
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: >-
+      ${{ !cancelled() &&
+          (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' ||
+           github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
+          !(needs.format.result == 'success' && needs.vet.result == 'success' &&
+            needs.test.result == 'success' && needs.race.result == 'success' &&
+            needs.semantic.result == 'success' && needs.policy.result == 'success' &&
+            needs.proof.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:

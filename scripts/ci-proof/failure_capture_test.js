@@ -143,3 +143,39 @@ test('six successful jobs still produce only a no-failure closure', async () => 
   assert.equal(input, null);
   assert.deepEqual(JSON.parse(outputs.get('ci-closure-input.json')).terminal_failures, []);
 });
+
+function failureSummaryAdmission() {
+  const job = source.split('  failure-report:\n')[1].split('    runs-on:')[0];
+  const dependencies = job.match(/needs: \[([^\]]+)\]/)[1].split(',').map(value => value.trim());
+  const expression = job.match(/\$\{\{([\s\S]*?)\}\}/)[1];
+  const evaluate = new Function('needs', 'github', 'cancelled', `return (${expression});`);
+  return {dependencies, evaluate};
+}
+
+test('failure-summary admission uses the positive proof on successful runs', () => {
+  const {dependencies, evaluate} = failureSummaryAdmission();
+  assert.deepEqual(dependencies, ['format', 'vet', 'test', 'race', 'semantic', 'policy', 'proof']);
+  const needs = Object.fromEntries(dependencies.map(name => [name, {result: 'success'}]));
+  for (const github of [
+    {event_name: 'pull_request', ref: 'refs/pull/1581/merge'},
+    {event_name: 'workflow_dispatch', ref: 'refs/heads/agent/current-source'},
+    {event_name: 'push', ref: 'refs/heads/dev'},
+    {event_name: 'push', ref: 'refs/heads/main'},
+  ]) {
+    assert.equal(evaluate(needs, github, () => false), false);
+  }
+});
+
+test('failure-summary admission retains every non-successful dependency', () => {
+  const {dependencies, evaluate} = failureSummaryAdmission();
+  const github = {event_name: 'pull_request', ref: 'refs/pull/1581/merge'};
+  for (const name of dependencies) {
+    for (const result of ['failure', 'skipped', 'cancelled', '']) {
+      const needs = Object.fromEntries(dependencies.map(key => [key, {result: 'success'}]));
+      needs[name].result = result;
+      assert.equal(evaluate(needs, github, () => false), true, `${name}: ${result}`);
+      assert.equal(evaluate(needs, github, () => true), false, 'workflow cancellation retains its existing guard');
+      assert.equal(evaluate(needs, {event_name: 'push', ref: 'refs/heads/agent/current-source'}, () => false), false);
+    }
+  }
+});
