@@ -63,7 +63,7 @@ jobs:
             printf 'GOOO_CI_STARTED_AT=%s\n' "$started"
             printf 'GOOO_CI_PREP_STARTED_AT=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           } >> "$GITHUB_ENV"
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -108,7 +108,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -327,7 +327,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -367,7 +367,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -407,7 +407,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -447,7 +447,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -494,7 +494,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -855,7 +855,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1015,7 +1015,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1371,7 +1371,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1698,7 +1698,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1832,7 +1832,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: true
@@ -1877,7 +1877,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
