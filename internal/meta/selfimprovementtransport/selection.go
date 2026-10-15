@@ -31,7 +31,7 @@ func SelectTransportMetadata(runRaw, artifactsRaw []byte,
 	return TransportMetadata{
 		Schema: MetadataSchema, Repository: input.Repository,
 		ProducerRunID: run.ID, ProducerRunAttempt: run.RunAttempt,
-		OrchestrationHeadSHA: run.HeadSHA, WorkflowPath: run.Path,
+		OrchestrationHeadSHA: run.HeadSHA, WorkflowPath: run.Path, ProducerEvent: run.Event,
 		ArtifactID: artifact.ID, ArtifactName: artifact.Name,
 		ArtifactDigest: artifact.Digest, ArtifactSizeBytes: artifact.SizeInBytes,
 		ArtifactInstanceCount: instances, ArtifactTypeCount: types,

@@ -55,7 +55,7 @@ func fixture(t *testing.T) (fstest.MapFS, []byte, []byte, TransportMetadata, str
 	}
 	producerRaw, _ := json.Marshal(producer)
 	archiveDigest := digestBytes([]byte("archive"))
-	metadata := TransportMetadata{Schema: MetadataSchema, Repository: "kimjooyoon/meta-ontology-go", ProducerRunID: 101, ProducerRunAttempt: 2, OrchestrationHeadSHA: sha, WorkflowPath: ".github/workflows/observation.yml", ArtifactID: 202, ArtifactName: ArtifactName, ArtifactDigest: archiveDigest, ArtifactSizeBytes: 4096, ArtifactInstanceCount: 1, ArtifactTypeCount: 1, ProducerDeclarationCount: 1, ProducerDeclarationDigest: digestBytes(producerRaw), ProducerSubjectSHA: sha, ProducerPayloadCount: 1, ProducerPayloadName: "first.json", ProducerPayloadDigest: digestBytes(observation), ProducerPayloadBytes: len(observation)}
+	metadata := TransportMetadata{Schema: MetadataSchema, Repository: "kimjooyoon/meta-ontology-go", ProducerRunID: 101, ProducerRunAttempt: 2, OrchestrationHeadSHA: sha, ProducerEvent: "pull_request", WorkflowPath: ".github/workflows/observation.yml", ArtifactID: 202, ArtifactName: ArtifactName, ArtifactDigest: archiveDigest, ArtifactSizeBytes: 4096, ArtifactInstanceCount: 1, ArtifactTypeCount: 1, ProducerDeclarationCount: 1, ProducerDeclarationDigest: digestBytes(producerRaw), ProducerSubjectSHA: sha, ProducerPayloadCount: 1, ProducerPayloadName: "first.json", ProducerPayloadDigest: digestBytes(observation), ProducerPayloadBytes: len(observation)}
 	return repository, observation, producerRaw, metadata, archiveDigest
 }
 

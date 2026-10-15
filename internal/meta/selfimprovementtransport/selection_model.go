@@ -8,6 +8,7 @@ type ArtifactSelectionInput struct {
 }
 
 type workflowRunAPI struct {
+	Event      string `json:"event"`
 	ID         int64  `json:"id"`
 	RunAttempt int    `json:"run_attempt"`
 	HeadSHA    string `json:"head_sha"`
