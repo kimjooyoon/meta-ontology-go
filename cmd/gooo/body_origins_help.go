@@ -53,6 +53,11 @@ Use --inputs-shape input-declaration-columns to export original signature positi
 type IDs and byte ranges for source/control:InspectInputs. Record field nodes share
 one signature position. The bound is 16 inputs and 32 KiB; --field and
 --include-control do not apply. Text output also shows signature line/column locations.
+Use --inputs-shape named-input-declaration-columns to also export authored names
+and their separate byte ranges (v2). source/control:DescribeInputs in
+examples/source-control-reader/named-inputs.workspace.json reads these facts in
+Gooo, reports name presence, and builds readable signature labels. Empty names
+retain positional labels. Export binds the facts to the supplied source bytes.
 See examples/fill-candidate-origins/README.md and
 examples/derived-candidate-origins/README.md.
 `

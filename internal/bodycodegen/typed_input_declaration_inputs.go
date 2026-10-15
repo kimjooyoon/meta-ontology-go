@@ -23,14 +23,18 @@ type InputDeclarationColumns struct {
 }
 
 func TypedInputDeclarationInputs(r TypedValueOrigins, target string) ([]byte, error) {
-	pkg, activity, ok := strings.Cut(target, ":")
-	if !ok || pkg == "" || activity == "" || strings.ContainsAny(target, " \t\r\n") || strings.Contains(activity, ":") {
-		return nil, fmt.Errorf("consumer input needs package/path:Activity")
-	}
 	rows, count, err := inputDeclarationRows(r)
 	if err != nil {
 		return nil, err
 	}
+	c, err := inputColumnsFromRows(r, rows, count)
+	if err != nil {
+		return nil, err
+	}
+	return marshalDeclarationInputs(target, c)
+}
+
+func inputColumnsFromRows(r TypedValueOrigins, rows [16]*TypedInputDeclaration, count int) (InputDeclarationColumns, error) {
 	c := InputDeclarationColumns{Schema: "gooo/input-declaration-columns/v1", Scope: "activity_signature",
 		SourceSHA256: r.SourceSHA256, ActivityID: r.ActivityID, Count: count,
 		Indices: make([]int, count), Ports: make([]string, count), TypeNames: make([]string, count),
@@ -38,15 +42,23 @@ func TypedInputDeclarationInputs(r TypedValueOrigins, target string) ([]byte, er
 	for i := range count {
 		d := rows[i]
 		if d == nil {
-			return nil, fmt.Errorf("input declaration positions are not contiguous")
+			return c, fmt.Errorf("input declaration positions are not contiguous")
 		}
 		c.Indices[i], c.Ports[i], c.TypeNames[i], c.TypeIDs[i] = i, d.Port, d.TypeName, d.TypeID
 		c.Starts[i], c.Ends[i] = d.Start, d.End
 	}
+	return c, nil
+}
+
+func marshalDeclarationInputs(target string, columns any) ([]byte, error) {
+	pkg, activity, ok := strings.Cut(target, ":")
+	if !ok || pkg == "" || activity == "" || strings.ContainsAny(target, " \t\r\n") || strings.Contains(activity, ":") {
+		return nil, fmt.Errorf("consumer input needs package/path:Activity")
+	}
 	output := struct {
-		Schema string                               `json:"schema"`
-		Inputs []map[string]InputDeclarationColumns `json:"inputs"`
-	}{Schema: "gooo/body-composition-inputs/v1", Inputs: []map[string]InputDeclarationColumns{{target: c}}}
+		Schema string           `json:"schema"`
+		Inputs []map[string]any `json:"inputs"`
+	}{Schema: "gooo/body-composition-inputs/v1", Inputs: []map[string]any{{target: columns}}}
 	raw, err := json.Marshal(output)
 	if err == nil && len(raw) > 32<<10 {
 		err = fmt.Errorf("input declarations exceed 32 KiB")

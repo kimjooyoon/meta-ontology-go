@@ -59,3 +59,12 @@ activity Difference(minuend Integer, subtrahend Integer) -> Integer
 [실행 예제](../../examples/named-inputs/README.md)와
 [첫 관찰 기록](../observations/named-inputs/observations.json)을 제공합니다.
 이 기능은 개발 소스의 구현이며, 배포된 릴리스 전체의 지원을 주장하지 않습니다.
+
+## 선언 사실을 Gooo에서 사용하기
+
+`body-origins --inputs-shape named-input-declaration-columns`는 작성한 이름,
+타입, 입력 순서와 각각의 원본 바이트 범위를 Gooo 프로그램의 입력으로
+내보냅니다. [DescribeInputs 예제](../../examples/source-control-reader/README.md#gooo로-입력-설명-만들기)는
+이 사실로 사람이 읽는 입력 설명과 이름의 존재 비율을 조립합니다.
+기존 `input-declaration-columns`의 11개 열은 v1으로 유지하고,
+이름을 포함하는 14개 열은 v2로 구분합니다.

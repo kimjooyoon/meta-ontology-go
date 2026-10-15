@@ -1,25 +1,18 @@
 package extractor
 
-import (
-	"go/parser"
-	"go/token"
-	"testing"
-)
+import "testing"
 
 func TestInputDeclarationReaderExtractionFirst(t *testing.T) {
-	result, err := ExtractWithResult("../../../..", "cmd/gooo/input_declaration_observations_test.go")
+	targets := []string{
+		"cmd/gooo#TestInputDeclarationSavedSourceBinding",
+		"cmd/gooo#readInputDeclarationObservation",
+		"cmd/gooo#readInputDeclarationArchive",
+	}
+	// Repository projection may move these declarations to helper files.
+	// Observe each declaration's actual rendered capacity in either layout.
+	observed, err := collectNamedCapacityFiles("../../../..", targets, true)
 	if err != nil {
-		t.Fatal("source observation reader cannot be projected", err)
+		t.Fatal(err)
 	}
-	if len(result.Generated) < 2 {
-		t.Fatal("expected complete-declaration partitions")
-	}
-	for name, raw := range result.Generated {
-		if physicalLines(raw) > 75 {
-			t.Fatal("partition exceeds current source profile", name)
-		}
-		if _, err := parser.ParseFile(token.NewFileSet(), name, raw, parser.AllErrors); err != nil {
-			t.Fatal(name, err)
-		}
-	}
+	requireObservedCapacities(t, targets, observed)
 }

@@ -19,6 +19,10 @@ type namedCapacityObservation struct {
 // A logical source split moves declarations between files in one package.
 // Package/receiver/declaration identity keeps the required subject set intact.
 func collectNamedCapacities(root string, targets []string) (map[string]namedCapacityObservation, error) {
+	return collectNamedCapacityFiles(root, targets, false)
+}
+
+func collectNamedCapacityFiles(root string, targets []string, includeTests bool) (map[string]namedCapacityObservation, error) {
 	wanted, packages := map[string]bool{}, map[string]bool{}
 	for _, target := range targets {
 		pkg, _, ok := strings.Cut(target, "#")
@@ -34,7 +38,7 @@ func collectNamedCapacities(root string, targets []string) (map[string]namedCapa
 			return nil, err
 		}
 		for _, path := range paths {
-			if strings.HasSuffix(path, "_test.go") {
+			if !includeTests && strings.HasSuffix(path, "_test.go") {
 				continue
 			}
 			if err := collectNamedCapacityFile(path, pkg, wanted, found); err != nil {
@@ -91,6 +95,11 @@ func requireNamedCapacities(t *testing.T, root string, targets []string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	requireObservedCapacities(t, targets, observed)
+}
+
+func requireObservedCapacities(t *testing.T, targets []string, observed map[string]namedCapacityObservation) {
+	t.Helper()
 	for _, target := range targets {
 		value := observed[target]
 		result := value.capacity

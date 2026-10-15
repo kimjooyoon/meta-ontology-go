@@ -86,8 +86,8 @@ gooo package execute --inputs /tmp/gooo-signature-inputs.json \
 원래 시그니처 위치를 표시할 수 있습니다.
 
 현재 범위는 입력 1~16개, 내보내기 32KiB입니다. 위치는 이번 소스 안의
-순서를 뜻합니다. 작성자가 붙이는 입력 이름과 안정적인 역할 ID는
-후속 언어 설계에서 다룹니다. 입력 칸을 바꾸면 그 위치의 의미도 바뀝니다.
+순서를 뜻합니다. 작성자가 붙인 입력 이름도 아래 v2 경로에서 읽을 수 있습니다.
+안정적인 역할 ID는 후속 설계 항목입니다. 입력 칸을 바꾸면 그 위치의 의미도 바뀝니다.
 직접 만든 열의 해시는 받은 식별자로 보관하므로, 파일과 연결하려면
 위의 소스 조회 명령으로 입력을 만듭니다.
 
@@ -104,3 +104,50 @@ gooo package execute --inputs /tmp/gooo-signature-inputs.json \
 별도의 지원 제약이 있습니다. [현재 소스의 관찰](../../docs/observations/input-declarations/collection-observations.json)에서도
 같은 16개 사례가 모두 통과했고, 보관한 이전 수정본과 출력이 일치했습니다.
 두 수정본에서 확인한 사례의 분모는 각각 16개입니다.
+
+## Gooo로 입력 설명 만들기
+
+`Difference(minuend Integer, subtrahend Integer)`처럼 이름을 붙인 입력은
+타입이 같아도 본문을 읽기 쉽습니다. `DescribeInputs`는 이 선언 사실을 받아
+각 입력의 설명을 Gooo 코드로 조립합니다.
+
+```sh
+gooo body-origins --activity Difference \
+  --inputs-for source/control:DescribeInputs \
+  --inputs-shape named-input-declaration-columns \
+  examples/named-inputs/main.gooo > /tmp/gooo-named-inputs.json
+gooo package execute --json --inputs /tmp/gooo-named-inputs.json \
+  examples/source-control-reader/named-inputs.workspace.json
+```
+
+결과의 `labels`에는 다음 두 줄이 담깁니다.
+
+```text
+minuend: Integer [input0]
+subtrahend: Integer [input1]
+```
+
+Go가 원본 파일과 이름·타입의 바이트 범위를 확인해 14개 열로 전달합니다.
+Gooo는 기존 `InspectInputs`로 선언 위치를 확인하고 이름 열을 읽습니다.
+이름이 없는 자리는 `input` 또는 `inputN`으로 표시합니다. 전체 입력 수,
+이름을 붙인 입력 수와 `named_bps`도 반환합니다. `named_bps`는
+`이름 있는 입력 수 × 10,000 ÷ 전체 입력 수`의 정수값입니다.
+2개 중 1개면 5,000, 3개 중 2개면 6,666입니다.
+
+이 지표로 문서화할 자리를 찾을 수 있습니다. 이름이 얼마나 유용한지,
+프로그램이 얼마나 완성됐는지는 이 수치로 판단하지 않습니다.
+같은 타입의 입력도 각 위치를 유지하며, 표시 이름에 PROV 역할 ID를
+자동 부여하지 않습니다. 원본 해시와 활동 ID를 결과에 그대로 남깁니다.
+
+새 유한 사례는 `named-inputs.cases.json`에 있습니다. 첫 관찰에서
+16/16이 맞았습니다. 실제 소스에서 얻은 입력 1개와 통제 사례 15개로,
+한글 이름·일부 이름 생략·16개 경계·잘못된 위치·중복 이름 등을 다룹니다.
+컴파일러의 새 내보내기 경로로 `Credit`과 `Net`을 읽은 별도 관찰도
+2/2가 맞았습니다. 이 두 건은 기대값 없이 실행한 뒤 외부에서 비교했으므로
+유한 테스트 분모 16에 더하지 않습니다. 모델 호출은 모두 0회입니다.
+[첫 실행 기록](../../docs/observations/named-input-reader/observations.json)에
+실패한 초안의 진단과 수정 후 관찰을 함께 보관합니다.
+
+이번 구현은 문자열을 이어 설명을 만듭니다. 컬렉션 `append`와 레코드 필드의
+복합 대입은 아직 지원되지 않아, `result.labels = result.labels + ...`로
+작성했습니다. 현재 범위는 1~16개 입력, 내보내기 32KiB입니다.
