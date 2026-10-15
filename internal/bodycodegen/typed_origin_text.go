@@ -57,6 +57,9 @@ func writeOriginTextNode(w io.Writer, report TypedValueOrigins, node RecordFlowN
 			return err
 		}
 	}
+	if err := writeOriginTextFacts(w, node); err != nil {
+		return err
+	}
 	if err := writeOriginTextLocation(w, location, source); err != nil {
 		return err
 	}
@@ -76,6 +79,23 @@ func writeOriginTextNode(w io.Writer, report TypedValueOrigins, node RecordFlowN
 		if _, err := fmt.Fprintf(w, "  condition <- #%d\n", node.Condition); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func writeOriginTextFacts(w io.Writer, node RecordFlowNode) error {
+	if node.Operator != "" {
+		label := "operator"
+		if node.Kind == "guard" && (node.Operator == "true" || node.Operator == "false") {
+			label = "when"
+		}
+		if _, err := fmt.Fprintf(w, " %s=%s", label, strconv.Quote(node.Operator)); err != nil {
+			return err
+		}
+	}
+	if node.KnownTruth != "" {
+		_, err := fmt.Fprintf(w, " constant-condition=%s", strconv.Quote(node.KnownTruth))
+		return err
 	}
 	return nil
 }
