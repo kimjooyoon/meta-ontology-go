@@ -26,7 +26,7 @@ Gooo는 계산의 의미, 허용한 구현 선택, 그 결과의 출처를 함�
 | 반환값까지 이어지는 소스 | [읽기 쉬운 기원 조회](language/readable-source-origins.ko.md) |
 | 실행 기록을 해석하는 메타프로그램 | [기원 읽기 프로젝트](language/project-starters.md#start-an-origin-reader) |
 | 선언·호출·값 버전을 구분하는 메타프로그램 | [지역 값 버전과 생성 관계](../examples/local-version-origins/README.md) |
-| 값 버전의 생성·읽기와 짧은 설명 | [기록된 사용 관계](../examples/recorded-use-origins/README.md) |
+| 값 버전의 생성·읽기, 짧은 설명과 RDF 교환 | [기록된 사용 관계](../examples/recorded-use-origins/README.md) |
 | 받은 바이트와 해석한 문자열의 기원 | [Text 입력 규칙](../examples/text-input-origins/README.md) |
 
 같은 정수 타입이라도 역할을 이름과 ID로 구분할 수 있습니다. 다음 계산은
@@ -111,6 +111,12 @@ Gooo의 가치는 개념의 출처가 구현과 실행을 거쳐서도 읽힌다
 Gooo 규칙으로 작성했습니다. 이름과 의미 ID가 있는 레코드로 토큰 관찰값을
 구분하고, Go 호스트와의 연결도 Gooo에서 조립합니다. 표현을 더 편하게 쓰면서
 원래 조건의 위치를 유지하는 작은 범위부터 발전시키고 있습니다.
+
+[읽기 사건의 RDF 뷰](../examples/recorded-use-origins/README.md#읽기-사건을-rdf로-내보내기)는
+Gooo가 기록을 확인하고 호출·읽기·값 버전의 관계를 직접 구성하는 예제입니다.
+그 결과를 표준 RDF 도구로 읽을 수 있게 하여, 내부 기록을 외부에서 활용하는
+입구를 만듭니다. 원래 문서의 해시와 좌표가 각 이름에 남고, Gooo 조건식과
+출력 문장을 함께 읽으며 의미를 확인할 수 있습니다.
 
 ## 다음 개발의 우선순위
 

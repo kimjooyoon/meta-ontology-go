@@ -205,3 +205,144 @@ if claim.status == "RECORDED_GENERATION_AND_USAGE" {
 }
 return "이 판정 상태의 설명이 아직 정의되지 않았습니다."
 `
+
+entity Integer id "urn:gooo:type:integer"
+entity Boolean id "urn:gooo:type:boolean"
+
+# Coordinates remain decimal, including the signed Integer boundary.
+activity Decimal(Integer) -> Text id "urn:gooo:recorded-use:decimal" computes `
+let value = input
+let negative = value < 0
+if value > 0 { value = -value }
+let digits = "0123456789"
+let result = ""
+for let step = 0; step < 19; step = step + 1 {
+    let digit = -(value % 10)
+    result = digits[digit:digit+1] + result
+    value = value / 10
+    if value == 0 {
+        if negative { return "-" + result }
+        return result
+    }
+}
+return ""
+`
+
+activity IsSHA256(Text) -> Boolean id "urn:gooo:recorded-use:sha256-shape" computes `
+if len(input) != 71 || input[:7] != "sha256:" { return false }
+for let index = 0; index < 64; index = index + 1 {
+    let code = int64(input[index+7])
+    if code < 48 || code > 57 {
+        if code < 97 || code > 102 { return false }
+    }
+}
+return true
+`
+
+# N-Triples quoted text, bounded so one emitted line fits the Text contract.
+activity RDFLiteral(Text) -> Text id "urn:gooo:recorded-use:rdf-literal" computes `
+if len(input) > 128 { return "" }
+let result = "\""
+let hex = "0123456789ABCDEF"
+for let index = 0; index < 128; index = index + 1 {
+    if index >= int64(len(input)) { return result + "\"" }
+    let code = int64(input[index])
+    if code == 34 { result = result + "\\\"" } else {
+        if code == 92 { result = result + "\\\\" } else {
+            if code < 32 || code == 127 {
+                let high = code / 16
+                let low = code % 16
+                result = result + "\\u00" + hex[high:high+1] + hex[low:low+1]
+            } else { result = result + input[index:index+1] }
+        }
+    }
+}
+return result + "\""
+`
+
+entity RDFUsage id "urn:gooo:recorded-use:rdf-usage" fields {
+    field schema id "urn:gooo:recorded-use:rdf:schema" type string required one
+    field scope id "urn:gooo:recorded-use:rdf:scope" type string required one
+    field status id "urn:gooo:recorded-use:rdf:status" type string required one
+    field reason id "urn:gooo:recorded-use:rdf:reason" type string required one
+    field receipt_sha256 id "urn:gooo:recorded-use:rdf:receipt" type string required one
+    field source_sha256 id "urn:gooo:recorded-use:rdf:source" type string required one
+    field journal_sha256 id "urn:gooo:recorded-use:rdf:journal" type string required one
+    field call_iri id "urn:gooo:recorded-use:rdf:call" type string required one
+    field value_iri id "urn:gooo:recorded-use:rdf:value" type string required one
+    field usage_iri id "urn:gooo:recorded-use:rdf:usage" type string required one
+    field records_dropped id "urn:gooo:recorded-use:rdf:drops" type boolean required one
+    field lines id "urn:gooo:recorded-use:rdf:lines" type string required many
+}
+
+# The graph describes one retained use within exact saved JSON bytes.
+activity ExportNTriples(Columns) -> RDFUsage id "urn:gooo:recorded-use:export-ntriples" computes `
+let claim = Inspect(input)
+let result = RDFUsage{
+    schema: "gooo/recorded-use-rdf/v1", scope: "saved_json_bytes",
+    status: claim.status, reason: claim.reason,
+    receipt_sha256: claim.receipt_sha256, source_sha256: claim.source_sha256,
+    journal_sha256: claim.journal_sha256, call_iri: "", value_iri: "", usage_iri: "",
+    records_dropped: claim.local_records_dropped, lines: []string{},
+}
+if claim.status != "RECORDED_GENERATION_AND_USAGE" { return result }
+if !IsSHA256(claim.receipt_sha256) || !IsSHA256(claim.source_sha256) || !IsSHA256(claim.journal_sha256) {
+    result.status = "UNRESOLVED_EXPORT_IDENTITY"
+    result.reason = "SHA256_IDENTITY_REQUIRED"
+    return result
+}
+if claim.read_mapping == "MAPPED" && !IsSHA256(claim.read_sha256) {
+    result.status = "UNRESOLVED_EXPORT_IDENTITY"
+    result.reason = "READ_SHA256_IDENTITY_REQUIRED"
+    return result
+}
+if len(claim.activity_id) > 128 || len(claim.root_activity_id) > 128 ||
+   len(claim.variable_name) > 128 || len(claim.scalar_type) > 128 {
+    result.status = "EXPORT_TEXT_BOUND"
+    result.reason = "METADATA_EXCEEDS_128_BYTES"
+    return result
+}
+let base = "urn:gooo:saved:" + claim.receipt_sha256 + ":case:" + Decimal(claim.case_index)
+result.call_iri = base + ":frame:" + Decimal(claim.frame)
+result.value_iri = base + ":version:" + Decimal(claim.assignment_index)
+result.usage_iri = base + ":use:" + Decimal(claim.use_index)
+let call = "<" + result.call_iri + ">"
+let value = "<" + result.value_iri + ">"
+let usage = "<" + result.usage_iri + ">"
+let rdf_type = " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "
+let prov = " <http://www.w3.org/ns/prov#"
+let own = " <urn:gooo:recorded-use:"
+let integer = "^^<http://www.w3.org/2001/XMLSchema#integer> ."
+let dropped = "false"
+if claim.local_records_dropped { dropped = "true" }
+result.lines = []string{
+    call + rdf_type + "<http://www.w3.org/ns/prov#Activity> .",
+    value + rdf_type + "<http://www.w3.org/ns/prov#Entity> .",
+    usage + rdf_type + "<http://www.w3.org/ns/prov#Usage> .",
+    call + prov + "qualifiedUsage> " + usage + " .",
+    usage + prov + "entity> " + value + " .",
+    call + prov + "used> " + value + " .",
+    value + prov + "wasGeneratedBy> " + call + " .",
+    call + own + "receiptSha256> " + RDFLiteral(claim.receipt_sha256) + " .",
+    value + own + "receiptSha256> " + RDFLiteral(claim.receipt_sha256) + " .",
+    usage + own + "receiptSha256> " + RDFLiteral(claim.receipt_sha256) + " .",
+    call + own + "caseIndex> \"" + Decimal(claim.case_index) + "\"" + integer,
+    call + own + "frame> \"" + Decimal(claim.frame) + "\"" + integer,
+    value + own + "assignmentIndex> \"" + Decimal(claim.assignment_index) + "\"" + integer,
+    usage + own + "useIndex> \"" + Decimal(claim.use_index) + "\"" + integer,
+    call + own + "activityDefinitionId> " + RDFLiteral(claim.activity_id) + " .",
+    call + own + "rootDefinitionId> " + RDFLiteral(claim.root_activity_id) + " .",
+    usage + own + "sourceSha256> " + RDFLiteral(claim.source_sha256) + " .",
+    usage + own + "journalSha256> " + RDFLiteral(claim.journal_sha256) + " .",
+    usage + own + "readMapping> " + RDFLiteral(claim.read_mapping) + " .",
+    usage + own + "selectedSourceSha256> " + RDFLiteral(claim.read_sha256) + " .",
+    usage + own + "selectedStart> \"" + Decimal(claim.read_start) + "\"" + integer,
+    usage + own + "selectedEnd> \"" + Decimal(claim.read_end) + "\"" + integer,
+    usage + own + "localRecordsDropped> \"" + dropped + "\"^^<http://www.w3.org/2001/XMLSchema#boolean> .",
+    value + own + "variableName> " + RDFLiteral(claim.variable_name) + " .",
+    value + own + "variableOrdinal> \"" + Decimal(claim.variable_ordinal) + "\"" + integer,
+    value + own + "scalarType> " + RDFLiteral(claim.scalar_type) + " .",
+}
+result.status = "RDF_READY"
+return result
+`

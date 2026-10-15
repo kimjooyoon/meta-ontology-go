@@ -47,6 +47,11 @@ own the classification, grouping and bounded ancestry walks; Go transports the
 observations. This lets a program inspect how another Gooo program was assembled
 and where retained values came from.
 
+The development [recorded-use RDF example](examples/recorded-use-origins/README.md#읽기-사건을-rdf로-내보내기)
+constructs PROV-O qualified usage and N-Triples in Gooo. Calls, retained value
+versions and individual reads get identities scoped to the exact saved document.
+This offers a small interoperability path from a Gooo metaprogram to RDF tools.
+
 | Task | Development examples |
 | --- | --- |
 | Trace authored conditions and selected fragments | [Condition origins](examples/condition-origins/README.md), [original fill files](examples/workspace-fill-origins/README.md) |

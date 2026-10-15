@@ -77,7 +77,8 @@ Gooo는 완료 여부와 프레임·활동 일치도 다시 확인해 두 관계
 - 전송은 최대 128행과 기존 32 KiB 입력 한도를 사용합니다. 배열은 선택한 페이지
   크기로 할당하고, 기본 조회는 한 행입니다. 이 Gooo 활동은 한 읽기를 선택합니다.
 - 값 자체를 열에 복사하지 않습니다. 읽기 식별자와 참조한 버전의 메타데이터를 옮깁니다.
-- 현재 출력은 타입 있는 관계 레코드입니다. RDF 내보내기와 qualified usage의 역할·시각은 후속 범위입니다.
+- `Inspect`는 타입 있는 관계 레코드를 반환합니다. 아래 `ExportNTriples`는 같은
+  관찰을 RDF로 옮깁니다. 역할과 시각은 해당 기록을 연결하는 후속 범위입니다.
 
 첫 새 코호트는 검사 함수 5개를 10.17초에 통과했습니다. 통제 입력은 **12/12**,
 실제 기록 조회는 원문과 줄바꿈이 다른 문서에서 같은 읽기를 두 번 관찰했습니다.
@@ -123,3 +124,55 @@ rm "$saved"
 첫 실행의 원래 경로·입력·컴파일러와 현재 소스의 CI 검증은 각자의 범위를 가집니다.
 [첫 실행과 소스 일관성 기록](../../docs/observations/recorded-use-explanation/observations.json)에
 소스 해시와 분모를 보존했습니다.
+
+## 읽기 사건을 RDF로 내보내기
+
+개발 소스의 `ExportNTriples`는 Gooo 조건식으로 기록을 확인하고, 호출·값 버전·읽기의
+이름과 관계를 구성합니다. 목록에 담긴 각 줄은 [N-Triples](https://www.w3.org/TR/n-triples/)
+한 문장입니다. 다음 명령은 저장된 기록 한 건을 받아 `use.nt`를 만듭니다.
+`jq`는 반환된 문자열 목록을 줄로 펼칩니다.
+
+```sh
+saved=$(mktemp)
+gzip -dc examples/recorded-use-origins/full-producer-receipt.json.gz > "$saved"
+go run ./cmd/gooo package execute \
+  --origin-receipt "$saved" --origin-shape local-use-columns --origin-offset 0 \
+  examples/recorded-use-origins/rdf.workspace.json | jq -r '.lines[]' > use.nt
+rm "$saved"
+```
+
+파일을 만들기 전에 상태를 확인하려면 마지막 줄의 `jq`와 리다이렉션을 생략합니다.
+연결 가능한 기록은 `status=RDF_READY`와 26개 문장을 반환합니다. 대입이 없거나
+입력에 모순이 있으면 판정과 이유를 유지하고 빈 `lines`를 반환합니다.
+
+호출 하나가 같은 값을 두 번 읽어도 각 읽기 사건에는 자기 이름이 있습니다.
+[PROV-O의 qualified usage](https://www.w3.org/TR/prov-o/#qualifiedUsage)를 사용해
+`호출 → 읽기 사건 → 값 버전`을 표현합니다. `used`와 `wasGeneratedBy`도 함께 담아
+간단한 조회와 사건별 조회를 모두 할 수 있게 합니다.
+
+| 이름 | 같은 저장 문서 안의 구성 |
+| --- | --- |
+| 공통 앞부분 | `urn:gooo:saved:{receipt_sha256}:case:{case_index}` |
+| 호출 | 앞부분 + `:frame:{frame}` |
+| 값 버전 | 앞부분 + `:version:{assignment_index}` |
+| 읽기 사건 | 앞부분 + `:use:{use_index}` |
+
+같은 원문을 복사하면 이름도 같습니다. 원문 바이트가 바뀌면 해시와 이름이 바뀝니다.
+이름의 범위는 저장 문서이며 실행 회차의 전역 식별자는 후속 과제입니다.
+원래 활동의 정의 ID와 호출 ID를 구분하고, 문서·생산자 소스·지역 기록·선택 소스의
+해시를 각 필드로 남깁니다. 역할·시각·반환값의 파생은 추가 관찰이 연결될 때 다룹니다.
+컴파일러 핵심 어휘의 범위는 유지하고 이 예제의 Gooo 소스가 내보내기 뷰를 소유합니다.
+
+내보낼 메타데이터는 필드당 UTF-8 128바이트까지, 각 출력 줄은 기존 Text 한도 안에서
+구성합니다. 큰따옴표·역슬래시·제어 문자를 이스케이프하며 128바이트 초과에는
+`EXPORT_TEXT_BOUND`, 잘못된 해시 형식에는 `UNRESOLVED_EXPORT_IDENTITY`를 반환합니다.
+해시 형식 검사는 문자열 모양을 확인합니다. 저장 문서의 실제 해시는 입력 어댑터가 계산합니다.
+
+첫 새 내보내기 사례 **12/12**, 숫자·해시·문자열 경계 사례 **32/32**를 통과했습니다.
+실제 전체 저장 기록의 첫 조회는 **0.67초**였고, `case=0, frame=1, version=1, use=0`을
+유지했습니다. 별도 [Go RDF 파서](https://github.com/knakk/rdf)는 저장된 출력 중 그래프
+7개를 각각 26문장으로 읽고 관계 방향과 타입을 확인했습니다. 원문에 줄바꿈을 더한
+새 조회에서는 원래 좌표가 유지되고 문서 해시와 세 이름이 모두 바뀌었습니다.
+별도 파서로 그 그래프 한 개도 읽었습니다. 이 값들은 준비·빌드를 포함한 원본 명령의 관찰이며,
+외부 작업 전체의 완전성이나 성능 분포를 나타내지는 않습니다.
+[소스·첫 실패와 관찰 원본](../../docs/observations/qualified-usage/observations.json)을 함께 보관합니다.

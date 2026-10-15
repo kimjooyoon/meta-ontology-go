@@ -1,0 +1,101 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": 0
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "0"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": 1
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "1"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": -1
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "-1"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": 9
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "9"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": -9
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "-9"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": 10
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "10"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": -10
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "-10"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": 2147483648
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "2147483648"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": -2147483649
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "-2147483649"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": 999999999999999999
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "999999999999999999"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": 9223372036854775807
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "9223372036854775807"
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:Decimal": -9223372036854775808
+      },
+      "expected": {
+        "origin/recordeduse:Decimal": "-9223372036854775808"
+      }
+    }
+  ]
+}

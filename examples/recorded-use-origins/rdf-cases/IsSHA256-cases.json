@@ -1,0 +1,85 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": true
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": true
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": true
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": ""
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": false
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "x"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": false
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": false
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "sha256:gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": false
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": false
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": false
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:IsSHA256": "sha255:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expected": {
+        "origin/recordeduse:IsSHA256": false
+      }
+    }
+  ]
+}
