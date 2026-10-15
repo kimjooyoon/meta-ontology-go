@@ -1,0 +1,104 @@
+{
+  "schema": "gooo/pr-terminal-observation/v1",
+  "pr": 1598,
+  "head": "44162c987b5ab1f0cd77287575308c2e5a8bc09e",
+  "original_workflows": 51,
+  "successful_workflows": 47,
+  "failed_workflows": [
+    {
+      "run_id": 38736301423,
+      "name": "Repository projection conformance",
+      "attempt": 1,
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38736301423"
+    },
+    {
+      "run_id": 38736301731,
+      "name": "Core conformance registry",
+      "attempt": 1,
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38736301731"
+    },
+    {
+      "run_id": 38736301367,
+      "name": "CI [PR authoritative]",
+      "attempt": 1,
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38736301367"
+    },
+    {
+      "run_id": 38736301308,
+      "name": "Compiler self-improvement compatibility",
+      "attempt": 1,
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38736301308"
+    }
+  ],
+  "failed_canonical_jobs": [
+    {
+      "id": 116427809683,
+      "name": "Semantic conformance",
+      "failed_steps": [
+        "Semantic conformance (staged verifier promotion)"
+      ],
+      "log_sha256": "6a3645ef72837824a82e918553e9e67054c6715f1060b6e1d41df7477ef2d490"
+    },
+    {
+      "id": 116427809730,
+      "name": "CI policy",
+      "failed_steps": [
+        "Upload source metrics artifact"
+      ],
+      "log_sha256": "0c3bb578dca35ee9d646496edddc7afb0c83b539594036f801e3a232fb9dd826"
+    },
+    {
+      "id": 116427809758,
+      "name": "go test -race",
+      "failed_steps": [
+        "Run go test -race -json ./internal/meta/repositoryprojection/extractor ./..."
+      ],
+      "log_sha256": "2a111a3a2407a7b21d2c64f3dadd66ce4f3e668b5b26c75cf968da4cbb148a61"
+    },
+    {
+      "id": 116427809858,
+      "name": "go test",
+      "failed_steps": [
+        "Run go test ./..."
+      ],
+      "log_sha256": "40bb1a51b59c8c2d3d8510548a3bfbbbd27b2666bd7db17b33616de0bc78254b"
+    },
+    {
+      "id": 116437488955,
+      "name": "CI evidence",
+      "failed_steps": [
+        "Download exact artifact provenance"
+      ],
+      "log_sha256": "b8d06195d89cbaeafebcfbb4a9c04fdd6033419b8f5ad4652d85de62e9293431"
+    },
+    {
+      "id": 116437825504,
+      "name": "CI proof bundle",
+      "failed_steps": [
+        "Resolve canonical evidence lineage"
+      ],
+      "log_sha256": "137f6f786c6a1dd838ca06f2829fbbd37be3e6e52f4aec64df5e3744e766852f"
+    }
+  ],
+  "causes": [
+    {
+      "subject": "TestDerivedCandidateCapacity27593",
+      "reason": "expectedBoundarySpecsForVersion rendered 76 lines with a 75-line limit",
+      "repair": "Source-owned history partition; unchanged target values and limit."
+    },
+    {
+      "subject": "CI policy / Upload source metrics artifact",
+      "reason": "CreateArtifact request ETIMEDOUT",
+      "downstream": [
+        "Missing self-improvement-provenance artifact",
+        "ARTIFACT_LINEAGE_NOT_FOUND"
+      ],
+      "repair": "No success substituted; successor original workflow must supply its own artifacts."
+    }
+  ],
+  "top_level_race_test_failures": [
+    "TestDerivedCandidateCapacity27593"
+  ],
+  "native_registration": "CONFORMANT",
+  "rerun_count": 0
+}

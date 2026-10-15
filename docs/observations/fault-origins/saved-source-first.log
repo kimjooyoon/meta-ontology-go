@@ -1,0 +1,12 @@
+=== RUN   TestFaultOriginSavedSourceAndMembership
+    fault_origin_saved_test.go:22: reader archive identity <nil>
+--- FAIL: TestFaultOriginSavedSourceAndMembership (0.00s)
+FAIL
+FAIL	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	0.566s
+=== RUN   TestFaultArchiveDeclarationCapacity
+    fault_archive_capacity_test.go:14: cmd/gooo#TestFaultOriginSavedSourceAndMembership rendered 36
+    fault_archive_capacity_test.go:14: internal/meta/repositoryprojection/extractor#TestFaultArchiveDeclarationCapacity rendered 15
+--- PASS: TestFaultArchiveDeclarationCapacity (0.09s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.541s
+FAIL

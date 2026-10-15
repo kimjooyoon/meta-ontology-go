@@ -91,3 +91,26 @@ The new helper/branch and mixed local/field cohorts bring this observation to
 12 distinct cases: 7 normal outcomes and 5 faults. The first revision failed
 with an unobserved panic; its five-case repair retains the same denominator.
 Model calls are zero. [Original attempts and results](../../docs/observations/local-division-origins/observations.json).
+
+### Read an execution fault from the terminal
+
+`division.inputs.json` supplies two ordinary inputs followed by a zero divisor:
+
+```sh
+gooo package execute --inputs examples/compound-updates/division.inputs.json \
+  examples/compound-updates/division.workspace.json
+```
+
+This diagnostic example prints the first two values and exits with failure on
+the third input. The error identifies the activity, operator, operands and Go
+projection expression. A local `/=` with an exact retained source binding also
+shows its Gooo right-hand expression, byte range and source hash. The selected
+Gooo source and the Go projection have separate byte coordinates. `--json`
+retains the complete execution record, including original-file annotations when
+available.
+
+The display checks read the saved execution above: one complete terminal view
+and twelve source-binding variants, with zero producer executions. Missing,
+ambiguous or mismatched source bindings leave the Gooo location undisplayed.
+[Display observations](../../docs/observations/fault-diagnostics/observations.json)
+retain the command results and sample terminal message.

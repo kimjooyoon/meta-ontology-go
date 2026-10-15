@@ -42,9 +42,9 @@ type NativeOriginInput struct {
 
 func ValidateNativeOriginQuery(query NativeOriginQuery) error {
 	switch query.Kind {
-	case "reads", "constructions", "elements", "links", "local-writes", "local-uses", "local-elements", "local-fill-fragments", "local-input-locations", "field-writes", "field-uses", "field-input-locations":
+	case "reads", "constructions", "elements", "links", "faults", "local-writes", "local-uses", "local-elements", "local-fill-fragments", "local-input-locations", "field-writes", "field-uses", "field-input-locations":
 	default:
-		return fmt.Errorf("origin kind must be reads, constructions, elements, links, local-writes, local-uses, local-elements, local-fill-fragments local-input-locations, field-writes, field-uses or field-input-locations")
+		return fmt.Errorf("origin kind must be reads, constructions, elements, links, faults, local-writes, local-uses, local-elements, local-fill-fragments, local-input-locations, field-writes, field-uses or field-input-locations")
 	}
 	maximum := 65536
 	if query.Kind == "local-fill-fragments" || query.Kind == "local-input-locations" || query.Kind == "field-input-locations" {
@@ -100,6 +100,11 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if err := validateRecordedNativeOrigins(runtime); err != nil {
 		return nil, nil, err
 	}
+	if query.Kind == "faults" {
+		if err := validateRecordedFaultOrigins(runtime); err != nil {
+			return nil, nil, err
+		}
+	}
 	if query.Kind != "reads" && runtime.ReadObservation.Schema != "gooo/native-read-summary/v2" {
 		return nil, nil, fmt.Errorf("saved record has no construction observations; choose reads or a newer record")
 	}
@@ -134,6 +139,9 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if query.Kind == "field-input-locations" {
 		report.Scope = "recorded original-file field anchors; authored field targets and values are separate static annotations referenced by dynamic events; construction fragments identify template/candidate/grammar origins; missing history stays UNMAPPED; mapping coverage does not establish causal completeness or producer correctness"
 	}
+	if query.Kind == "faults" {
+		report.Scope = "recorded arithmetic faults and retained operation identities; selected_local_rhs anchors cover only the RHS in the selected Gooo carrier; other source mappings remain UNMAPPED; no producer execution or new correctness denominator"
+	}
 	if runtime.LocalObservation != nil {
 		local := *runtime.LocalObservation
 		report.LocalObservation = &local
@@ -158,6 +166,10 @@ func isLocalOriginKind(kind string) bool {
 }
 
 func (page *nativeOriginPage) visit(runtime CompositionRuntime, trace CompositionTrace) {
+	if page.query.Kind == "faults" {
+		page.visitFaults(runtime, trace)
+		return
+	}
 	if page.query.Kind == "field-input-locations" {
 		page.visitFieldFileLocations(runtime, trace)
 		return

@@ -3,7 +3,6 @@ package syntaxregistration
 import (
 	"encoding/json"
 	"fmt"
-	"go/ast"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -146,30 +145,11 @@ func TestSourceOwnedHistoryGrowth32403(t *testing.T) {
 
 func freshAssertHistoryTarget32403(t *testing.T, source *goSource, version, target int) {
 	t.Helper()
-	function, err := source.function("expectedBoundarySpecsForVersion")
+	history, err := readHistoryOrigins(source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	count := 0
-	ast.Inspect(function.Body, func(node ast.Node) bool {
-		clause, ok := node.(*ast.CaseClause)
-		if !ok {
-			return true
-		}
-		for _, expression := range clause.List {
-			value, literal := integer(expression)
-			if literal && value == version {
-				count++
-				assignment := clause.Body[0].(*ast.AssignStmt)
-				value, literal = integer(assignment.Rhs[0])
-				if !literal || value != target {
-					t.Fatal("historical source target changed", version, value)
-				}
-			}
-		}
-		return true
-	})
-	if count != 1 {
-		t.Fatal("historical source target missing or repeated", version, count)
+	if value, exists := history.targets[version]; !exists || value != target {
+		t.Fatal("historical source target missing or changed", version, value)
 	}
 }

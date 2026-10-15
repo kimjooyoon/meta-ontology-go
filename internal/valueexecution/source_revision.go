@@ -122,11 +122,10 @@ func ProposeSourceRevision(filename string, source []byte, request SourceRevisio
 	if err != nil || decoded != request.ExpectedProgram {
 		return nil, SourceRevision{}, failAt(ReasonSourceRevisionInvalid, "PROPOSE", "match-source-token", request.Activity)
 	}
-	replacement := strconv.Quote(request.ReplacementProgram)
-	candidate := make([]byte, 0, len(source)+len(replacement)-len(quoted))
-	candidate = append(candidate, source[:start]...)
-	candidate = append(candidate, replacement...)
-	candidate = append(candidate, source[end:]...)
+	candidate, err := syntax.ReplaceStringLiteral(source, target.ValueProgramSpan, request.ReplacementProgram)
+	if err != nil {
+		return nil, SourceRevision{}, failAt(ReasonSourceRevisionInvalid, "PROPOSE", "replace-program-literal", err.Error())
+	}
 	candidateFile, candidateDiagnostics := syntax.ParseFile(filename, string(candidate))
 	if candidateDiagnostics.HasErrors() || candidateFile == nil {
 		return nil, SourceRevision{}, failAt(ReasonSourceRevisionInvalid, "PROPOSE", "parse-candidate-source", candidateDiagnostics.Error().Error())

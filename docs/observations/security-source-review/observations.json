@@ -1,0 +1,139 @@
+{
+  "schema": "gooo/security-source-review/v1",
+  "source_parent": "5714e9335",
+  "alert_numbers": [
+    12,
+    13,
+    14,
+    15,
+    21,
+    22,
+    23
+  ],
+  "dependency_prs": [
+    1592,
+    1593,
+    1594,
+    1595
+  ],
+  "commands": [
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/syntax",
+        "./internal/bodycodegen",
+        "./internal/valueexecution",
+        "-run",
+        "^(TestLiteralEdit|TestLiteralReplacementSize|TestAssemblyIntegerBounds|TestIntegerWidth|TestMeasurementEditsSelected|TestMeasurementRejectsStale)",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 1,
+      "seconds": 6.3865425,
+      "name": "security-first",
+      "log": "security-first.log",
+      "log_sha256": "a5a0641b493e6e9bb5afaacde726de18adf3e68ca3379b44499a069838e6d45c"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/syntax",
+        "-run",
+        "^TestAssemblyIntegerBoundsRetainOnlyValidValues$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 1.6569594589999999,
+      "name": "security-parser-repair",
+      "log": "security-parser-repair.log",
+      "log_sha256": "330ea5dec39e96bfa24dd7e386513734b671920f6797839403a60d89c85cf8f1"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./internal/meta/repositoryprojection/extractor",
+        "-run",
+        "^TestSecuritySourceDeclarationCapacity$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 5.93674225,
+      "name": "security-capacity-first",
+      "log": "security-capacity-first.log",
+      "log_sha256": "fcc564879094f844d3398d1391645436ea565f262f025c2a44468524a9ef1e9e"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "test",
+        "-p=1",
+        "./scripts/action-runtime",
+        "./internal/verify",
+        "-run",
+        "^(TestSetupGoSourceAvailabilityBinding|TestSharedWorkClockRetainsCommandPopulation124073)$",
+        "-count=1",
+        "-v"
+      ],
+      "exit_code": 0,
+      "seconds": 2.777102541,
+      "name": "dependency-repair-first",
+      "log": "dependency-repair-first.log",
+      "log_sha256": "823583ad231e4d1ce5e87b3f16d5b79e8bd9d06265ddc4308ca71c2b2e3e9e91"
+    },
+    {
+      "argv": [
+        "node",
+        "--test",
+        "--test-name-pattern=workflow helper is checked out from trusted workflow_run github.sha",
+        "scripts/ci-automatic-promotion/promotion.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.21995612499999995,
+      "name": "promotion-repair-first",
+      "log": "promotion-repair-first.log",
+      "log_sha256": "df1c54c85e2dbae847e321145c035be8120ac18ab63929fe8354f57b5bb4983e"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "fix",
+        "-diff",
+        "./internal/syntax",
+        "./internal/bodycodegen",
+        "./internal/valueexecution"
+      ],
+      "exit_code": 0,
+      "seconds": 0.5814338330000002,
+      "name": "security-normalization-first",
+      "log": "security-normalization-first.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+        "vet",
+        "-p=1",
+        "./internal/syntax",
+        "./internal/bodycodegen",
+        "./internal/valueexecution",
+        "./scripts/action-runtime"
+      ],
+      "exit_code": 0,
+      "seconds": 0.6680046249999996,
+      "name": "security-vet-first",
+      "log": "security-vet-first.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "producer_execution_count": 0,
+  "model_call_count": 0,
+  "scope": "Fresh source-bound checks and repairs of three failed dependency contract checks; full source CI and postmerge scanner status remain separate."
+}

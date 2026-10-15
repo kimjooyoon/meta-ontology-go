@@ -9,7 +9,7 @@ import (
 
 func TestSetupGoSourceAvailabilityBinding(t *testing.T) {
 	root := filepath.Join("..", "..")
-	data, err := os.ReadFile(filepath.Join(root, "docs/observations/action-origin/observations.json"))
+	data, err := os.ReadFile(filepath.Join(root, "docs/observations/action-origin-upgrade/observations.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

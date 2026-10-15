@@ -1,0 +1,11 @@
+{
+  "archive": "../../docs/observations/local-division-origins/first-observations.tar.gz",
+  "archive_sha256": "f924dbf8e1f3a0556339c12c0da1b6da58055c56371d2bf4a09f483548b43d89",
+  "member": "repair-outputs/local-division-faults.json",
+  "selected_source_sha256": "sha256:dc3cd13ee7f172022e237b99c48cd371d6643e9cf18e7c15cd3a35ec079b57d3",
+  "fixture_sha256": "b9730feaf0f2256c5c3c8ec265cd970c934e52838964ef7faad5bda4151c6114",
+  "encoding": "UTF-8 JSON runtime, gzip mtime=0",
+  "producer_reexecuted": false,
+  "producer_cases": 5,
+  "selected_fault_rows": 2
+}

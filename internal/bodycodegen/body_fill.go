@@ -11,7 +11,6 @@ import (
 	"go/token"
 	"maps"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -877,16 +876,7 @@ func replaceIdentifier(body, name, replacement string) (string, error) {
 }
 
 func replaceActivityProgram(source []byte, span syntax.Span, body string) ([]byte, error) {
-	start, end := span.Start.Offset, span.End.Offset
-	if start < 0 || end < start || end > len(source) || start == end {
-		return nil, fmt.Errorf("activity computes body has an invalid source span")
-	}
-	quoted := strconv.Quote(body)
-	updated := make([]byte, 0, len(source)-span.Len()+len(quoted))
-	updated = append(updated, source[:start]...)
-	updated = append(updated, quoted...)
-	updated = append(updated, source[end:]...)
-	return updated, nil
+	return syntax.ReplaceStringLiteral(source, span, body)
 }
 
 func scoreByID(scores []IRBodyFillCandidateScore, id string) IRBodyFillCandidateScore {

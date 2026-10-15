@@ -1,0 +1,17 @@
+=== RUN   TestHistorySelectorUsesSyntaxInsteadOfLineLayout
+--- PASS: TestHistorySelectorUsesSyntaxInsteadOfLineLayout (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.466s
+=== RUN   TestHistoryShapeDeclarationCapacity
+    history_shape_capacity_test.go:21: internal/meta/syntaxregistration#isHistorySelector rendered 20
+    history_shape_capacity_test.go:21: internal/meta/syntaxregistration#isHistoryCall rendered 10
+    history_shape_capacity_test.go:21: internal/meta/syntaxregistration#historyHelperSignature rendered 14
+    history_shape_capacity_test.go:21: internal/meta/syntaxregistration#historyContinuation rendered 19
+    history_shape_capacity_test.go:21: internal/meta/syntaxregistration#readHistoryChunks rendered 33
+    history_shape_capacity_test.go:21: internal/meta/syntaxregistration#TestHistorySelectorUsesSyntaxInsteadOfLineLayout rendered 41
+    history_shape_capacity_test.go:21: internal/meta/syntaxregistration#TestPartitionedHistoryContinuesNineRegistrationRoles rendered 55
+    history_shape_capacity_test.go:21: internal/meta/syntaxregistration#historyContinuationSource rendered 17
+    history_shape_capacity_test.go:21: internal/meta/repositoryprojection/extractor#TestHistoryShapeDeclarationCapacity rendered 22
+--- PASS: TestHistoryShapeDeclarationCapacity (0.03s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor	0.429s

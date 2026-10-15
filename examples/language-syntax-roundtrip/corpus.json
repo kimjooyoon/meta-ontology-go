@@ -1158,6 +1158,16 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY",
       "ordered_collections": true
+    },
+    {
+      "id": "recorded-arithmetic-fault-reader",
+      "path": "examples/fault-origins/describe.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
     }
   ],
   "package_units": [

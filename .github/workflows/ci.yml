@@ -63,7 +63,7 @@ jobs:
             printf 'GOOO_CI_STARTED_AT=%s\n' "$started"
             printf 'GOOO_CI_PREP_STARTED_AT=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           } >> "$GITHUB_ENV"
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -108,7 +108,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -303,7 +303,7 @@ jobs:
           fi
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -327,7 +327,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -343,7 +343,7 @@ jobs:
       - run: go vet ./...
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -367,7 +367,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -383,7 +383,7 @@ jobs:
       - run: go test ./...
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -407,7 +407,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -423,7 +423,7 @@ jobs:
       - run: go test -race -json ./internal/meta/repositoryprojection/extractor ./...
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -447,7 +447,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -469,7 +469,7 @@ jobs:
         run: ./scripts/semantic-conformance.sh
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -494,7 +494,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -830,7 +830,7 @@ jobs:
         run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -855,7 +855,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -990,7 +990,7 @@ jobs:
           retention-days: 14
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1015,7 +1015,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1339,7 +1339,7 @@ jobs:
           retention-days: 14
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1371,7 +1371,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1674,7 +1674,7 @@ jobs:
           retention-days: 14
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1698,7 +1698,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -1808,7 +1808,7 @@ jobs:
           retention-days: 30
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1832,7 +1832,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: true
@@ -1852,7 +1852,7 @@ jobs:
           retention-days: 14
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1877,7 +1877,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6.4.0
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: 1.27.2
           cache: false
@@ -2213,7 +2213,7 @@ jobs:
           retention-days: 30
       - name: Retain completed and censored command costs
         if: ${{ always() && env.GOOO_CI_ORIGIN_ROOT != '' }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
           key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}

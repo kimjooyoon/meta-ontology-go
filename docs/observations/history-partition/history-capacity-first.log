@@ -1,0 +1,10 @@
+=== RUN   TestHistoryCapacityGrowthPreservesEveryDeclaredTarget
+    history_capacity_repair_test.go:72: 53 fresh append steps; 126 declared historical targets retained; each generated function <=60 lines; producer/model 0
+--- PASS: TestHistoryCapacityGrowthPreservesEveryDeclaredTarget (0.03s)
+=== RUN   TestHistoryCapacityRejectsAmbiguousOwnershipAndCycles
+--- PASS: TestHistoryCapacityRejectsAmbiguousOwnershipAndCycles (0.00s)
+=== RUN   TestHistoryCapacityCurrentSourceNormalizationProposal
+    history_capacity_repair_test.go:162: normalization: 27 historical targets preserved; 2 helpers; no corpus or denominator evidence edits
+--- PASS: TestHistoryCapacityCurrentSourceNormalizationProposal (0.01s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration	0.509s

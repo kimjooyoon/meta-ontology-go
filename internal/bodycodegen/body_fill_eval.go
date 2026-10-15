@@ -310,14 +310,7 @@ func coerceBodyValue(value any, valueType types.Type) (any, error) {
 		if !ok {
 			return nil, fmt.Errorf("generated integer value has type %T", value)
 		}
-		if basic.Kind() == types.Uint8 {
-			number = int64(uint8(number))
-		} else if basic.Kind() == types.Int32 {
-			number = int64(int32(number))
-		} else if basic.Kind() == types.Int {
-			number = int64(int(number))
-		}
-		return number, nil
+		return coerceBodyInteger(number, basic.Kind()), nil
 	case types.Bool, types.UntypedBool:
 		if truth, ok := value.(bool); ok {
 			return truth, nil

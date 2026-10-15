@@ -1,0 +1,4 @@
+=== RUN   TestFaultDiagnosticInputExampleMatchesSavedInputs
+--- PASS: TestFaultDiagnosticInputExampleMatchesSavedInputs (0.00s)
+PASS
+ok  	github.com/kimjooyoon/meta-ontology-go/cmd/gooo	0.563s

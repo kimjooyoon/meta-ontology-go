@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "/Users/alice/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.2.darwin-arm64/bin/go",
+    "test",
+    "-p=1",
+    "./internal/meta/syntaxregistration",
+    "-run",
+    "^TestHistoryDeclarationWithoutBodyProducesNoEdits$",
+    "-count=1",
+    "-v"
+  ],
+  "exit_code": 0,
+  "seconds": 2.188058459,
+  "scope": "New missing-body source counterexample; no producer/model execution",
+  "source_parent": "2c26a65a8",
+  "log_sha256": "1aba2f8e09f8711cf1d90b134ec828d95feb9a473d0dfb9fdf96e31385878e5c",
+  "source_sha256": {
+    "internal/meta/syntaxregistration/history_origins.go": "ec4a7ec6ec5f8339c6a1000613416a61413e4f780d5b8c9985c322d676f4a950",
+    "internal/meta/syntaxregistration/history_body_missing_test.go": "848e4e34535e011b01c20b0a7c5fc851a61c72cc5afa1d3bee92f14d21ab0fd6"
+  }
+}
