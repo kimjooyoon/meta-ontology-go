@@ -45,7 +45,7 @@ func operationIDsForSelection(selection StrategySelection) ([]string, error) {
 	case "preserve-non-promoting-terminal":
 		excluded = "terminate-at-fixed-point"
 	}
-	ids := make([]string, 0, len(selection.SourceMetaOperations)+1)
+	ids := make([]string, 0, len(selection.SourceMetaOperations))
 	seen := make(map[string]bool)
 	for _, id := range selection.SourceMetaOperations {
 		if id == excluded {
