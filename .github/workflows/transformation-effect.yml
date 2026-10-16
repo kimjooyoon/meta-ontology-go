@@ -63,6 +63,7 @@ jobs:
           go test -json ./internal/bodyexecution \
             -run '^TestWindowsWorkspace(SharingErrorsFresh1713|LockReleaseFresh1715)$' -count=1 | tee "$report"
           jq -s -e '
+            all(.[]; .Action != "fail") and (
             [.[] | select(.Action == "pass" and (.Test | type) == "string") | .Test
               | select(contains("/") or . == "TestWindowsWorkspaceLockReleaseFresh1715")]
             | sort == ([
@@ -73,7 +74,7 @@ jobs:
               "TestWindowsWorkspaceSharingErrorsFresh1713/message-only",
               "TestWindowsWorkspaceSharingErrorsFresh1713/nil",
               "TestWindowsWorkspaceLockReleaseFresh1715"
-            ] | sort)
+            ] | sort))
           ' "$report"
       - name: Retain original Windows workspace cleanup checks
         if: always() && matrix.goos == 'windows'
