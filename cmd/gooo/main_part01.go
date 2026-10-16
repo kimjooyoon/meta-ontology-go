@@ -189,6 +189,10 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr), true
 	case "body-origins":
 		return runBodyOrigins(args[1:], OSFileReader{}, stdout, stderr), true
+	case "body-view":
+		return runBodyView(args[1:], OSFileReader{}, stdout, stderr), true
+	case "view-lens":
+		return runViewLens(args[1:], stdout, stderr), true
 	case "body-context":
 		return runBodyContext(args[1:], OSFileReader{}, stdout, stderr), true
 	case "body-plan":

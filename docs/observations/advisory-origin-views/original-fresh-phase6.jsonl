@@ -1,0 +1,8 @@
+{"Time":"2026-10-16T19:37:24.688553+09:00","Action":"start","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens"}
+{"Time":"2026-10-16T19:37:25.113062+09:00","Action":"run","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Test":"TestCopiedProfileOriginPreservationFresh1820"}
+{"Time":"2026-10-16T19:37:25.113464+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Test":"TestCopiedProfileOriginPreservationFresh1820","Output":"=== RUN   TestCopiedProfileOriginPreservationFresh1820\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:37:25.161296+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Test":"TestCopiedProfileOriginPreservationFresh1820","Output":"--- PASS: TestCopiedProfileOriginPreservationFresh1820 (0.05s)\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:37:25.16132+09:00","Action":"pass","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Test":"TestCopiedProfileOriginPreservationFresh1820","Elapsed":0.05}
+{"Time":"2026-10-16T19:37:25.161533+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:37:25.161687+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Output":"ok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/viewlens\t0.473s\n"}
+{"Time":"2026-10-16T19:37:25.161706+09:00","Action":"pass","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Elapsed":0.473}

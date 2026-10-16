@@ -1,0 +1,8 @@
+{"Time":"2026-10-16T19:36:08.682213+09:00","Action":"start","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo"}
+{"Time":"2026-10-16T19:36:09.248191+09:00","Action":"run","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Test":"TestAdvisoryCapabilitiesRoutingFresh1819"}
+{"Time":"2026-10-16T19:36:09.24863+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Test":"TestAdvisoryCapabilitiesRoutingFresh1819","Output":"=== RUN   TestAdvisoryCapabilitiesRoutingFresh1819\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:36:09.249416+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Test":"TestAdvisoryCapabilitiesRoutingFresh1819","Output":"--- PASS: TestAdvisoryCapabilitiesRoutingFresh1819 (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:36:09.249439+09:00","Action":"pass","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Test":"TestAdvisoryCapabilitiesRoutingFresh1819","Elapsed":0}
+{"Time":"2026-10-16T19:36:09.249455+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:36:09.250326+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Output":"ok  \tgithub.com/kimjooyoon/meta-ontology-go/cmd/gooo\t0.568s\n"}
+{"Time":"2026-10-16T19:36:09.250344+09:00","Action":"pass","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Elapsed":0.568}

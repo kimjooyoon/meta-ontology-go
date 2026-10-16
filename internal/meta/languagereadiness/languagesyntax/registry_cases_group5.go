@@ -52,5 +52,7 @@ func expectedSyntaxCaseGroup5() []CaseDefinition {
 		{ID: "unresolved-operation-source-origin", Path: "internal/meta/metricprogram/unresolvedpolicy/policy.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false},
 
 		{ID: "fixed-record-value-contract", Path: "examples/fixed-record-contract/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
+
+		{ID: "advisory-origin-lens-policy", Path: "internal/meta/originlenspolicy/policy.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false},
 	}
 }

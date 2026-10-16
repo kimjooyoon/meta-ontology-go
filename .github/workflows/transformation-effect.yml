@@ -84,6 +84,25 @@ jobs:
           path: ${{ runner.temp }}/workspace-cleanup-native.jsonl
           if-no-files-found: error
           retention-days: 30
+      - name: Check native Windows advisory origin storage
+        if: matrix.goos == 'windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/advisory-origin-native.jsonl"
+          go test -json ./internal/viewlens -run '^TestWindowsAdvisoryStoreFresh1818$' -count=1 | tee "$report"
+          jq -s -e '
+            all(.[]; .Action != "fail" and .Action != "skip") and
+            ([.[] | select(.Action == "pass" and .Test == "TestWindowsAdvisoryStoreFresh1818")] | length == 1)
+          ' "$report"
+      - name: Retain original Windows advisory storage observation
+        if: always() && matrix.goos == 'windows'
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-advisory-origin-windows-amd64-${{ env.HEAD_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/advisory-origin-native.jsonl
+          if-no-files-found: error
+          retention-days: 30
       - name: Build, execute, and replay native release candidate
         shell: bash
         run: |
