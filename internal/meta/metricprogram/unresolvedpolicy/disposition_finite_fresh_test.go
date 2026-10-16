@@ -11,7 +11,7 @@ import (
 )
 
 func TestDispositionFiniteSourceFresh1753(t *testing.T) {
-	base, err := os.ReadFile("policy.gooo")
+	base, err := os.ReadFile("testdata/policy-labels-v1.txt")
 	if err != nil {
 		t.Fatal(err)
 	}

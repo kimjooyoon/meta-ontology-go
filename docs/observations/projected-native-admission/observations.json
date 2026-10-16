@@ -1,0 +1,37 @@
+{
+  "schema": "gooo/projected-native-admission-observations/v1",
+  "source_base": "e7e76e8055047d8f16592ac3cc2363b44f3ed151",
+  "state": "DEVELOPMENT_SOURCE_NOT_YET_ORIGINAL_CI_ACCEPTED",
+  "failed_main_pr": 1631,
+  "failed_source_head": "1796567ff88917ba27697e250603774621fb4d67",
+  "original_run": 38910395088,
+  "original_semantic_job": 117005329296,
+  "original_semantic_log_digest": "sha256:08c5cfeafd4f07ce8b8f8dd3542b8a9a219d67e9be1afd9036bc3205219a679e",
+  "observed_failure": "Native EXECUTE_2 WAIT timeout; operating-system or scheduling cause is not established.",
+  "unchanged_budgets": {
+    "native_wait_ns": 2000000000,
+    "composition_parent_ns": 60000000000
+  },
+  "new_projected_command": [
+    "go",
+    "test",
+    "-p=1",
+    "./..."
+  ],
+  "new_unique_fresh_leaves": 2,
+  "expected_leaves": [
+    "TestProjectedCompileAdmissionFresh1873/0",
+    "TestProjectedCompileAdmissionFresh1873/23"
+  ],
+  "archive": {
+    "path": "fresh-admission.jsonl.gz",
+    "raw_digest": "sha256:4fd3a2017179c5526d385b8ef02c68cdc7bfba7c3edb939ed6e47a71174758dc",
+    "archive_digest": "sha256:5b9823d8efbfa40bb785f9fb7febe4b86e267fb184adcec73487a9f27ecfbaa4",
+    "raw_bytes": 3354,
+    "stored_bytes": 438
+  },
+  "models_executed": 0,
+  "native_language_programs_executed": 0,
+  "scope": "Actual fresh shell-function fixtures with a fake tool, preserving success/failure argv, call count and output identities. No completed language/native cohort replay. Final original CI independently required.",
+  "effectiveness": "UNESTABLISHED; serial package admission reduces one overlap source and may increase overall duration."
+}

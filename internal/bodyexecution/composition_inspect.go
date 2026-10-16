@@ -138,8 +138,8 @@ func CompositionInputTemplate(plan CompositionInspection) ([]byte, error) {
 		Schema string           `json:"schema"`
 		Inputs []map[string]any `json:"inputs"`
 	}{CompositionInputsSchema, []map[string]any{row}}, "", "  ")
-	if err == nil && len(raw) > 32<<10 {
-		err = fmt.Errorf("input template exceeds 32 KiB")
+	if err == nil {
+		err = checkCompositionInputSize(raw, "input template")
 	}
 	return raw, err
 }

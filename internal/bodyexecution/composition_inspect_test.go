@@ -174,7 +174,7 @@ func TestCompositionInspectionTemplateRejectsAmbiguousOrOversizedPlans(t *testin
 		func(p *CompositionInspection) { p.CallerInputs = append(p.CallerInputs, p.CallerInputs[0]) },
 		func(p *CompositionInspection) { p.CallerInputs[0].Key = "" },
 		func(p *CompositionInspection) { p.CallerInputs[0].ScalarKind = "unknown" },
-		func(p *CompositionInspection) { p.CallerInputs[0].Key = strings.Repeat("x", 32<<10) },
+		func(p *CompositionInspection) { p.CallerInputs[0].Key = strings.Repeat("x", CompositionInputMaxBytes) },
 	} {
 		p := base
 		p.CallerInputs = append([]CompositionCallerInput(nil), base.CallerInputs...)
