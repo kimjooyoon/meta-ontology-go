@@ -31,8 +31,8 @@ func TestRegistryProjectionFresh1631(t *testing.T) {
 			regions += bytes.Count(content, []byte("//gooo:generated:start"))
 		}
 	}
-	if regions != 6 {
-		t.Fatal("expected four activity and two record regions")
+	if regions != 9 {
+		t.Fatal("expected six activity and three record regions")
 	}
 }
 

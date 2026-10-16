@@ -122,9 +122,9 @@ both the ordinary program and the origin report's scope.
 
 ## Edit Gooo in VS Code
 
-The existing [Gooo extension](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/vscode-v0.2.4/editors/vscode)
+The existing [Gooo extension](https://github.com/kimjooyoon/gooo-ecosystem-workbench/tree/vscode-v0.2.5/editors/vscode)
 provides a `source.gooo` TextMate grammar, snippets and compiler commands.
-Its [0.2.4 release](https://github.com/kimjooyoon/gooo-ecosystem-workbench/releases/tag/vscode-v0.2.4)
+Its [0.2.5 release](https://github.com/kimjooyoon/gooo-ecosystem-workbench/releases/tag/vscode-v0.2.5)
 contains a VSIX package for **Extensions: Install from VSIX...**.
 Set **`gooo.compilerPath`** to the absolute path of the compiler installed above,
 such as the `gooo` executable in your `.gooo-bin` directory.
