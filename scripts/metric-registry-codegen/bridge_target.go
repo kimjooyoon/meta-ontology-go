@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"reflect"
 	"strconv"
 )
 
@@ -61,7 +60,10 @@ func targetFieldIdentity(field *ast.Field) (string, targetField, error) {
 	if err != nil {
 		return "", targetField{}, err
 	}
-	id, present := reflect.StructTag(raw).Lookup("gooo")
+	id, present, err := nativeTagID(raw)
+	if err != nil {
+		return "", targetField{}, fmt.Errorf("target field %s tag: %w", field.Names[0].Name, err)
+	}
 	if !present || id == "" {
 		return "", targetField{}, fmt.Errorf("target field %s requires a gooo ID tag", field.Names[0].Name)
 	}

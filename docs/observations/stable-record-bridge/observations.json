@@ -50,7 +50,7 @@
       "failures": []
     }
   ],
-  "fresh_leaf_count": 26,
+  "fresh_leaf_count": 41,
   "five_source_projection_files_byte_identical": true,
   "native_countercase_replays": 0,
   "model_calls": 0,
@@ -62,5 +62,31 @@
   },
   "parent_source_role": "Original development input; fresh local source checks were recorded before unpublished ancestry alignment.",
   "integration_base_dev": "61eb4ec3a36299541a2c9fa2637d726420cd361a",
-  "integration_alignment": "The private branch was rebased onto the accepted squash with byte-identical contents; no completed test/native/model cohort was rerun."
+  "integration_alignment": "The private branch was rebased onto the accepted squash with byte-identical contents; no completed test/native/model cohort was rerun.",
+  "tag_parser_phase": {
+    "phase": "fresh-tag-repair-1707-1709",
+    "earlier_reproduced_failures": 3,
+    "repaired_case_leaves": 3,
+    "new_syntax_case_leaves": 12,
+    "passed_leaves": [
+      "TestAmbiguousNativeTagsFresh1707/different-IDs",
+      "TestAmbiguousNativeTagsFresh1707/repeated-ID",
+      "TestAmbiguousNativeTagsFresh1707/ignored-tail",
+      "TestNativeTagSyntaxFresh1709/plain",
+      "TestNativeTagSyntaxFresh1709/other-key",
+      "TestNativeTagSyntaxFresh1709/spaces",
+      "TestNativeTagSyntaxFresh1709/escaped-ID",
+      "TestNativeTagSyntaxFresh1709/no-separator",
+      "TestNativeTagSyntaxFresh1709/tab-separator",
+      "TestNativeTagSyntaxFresh1709/unclosed-value",
+      "TestNativeTagSyntaxFresh1709/unquoted-value",
+      "TestNativeTagSyntaxFresh1709/control-key",
+      "TestNativeTagSyntaxFresh1709/missing-ID",
+      "TestNativeTagSyntaxFresh1709/empty-ID",
+      "TestNativeTagSyntaxFresh1709/repeated-other-key"
+    ],
+    "behavior": "Complete quoted tag parsing, unique keys, exact decoded source ID, no ignored malformed suffix.",
+    "earlier_completed_26_leaves_replayed_locally": 0
+  },
+  "final_source_combined_suite": "Pending own original CI; 26 early adapter leaves and 15 later tag-parser leaves are separate local phases."
 }
