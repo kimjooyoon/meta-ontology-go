@@ -142,7 +142,7 @@ func (e *Executor) dropArtifact() error {
 	if e.artifact == nil {
 		return nil
 	}
-	if err := os.RemoveAll(e.artifact.root); err != nil {
+	if err := removeRuntimeWorkspace(e.artifact.root); err != nil {
 		return err
 	}
 	e.artifact = nil
@@ -207,7 +207,7 @@ func executableFor(ctx context.Context, prior bodycodegen.Result, goBinary strin
 	if err != nil {
 		return "", "", release, fmt.Errorf("cannot create runtime workspace")
 	}
-	release = func() { _ = os.RemoveAll(root) }
+	release = func() { _ = removeRuntimeWorkspace(root) }
 	if err := prepareWorkspace(root, prior); err != nil {
 		return root, "", release, err
 	}

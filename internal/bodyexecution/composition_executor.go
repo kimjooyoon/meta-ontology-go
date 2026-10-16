@@ -120,7 +120,7 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 	if err != nil {
 		return "", "", release, err
 	}
-	release = func() { _ = os.RemoveAll(root) }
+	release = func() { _ = removeRuntimeWorkspace(root) }
 	executable, err = buildCompositionExecutable(ctx, root, projection, driver, goBinary, r)
 	if err != nil {
 		return root, executable, release, err
