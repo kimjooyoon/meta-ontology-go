@@ -26,6 +26,7 @@ on:
       - 'internal/meta/sourcepolicy/**'
       - 'internal/verify/scope_part01.go'
       - 'scripts/line-metrics/**'
+      - 'scripts/metric-cohort-counterexamples/**'
       - 'scripts/metric-counterfactual/**'
       - 'scripts/metric-intervention/**'
       - 'scripts/metric-meta-program/**'
