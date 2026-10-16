@@ -46,7 +46,7 @@ func TestBoundedTextPublicRefusalsFresh1905(t *testing.T) {
 				t.Fatal("rejected value gained completion credit", r)
 			}
 			if tc.native {
-				if !r.Build.Completed || len(r.Runs) != 1 || !r.Runs[0].Completed || r.Runs[0].ExitCode != 0 {
+				if !r.Build.Completed || len(r.Runs) != 1 || !r.Runs[0].Completed || r.Runs[0].ExitCode == nil || *r.Runs[0].ExitCode != 0 {
 					t.Fatal("output boundary did not observe the original native process", r)
 				}
 			} else if r.Build.Started || len(r.Runs) != 0 {
@@ -66,7 +66,7 @@ func TestSourceDeclaredLargerTextDomainFresh1905(t *testing.T) {
 	input, _ := json.Marshal(strings.Repeat("x", 1024))
 	expected, _ := json.Marshal(map[string]string{"value": "prefix!" + strings.Repeat("x", 1024)})
 	suite := bodyexecution.CompositionCases{Schema: "gooo/body-composition-cases/v1", Cases: []bodyexecution.CompositionCase{{
-		Inputs: map[string]json.RawMessage{"app/bound1905:Prefix": input},
+		Inputs:   map[string]json.RawMessage{"app/bound1905:Prefix": input},
 		Expected: map[string]json.RawMessage{"app/bound1905:Prefix": expected},
 	}}}
 	receipt, code := executeTextBound1905(t, "declared1031", source, "Prefix", suite, false)

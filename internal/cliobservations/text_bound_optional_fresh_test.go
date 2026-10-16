@@ -21,7 +21,7 @@ activity Empty(Text) -> Marker id "bound1905://empty-result" computes ` + "`" + 
 	suite := bodyexecution.CompositionCases{Schema: "gooo/body-composition-cases/v1"}
 	for _, input := range []string{`""`, `"present-root"`} {
 		suite.Cases = append(suite.Cases, bodyexecution.CompositionCase{
-			Inputs: map[string]json.RawMessage{"app/bound1905:Empty": json.RawMessage(input)},
+			Inputs:   map[string]json.RawMessage{"app/bound1905:Empty": json.RawMessage(input)},
 			Expected: map[string]json.RawMessage{"app/bound1905:Empty": json.RawMessage(`{"empty":"","zeros":["",""]}`)},
 		})
 	}

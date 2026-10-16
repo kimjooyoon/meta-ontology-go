@@ -14,7 +14,7 @@ func textBoundWorkspace1905(t *testing.T, source []byte, activity string) string
 	t.Helper()
 	dir := t.TempDir()
 	manifest := map[string]any{"schema": "gooo/package-workspace-manifest/v1",
-		"entry": map[string]string{"package_path": "app/bound1905", "activity": activity},
+		"entry":    map[string]string{"package_path": "app/bound1905", "activity": activity},
 		"packages": []any{map[string]any{"path": "app/bound1905", "sources": []string{"main.gooo"}}}}
 	raw, err := json.Marshal(manifest)
 	if err != nil {

@@ -46,7 +46,7 @@ type Field struct {
 	TypeRefSpan     SourceSpan
 	PresenceSpan    SourceSpan
 	CardinalitySpan SourceSpan
-	NameSource      SourceSpan // compatibility alias; NameSpan is authoritative
+	NameSource      SourceSpan     // compatibility alias; NameSpan is authoritative
 	TextBound       textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 }
 

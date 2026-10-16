@@ -21,7 +21,7 @@ func TestBoundedRecordIngressAndRenameNativeFresh1905(t *testing.T) {
 			source = strings.ReplaceAll(source, "Expanded{value:", "Expanded{"+name+":")
 			object, _ := json.Marshal(map[string]string{name: strings.Repeat("x", 1030)})
 			suite := bodyexecution.CompositionCases{Schema: "gooo/body-composition-cases/v1", Cases: []bodyexecution.CompositionCase{{
-				Inputs: map[string]json.RawMessage{"app/bound1905:Identity": object},
+				Inputs:   map[string]json.RawMessage{"app/bound1905:Identity": object},
 				Expected: map[string]json.RawMessage{"app/bound1905:Identity": object},
 			}}}
 			receipt, code := executeTextBound1905(t, "record-input-"+name, []byte(source), "Identity", suite, false)

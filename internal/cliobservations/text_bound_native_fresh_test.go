@@ -23,7 +23,7 @@ func TestBoundedTextPrefixPublicNativeFresh1905(t *testing.T) {
 		input, _ := json.Marshal(value)
 		expected, _ := json.Marshal(map[string]string{"value": "prefix" + value})
 		suite.Cases = append(suite.Cases, bodyexecution.CompositionCase{
-			Inputs: map[string]json.RawMessage{"app/bound1905:Prefix": input},
+			Inputs:   map[string]json.RawMessage{"app/bound1905:Prefix": input},
 			Expected: map[string]json.RawMessage{"app/bound1905:Prefix": expected},
 		})
 	}
@@ -59,7 +59,7 @@ func TestBoundedMappedOutput13PublicNativeFresh1905(t *testing.T) {
 		"group3": 0, "group4": 0, "group5": 65535, "group6": 65535, "group7": 65535}
 	raw, _ := json.Marshal(expected)
 	suite := bodyexecution.CompositionCases{Schema: "gooo/body-composition-cases/v1", Cases: []bodyexecution.CompositionCase{{
-		Inputs: map[string]json.RawMessage{"app/bound1905:MappedOutput": input},
+		Inputs:   map[string]json.RawMessage{"app/bound1905:MappedOutput": input},
 		Expected: map[string]json.RawMessage{"app/bound1905:MappedOutput": raw},
 	}}}
 	receipt, code := executeTextBound1905(t, "mapped13", source, "MappedOutput", suite, false)
@@ -102,7 +102,7 @@ func assertTextBoundNative1905(t *testing.T, receipt packageExecutionReceipt, co
 		t.Fatal("native producer is not the original CI source", r.ProducerSourceSHA, head)
 	}
 	for _, process := range r.Runs {
-		if !process.Started || !process.Completed || process.ExitCode != 0 || process.TimedOut || process.Canceled {
+		if !process.Started || !process.Completed || process.ExitCode == nil || *process.ExitCode != 0 || process.TimedOut || process.Canceled {
 			t.Fatal("native execution was incomplete", process)
 		}
 	}

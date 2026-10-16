@@ -36,7 +36,7 @@ func (mapping SourceMapping) MarshalJSON() ([]byte, error) {
 		TypeRefID: mapping.TypeRefID, Presence: mapping.Presence, Cardinality: mapping.Cardinality,
 		NameSource: nameSource, ProfileID: mapping.ProfileID, ProfileVersion: mapping.ProfileVersion,
 		ProfileDigest: mapping.ProfileDigest,
-		TextBound: mapping.TextBound,
+		TextBound:     mapping.TextBound,
 	})
 }
 

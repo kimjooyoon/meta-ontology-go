@@ -23,7 +23,7 @@ func TestBoundedTextRefusesNativeUTF8ReplacementFresh1905(t *testing.T) {
 	}
 	runtime := receipt.Result.Runtime
 	if runtime.RuntimeReplayed || runtime.FinitePassed != 0 || runtime.ModelCalls != 0 ||
-		!runtime.Build.Completed || len(runtime.Runs) != 1 || runtime.Runs[0].ExitCode != 4 {
+		!runtime.Build.Completed || len(runtime.Runs) != 1 || runtime.Runs[0].ExitCode == nil || *runtime.Runs[0].ExitCode != 4 {
 		t.Fatal("native Text encoding refusal lost its original process", runtime)
 	}
 }
