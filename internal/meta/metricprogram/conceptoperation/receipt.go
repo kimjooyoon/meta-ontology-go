@@ -22,12 +22,12 @@ import (
 )
 
 const (
-	Schema   = "gooo/metric-meta-concept-operation-binding/v1"
+	Schema   = "gooo/metric-meta-concept-operation-binding/v2"
 	MetricID = "gooo.metric.meta.concept-operation-binding-bps.v1"
 
 	ExecutionPolicy = "READ_ONLY_CONCEPT_OPERATION_RECEIPT"
 	CohortRule      = "UPSTREAM_INTERVENTION_OPERATIONS_PLUS_REGISTERED_TERMINALS"
-	SourceAuthority = "HANDWRITTEN_GO_REGISTRY_TO_CANONICAL_SOURCE_TO_PARSED_LOWERED_IR"
+	SourceAuthority = "EXECUTABLE_GOOO_REGISTRY_TO_TYPED_GO_PROJECTION_TO_PARSED_LOWERED_IR"
 )
 
 type OperationBinding struct {
@@ -70,37 +70,38 @@ type SourceInputs struct {
 }
 
 type Receipt struct {
-	Schema                     string             `json:"schema"`
-	Repository                 string             `json:"repository"`
-	SubjectSHA                 string             `json:"subject_sha"`
-	ExecutionPolicy            string             `json:"execution_policy"`
-	MetricID                   string             `json:"metric_id"`
-	CohortRule                 string             `json:"cohort_rule"`
-	SourceAuthority            string             `json:"source_authority"`
-	StrategyDigest             string             `json:"strategy_digest"`
-	StrategyVerificationDigest string             `json:"strategy_verification_digest"`
-	InterventionDigest         string             `json:"intervention_digest"`
-	ProgramDigest              string             `json:"program_digest"`
-	ProgramVerificationDigest  string             `json:"program_verification_digest"`
-	ProgramSourcePath          string             `json:"program_source_path"`
-	ProgramSourceDigest        string             `json:"program_source_digest"`
-	ProgramSemanticDigest      string             `json:"program_semantic_digest"`
-	ProgramRegistryDigest      string             `json:"program_registry_digest"`
-	Expected                   []OperationBinding `json:"expected"`
-	ExpectedCount              int                `json:"expected_count"`
-	ObservedCount              int                `json:"observed_count"`
-	BoundCount                 int                `json:"bound_count"`
-	UnknownCount               int                `json:"unknown_count"`
-	CoverageBPS                int                `json:"coverage_bps"`
-	Status                     string             `json:"status"`
-	FailureClass               string             `json:"failure_class"`
-	Unknown                    *UnknownCausal     `json:"unknown,omitempty"`
-	Producer                   string             `json:"producer"`
-	Consumer                   string             `json:"consumer"`
-	MetaOperation              string             `json:"meta_operation"`
-	RepositoryWorkspaceWrites  bool               `json:"repository_workspace_writes"`
-	PromotionAuthorized        bool               `json:"promotion_authorized"`
-	Digest                     string             `json:"digest"`
+	Schema                     string                       `json:"schema"`
+	Repository                 string                       `json:"repository"`
+	SubjectSHA                 string                       `json:"subject_sha"`
+	ExecutionPolicy            string                       `json:"execution_policy"`
+	MetricID                   string                       `json:"metric_id"`
+	CohortRule                 string                       `json:"cohort_rule"`
+	SourceAuthority            string                       `json:"source_authority"`
+	RegistryOrigin             metricprogram.RegistryOrigin `json:"registry_origin"`
+	StrategyDigest             string                       `json:"strategy_digest"`
+	StrategyVerificationDigest string                       `json:"strategy_verification_digest"`
+	InterventionDigest         string                       `json:"intervention_digest"`
+	ProgramDigest              string                       `json:"program_digest"`
+	ProgramVerificationDigest  string                       `json:"program_verification_digest"`
+	ProgramSourcePath          string                       `json:"program_source_path"`
+	ProgramSourceDigest        string                       `json:"program_source_digest"`
+	ProgramSemanticDigest      string                       `json:"program_semantic_digest"`
+	ProgramRegistryDigest      string                       `json:"program_registry_digest"`
+	Expected                   []OperationBinding           `json:"expected"`
+	ExpectedCount              int                          `json:"expected_count"`
+	ObservedCount              int                          `json:"observed_count"`
+	BoundCount                 int                          `json:"bound_count"`
+	UnknownCount               int                          `json:"unknown_count"`
+	CoverageBPS                int                          `json:"coverage_bps"`
+	Status                     string                       `json:"status"`
+	FailureClass               string                       `json:"failure_class"`
+	Unknown                    *UnknownCausal               `json:"unknown,omitempty"`
+	Producer                   string                       `json:"producer"`
+	Consumer                   string                       `json:"consumer"`
+	MetaOperation              string                       `json:"meta_operation"`
+	RepositoryWorkspaceWrites  bool                         `json:"repository_workspace_writes"`
+	PromotionAuthorized        bool                         `json:"promotion_authorized"`
+	Digest                     string                       `json:"digest"`
 }
 
 func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
@@ -259,6 +260,7 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 		Schema: Schema, Repository: plan.Repository, SubjectSHA: plan.SubjectSHA, ExecutionPolicy: ExecutionPolicy,
 		MetricID: MetricID, CohortRule: CohortRule, StrategyDigest: plan.Digest,
 		SourceAuthority:            SourceAuthority,
+		RegistryOrigin:             metricprogram.RegistrySourceOrigin(),
 		StrategyVerificationDigest: strategyReceipt.Digest, InterventionDigest: ledger.Digest,
 		ProgramDigest: program.Digest, ProgramVerificationDigest: programReceipt.Digest,
 		ProgramSourcePath:   program.SourcePath,
@@ -298,6 +300,9 @@ func VerifySource(receipt Receipt, inputs SourceInputs, repository fs.FS, reposi
 		if len(input.payload) == 0 {
 			return fmt.Errorf("concept-operation %s source is missing", input.name)
 		}
+	}
+	if err := metricprogram.VerifyRegistrySource(repository, receipt.RegistryOrigin); err != nil {
+		return fmt.Errorf("verify concept-operation registry origin: %w", err)
 	}
 	var plan metricstrategy.Plan
 	if err := decodeExact(inputs.Strategy, &plan); err != nil {
@@ -444,6 +449,9 @@ func Verify(payload []byte, expectedRepository, expectedSubjectSHA string) (Rece
 }
 
 func VerifyReceipt(receipt Receipt, expectedRepository, expectedSubjectSHA string) error {
+	if receipt.RegistryOrigin != metricprogram.RegistrySourceOrigin() {
+		return fmt.Errorf("concept-operation registry origin is invalid")
+	}
 	if receipt.Schema != Schema || receipt.ExecutionPolicy != ExecutionPolicy || receipt.MetricID != MetricID ||
 		receipt.CohortRule != CohortRule || receipt.SourceAuthority != SourceAuthority || receipt.ProgramSourcePath != metricprogram.ProgramSourceFilename ||
 		receipt.RepositoryWorkspaceWrites || receipt.PromotionAuthorized ||

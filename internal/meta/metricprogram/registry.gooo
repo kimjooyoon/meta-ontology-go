@@ -1,0 +1,214 @@
+package metricprogram
+namespace metricregistry
+
+entity Integer id "urn:gooo:type:integer"
+
+entity OperationDeclaration id "gooo://metric-registry/OperationDeclaration" fields {
+    field ID id "gooo://metric-registry/OperationDeclaration/ID" type string required one
+    field Activity id "gooo://metric-registry/OperationDeclaration/Activity" type string required one
+    field ProofChoice id "gooo://metric-registry/OperationDeclaration/ProofChoice" type string required one
+    field InputEntity id "gooo://metric-registry/OperationDeclaration/InputEntity" type string required one
+    field OutputEntity id "gooo://metric-registry/OperationDeclaration/OutputEntity" type string required one
+    field Mode id "gooo://metric-registry/OperationDeclaration/Mode" type string required one
+    field Ordinal id "gooo://metric-registry/OperationDeclaration/Ordinal" type integer required one
+    field RepositoryWrites id "gooo://metric-registry/OperationDeclaration/RepositoryWrites" type boolean required one
+    field PromotionAuthorized id "gooo://metric-registry/OperationDeclaration/PromotionAuthorized" type boolean required one
+}
+
+entity EntityDeclaration id "gooo://metric-registry/EntityDeclaration" fields {
+    field Name id "gooo://metric-registry/EntityDeclaration/Name" type string required one
+    field ID id "gooo://metric-registry/EntityDeclaration/ID" type string required one
+}
+
+activity OperationCount(seed Integer) -> Integer
+    id "gooo://metric-registry/operations/count" computes `return 9`
+
+activity OperationAt(index Integer) -> OperationDeclaration
+    id "gooo://metric-registry/operations/at" computes `
+if index == 0 {
+    return OperationDeclaration{
+        ID: "bind-exact-source-metrics",
+        Activity: "BindExactSourceMetrics",
+        ProofChoice: "FOUNDATION",
+        InputEntity: "SourceMetrics",
+        OutputEntity: "BoundMetrics",
+        Mode: "BIND",
+        Ordinal: 10,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+if index == 1 {
+    return OperationDeclaration{
+        ID: "exempt-project-root-topology",
+        Activity: "ExemptProjectRootTopology",
+        ProofChoice: "FOUNDATION",
+        InputEntity: "BoundMetrics",
+        OutputEntity: "RootPolicy",
+        Mode: "EXEMPT",
+        Ordinal: 20,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+if index == 2 {
+    return OperationDeclaration{
+        ID: "interpret-dimension-registry",
+        Activity: "InterpretDimensionRegistry",
+        ProofChoice: "FOUNDATION",
+        InputEntity: "RootPolicy",
+        OutputEntity: "DimensionRegistry",
+        Mode: "INTERPRET",
+        Ordinal: 30,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+if index == 3 {
+    return OperationDeclaration{
+        ID: "project-algebraic-root-state",
+        Activity: "ProjectAlgebraicRootState",
+        ProofChoice: "COHERENCE",
+        InputEntity: "SourceMetrics",
+        OutputEntity: "ProjectedMetrics",
+        Mode: "PROJECT",
+        Ordinal: 40,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+if index == 4 {
+    return OperationDeclaration{
+        ID: "observe-counterfactual-boundary",
+        Activity: "ObserveCounterfactualBoundary",
+        ProofChoice: "REGRESSION",
+        InputEntity: "ProjectedMetrics",
+        OutputEntity: "CounterfactualBoundary",
+        Mode: "OBSERVE",
+        Ordinal: 50,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+if index == 5 {
+    return OperationDeclaration{
+        ID: "preserve-repository-workspace",
+        Activity: "PreserveRepositoryWorkspace",
+        ProofChoice: "REGRESSION",
+        InputEntity: "CounterfactualBoundary",
+        OutputEntity: "WorkspaceReceipt",
+        Mode: "ASSERT_NO_WRITE",
+        Ordinal: 60,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+if index == 6 {
+    return OperationDeclaration{
+        ID: "replay-counterfactual",
+        Activity: "ReplayCounterfactual",
+        ProofChoice: "REGRESSION",
+        InputEntity: "WorkspaceReceipt",
+        OutputEntity: "VerificationEvidence",
+        Mode: "REPLAY",
+        Ordinal: 70,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+if index == 7 {
+    return OperationDeclaration{
+        ID: "terminate-at-fixed-point",
+        Activity: "TerminateAtFixedPoint",
+        ProofChoice: "REGRESSION",
+        InputEntity: "VerificationEvidence",
+        OutputEntity: "FixedPointReceipt",
+        Mode: "TERMINATE",
+        Ordinal: 80,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+if index == 8 {
+    return OperationDeclaration{
+        ID: "preserve-non-promoting-terminal",
+        Activity: "PreserveNonPromotingTerminal",
+        ProofChoice: "REGRESSION",
+        InputEntity: "VerificationEvidence",
+        OutputEntity: "NonPromotingTerminalReceipt",
+        Mode: "PRESERVE_NON_PROMOTING",
+        Ordinal: 90,
+        RepositoryWrites: false,
+        PromotionAuthorized: false,
+    }
+}
+return OperationDeclaration{ID: "", Activity: "", ProofChoice: "", InputEntity: "", OutputEntity: "", Mode: "", Ordinal: 0, RepositoryWrites: false, PromotionAuthorized: false}
+`
+
+activity EntityCount(seed Integer) -> Integer
+    id "gooo://metric-registry/entities/count" computes `return 10`
+
+activity EntityAt(index Integer) -> EntityDeclaration
+    id "gooo://metric-registry/entities/at" computes `
+if index == 0 {
+    return EntityDeclaration{
+        Name: "SourceMetrics",
+        ID: "gooo://metric-meta-program/entity/source-metrics",
+    }
+}
+if index == 1 {
+    return EntityDeclaration{
+        Name: "BoundMetrics",
+        ID: "gooo://metric-meta-program/entity/bound-metrics",
+    }
+}
+if index == 2 {
+    return EntityDeclaration{
+        Name: "RootPolicy",
+        ID: "gooo://metric-meta-program/entity/root-policy",
+    }
+}
+if index == 3 {
+    return EntityDeclaration{
+        Name: "DimensionRegistry",
+        ID: "gooo://metric-meta-program/entity/dimension-registry",
+    }
+}
+if index == 4 {
+    return EntityDeclaration{
+        Name: "ProjectedMetrics",
+        ID: "gooo://metric-meta-program/entity/projected-metrics",
+    }
+}
+if index == 5 {
+    return EntityDeclaration{
+        Name: "CounterfactualBoundary",
+        ID: "gooo://metric-meta-program/entity/counterfactual-boundary",
+    }
+}
+if index == 6 {
+    return EntityDeclaration{
+        Name: "WorkspaceReceipt",
+        ID: "gooo://metric-meta-program/entity/workspace-receipt",
+    }
+}
+if index == 7 {
+    return EntityDeclaration{
+        Name: "VerificationEvidence",
+        ID: "gooo://metric-meta-program/entity/verification-evidence",
+    }
+}
+if index == 8 {
+    return EntityDeclaration{
+        Name: "FixedPointReceipt",
+        ID: "gooo://metric-meta-program/entity/fixed-point-receipt",
+    }
+}
+if index == 9 {
+    return EntityDeclaration{
+        Name: "NonPromotingTerminalReceipt",
+        ID: "gooo://metric-meta-program/entity/non-promoting-terminal-receipt",
+    }
+}
+return EntityDeclaration{Name: "", ID: ""}
+`

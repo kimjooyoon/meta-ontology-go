@@ -8,6 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
+// These identities constrain the accepted program independently of its producer.
 var entities = []struct {
 	name string
 	id   string
