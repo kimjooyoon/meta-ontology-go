@@ -1,11 +1,8 @@
 package candidatedelivery
 
 import (
-	"archive/zip"
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport"
@@ -115,31 +112,9 @@ func validateBundle(manifest Manifest, bundle Bundle) (string, error) {
 }
 
 func readBundle(raw []byte) (Bundle, error) {
-	z, err := zip.NewReader(bytes.NewReader(raw), int64(len(raw)))
+	files, err := ReadArchiveMembers(raw, []string{"output/first.json", "transport/receipt.json", "output/delivery.json"})
 	if err != nil {
 		return Bundle{}, err
-	}
-	if len(z.File) > 128 {
-		return Bundle{}, fmt.Errorf("delivery member population oversized")
-	}
-	files := map[string][]byte{}
-	for _, entry := range z.File {
-		if entry.Name != "output/first.json" && entry.Name != "transport/receipt.json" && entry.Name != "output/delivery.json" {
-			continue
-		}
-		if _, found := files[entry.Name]; found {
-			return Bundle{}, fmt.Errorf("duplicate delivery member")
-		}
-		stream, err := entry.Open()
-		if err != nil {
-			return Bundle{}, err
-		}
-		data, readErr := io.ReadAll(io.LimitReader(stream, (8<<20)+1))
-		closeErr := stream.Close()
-		if readErr != nil || closeErr != nil || len(data) > 8<<20 {
-			return Bundle{}, fmt.Errorf("delivery member unavailable or oversized")
-		}
-		files[entry.Name] = data
 	}
 	return Bundle{Candidate: files["output/first.json"], Transport: files["transport/receipt.json"], Manifest: files["output/delivery.json"]}, nil
 }
