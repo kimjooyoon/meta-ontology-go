@@ -34,7 +34,7 @@ func TestEverydayRegistryRetainsAllPriorCases67143(t *testing.T) {
 	}
 	if len(prior.Cases) != 110 || len(registry.Cases) != FixedTotal ||
 		!reflect.DeepEqual(prior.Cases, registry.Cases[:110]) ||
-		!reflect.DeepEqual(prior.MetaSources, registry.MetaSources) ||
+		!metaSourceHistoryRetained67143(prior.MetaSources, registry.MetaSources) ||
 		!reflect.DeepEqual(prior.ProjectionUnits, registry.ProjectionUnits) ||
 		!reflect.DeepEqual(prior.PackageUnits, registry.PackageUnits) {
 		t.Fatal("previous source identities, scopes or classifications changed")
@@ -44,6 +44,12 @@ func TestEverydayRegistryRetainsAllPriorCases67143(t *testing.T) {
 		added.Kind != KindValid || added.Scope != ScopeLanguageCapability || added.ExpectedDecision != DecisionPass {
 		t.Fatal("ordinary source registration omitted", added)
 	}
+}
+
+// Existing source identities retain their ordered prefix; new meta sources are
+// admitted separately by decodeRegistry's exact current native/JSON binding.
+func metaSourceHistoryRetained67143(prior, current []string) bool {
+	return len(current) >= len(prior) && reflect.DeepEqual(prior, current[:len(prior)])
 }
 
 func TestEverydayRegistryCoversActualSourceInventory67143(t *testing.T) {
