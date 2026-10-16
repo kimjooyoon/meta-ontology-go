@@ -1,15 +1,15 @@
 package metricprogram
 
 type OperationSpec struct {
-	ID                  string `json:"id"`
-	Activity            string `json:"activity"`
-	ProofChoice         string `json:"proof_choice"`
-	InputEntity         string `json:"input_entity"`
-	OutputEntity        string `json:"output_entity"`
-	Mode                string `json:"mode"`
-	Ordinal             int    `json:"ordinal"`
-	RepositoryWrites    bool   `json:"repository_writes"`
-	PromotionAuthorized bool   `json:"promotion_authorized"`
+	ID                  string `json:"id" gooo:"gooo://metric-registry/OperationDeclaration/ID"`
+	Activity            string `json:"activity" gooo:"gooo://metric-registry/OperationDeclaration/Activity"`
+	ProofChoice         string `json:"proof_choice" gooo:"gooo://metric-registry/OperationDeclaration/ProofChoice"`
+	InputEntity         string `json:"input_entity" gooo:"gooo://metric-registry/OperationDeclaration/InputEntity"`
+	OutputEntity        string `json:"output_entity" gooo:"gooo://metric-registry/OperationDeclaration/OutputEntity"`
+	Mode                string `json:"mode" gooo:"gooo://metric-registry/OperationDeclaration/Mode"`
+	Ordinal             int    `json:"ordinal" gooo:"gooo://metric-registry/OperationDeclaration/Ordinal"`
+	RepositoryWrites    bool   `json:"repository_writes" gooo:"gooo://metric-registry/OperationDeclaration/RepositoryWrites"`
+	PromotionAuthorized bool   `json:"promotion_authorized" gooo:"gooo://metric-registry/OperationDeclaration/PromotionAuthorized"`
 }
 
 type ResolvedBinding struct {

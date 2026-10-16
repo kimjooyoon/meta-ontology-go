@@ -1,0 +1,63 @@
+{
+  "schema": "gooo/stable-record-bridge-development/v1",
+  "state": "FRESH_IDENTITY_CHECKED_ORIGINAL_CI_PENDING",
+  "parent_source": "46523057a586900095c3e34f9edb087eec65dacb",
+  "source": "internal/meta/metricprogram/registry.gooo",
+  "source_digest": "sha256:b03df48baaf6141488278f62fd8846c33d5b9f02f5cf7402bbab5574f0a1379e",
+  "records": 3,
+  "field_mappings": 15,
+  "identity": "Source record/field semantic IDs match explicit Go DTO gooo tags. Display names are independent.",
+  "value_contract": "Required single string/bool/integer fields; optional/collection/ambiguous identities refused.",
+  "fresh_local_checks": [
+    {
+      "phase": "fresh-identity-1699-1703",
+      "leaves": [
+        "TestStableBridgeIdentityFresh1699/original",
+        "TestStableBridgeIdentityFresh1699/source-field-rename",
+        "TestStableBridgeIdentityFresh1699/source-record-rename",
+        "TestStableBridgeIdentityFresh1699/target-field-rename",
+        "TestStableBridgeIdentityFresh1699/changed-record-ID",
+        "TestStableBridgeIdentityFresh1699/changed-field-ID",
+        "TestStableBridgeIdentityFresh1699/missing-field-ID",
+        "TestStableBridgeIdentityFresh1699/missing-native-name",
+        "TestStableBridgeIdentityFresh1699/duplicate-record-ID",
+        "TestStableBridgeIdentityFresh1699/duplicate-field-ID",
+        "TestStableBridgeIdentityFresh1699/optional-field",
+        "TestStableBridgeIdentityFresh1699/repeated-field",
+        "TestStableBridgeIdentityFresh1699/changed-type",
+        "TestSourceAndTargetRenameFresh1703",
+        "TestStableTargetIdentityFresh1701/missing-tag",
+        "TestStableTargetIdentityFresh1701/empty-ID",
+        "TestStableTargetIdentityFresh1701/missing-ID",
+        "TestStableTargetIdentityFresh1701/duplicate-ID",
+        "TestStableTargetIdentityFresh1701/duplicate-native-name",
+        "TestStableTargetIdentityFresh1701/grouped",
+        "TestStableTargetIdentityFresh1701/nested",
+        "TestStableTargetIdentityFresh1701/alias",
+        "TestStableTargetIdentityFresh1701/generic"
+      ],
+      "leaf_count": 23,
+      "failures": []
+    },
+    {
+      "phase": "fresh-typecheck-1705",
+      "leaves": [
+        "TestRenamedBridgeTypesFresh1705/string",
+        "TestRenamedBridgeTypesFresh1705/boolean",
+        "TestRenamedBridgeTypesFresh1705/integer"
+      ],
+      "leaf_count": 3,
+      "failures": []
+    }
+  ],
+  "fresh_leaf_count": 26,
+  "five_source_projection_files_byte_identical": true,
+  "native_countercase_replays": 0,
+  "model_calls": 0,
+  "scope_limits": {
+    "activity_lookup": "Existing At/Count activity names remain configured.",
+    "native_execution": "Own new original CI pending. Local checks generate renamed source and typecheck bridge code; no runtime rename parity claim.",
+    "generic_interop": "Metric registry adapters only; no general external-Go binding syntax added.",
+    "nested_records": "Unchanged unsupported body route."
+  }
+}

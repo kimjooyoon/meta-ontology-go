@@ -186,7 +186,7 @@
     "issue791": "Original six clauses remain open until native artifacts and exact refusal paths are reviewed.",
     "mechanisms": "Go retains union/sorting, transport, actual execution and independent verification. Gooo owns terminal membership and roles.",
     "nested_record_collections": "Unsupported by this body route.",
-    "adapter_names": "Transport field adapters still match source display field names and types. Stable-ID mapping remains a future interoperability improvement.",
+    "adapter_names": "Registry record/field adapters now match explicit semantic IDs and typed Go gooo tags. At/Count activity names remain configured. See stable-record-bridge observations; prior native artifacts retain their own source identity.",
     "performance": "No runtime speedup claim."
   },
   "source_checks": {
