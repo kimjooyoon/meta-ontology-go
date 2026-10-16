@@ -1,0 +1,86 @@
+{
+  "schema": "gooo/native-workspace-lifecycle-development/v1",
+  "state": "FRESH_LOCAL_PROTOCOL_CHECKED_WINDOWS_ORIGINAL_CI_PENDING",
+  "base_dev": "61eb4ec3a36299541a2c9fa2637d726420cd361a",
+  "original_failure": {
+    "pr": 1615,
+    "head": "05aca3d97c0ee1aaa6fe18f8850cd6b0dc9cd9d0",
+    "run": 38856672790,
+    "job": 116829579217,
+    "artifact_id": 12027641357,
+    "artifact_digest": "sha256:d3a9e9ee65a29f2bcaeb11a529e26da11ad7da32b2d7d0251ef076da71a378fd",
+    "member": "windows-amd64-record-english-inputs.failed-output",
+    "member_digest": "sha256:99142f17fa57bd234cfbb4b3902546b316bdce86042bb7694d005cce1afcb45c"
+  },
+  "original_runtime_stage": "COMPLETE",
+  "original_runtime_processes": {
+    "completed": true,
+    "canceled": false,
+    "timed_out": false,
+    "exit_code": 0
+  },
+  "original_cleanup_error": "Windows reported another process using observed-composition.exe.",
+  "classification_basis": "Exact original Windows message matches the documented Win32 sharing violation; the original CLI did not serialize numeric errno.",
+  "handle_holder": "NOT_ESTABLISHED",
+  "policy": {
+    "platform": "windows",
+    "retryable_native_error_identities": [
+      32,
+      33
+    ],
+    "maximum_attempts": 7,
+    "scheduled_backoffs_ms": [
+      10,
+      20,
+      40,
+      80,
+      160,
+      320
+    ],
+    "maximum_scheduled_backoff_ms": 630,
+    "filesystem_call_time": "Separate; no hard OS I/O wall-time guarantee.",
+    "other_platforms_and_errors": "Return immediately.",
+    "ownership": "Child-completion gate remains held; artifact reference is cleared only after successful removal.",
+    "program_reexecution": false,
+    "persistent_owned_cleanup_error": "Return to caller; retain artifact reference.",
+    "existing_unowned_release_callbacks": "Existing best-effort error propagation unchanged; same bounded helper applied.",
+    "budget_scope": "One cleanup invocation; concurrent/canceled callers retain their own lifecycle calls."
+  },
+  "local_checks": {
+    "fresh_leaf_count": 9,
+    "leaves": [
+      "TestWorkspaceRemovalBudgetFresh1711/first-success",
+      "TestWorkspaceRemovalBudgetFresh1711/one-lock",
+      "TestWorkspaceRemovalBudgetFresh1711/three-locks",
+      "TestWorkspaceRemovalBudgetFresh1711/permanent-error",
+      "TestWorkspaceRemovalBudgetFresh1711/persistent-lock",
+      "TestWorkspaceCloseOwnershipFresh1717",
+      "TestNonWindowsWorkspaceErrorsFresh1713/numeric-overlap",
+      "TestNonWindowsWorkspaceErrorsFresh1713/permission",
+      "TestNonWindowsWorkspaceErrorsFresh1713/message-only"
+    ],
+    "native_windows_executions": 0,
+    "native_program_or_model_cohorts_replayed": 0
+  },
+  "windows_original_ci": {
+    "declared_leaves": 7,
+    "classification_leaves": 6,
+    "actual_handle_lock_release_leaves": 1,
+    "entry": "Transformation effect ledger / cross-platform release windows-amd64",
+    "status": "PENDING_NEW_ORIGINAL_SOURCE_CI",
+    "full_existing_platform_witness": "Preserved.",
+    "retained_artifact": "native-workspace-cleanup-windows-amd64-<head>-<run>-<attempt>",
+    "execution_accounting": "Exact seven passing leaf names from real go test JSON; zero/missing/extra/duplicate leaves cannot satisfy the set."
+  },
+  "unchanged": {
+    "gooo_source_and_projection_files": 5,
+    "registration_members": 9,
+    "module_graph": true,
+    "workflow_timeout_minutes": 20,
+    "six_canonical_required_checks": true
+  },
+  "source_references": [
+    "https://learn.microsoft.com/windows/win32/debug/system-error-codes--0-499-",
+    "https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea"
+  ]
+}
