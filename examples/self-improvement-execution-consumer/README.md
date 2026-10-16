@@ -42,9 +42,10 @@ the registered `Increment` file at the explicit subject commit and compares its
 bytes with the authorized snapshot. The consumer uses its own workflow code.
 
 The command has `prepare`, `reserve`, `consume` and producer-side `dispatch`
-modes. The workflow invokes them directly in Go. The evaluator compiles the
-Gooo snapshot once, runs the fixed corpus and verifies each opaque produced
-result against that program. Reports preserve subject blob/file hashes, both
+modes. The workflow invokes them directly in Go. The evaluator reuses one
+compiled Gooo program across the five value calls and verifies each opaque
+produced result against that program. Input validation separately recompiles
+the snapshot to recheck semantic identity. Reports preserve subject blob/file hashes, both
 producer origins, consumer origin and each value result's provenance.
 
 ## One-use scope
@@ -71,6 +72,10 @@ plan identity, per-case elapsed time, compile time, and total evaluation time.
 Repository writes and external effects remain zero. Runtime samples are
 diagnostic; without a comparable baseline, `performance_improvement` stays
 `UNKNOWN`.
+
+Compile and evaluation timers cover the evaluator phase. Source retrieval,
+policy and input validation, command startup and queue time have separate costs;
+the report supplies no end-to-end speedup measurement.
 
 HTTP reads have a 30-second request timeout and a four-minute command deadline.
 History and artifact inventories each have an eight-page bound. Archives are

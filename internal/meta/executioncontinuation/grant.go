@@ -21,7 +21,7 @@ func ValidateGrant(root fs.FS, g grant.LiveReport, e Envelope) error {
 	}
 	program, err := grant.CompilePolicy(root, grant.PolicyPath)
 	if err != nil {
-		return err
+		return unknown("GRANT_POLICY_UNAVAILABLE")
 	}
 	verification := grant.Verify(program, grant.GrantInput{Request: g.Request, Live: true}, g.Resolution)
 	if !verification.Verified || !reflect.DeepEqual(verification, g.Verification) {

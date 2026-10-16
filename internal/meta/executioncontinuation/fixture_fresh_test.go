@@ -111,7 +111,7 @@ func fixtureConsumer1617(t *testing.T) fixture1617 {
 }
 
 func run1617(kind string, id int64, head string) Run {
-	r := Run{Run: candidatedelivery.Run{ID: id, Attempt: 1, Head: head, Event: "workflow_dispatch", Path: policy.WorkflowPath(kind), Status: "completed", Conclusion: "success"}, Branch: "dev"}
+	r := Run{ID: id, Attempt: 1, Head: head, Event: "workflow_dispatch", Path: policy.WorkflowPath(kind), Status: "completed", Conclusion: "success", Branch: "dev"}
 	r.Repository.Name = "kimjooyoon/meta-ontology-go"
 	return r
 }
