@@ -2,31 +2,31 @@ package main
 
 import (
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"path/filepath"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
-type bridgeBinding struct{ record, target, activity, function, owner string }
+type bridgeBinding struct{ recordID, target, activity, function, owner string }
 
 type bridgeProjection struct{ recordID, code string }
 
 func renderBridge(records []bodycodegen.RecordType, b bridgeBinding, directory string) (bridgeProjection, error) {
+	if b.recordID == "" {
+		return bridgeProjection{}, fmt.Errorf("record binding requires a stable ID")
+	}
 	var selected *bodycodegen.RecordType
 	for i := range records {
-		if records[i].Name == b.record {
+		if records[i].ID == b.recordID {
 			if selected != nil {
-				return bridgeProjection{}, fmt.Errorf("duplicated record %s", b.record)
+				return bridgeProjection{}, fmt.Errorf("duplicated record ID %s", b.recordID)
 			}
 			selected = &records[i]
 		}
 	}
 	if selected == nil {
-		return bridgeProjection{}, fmt.Errorf("record %s unavailable", b.record)
+		return bridgeProjection{}, fmt.Errorf("record ID %s unavailable", b.recordID)
 	}
 	fields, err := targetFields(filepath.Join(directory, b.owner), b.target)
 	if err != nil {
@@ -36,18 +36,23 @@ func renderBridge(records []bodycodegen.RecordType, b bridgeBinding, directory s
 		return bridgeProjection{}, fmt.Errorf("record/target fields differ")
 	}
 	var assignments []string
+	seen := map[string]bool{}
 	for _, field := range selected.Fields {
-		kind, ok := fields[field.Name]
-		if !ok {
-			return bridgeProjection{}, fmt.Errorf("record field %s has no target", field.Name)
+		target, ok := fields[field.ID]
+		if field.ID == "" || field.GoName == "" || seen[field.ID] || !ok {
+			return bridgeProjection{}, fmt.Errorf("record field ID %q has no unique target", field.ID)
+		}
+		seen[field.ID] = true
+		if field.Presence != "" || field.Cardinality != "" {
+			return bridgeProjection{}, fmt.Errorf("record field ID %q requires one mandatory value", field.ID)
 		}
 		value := "row." + field.GoName
-		if kind == "int" && field.TypeID == "urn:gooo:type:integer" {
+		if target.kind == "int" && field.TypeID == "urn:gooo:type:integer" {
 			value = "int(" + value + ")"
-		} else if !compatibleType(kind, field.TypeID) {
-			return bridgeProjection{}, fmt.Errorf("record field %s changes type", field.Name)
+		} else if !compatibleType(target.kind, field.TypeID) {
+			return bridgeProjection{}, fmt.Errorf("record field ID %q changes type", field.ID)
 		}
-		assignments = append(assignments, field.Name+": "+value)
+		assignments = append(assignments, target.name+": "+value)
 	}
 	code := fmt.Sprintf("func %s() []%s {\n values := make([]%s, %sCount(0))\n for index := range values {\n"+
 		"row := %sAt(int64(index))\n values[index] = %s{%s}\n }\n return values\n }\n"+
@@ -59,37 +64,4 @@ func renderBridge(records []bodycodegen.RecordType, b bridgeBinding, directory s
 func compatibleType(kind, typeID string) bool {
 	return kind == "string" && typeID == "urn:gooo:type:string" ||
 		kind == "bool" && typeID == "urn:gooo:type:boolean"
-}
-
-func targetFields(path, name string) (map[string]string, error) {
-	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
-	if err != nil {
-		return nil, err
-	}
-	var result map[string]string
-	ast.Inspect(file, func(n ast.Node) bool {
-		spec, ok := n.(*ast.TypeSpec)
-		if !ok || spec.Name.Name != name {
-			return true
-		}
-		shape, ok := spec.Type.(*ast.StructType)
-		if !ok || result != nil {
-			err = fmt.Errorf("target type is ambiguous or not a record")
-			return false
-		}
-		result = map[string]string{}
-		for _, field := range shape.Fields.List {
-			kind, ok := field.Type.(*ast.Ident)
-			if !ok || len(field.Names) != 1 {
-				err = fmt.Errorf("target field is not one named scalar")
-				return false
-			}
-			result[field.Names[0].Name] = kind.Name
-		}
-		return false
-	})
-	if result == nil && err == nil {
-		err = fmt.Errorf("target type unavailable")
-	}
-	return result, err
 }

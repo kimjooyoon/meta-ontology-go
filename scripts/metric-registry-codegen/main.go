@@ -47,9 +47,9 @@ func generate(sourcePath, output string) error {
 	}
 	body := generated.String()
 	for _, binding := range []bridgeBinding{
-		{"OperationDeclaration", "OperationSpec", "Operation", "sourceOperations", "types_program.go"},
-		{"EntityDeclaration", "entitySpec", "Entity", "sourceEntities", "source.go"},
-		{"CohortTerminalDeclaration", "CohortTerminalSpec", "CohortTerminal", "sourceCohortTerminals", "cohort.go"},
+		{"gooo://metric-registry/OperationDeclaration", "OperationSpec", "Operation", "sourceOperations", "types_program.go"},
+		{"gooo://metric-registry/EntityDeclaration", "entitySpec", "Entity", "sourceEntities", "source.go"},
+		{"gooo://metric-registry/CohortTerminalDeclaration", "CohortTerminalSpec", "CohortTerminal", "sourceCohortTerminals", "cohort.go"},
 	} {
 		bridge, err := renderBridge(records, binding, filepath.Dir(sourcePath))
 		if err != nil {

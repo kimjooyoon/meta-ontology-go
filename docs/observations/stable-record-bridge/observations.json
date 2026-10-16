@@ -1,0 +1,98 @@
+{
+  "schema": "gooo/stable-record-bridge-development/v1",
+  "state": "FRESH_IDENTITY_CHECKED_ORIGINAL_CI_PENDING",
+  "parent_source": "46523057a586900095c3e34f9edb087eec65dacb",
+  "source": "internal/meta/metricprogram/registry.gooo",
+  "source_digest": "sha256:b03df48baaf6141488278f62fd8846c33d5b9f02f5cf7402bbab5574f0a1379e",
+  "records": 3,
+  "field_mappings": 15,
+  "identity": "Source record/field semantic IDs match explicit Go DTO gooo tags. Display names are independent.",
+  "value_contract": "Required single string/bool/integer fields; optional/collection/ambiguous identities refused.",
+  "fresh_local_checks": [
+    {
+      "phase": "fresh-identity-1699-1703",
+      "leaves": [
+        "TestStableBridgeIdentityFresh1699/original",
+        "TestStableBridgeIdentityFresh1699/source-field-rename",
+        "TestStableBridgeIdentityFresh1699/source-record-rename",
+        "TestStableBridgeIdentityFresh1699/target-field-rename",
+        "TestStableBridgeIdentityFresh1699/changed-record-ID",
+        "TestStableBridgeIdentityFresh1699/changed-field-ID",
+        "TestStableBridgeIdentityFresh1699/missing-field-ID",
+        "TestStableBridgeIdentityFresh1699/missing-native-name",
+        "TestStableBridgeIdentityFresh1699/duplicate-record-ID",
+        "TestStableBridgeIdentityFresh1699/duplicate-field-ID",
+        "TestStableBridgeIdentityFresh1699/optional-field",
+        "TestStableBridgeIdentityFresh1699/repeated-field",
+        "TestStableBridgeIdentityFresh1699/changed-type",
+        "TestSourceAndTargetRenameFresh1703",
+        "TestStableTargetIdentityFresh1701/missing-tag",
+        "TestStableTargetIdentityFresh1701/empty-ID",
+        "TestStableTargetIdentityFresh1701/missing-ID",
+        "TestStableTargetIdentityFresh1701/duplicate-ID",
+        "TestStableTargetIdentityFresh1701/duplicate-native-name",
+        "TestStableTargetIdentityFresh1701/grouped",
+        "TestStableTargetIdentityFresh1701/nested",
+        "TestStableTargetIdentityFresh1701/alias",
+        "TestStableTargetIdentityFresh1701/generic"
+      ],
+      "leaf_count": 23,
+      "failures": []
+    },
+    {
+      "phase": "fresh-typecheck-1705",
+      "leaves": [
+        "TestRenamedBridgeTypesFresh1705/string",
+        "TestRenamedBridgeTypesFresh1705/boolean",
+        "TestRenamedBridgeTypesFresh1705/integer"
+      ],
+      "leaf_count": 3,
+      "failures": []
+    }
+  ],
+  "fresh_leaf_count": 41,
+  "five_source_projection_files_byte_identical": true,
+  "native_countercase_replays": 0,
+  "model_calls": 0,
+  "scope_limits": {
+    "activity_lookup": "Existing At/Count activity names remain configured.",
+    "native_execution": "Own new original CI pending. Local checks generate renamed source and typecheck bridge code; no runtime rename parity claim.",
+    "generic_interop": "Metric registry adapters only; no general external-Go binding syntax added.",
+    "nested_records": "Unchanged unsupported body route."
+  },
+  "parent_source_role": "Original development input; fresh local source checks were recorded before unpublished ancestry alignment.",
+  "integration_base_dev": "48df81a7c03f9ba657141c2968e44e2d8e359b27",
+  "integration_alignment": "Private feature rebased onto accepted runtime cleanup dev; all feature file blobs matched before provenance-only documentation updates. Earlier local phases retain their original development roles; final combined suite requires this feature original CI.",
+  "tag_parser_phase": {
+    "phase": "fresh-tag-repair-1707-1709",
+    "earlier_reproduced_failures": 3,
+    "repaired_case_leaves": 3,
+    "new_syntax_case_leaves": 12,
+    "passed_leaves": [
+      "TestAmbiguousNativeTagsFresh1707/different-IDs",
+      "TestAmbiguousNativeTagsFresh1707/repeated-ID",
+      "TestAmbiguousNativeTagsFresh1707/ignored-tail",
+      "TestNativeTagSyntaxFresh1709/plain",
+      "TestNativeTagSyntaxFresh1709/other-key",
+      "TestNativeTagSyntaxFresh1709/spaces",
+      "TestNativeTagSyntaxFresh1709/escaped-ID",
+      "TestNativeTagSyntaxFresh1709/no-separator",
+      "TestNativeTagSyntaxFresh1709/tab-separator",
+      "TestNativeTagSyntaxFresh1709/unclosed-value",
+      "TestNativeTagSyntaxFresh1709/unquoted-value",
+      "TestNativeTagSyntaxFresh1709/control-key",
+      "TestNativeTagSyntaxFresh1709/missing-ID",
+      "TestNativeTagSyntaxFresh1709/empty-ID",
+      "TestNativeTagSyntaxFresh1709/repeated-other-key"
+    ],
+    "behavior": "Complete quoted tag parsing, unique keys, exact decoded source ID, no ignored malformed suffix.",
+    "earlier_completed_26_leaves_replayed_locally": 0
+  },
+  "final_source_combined_suite": "Pending own original CI; 26 early adapter leaves and 15 later tag-parser leaves are separate local phases.",
+  "runtime_cleanup_inherited_from": {
+    "pr": 1616,
+    "head": "475cbba4bd8a31fb3c1f8fc97855a33af49d3a06",
+    "merge_commit": "48df81a7c03f9ba657141c2968e44e2d8e359b27",
+    "tree": "9311be8cb9cec591dcd35cf7fb66f4a252d339ef"
+  }
+}
