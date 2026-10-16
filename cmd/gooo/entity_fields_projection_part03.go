@@ -12,6 +12,10 @@ func validateCLIProjectedFields(model generator.SemanticIR, support syntax.Entit
 		if len(entity.Fields) == 0 {
 			continue
 		}
+		capabilities, err := support.Profile.Capabilities()
+		if err != nil {
+			return err
+		}
 		seenIDs := make(map[string]struct{}, len(entity.Fields))
 		seenNames := make(map[string]struct{}, len(entity.Fields))
 		var sourceURI string
@@ -32,14 +36,16 @@ func validateCLIProjectedFields(model generator.SemanticIR, support syntax.Entit
 			}
 			seenNames[field.Name] = struct{}{}
 			stringType := field.TypeRefID == "urn:gooo:type:string"
-			booleanType := field.TypeRefID == "urn:gooo:type:boolean" &&
-				(support.Profile.ID == syntax.EntityFieldsV2ProfileID || support.Profile.ID == syntax.EntityFieldsV3ProfileID || support.Profile.ID == syntax.EntityFieldsV4ProfileID || support.Profile.ID == syntax.EntityFieldsV5ProfileID)
-			integerType := field.TypeRefID == "urn:gooo:type:integer" && (support.Profile.ID == syntax.EntityFieldsV3ProfileID || support.Profile.ID == syntax.EntityFieldsV4ProfileID || support.Profile.ID == syntax.EntityFieldsV5ProfileID)
+			booleanType := field.TypeRefID == "urn:gooo:type:boolean" && capabilities.Boolean
+			integerType := field.TypeRefID == "urn:gooo:type:integer" && capabilities.Integer
 			if !stringType && !booleanType && !integerType {
 				return fmt.Errorf("GOOO-EF-V1-UNSUPPORTED-TYPE: field %q type %q", field.ID, field.TypeRefID)
 			}
-			optionalSupported := (support.Profile.ID == syntax.EntityFieldsV4ProfileID || support.Profile.ID == syntax.EntityFieldsV5ProfileID) && field.Presence == "optional"
-			if field.Presence != "required" && !optionalSupported || field.Cardinality != "one" && !(support.Profile.ID == syntax.EntityFieldsV5ProfileID && field.Cardinality == "many") {
+			if field.TextBound.Validate() != nil || field.TextBound.IsSet() && (!capabilities.TextBound || !stringType) {
+				return fmt.Errorf("GOOO-EF-V1-UNSUPPORTED-TYPE: field %q max_utf8_bytes requires Text under V6", field.ID)
+			}
+			optionalSupported := capabilities.Optional && field.Presence == "optional"
+			if field.Presence != "required" && !optionalSupported || field.Cardinality != "one" && !(capabilities.Many && field.Cardinality == "many") {
 				return fmt.Errorf("GOOO-EF-V1-UNSUPPORTED-SHAPE: field %q", field.ID)
 			}
 			if err := validateCLIFieldSpans(entity, field, sourceURI, previousStart, index > 0); err != nil {

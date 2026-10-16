@@ -10,9 +10,9 @@ import (
 	"go/token"
 	"go/types"
 	"strconv"
-	"unicode/utf8"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
+	"github.com/kimjooyoon/meta-ontology-go/internal/valuejson"
 )
 
 // Scalar slots keep records value-shaped and bounded; local copies never alias.
@@ -303,6 +303,9 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 	if !ok {
 		return RecordAssemblyCase{}, fmt.Errorf("record case returned %T", value)
 	}
+	if err := validateRecordOutputBounds(actual, record); err != nil {
+		return RecordAssemblyCase{}, err
+	}
 	wanted := expected.(recordBodyValue)
 	result := RecordAssemblyCase{Inputs: json.RawMessage(c.Inputs), Expected: json.RawMessage(c.Expected), Passed: equalRecordBodyValue(actual, wanted)}
 	object := make(map[string]any, len(record.Fields))
@@ -340,64 +343,7 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 		return nil, fmt.Errorf("null is outside the pure value profile")
 	}
 	if named, ok := t.(*types.Named); ok {
-		record := recordTypeByName(records, named.Obj().Name())
-		if record == nil {
-			return nil, fmt.Errorf("record type is not declared")
-		}
-		var object map[string]json.RawMessage
-		required := 0
-		for _, field := range record.Fields {
-			if field.Presence != "optional" {
-				required++
-			}
-		}
-		if err := json.Unmarshal(raw, &object); err != nil || len(object) < required || len(object) > len(record.Fields) {
-			return nil, fmt.Errorf("record requires exactly its declared fields")
-		}
-		declared := make(map[string]bool, len(record.Fields))
-		for _, field := range record.Fields {
-			declared[field.Name] = true
-		}
-		for name := range object {
-			if !declared[name] {
-				return nil, fmt.Errorf("record field %q is not declared", name)
-			}
-		}
-		value, err := zeroRecordBodyValue(t)
-		if err != nil {
-			return nil, err
-		}
-		for i, field := range record.Fields {
-			fieldRaw, ok := object[field.Name]
-			if !ok {
-				if field.Presence == "optional" {
-					continue
-				}
-				return nil, fmt.Errorf("record field %q is missing", field.Name)
-			}
-			fieldType := types.Type(types.Typ[types.String])
-			if field.TypeID == "urn:gooo:type:boolean" {
-				fieldType = types.Typ[types.Bool]
-			} else if field.TypeID == "urn:gooo:type:integer" {
-				fieldType = types.Typ[types.Int64]
-			}
-			if field.Cardinality == "many" {
-				fieldType = types.NewSlice(fieldType)
-			}
-			decoded, err := decodeRecordCaseValue(fieldRaw, fieldType, records)
-			if err != nil {
-				return nil, err
-			}
-			kind, _, err := recordBodyScalarKind(fieldType)
-			if err != nil {
-				return nil, err
-			}
-			value.Values[i], err = recordBodyScalarFromValue(decoded, kind)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return value, nil
+		return decodeRecordObjectCase(raw, named, records)
 	}
 	if sequence, ok := t.(*types.Slice); ok {
 		return decodeRecordSequence(raw, sequence, records)
@@ -413,10 +359,7 @@ func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any,
 			return false, nil
 		}
 	case types.Typ[types.String]:
-		var text string
-		if err := json.Unmarshal(raw, &text); err == nil && len(text) <= 1024 && utf8.ValidString(text) {
-			return text, nil
-		}
+		return valuejson.DecodeText(raw, 1024)
 	}
 	return nil, fmt.Errorf("value does not match %s or exceeds its text bound", t)
 }

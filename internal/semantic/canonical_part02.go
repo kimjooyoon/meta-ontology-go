@@ -19,6 +19,9 @@ func (f Field) Canonical() string {
 	b.WriteString(f.TypeRef.Canonical())
 	writeCanonicalField(&b, string(f.Presence))
 	writeCanonicalField(&b, string(f.Cardinality))
+	if f.TextBound.IsSet() {
+		writeCanonicalField(&b, f.TextBound.Canonical())
+	}
 	writeCanonicalSpan(&b, f.Span)
 	return b.String()
 }
@@ -33,6 +36,9 @@ func (f Field) SemanticCanonical() string {
 	writeCanonicalField(&b, f.TypeRef.SemanticCanonical())
 	writeCanonicalField(&b, string(f.Presence))
 	writeCanonicalField(&b, string(f.Cardinality))
+	if f.TextBound.IsSet() {
+		writeCanonicalField(&b, f.TextBound.Canonical())
+	}
 	return b.String()
 }
 func (f Field) StableHash() string {

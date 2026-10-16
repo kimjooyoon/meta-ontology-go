@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	"unicode/utf8"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/valuejson"
 )
 
 // DecodeRecordInput rejects ambiguous JSON rather than choosing the last
@@ -12,7 +14,10 @@ import (
 // which fields may be omitted. JSON null is never an absent value.
 func DecodeRecordInput(raw []byte) (RecordFields, error) {
 	failure := failAt(ReasonExternalInputUnexpected, "INPUT", "decode-record-input", "input must be one object with unique scalar or ordered scalar-array fields")
-	if !utf8.Valid(raw) {
+	if !utf8.Valid(raw) || !json.Valid(raw) {
+		return nil, failure
+	}
+	if err := valuejson.CheckEscapesInValidJSON(raw); err != nil {
 		return nil, failure
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))

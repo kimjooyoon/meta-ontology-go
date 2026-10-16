@@ -1,5 +1,7 @@
 package generator
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/textbound"
+
 // Slot is a handwritten implementation region inside a generated boundary.
 // ID must remain stable across declaration renames.
 type Slot struct {
@@ -41,12 +43,13 @@ type SourceMapping struct {
 	Ordinal        int
 	Source         SourceSpan
 	Generated      SourceRange
-	ParentID       string     `json:"parent_id,omitempty"`
-	TypeRefID      string     `json:"type_ref_id,omitempty"`
-	Presence       string     `json:"presence,omitempty"`
-	Cardinality    string     `json:"cardinality,omitempty"`
-	NameSource     SourceSpan `json:"name_source"`
-	ProfileID      string     `json:"profile_id,omitempty"`
-	ProfileVersion int        `json:"profile_version,omitempty"`
-	ProfileDigest  string     `json:"profile_digest,omitempty"`
+	ParentID       string         `json:"parent_id,omitempty"`
+	TypeRefID      string         `json:"type_ref_id,omitempty"`
+	Presence       string         `json:"presence,omitempty"`
+	Cardinality    string         `json:"cardinality,omitempty"`
+	NameSource     SourceSpan     `json:"name_source"`
+	ProfileID      string         `json:"profile_id,omitempty"`
+	ProfileVersion int            `json:"profile_version,omitempty"`
+	ProfileDigest  string         `json:"profile_digest,omitempty"`
+	TextBound      textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 }

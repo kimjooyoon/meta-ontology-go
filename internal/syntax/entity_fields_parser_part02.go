@@ -12,13 +12,18 @@ func (p *Parser) parseEntityField() (FieldDecl, bool) {
 	if name.Span.IsEmpty() || id.Span.IsEmpty() || typeRef.Span.IsEmpty() || presence.Span.IsEmpty() || cardinality.Span.IsEmpty() {
 		return FieldDecl{}, false
 	}
+	bound, end, ok := p.parseFieldTextBound(cardinality.Span.End)
+	if !ok {
+		return FieldDecl{}, false
+	}
 	return FieldDecl{
-		Span:            startSpan(p.filename, keyword.Span.Start, cardinality.Span.End),
+		Span:            startSpan(p.filename, keyword.Span.Start, end),
 		ID:              id.Name,
 		Name:            name.Name,
 		TypeRef:         typeRef,
 		Presence:        FieldPresence(presence.Name),
 		Cardinality:     FieldCardinality(cardinality.Name),
+		TextBound:       bound,
 		IDSpan:          id.Span,
 		NameSpan:        name.Span,
 		PresenceSpan:    presence.Span,

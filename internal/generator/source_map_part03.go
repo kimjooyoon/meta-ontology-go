@@ -19,7 +19,8 @@ func findGeneratedFieldLine(source []byte, lines []sourceLine, region generatedR
 }
 func matchesGeneratedFieldLine(line string, field Field) bool {
 	parts := strings.Fields(line)
-	return len(parts) == 2 && parts[0] == field.GoName && parts[1] == field.GoType
+	want := strings.Fields(field.GoName + " " + field.GoType + fieldTextBoundTag(field))
+	return len(parts) == len(want) && strings.Join(parts, " ") == strings.Join(want, " ")
 }
 func rangeForOffsets(source []byte, start, end int) SourceRange {
 	return SourceRange{Start: positionAt(source, start), End: positionAt(source, end)}

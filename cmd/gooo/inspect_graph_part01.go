@@ -1,5 +1,7 @@
 package main
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/textbound"
+
 type graphDump struct {
 	SchemaVersion   string                `json:"schema_version"`
 	GraphHash       string                `json:"graph_hash"`
@@ -45,14 +47,15 @@ type graphNode struct {
 	Fields    []graphField `json:"fields,omitempty"`
 }
 type graphField struct {
-	ID          string    `json:"id"`
-	Parent      string    `json:"parent"`
-	Name        string    `json:"name"`
-	Aliases     []string  `json:"aliases,omitempty"`
-	TypeRefID   string    `json:"type_ref_id"`
-	Presence    string    `json:"presence"`
-	Cardinality string    `json:"cardinality"`
-	Source      graphSpan `json:"source"`
+	ID          string         `json:"id"`
+	Parent      string         `json:"parent"`
+	Name        string         `json:"name"`
+	Aliases     []string       `json:"aliases,omitempty"`
+	TypeRefID   string         `json:"type_ref_id"`
+	Presence    string         `json:"presence"`
+	Cardinality string         `json:"cardinality"`
+	Source      graphSpan      `json:"source"`
+	TextBound   textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 }
 type graphRuntimeBinding struct {
 	Schema           string    `json:"schema"`

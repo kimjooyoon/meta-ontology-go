@@ -1,5 +1,7 @@
 package syntax
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/textbound"
+
 // Valid reports whether the carrier contains a known presence value. It does
 // not perform semantic validation or registry resolution.
 func (p FieldPresence) Valid() bool {
@@ -43,6 +45,7 @@ type FieldDecl struct {
 	TypeRef     TypeRefDecl
 	Presence    FieldPresence
 	Cardinality FieldCardinality
+	TextBound   textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 
 	IDSpan          Span
 	NameSpan        Span

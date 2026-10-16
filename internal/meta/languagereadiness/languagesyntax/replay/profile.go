@@ -9,19 +9,7 @@ import (
 // EntityFieldsProfileSupport resolves exact kernel IDs. It does not select a
 // newer profile from the source shape or widen the ordinary parser's default.
 func EntityFieldsProfileSupport(id string) (syntax.EntityFieldsSupport, bool) {
-	switch id {
-	case syntax.EntityFieldsProfileID:
-		return syntax.EntityFieldsV1Support(), true
-	case syntax.EntityFieldsV2ProfileID:
-		return syntax.EntityFieldsV2Support(), true
-	case syntax.EntityFieldsV3ProfileID:
-		return syntax.EntityFieldsV3Support(), true
-	case syntax.EntityFieldsV4ProfileID:
-		return syntax.EntityFieldsV4Support(), true
-	case syntax.EntityFieldsV5ProfileID:
-		return syntax.EntityFieldsV5Support(), true
-	}
-	return syntax.EntityFieldsSupport{}, false
+	return syntax.EntityFieldsSupportForProfileID(id)
 }
 
 func ExecuteWithEntityFieldsProfile(repository fs.FS, path, kind, diagnostic, profileID string) Result {

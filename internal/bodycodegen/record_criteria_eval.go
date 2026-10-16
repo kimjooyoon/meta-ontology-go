@@ -120,6 +120,9 @@ func encodeCriteriaOutput(value any, output types.Type, records []RecordType) (j
 	if record == nil || !ok {
 		return nil, fmt.Errorf("criteria record result is outside its declared type")
 	}
+	if err := validateRecordOutputBounds(actual, *record); err != nil {
+		return nil, err
+	}
 	object := make(map[string]any, len(record.Fields))
 	for i, field := range record.Fields {
 		value := actual.Values[i]

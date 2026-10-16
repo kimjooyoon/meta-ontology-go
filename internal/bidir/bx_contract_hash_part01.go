@@ -63,6 +63,9 @@ func writeFields(builder *strings.Builder, fields []Field) {
 		writeSpan(builder, field.TypeRefUse.Span)
 		writePart(builder, string(field.Presence))
 		writePart(builder, string(field.Cardinality))
+		if field.TextBound.IsSet() {
+			writePart(builder, field.TextBound.Canonical())
+		}
 		writeSpan(builder, field.Span)
 		writeSpan(builder, field.IDSpan)
 		writeSpan(builder, field.NameSpan)

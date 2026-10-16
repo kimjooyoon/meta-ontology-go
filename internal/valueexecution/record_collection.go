@@ -40,19 +40,34 @@ func decodeRecordScalar(value any) (any, error) {
 }
 
 func recordFieldValueMatches(field RecordField, value any) bool {
+	if field.TextBound.Validate() != nil || field.TextBound.IsSet() && field.TypeID != string(semantic.BuiltinStringTypeID) {
+		return false
+	}
 	if field.Cardinality == semantic.Many {
 		values, ok := value.([]any)
 		if !ok || values == nil || len(values) > syntax.RepeatedFieldLimit {
 			return false
 		}
 		for _, item := range values {
-			if !recordScalarMatches(field.TypeID, item) {
+			if !recordBoundedScalarMatches(field, item) {
 				return false
 			}
 		}
 		return true
 	}
-	return recordScalarMatches(field.TypeID, value)
+	return recordBoundedScalarMatches(field, value)
+}
+
+func recordBoundedScalarMatches(field RecordField, value any) bool {
+	if !recordScalarMatches(field.TypeID, value) {
+		return false
+	}
+	if !field.TextBound.IsSet() {
+		return true
+	}
+	maximum, err := field.TextBound.Resolve(0)
+	text, ok := value.(string)
+	return err == nil && ok && uint64(len(text)) <= uint64(maximum)
 }
 
 func recordScalarMatches(typeID string, value any) bool {

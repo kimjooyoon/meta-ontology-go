@@ -26,32 +26,51 @@ const (
 	EntityFieldsV5ProfileID      = "gooo.entityfields.go-projection.v5"
 	EntityFieldsV5ProfileVersion = 5
 	EntityFieldsV5ProfileDigest  = "edac62212632b1f61390c95e624d0671c718b357cd5aa42ff0eef86358d90899"
+	EntityFieldsV6ProfileID      = "gooo.entityfields.go-projection.v6"
+	EntityFieldsV6ProfileVersion = 6
+	EntityFieldsV6ProfileDigest  = "db163a3114f83e0ffd9b7e09cc812afae124e9613318ccfd6184c606c6ce6ee5"
 )
 
 var ErrEntityFieldsProfileMismatch = errors.New("syntax: EntityFields profile mismatch")
 
 func (p EntityFieldsProfile) Validate() error {
-	switch p.ID {
-	case EntityFieldsProfileID:
-		if p.Version == EntityFieldsProfileVersion && p.Digest == EntityFieldsProfileDigest {
-			return nil
-		}
-	case EntityFieldsV2ProfileID:
-		if p.Version == EntityFieldsV2ProfileVersion && p.Digest == EntityFieldsV2ProfileDigest {
-			return nil
-		}
-	case EntityFieldsV3ProfileID:
-		if p.Version == EntityFieldsV3ProfileVersion && p.Digest == EntityFieldsV3ProfileDigest {
-			return nil
-		}
-	case EntityFieldsV4ProfileID:
-		if p.Version == EntityFieldsV4ProfileVersion && p.Digest == EntityFieldsV4ProfileDigest {
-			return nil
-		}
-	case EntityFieldsV5ProfileID:
-		if p.Version == EntityFieldsV5ProfileVersion && p.Digest == EntityFieldsV5ProfileDigest {
-			return nil
-		}
+	if p.IdentityVersionMatches() && p.Digest == p.canonicalProfile().Digest {
+		return nil
 	}
 	return ErrEntityFieldsProfileMismatch
+}
+
+// IdentityVersionMatches distinguishes an unknown contract from a changed
+// digest while keeping profile registration in this one kernel boundary.
+func (p EntityFieldsProfile) IdentityVersionMatches() bool {
+	known := p.canonicalProfile()
+	return known.ID != "" && p.Version == known.Version
+}
+
+// EntityFieldsSupportForProfileID resolves an explicit kernel contract ID.
+// It does not infer a profile from data or accept a caller-supplied digest.
+func EntityFieldsSupportForProfileID(id string) (EntityFieldsSupport, bool) {
+	profile := (EntityFieldsProfile{ID: id}).canonicalProfile()
+	if profile.ID == "" {
+		return EntityFieldsSupport{}, false
+	}
+	return EntityFieldsSupport{State: EntityFieldsSupported, Profile: profile}, true
+}
+
+func (p EntityFieldsProfile) canonicalProfile() EntityFieldsProfile {
+	switch p.ID {
+	case EntityFieldsProfileID:
+		return EntityFieldsV1Support().Profile
+	case EntityFieldsV2ProfileID:
+		return EntityFieldsV2Support().Profile
+	case EntityFieldsV3ProfileID:
+		return EntityFieldsV3Support().Profile
+	case EntityFieldsV4ProfileID:
+		return EntityFieldsV4Support().Profile
+	case EntityFieldsV5ProfileID:
+		return EntityFieldsV5Support().Profile
+	case EntityFieldsV6ProfileID:
+		return EntityFieldsV6Support().Profile
+	}
+	return EntityFieldsProfile{}
 }

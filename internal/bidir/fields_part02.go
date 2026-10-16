@@ -34,6 +34,7 @@ func (f Field) semantic() (semantic.Field, error) {
 		Presence:    f.Presence,
 		Cardinality: f.Cardinality,
 		Span:        toSemanticSpan(f.Span),
+		TextBound:   f.TextBound,
 	}).Normalized()
 	if err != nil {
 		return semantic.Field{}, fmt.Errorf("%w: %v", ErrInvalidField, err)

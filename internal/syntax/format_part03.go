@@ -22,6 +22,10 @@ func formatEntityFields(output *strings.Builder, fields []FieldDecl) error {
 		output.WriteString(string(field.Presence))
 		output.WriteByte(' ')
 		output.WriteString(string(field.Cardinality))
+		if field.TextBound.IsSet() {
+			maximum, _ := field.TextBound.Resolve(0)
+			fmt.Fprintf(output, " max_utf8_bytes %q", fmt.Sprint(maximum))
+		}
 	}
 	if len(fields) != 0 {
 		output.WriteByte('\n')
@@ -30,6 +34,9 @@ func formatEntityFields(output *strings.Builder, fields []FieldDecl) error {
 	return nil
 }
 func validateFieldForFormatting(field FieldDecl) error {
+	if err := field.TextBound.Validate(); err != nil {
+		return err
+	}
 	if field.Span.IsEmpty() || field.NameSpan.IsEmpty() || field.IDSpan.IsEmpty() || field.TypeRef.Span.IsEmpty() || field.PresenceSpan.IsEmpty() || field.CardinalitySpan.IsEmpty() {
 		return fmt.Errorf("entity field %q is missing source spans", field.Name)
 	}

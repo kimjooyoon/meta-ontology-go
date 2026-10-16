@@ -24,6 +24,7 @@ func projectionSemanticFields(node semantic.Node) ([]generator.Field, error) {
 			ID: string(field.ID), Parent: string(field.Parent), Name: field.Name,
 			Aliases: append([]string(nil), field.Aliases...), TypeRefID: string(field.TypeRef.ID),
 			Presence: string(field.Presence), Cardinality: string(field.Cardinality), Source: generatorSpan(field.Span),
+			TextBound: field.TextBound,
 		}
 	}
 	return fields, nil
@@ -42,6 +43,7 @@ func projectionBidirField(field bidir.Field) (generator.Field, error) {
 		Source: bidirGeneratorSpan(field.Span), IDSpan: bidirGeneratorSpan(field.IDSpan), NameSpan: bidirGeneratorSpan(field.NameSpan),
 		TypeRefSpan: bidirGeneratorSpan(field.TypeRefSpan), PresenceSpan: bidirGeneratorSpan(field.PresenceSpan),
 		CardinalitySpan: bidirGeneratorSpan(field.CardinalitySpan), NameSource: bidirGeneratorSpan(field.NameSpan),
+		TextBound: field.TextBound,
 	}, nil
 }
 func bidirGeneratorSpan(span bidir.SourceSpan) generator.SourceSpan {

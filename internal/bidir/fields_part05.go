@@ -38,7 +38,8 @@ func fieldSemanticEqual(left, right Field) bool {
 		leftSemantic.Parent == rightSemantic.Parent &&
 		leftTypeID == rightTypeID &&
 		leftSemantic.Presence == rightSemantic.Presence &&
-		leftSemantic.Cardinality == rightSemantic.Cardinality
+		leftSemantic.Cardinality == rightSemantic.Cardinality &&
+		leftSemantic.TextBound == rightSemantic.TextBound
 }
 func writeFieldSemanticFingerprint(builder *strings.Builder, field Field) {
 	normalized, err := field.semantic()
@@ -56,6 +57,9 @@ func writeFieldSemanticFingerprint(builder *strings.Builder, field Field) {
 	writeFingerprintPart(builder, string(typeID))
 	writeFingerprintPart(builder, string(normalized.Presence))
 	writeFingerprintPart(builder, string(normalized.Cardinality))
+	if normalized.TextBound.IsSet() {
+		writeFingerprintPart(builder, normalized.TextBound.Canonical())
+	}
 }
 func resolvedTypeID(ref semantic.TypeRef, registry semantic.TypeRegistry) (semantic.ID, error) {
 	normalized, err := ref.Normalized()

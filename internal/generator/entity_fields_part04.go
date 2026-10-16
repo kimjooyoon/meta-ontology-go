@@ -5,9 +5,12 @@ import (
 	"net/url"
 	"strings"
 	"unicode"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func validateSupportedField(entity Entity, index int, field Field, used map[string]string, seenNames map[string]string, sourceURI string, previousStart int, hasPrevious, allowBoolean, allowInteger, allowOptional, allowMany bool) error {
+func validateSupportedField(entity Entity, index int, field Field, used, seenNames map[string]string,
+	sourceURI string, previousStart int, hasPrevious bool, capabilities syntax.EntityFieldsCapabilities) error {
 	context := fmt.Sprintf("entity %q field %d", entity.ID, index)
 	if field.ID == "" || field.Name == "" || field.Parent == "" || field.TypeRefID == "" || field.Presence == "" || field.Cardinality == "" {
 		return entityFieldsError(entityFieldsIncompleteDiagnostic, field, context+" is missing a required identity, name, type, shape, or parent")
@@ -33,15 +36,15 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "Go name must be exactly Field.Name")
 	}
 	expectedGoType := "string"
-	if field.TypeRefID == entityFieldsBooleanTypeID && allowBoolean {
+	if field.TypeRefID == entityFieldsBooleanTypeID && capabilities.Boolean {
 		expectedGoType = "bool"
-	} else if field.TypeRefID == entityFieldsIntegerTypeID && allowInteger {
+	} else if field.TypeRefID == entityFieldsIntegerTypeID && capabilities.Integer {
 		expectedGoType = "int64"
 	}
-	if field.Cardinality == "many" && allowMany {
+	if field.Cardinality == "many" && capabilities.Many {
 		expectedGoType = "[]" + expectedGoType
 	}
-	if field.Presence == "optional" && allowOptional {
+	if field.Presence == "optional" && capabilities.Optional {
 		expectedGoType = "*" + expectedGoType
 	}
 	if field.GoType != "" && field.GoType != expectedGoType {
@@ -54,11 +57,14 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 		return entityFieldsError(entityFieldsGoNameCollisionDiagnostic, field, fmt.Sprintf("Go name is already used by field %q", previous))
 	}
 	seenNames[field.Name] = field.ID
-	if field.TypeRefID != entityFieldsStringTypeID && !(allowBoolean && field.TypeRefID == entityFieldsBooleanTypeID) && !(allowInteger && field.TypeRefID == entityFieldsIntegerTypeID) {
+	if field.TypeRefID != entityFieldsStringTypeID && !(capabilities.Boolean && field.TypeRefID == entityFieldsBooleanTypeID) && !(capabilities.Integer && field.TypeRefID == entityFieldsIntegerTypeID) {
 		return entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, field, fmt.Sprintf("resolved type %q is not in the bound profile", field.TypeRefID))
 	}
-	validPresence := field.Presence == "required" || allowOptional && field.Presence == "optional"
-	if !validPresence || field.Cardinality != "one" && !(allowMany && field.Cardinality == "many") {
+	if field.TextBound.Validate() != nil || field.TextBound.IsSet() && (!capabilities.TextBound || field.TypeRefID != entityFieldsStringTypeID) {
+		return entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, field, "max_utf8_bytes requires Text under V6")
+	}
+	validPresence := field.Presence == "required" || capabilities.Optional && field.Presence == "optional"
+	if !validPresence || field.Cardinality != "one" && !(capabilities.Many && field.Cardinality == "many") {
 		return entityFieldsError(entityFieldsUnsupportedShapeDiagnostic, field, "the bound profile does not support this presence/cardinality shape")
 	}
 	if err := validateFieldSource(entity, field, sourceURI, previousStart, hasPrevious); err != nil {
