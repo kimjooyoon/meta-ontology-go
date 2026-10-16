@@ -176,7 +176,7 @@ func readPackageReplayInputs(reader SourceReader, flags map[string]string) (body
 	if inputOnly {
 		path, decode = flags["--inputs"], bodyexecution.DecodeCompositionInputs
 	}
-	raw, err := readSource(reader, path)
+	raw, err := readPackageInputBytes(reader, path, false)
 	if err != nil {
 		return bodyexecution.CompositionCases{}, "", inputOnly, err
 	}

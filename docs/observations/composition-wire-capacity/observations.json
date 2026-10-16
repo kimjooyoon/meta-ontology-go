@@ -1,0 +1,156 @@
+{
+  "schema": "gooo/composition-wire-capacity-observation/v1",
+  "decision": "DEVELOPMENT_SOURCE_LOCAL_FRESH_20_PASS_ORIGINAL_CI_PENDING",
+  "at_utc": "2026-10-16T14:47:30.295412+00:00",
+  "base": "41497115230ab828a204b2280e8b1f1a36eb252f",
+  "toolchain": "go1.27.2",
+  "expected_leaves": [
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireInputFresh1874/inputs"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireInputFresh1874/cases"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireInputFresh1874/exact_budget"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireInputFresh1874/over_budget"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireInputFresh1874/decoded_text_bound"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireInputFresh1874/duplicate"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireInspectionFresh1875"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireNativeFresh1876"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireProcessPolicyFresh1878/compiler_stdout"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireProcessPolicyFresh1878/composition_stdout"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireProcessPolicyFresh1878/composition_overflow"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireProcessPolicyFresh1878/composition_stderr"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireSeriesFresh1879/sixteen"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireSeriesFresh1879/seventeen"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireSeriesFresh1879/suite_over"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireSeriesFresh1879/series_over"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "test": "TestPackageWireCapacityFresh1880/inspect"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "test": "TestPackageWireCapacityFresh1880/read"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "test": "TestPackageWireCapacityFresh1880/over"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution",
+      "test": "TestCompositionWireNormalizedBudgetFresh1881"
+    }
+  ],
+  "declared": 20,
+  "executed": 20,
+  "passed": 20,
+  "cached": false,
+  "native_source": "internal/bodyexecution/testdata/wire-capacity.gooo.fixture",
+  "native_source_sha256": "836402ae23d2e93975f9389c2f2481515b38a0989bb247863a26855d2b2188de",
+  "fresh_native_case": {
+    "rows": 1,
+    "text_fields": 6,
+    "decoded_bytes_each": 1024,
+    "text_value": "U+0000 repeated1024",
+    "integer": -9223372036854775808,
+    "input_json_bytes": 37005,
+    "native_stdout_bytes": 73884,
+    "activities": 2,
+    "actual_fields_checked": 14,
+    "owned_native_runs": 2,
+    "finite_total": 0,
+    "model_calls": 0
+  },
+  "archives": [
+    {
+      "path": "fresh-wire.jsonl.gz",
+      "raw_bytes": 14596,
+      "raw_sha256": "55d8c94fa311ace8eecdc3ad7e459986b4bf2521fc7a7cb3c1c72cbe70a9303c",
+      "gzip_bytes": 1130,
+      "gzip_sha256": "d9737f1c54ac999000d2070c465ad55d2bf337cda42a78680977e54360a90129"
+    },
+    {
+      "path": "fresh-wire-phase2.jsonl.gz",
+      "raw_bytes": 9432,
+      "raw_sha256": "42e4b3560dd2bfca126a8042ec86dbcc2ec7344087159348da0acdd2300809d3",
+      "gzip_bytes": 818,
+      "gzip_sha256": "6ae331493102332051ac517377d07407851858065f70489c15c81cf3e2717142"
+    },
+    {
+      "path": "fresh-wire-phase3.jsonl.gz",
+      "raw_bytes": 1641,
+      "raw_sha256": "093f008ec3d193438c7852f9cb276cac1b2f80eeb29fa128b6318e2808802d12",
+      "gzip_bytes": 348,
+      "gzip_sha256": "54b0894efa5c7c75f8cdcd5ff4972910c419e027e3f21ad69e1bdf59c425b6a2"
+    }
+  ],
+  "prior_local_cohorts_replayed": false,
+  "source_phase_freezes": [
+    {
+      "path": "source-phase1.json.gz",
+      "raw_sha256": "d4a82004ad98d144bc037ccc24a670c4d4de8636008b63af816d77d49de8cd8f",
+      "gzip_sha256": "6aa25aa47624db56935261d454d3edbce47dd312e0d7bdd941273baab95f0086",
+      "gzip_bytes": 1499
+    },
+    {
+      "path": "source-phase2.json.gz",
+      "raw_sha256": "83c058453597ebd794e8bfb25add8bc3fa36ddc7c41ba0c22549c959cef15b7f",
+      "gzip_sha256": "9211f320dbca7ace005634249c931b83f94428b8fc162e570b811108e1e0047a",
+      "gzip_bytes": 1376
+    },
+    {
+      "path": "source-phase3.json.gz",
+      "raw_sha256": "5b4427ed4f440226f4bed7dc10bcc819860b4e78f269bbc4cce02986b8236313",
+      "gzip_sha256": "5e71a50c37aad373cc6d034062064e19e9dc5090b4d0283084cfcc1ec44ae04c",
+      "gzip_bytes": 316
+    }
+  ],
+  "external_37282_byte_original_repair_observation": "NOT_EXECUTED_WITH_NEW_COMPILER_YET",
+  "external_full_ABI_acceptance": false,
+  "limits": "One synthetic row is not full domain or cohort coverage. No speed/RSS improvement claim. Three separate source freezes preserve12+7+1 fresh local leaves; final source original CI remains required."
+}

@@ -28,7 +28,7 @@ func decodeTextScalar(raw []byte) (string, error) {
 	if err := validateJSONTextEscapes(raw); err != nil {
 		return "", err
 	}
-	if json.Unmarshal(raw, &text) != nil || len(text) > 1024 {
+	if json.Unmarshal(raw, &text) != nil || len(text) > compositionTextMaxBytes {
 		return "", fmt.Errorf("Text requires a string of at most 1024 UTF-8 bytes")
 	}
 	return text, nil

@@ -20,12 +20,13 @@ type constructionInputEvidence struct {
 }
 
 func readPackageInputBytes(reader SourceReader, path string, construction bool) ([]byte, error) {
-	if !construction {
-		return readSource(reader, path)
+	limit := bodyexecution.CompositionInputMaxBytes
+	if construction {
+		limit = 32 << 20
 	}
 	raw, err := reader.ReadFile(path)
-	if err == nil && len(raw) > 32<<20 {
-		return nil, inputLimitError(32 << 20)
+	if err == nil && len(raw) > limit {
+		return nil, inputLimitError(int64(limit))
 	}
 	return raw, err
 }

@@ -13,6 +13,17 @@ gooo package execute --json \
 Pass `--go /path/to/go1.27.2` when the Go executable on PATH differs from the
 required toolchain. This example runs locally with deterministic construction.
 
+`gooo package inspect --json <workspace.json>` reports `transport_capacity`
+without constructing or executing bodies. Input JSON and its normalized suite
+each have a 1 MiB aggregate limit; native composition stdout has a separate
+1 MiB limit. Each decoded Text value remains limited to 1,024 UTF-8 bytes and a
+request to 128 rows. JSON escapes count toward the aggregate wire limit: one
+decoded NUL byte occupies six bytes as `\u0000`. These independent limits do not
+promise acceptance of every combination of maximum fields, Text values and rows.
+Oversized input is refused; values and rows are never shortened to fit. Recorded
+origin pages retain their separate 32 KiB export limit. Provenance files and
+saved receipts also retain their existing limits.
+
 | Root input | Input delivered to Lift | Earlier observation | Classification |
 | ---: | ---: | --- | --- |
 | -9 | 0 | Construction case | Overlapping |
@@ -52,6 +63,19 @@ earlier input-set identities stay the same. New runtime rows and expectations
 determine this invocation's counts; historical accuracy counters are not reused.
 Passing `--inputs` instead of `--cases` retains overlap observations and marks
 expected-output evidence as unknown. Replay performs zero model calls.
+
+Replay validates the saved construction against the current sources, then makes
+new runtime observations. It does not certify the internal consistency of the
+old runtime's redundant `actual` and `actual_fields` representations. A consumer
+that uses the old observation needs to check that observation separately; a
+successful fresh replay does not make a conflicting old display value valid.
+
+The outer `replayed_from_sha256` identifies the exact supplied receipt bytes.
+The inner `result.replay.prior_result_sha256` identifies Go's JSON serialization
+of the decoded saved `result`, including its historical runtime fields. They
+have different inputs and can differ. Both are content identities; neither is
+an attestation of the old observation's correctness. `OBSERVED` with `--inputs`
+continues to mean fresh actual values with no expected-output success count.
 
 The [published run](../../docs/research/workspace-inputs-20261008/summary.json)
 records clean compiler revision `093a8391`, the raw receipt, eight matched

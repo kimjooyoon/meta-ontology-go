@@ -1,0 +1,138 @@
+{
+  "schema": "gooo/inspection-hint-boundary-observation/v1",
+  "decision": "DEVELOPMENT_SOURCE_FRESH12_AND_FAILED_CASE_EXISTING8_PASS_ORIGINAL_CI_PENDING",
+  "at_utc": "2026-10-16T15:26:54.976625+00:00",
+  "failed_source_head": "04f435e72724f6babb86cb5b7f12964c65d0cc25",
+  "original_failure": {
+    "run": 38919600787,
+    "job": 117035787496,
+    "url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38919600787/job/117035787496",
+    "log_sha256": "efa940cf9824e24e381560195014453b9b5d6613017dba9b580f093ea4f33b7f",
+    "case": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource",
+    "cause": "Optional transport-capacity view metadata entered structural-plan equality; older frozen inspection fixture has no such field."
+  },
+  "expected_leaves": [
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/absent"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/large_hint"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/null"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/text"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/wrong_field_type"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/future_schema"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/changed_source"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/missing_counter"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/nonzero_counter"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionAdvisoryBoundaryFresh1882/changed_plan"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "test": "TestBodyPlanHintViewFresh1883/view"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+      "test": "TestBodyPlanHintViewFresh1883/broken_hint"
+    }
+  ],
+  "declared_fresh": 12,
+  "executed_fresh": 12,
+  "passed_fresh": 12,
+  "repaired_existing_negative_leaves": [
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource/missing_model_calls"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource/prediction"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource/missing_tests"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource/native_execution"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource/source"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource/caller_input"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource/assembly_phase"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease",
+      "test": "TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource/plan_entry"
+    }
+  ],
+  "declared_existing": 8,
+  "executed_existing": 8,
+  "passed_existing": 8,
+  "independent_validator_and_fixtures_unchanged": [
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_plan_inspection.go",
+      "sha256": "4720acb1f6291d3645f40693f5cad72f4d6188810b577929276c8712189ddf5a"
+    },
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/platform_plan_inputs_test.go",
+      "sha256": "9ed66f9686c0031ee49e0f8dbb99a23d76af0a2e3e1e0258578a8af75b11b4f9"
+    },
+    {
+      "path": "internal/meta/languagereadiness/toolchainrelease/testdata/plan-inputs-record-korean-plan.json.gz",
+      "sha256": "116b0faa53b8a4f77eaec2133b8b4138b86327c355e6d4e571d5c9306285ee35"
+    }
+  ],
+  "archives": [
+    {
+      "path": "fresh-hint.jsonl.gz",
+      "raw_bytes": 27397,
+      "raw_sha256": "2a15ce3b3bf0082c58e5c35a4bc4e0d1943fb6d9ac694d41d915973db4443938",
+      "gzip_bytes": 1586,
+      "gzip_sha256": "6dbaef6acdb7c26f5e9533e40436d929e874f2f43694df311052ba6cd8ebee5b"
+    },
+    {
+      "path": "source-freeze.json.gz",
+      "raw_bytes": 1194,
+      "raw_sha256": "6283340c4e48493344b81af11e6926ab966e6a6ffe3d641814e8cb252b13d2a2",
+      "gzip_bytes": 615,
+      "gzip_sha256": "2aec691d4240e4e12de5d1b6c452a17f0681b54f9447fae12e879dae926ee1eb"
+    }
+  ],
+  "native_programs": 0,
+  "models": 0,
+  "old_local_wire20_replayed": false,
+  "scope": "Operational capacity metadata is emitted by the CLI view; the structural inspection type has no capacity field. Valid outer JSON with unknown, missing or ill-typed hint contents does not change core decoding. Source, plan and required zero counters remain independently checked. Invalid outer JSON remains a transport error."
+}
