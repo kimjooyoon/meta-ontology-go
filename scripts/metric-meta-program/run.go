@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram"
-	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	programverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/verify"
 )
 
@@ -37,8 +36,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 	program, source, err := metricprogram.Compile(strategy, strategyVerification)
 	if err != nil {
-		fmt.Fprintf(stderr, "metric-meta-program: compile: %v\n", err)
-		return 1
+		return reportCompileFailure(err, stdout, stderr)
 	}
 	programPayload, err := encodeJSON(program)
 	if err != nil {
@@ -60,24 +58,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	if *interventionPath != "" {
-		interventionPayload, err := readBounded(*interventionPath)
-		if err != nil {
-			fmt.Fprintf(stderr, "metric-meta-program: read intervention: %v\n", err)
-			return 1
-		}
-		conceptReceipt, err := conceptoperation.Build(strategy, strategyVerification, interventionPayload,
-			programPayload, source, reportPayload)
-		if err != nil {
-			fmt.Fprintf(stderr, "metric-meta-program: build concept-operation receipt: %v\n", err)
-			return 1
-		}
-		conceptPayload, err := encodeJSON(conceptReceipt)
-		if err != nil {
-			fmt.Fprintf(stderr, "metric-meta-program: encode concept-operation receipt: %v\n", err)
-			return 1
-		}
-		if err := writeConceptOperationReceipt(*outputDirectory, conceptPayload); err != nil {
-			fmt.Fprintf(stderr, "metric-meta-program: write concept-operation receipt: %v\n", err)
+		if err := emitConceptReceipt(*outputDirectory, *interventionPath,
+			strategy, strategyVerification, programPayload, source, reportPayload); err != nil {
+			fmt.Fprintf(stderr, "metric-meta-program: %v\n", err)
 			return 1
 		}
 	}

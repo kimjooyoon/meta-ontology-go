@@ -3,11 +3,13 @@ package metricprogram
 import (
 	"fmt"
 	"slices"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy"
 )
 
 var proofChoices = []string{"FOUNDATION", "COHERENCE", "REGRESSION"}
 
-func validateStrategy(plan StrategyPlan, verification StrategyVerification) error {
+func validateStrategy(plan StrategyPlan, verification StrategyVerification, inputs unresolvedpolicy.InputDigests) error {
 	if plan.Schema != StrategySchemaVersion || verification.Schema != StrategyVerificationSchemaVersion {
 		return fmt.Errorf("strategy schema mismatch")
 	}
@@ -41,5 +43,5 @@ func validateStrategy(plan StrategyPlan, verification StrategyVerification) erro
 	if plan.Policy.FailureRule != "FIRST_UNSATISFIED_CANONICAL_FAMILY" || plan.Policy.FixedPointRule != "REGRESSION_TERMINATES_AT_VERIFIED_ZERO_RESIDUAL" {
 		return fmt.Errorf("Munchhausen selection rules are not canonical")
 	}
-	return validateStrategyMembers(plan, verification)
+	return validateStrategyMembers(plan, verification, inputs)
 }

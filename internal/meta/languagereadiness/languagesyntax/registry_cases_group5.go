@@ -48,5 +48,7 @@ func expectedSyntaxCaseGroup5() []CaseDefinition {
 		{ID: "explicit-consumer-continuation", Path: "internal/meta/executioncontinuation/policy/source.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
 
 		{ID: "executable-metric-registry", Path: "internal/meta/metricprogram/registry.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
+
+		{ID: "unresolved-operation-source-origin", Path: "internal/meta/metricprogram/unresolvedpolicy/policy.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false},
 	}
 }
