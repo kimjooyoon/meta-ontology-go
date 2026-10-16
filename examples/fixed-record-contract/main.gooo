@@ -1,0 +1,27 @@
+package fixedrecordcontract
+namespace fixedrecordcontract
+
+entity Boolean id "urn:gooo:type:boolean"
+
+entity ShippingDecision id "example://fixed-record-contract/shipping-decision" fields {
+    field can_ship id "example://fixed-record-contract/shipping-decision/can-ship" type boolean required one
+    field reason id "example://fixed-record-contract/shipping-decision/reason" type string required one
+    field units id "example://fixed-record-contract/shipping-decision/units" type integer required one
+}
+
+activity Decide(stocked Boolean, paid Boolean) -> ShippingDecision
+    id "example://fixed-record-contract/decide" computes `
+if !paid {
+    return ShippingDecision{can_ship: false, reason: "PAYMENT_PENDING", units: 0}
+}
+if !stocked {
+    return ShippingDecision{can_ship: false, reason: "STOCK_PENDING", units: 0}
+}
+return ShippingDecision{can_ship: true, reason: "READY", units: 1}
+` assembling {
+    value_case "[true,true]" -> "{\"can_ship\":true,\"reason\":\"READY\",\"units\":1}"
+    value_case "[false,true]" -> "{\"can_ship\":false,\"reason\":\"STOCK_PENDING\",\"units\":0}"
+    value_case "[true,false]" -> "{\"can_ship\":false,\"reason\":\"PAYMENT_PENDING\",\"units\":0}"
+    value_case "[false,false]" -> "{\"can_ship\":false,\"reason\":\"PAYMENT_PENDING\",\"units\":0}"
+    attempts "1"
+}

@@ -1,6 +1,6 @@
 # Gooo가 만들고 있는 언어와 작은 모델
 
-2026-10-15 개발 소스 기준. 공개 바이너리의 지원 범위는 각
+2026-10-16 개발 소스 기준. 공개 바이너리의 지원 범위는 각
 [릴리스 안내](releases/0.6.34-dev.md)에서 확인할 수 있습니다.
 
 Gooo는 계산의 의미, 허용한 구현 선택, 그 결과의 출처를 함께 다루는 언어를
@@ -24,6 +24,7 @@ Gooo는 계산의 의미, 허용한 구현 선택, 그 결과의 출처를 함�
 | 후보가 만족해야 할 관계 | [소스의 판단 조건](../examples/source-behavior-criteria/README.md) |
 | 확인할 입력과 별도 평가 | [추가 관측](../examples/source-record-observation/README.md), [별도 평가](../examples/record-field-holdouts/README.md) |
 | 반환값까지 이어지는 소스 | [읽기 쉬운 기원 조회](language/readable-source-origins.ko.md) |
+| 에이전트와 사람의 보조 보기, 별도로 기억하는 선호 | [출처 보기 힌트](language/advisory-origin-views.ko.md) |
 | 실행 기록을 해석하는 메타프로그램 | [기원 읽기 프로젝트](language/project-starters.md#start-an-origin-reader) |
 | 선언·호출·값 버전을 구분하는 메타프로그램 | [지역 값 버전과 생성 관계](../examples/local-version-origins/README.md) |
 | 값 버전의 생성·읽기, 짧은 설명과 RDF 교환 | [기록된 사용 관계](../examples/recorded-use-origins/README.md) |
@@ -163,11 +164,19 @@ Gooo가 기록을 확인하고 호출·읽기·값 버전의 관계를 직접 �
 
 ## 다음 개발의 우선순위
 
-1. **읽을 수 있는 입력과 계산.** 현재 여러 인자는 `input0`, `input1`로 받습니다.
-   본문에서 `let adjustment = input1`처럼 이름을 붙이거나 안정 ID가 있는 레코드
-   필드를 사용할 수 있습니다. [입력 선언 판독기](../examples/source-control-reader/README.md#같은-타입의-입력을-선언-위치로-구분하기)는
-   같은 타입의 두 인자를 원본 위치로 구분하고 타입의 안정 ID를 비교합니다.
-   이후 작성자가 붙인 입력 이름과 역할을 함께 보존하는 표현을 설계합니다.
+후속 개발의 [고정 본문 예제](../examples/fixed-record-contract/README.md)는 이미
+작성한 계산에 `value_case`를 붙입니다. 후보는 본문 하나이며, 두 불리언 입력의
+네 조합과 세 필드값을 각각 기록합니다. 일부 기대값이 어긋나면 맞은 사례 수와
+필드 수를 함께 남깁니다. 실제 생성 프로그램과의 대조는 원래 CI의 별도 실행입니다.
+[결과 읽기 안내](language/fixed-record-contract.ko.md)는 생성과 실제 실행의 집계,
+명령 종료 코드, 입력 이름과 원본 해시의 의미를 설명합니다.
+
+1. **읽을 수 있는 입력과 계산.** 개발 소스는 `Decide(stocked Boolean, paid Boolean)`처럼
+   [입력 이름](language/named-inputs.ko.md)을 선언하고 본문에서 사용할 수 있습니다.
+   활동 연결과 외부 JSON에는 선언 순서의 `input0`, `input1`을 사용합니다.
+   [입력 선언 판독기](../examples/source-control-reader/README.md#gooo로-입력-설명-만들기)는
+   이름·순서·타입과 각각의 원문 위치를 Gooo 데이터로 내보내 설명을 조립합니다.
+   이후에는 작성자가 구분한 입력의 역할을 안정 ID와 함께 표현하는 규칙을 설계합니다.
    입력 목록의 비교에는 이미 지원하는 배열 중첩 순회를 사용합니다.
    횟수를 지정하는 중첩 반복문의 제약은 후속 설계 대상으로 보관합니다.
    새 표현은 원래 선언과 계산의 연결을 유지해야 합니다.

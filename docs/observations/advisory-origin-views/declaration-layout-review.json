@@ -1,0 +1,1 @@
+{"changed_declarations":149,"largest":"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go:TestProjectionCorpusBindsActualSourceAndBothArtifacts","max_lines":59,"over_75":null,"scope":"new/changed AST declarations versus HEAD; unchanged declaration byte digests excluded","unchanged_legacy_over_75":1}

@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/owned-projection-bundle/v1",
+  "source_digest": "sha256:9e093ae8061e8bb19d1e25c93db8153410648168fa5b10a866a810067f667244",
+  "members": [
+    {
+      "path": "policy.generated.go",
+      "digest": "sha256:451ed82a4dccc749d2f4aa2dc65a7b542384cf9d9758c76ac1b253cc2dd033ac",
+      "region_ids": [
+        "gooo://origin-lens/select",
+        "gooo://origin-lens/selection-reason",
+        "gooo://origin-lens/available"
+      ]
+    }
+  ]
+}
