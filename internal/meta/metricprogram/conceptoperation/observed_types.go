@@ -52,7 +52,7 @@ type ObservedReceipt struct {
 	Schema                    string                 `json:"schema"`
 	MetricID                  string                 `json:"metric_id"`
 	Baseline                  Receipt                `json:"baseline"`
-	DeclaredCohortDigest       string                 `json:"declared_cohort_digest"`
+	DeclaredCohortDigest      string                 `json:"declared_cohort_digest"`
 	ObservationInputDigest    string                 `json:"observation_input_digest"`
 	Decision                  bodycodegen.FixedValue `json:"decision"`
 	Producer                  string                 `json:"producer"`

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -47,6 +48,9 @@ func executeObservedNative(cfg config, source []byte,
 	}
 	if err := os.WriteFile(filepath.Join(cfg.Output, "observed-native.json"), append(raw, '\n'), 0640); err != nil {
 		return native, err
+	}
+	if executionErr == nil && native.ProducerSourceSHA != cfg.Origin.SubjectSHA {
+		return native, fmt.Errorf("observed native producer source is not the exact checkout")
 	}
 	return native, executionErr
 }

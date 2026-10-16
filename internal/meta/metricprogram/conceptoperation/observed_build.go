@@ -55,7 +55,7 @@ func BuildObserved(ctx context.Context, inputs SourceInputs) (ObservedReceipt, e
 		return ObservedReceipt{}, fmt.Errorf("evaluate source-owned observations: %w", err)
 	}
 	receipt := ObservedReceipt{Schema: ObservedReceiptSchema, MetricID: MetricID, Baseline: baseline,
-		DeclaredCohortDigest: declaration.DeclaredCohortDigest,
+		DeclaredCohortDigest:   declaration.DeclaredCohortDigest,
 		ObservationInputDigest: artifact.ContentDigest(inputs.Observation.Document), Decision: decision,
 		Producer: "metricprogram/conceptoperation.BuildObserved", Consumer: "language-readiness"}
 	assessment, err := observedAssessment(receipt)

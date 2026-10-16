@@ -1014,7 +1014,7 @@ jobs:
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/metric-concept-operation-observation"
-          go run ./scripts/metric-cohort-counterexamples \
+          go run -buildvcs=true ./scripts/metric-cohort-counterexamples \
             -root "$GITHUB_WORKSPACE" \
             -scratch "$work/counterexample-scratch" \
             -input "$work/unpacked" \
