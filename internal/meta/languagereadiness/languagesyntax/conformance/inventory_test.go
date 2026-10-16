@@ -11,6 +11,7 @@ import (
 	"testing/fstest"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
 // Inventory is an observation of this source snapshot, not a frozen measure
@@ -81,5 +82,30 @@ func TestIndependentSourceInventoryRejectsUnreportedFile(t *testing.T) {
 	err := independentSourceInventoryError(repository, languagesyntax.Source{}, 0)
 	if err == nil || !strings.Contains(err.Error(), "omits 1 independently walked .gooo files") {
 		t.Fatalf("omitted source was not independently rejected: %v", err)
+	}
+}
+
+func TestIndependentInventorySameCountFresh1891(t *testing.T) {
+	raw := []byte("package inventory1891\nnamespace inventory1891\n")
+	repository := fstest.MapFS{"main.gooo": {Data: raw}}
+	observed := replay.FileObservation{Path: "main.gooo", GoooLines: 2,
+		SourceDigest: fmt.Sprintf("sha256:%x", sha256.Sum256(raw))}
+	for _, mode := range []string{"exact", "wrong-path", "wrong-digest", "wrong-lines"} {
+		t.Run(mode, func(t *testing.T) {
+			candidate := observed
+			switch mode {
+			case "wrong-path":
+				candidate.Path = "other.gooo"
+			case "wrong-digest":
+				candidate.SourceDigest = fmt.Sprintf("sha256:%x", sha256.Sum256([]byte("different1891")))
+			case "wrong-lines":
+				candidate.GoooLines++
+			}
+			source := languagesyntax.Source{GoooFiles: []replay.FileObservation{candidate}}
+			err := independentSourceInventoryError(repository, source, 2)
+			if (mode == "exact") != (err == nil) {
+				t.Fatal("same file count hid changed source identity", mode, err)
+			}
+		})
 	}
 }

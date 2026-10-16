@@ -30,4 +30,5 @@ type report struct {
 	SetupError              string                                `json:"setup_error,omitempty"`
 	Cases                   []caseResult                          `json:"cases"`
 	UnregisteredUpstream    *upstreamObservation                  `json:"unregistered_upstream,omitempty"`
+	ObservedCohort          *observedCohortReport                 `json:"observed_cohort,omitempty"`
 }

@@ -10,12 +10,17 @@ import (
 )
 
 func inputPayloads(inputs co.SourceInputs) map[string][]byte {
-	return map[string][]byte{
+	files := map[string][]byte{
 		"strategy-plan.json": inputs.Strategy, "strategy-verification.json": inputs.StrategyVerification,
 		"source-metrics.json": inputs.SourceMetrics, "intervention-ledger.json": inputs.Intervention,
 		"intervention-verification.json": inputs.InterventionVerification, "program.json": inputs.Program,
 		"program.gooo": inputs.ProgramSource, "verification.json": inputs.ProgramVerification,
 	}
+	if inputs.Observation != nil {
+		files["operation-observations.json"] = inputs.Observation.Document
+		files["observation-policy.gooo"] = inputs.Observation.PolicySource
+	}
+	return files
 }
 
 func inputDigests(v variant) map[string]string {

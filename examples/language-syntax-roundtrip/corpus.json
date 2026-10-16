@@ -1319,6 +1319,7 @@
     "internal/meta/policycompilation/revision-operation.gooo",
     "examples/relay-game-contract/main.gooo",
     "internal/meta/generation/experience_memory_receipt_contract.gooo",
-    "internal/meta/syntaxregistration/profile_migration.gooo"
+    "internal/meta/syntaxregistration/profile_migration.gooo",
+    "examples/source-owned-cohort-observations/main.gooo"
   ]
 }

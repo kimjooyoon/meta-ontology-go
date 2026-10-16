@@ -1014,7 +1014,7 @@ jobs:
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/metric-concept-operation-observation"
-          go run ./scripts/metric-cohort-counterexamples \
+          go run -buildvcs=true ./scripts/metric-cohort-counterexamples \
             -root "$GITHUB_WORKSPACE" \
             -scratch "$work/counterexample-scratch" \
             -input "$work/unpacked" \
@@ -1041,6 +1041,10 @@ jobs:
             .unregistered_upstream.refusal.readiness_credit == false and
             .unregistered_upstream.refusal.repository_workspace_writes == false and
             .unregistered_upstream.refusal.promotion_authorized == false and
+            .observed_cohort.decision == "PASS" and .observed_cohort.cases_declared == 6 and
+            .observed_cohort.cases_passed == .observed_cohort.cases_declared and
+            .observed_cohort.native_runs == 2 and .observed_cohort.native_passed == .observed_cohort.cases_declared and
+            .observed_cohort.model_calls == 0 and
             .readiness_total == 24 and .repository_writes == 0 and .promotion_authorized == false' \
             "$work/counterexamples/report.json"
           test -z "$(git status --porcelain --untracked-files=all)"
