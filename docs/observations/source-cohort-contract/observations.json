@@ -1,0 +1,233 @@
+{
+  "schema": "gooo/source-cohort-contract-development/v1",
+  "state": "PREDECESSOR_ORIGINAL_NATIVE_OBSERVED_SECURITY_SUCCESSOR_PENDING",
+  "base_dev": "a2879b9059dd1977478bbbb9b255a83d66b951fd",
+  "source": {
+    "path": "internal/meta/metricprogram/registry.gooo",
+    "digest": "sha256:b03df48baaf6141488278f62fd8846c33d5b9f02f5cf7402bbab5574f0a1379e",
+    "activities": 6,
+    "records": 3,
+    "regions": 9,
+    "declared_terminals": 2,
+    "canonical_operations": 9,
+    "canonical_entities": 10,
+    "global_readiness_obligations": 24,
+    "projection_manifest_digest": "sha256:52217106d0b14bdcca08a6d3a5e8800629dfbc240b425deb5285ceffb403b108",
+    "projection_members": [
+      {
+        "path": "registry.generated.go",
+        "digest": "sha256:6eb4aa0a0ed17de83b62dddfb442896051ff60a006e44a1d060a98caf92b5378",
+        "region_ids": [
+          "gooo://metric-registry/OperationDeclaration",
+          "gooo://metric-registry/operations/at",
+          "gooo://metric-registry/operations/count"
+        ]
+      },
+      {
+        "path": "registry_part02.generated.go",
+        "digest": "sha256:ba503c1bd1c2f781fe4f472cf12404bb6adc05e67c3a7bc54eefd68e2d8f5b01",
+        "region_ids": [
+          "gooo://metric-registry/EntityDeclaration",
+          "gooo://metric-registry/entities/at",
+          "gooo://metric-registry/entities/count"
+        ]
+      },
+      {
+        "path": "registry_part03.generated.go",
+        "digest": "sha256:8f949e09f10ca79e1efe64927f6c3f67c92488365eefc4c334b0ba3487b59172",
+        "region_ids": [
+          "gooo://metric-registry/CohortTerminalDeclaration",
+          "gooo://metric-registry/cohort/terminals/at",
+          "gooo://metric-registry/cohort/terminals/count"
+        ]
+      }
+    ],
+    "first_two_parts_byte_identical_to_base": true
+  },
+  "registration": {
+    "existing_case": "executable-metric-registry",
+    "sources": 146,
+    "unregistered": 0,
+    "missing": 0,
+    "registry_digest": "sha256:e6e0e8b4f7459a366bbf6600de210505d636d3a9659dc823c9b8744d31f13cdd",
+    "observation_digest": "sha256:fc0fa9820fac1ffd54f8155493e797bb92ab52aea326e78d75a6f43ea66a546a",
+    "v90_members_unchanged": 9,
+    "new_registration_operations": 0
+  },
+  "fresh_local_checks": {
+    "leaf_count": 50,
+    "phases": [
+      {
+        "leaf_count": 9,
+        "leaves": [
+          "TestDeclaredCohortTerminalsFresh1671",
+          "TestCohortTerminalBoundsFresh1671/-1",
+          "TestCohortTerminalBoundsFresh1671/2",
+          "TestCohortTerminalOwnershipFresh1671",
+          "TestUpstreamDeclaredCohortFresh1673/declared-only",
+          "TestUpstreamDeclaredCohortFresh1673/upstream-union",
+          "TestUpstreamDeclaredCohortFresh1673/same-upstream-operation",
+          "TestUpstreamDeclaredCohortFresh1673/declared-terminal-overlap",
+          "TestCohortProofConflictFresh1673"
+        ],
+        "phase": "fresh-source-1671-1673"
+      },
+      {
+        "leaf_count": 15,
+        "leaves": [
+          "TestCountercaseTransportPopulationFresh1679/exact",
+          "TestCountercaseTransportPopulationFresh1679/changed-unpacked",
+          "TestCountercaseTransportPopulationFresh1679/missing-unpacked",
+          "TestCountercaseTransportPopulationFresh1679/changed-archive",
+          "TestCountercaseArchiveRefusalsFresh1679/extra",
+          "TestCountercaseArchiveRefusalsFresh1679/duplicate",
+          "TestCountercaseArchiveRefusalsFresh1679/traversal",
+          "TestOriginalProducerOriginFresh1677/exact",
+          "TestOriginalProducerOriginFresh1677/wrong-id",
+          "TestOriginalProducerOriginFresh1677/wrong-run",
+          "TestOriginalProducerOriginFresh1677/wrong-source",
+          "TestOriginalProducerOriginFresh1677/wrong-name",
+          "TestOriginalProducerOriginFresh1677/expired",
+          "TestOriginalProducerOriginFresh1677/rerun",
+          "TestCountercaseDeclarationFresh1681"
+        ],
+        "phase": "fresh-protocol-1677-1681"
+      },
+      {
+        "leaf_count": 9,
+        "leaves": [
+          "TestArtifactDigestSpellingFresh1683/upload-output",
+          "TestArtifactDigestSpellingFresh1683/api-metadata",
+          "TestArtifactDigestSpellingFresh1683/upper-case",
+          "TestArtifactDigestSpellingFresh1683/short",
+          "TestArtifactDigestSpellingFresh1683/malformed",
+          "TestArtifactDigestSpellingFresh1683/empty",
+          "TestVariantArchiveReferencesFresh1685/unchanged",
+          "TestVariantArchiveReferencesFresh1685/changed",
+          "TestVariantArchiveReferencesFresh1685/absent"
+        ],
+        "phase": "fresh-protocol-1683-1685"
+      },
+      {
+        "leaf_count": 5,
+        "leaves": [
+          "TestCountercaseExecutionAccountingFresh1687/harness-error",
+          "TestCountercaseExecutionAccountingFresh1687/unexecuted-pass-claim",
+          "TestCountercaseExecutionAccountingFresh1687/reported-refusal",
+          "TestCountercaseExecutionAccountingFresh1687/reported-acceptance",
+          "TestCountercaseExecutionAccountingFresh1687/producer-only"
+        ],
+        "phase": "fresh-accounting-1687"
+      },
+      {
+        "leaf_count": 4,
+        "leaves": [
+          "TestCountercaseKernelReasonsFresh1689/source-rebuild",
+          "TestCountercaseKernelReasonsFresh1689/source-replay",
+          "TestCountercaseKernelReasonsFresh1689/program-replay",
+          "TestCountercaseKernelReasonsFresh1689/program-source"
+        ],
+        "phase": "fresh-reason-source-1689"
+      },
+      {
+        "leaf_count": 8,
+        "leaves": [
+          "TestCountercaseExecutionOriginsFresh1691/distinct-workflow-source",
+          "TestCountercaseExecutionOriginsFresh1691/wrong-run",
+          "TestCountercaseExecutionOriginsFresh1691/rerun",
+          "TestCountercaseExecutionOriginsFresh1691/wrong-checkout",
+          "TestCountercaseExecutionOriginsFresh1691/wrong-job",
+          "TestCountercaseExecutionOriginsFresh1691/missing-workflow-source",
+          "TestCountercaseExecutionOriginsFresh1691/dispatch",
+          "TestCountercaseExecutionOriginsFresh1691/dirty-checkout"
+        ],
+        "phase": "fresh-execution-origin-1691"
+      }
+    ],
+    "completed_cohorts_manually_replayed": 0,
+    "native_countercases_executed": 0,
+    "model_calls": 0
+  },
+  "native_countercase_contract": {
+    "declared_count": 16,
+    "case_ids": [
+      "missing-observed-binding",
+      "replaced-observed-binding",
+      "extra-unknown-observation",
+      "omitted-declared-subject",
+      "replaced-declared-subject",
+      "ambiguous-binding",
+      "wrong-head",
+      "resealed-program",
+      "wrong-source-digest",
+      "program-source-tamper",
+      "missing-receipt",
+      "repository-write-authority",
+      "promotion-authority",
+      "wrong-registry-origin",
+      "missing-producer-input",
+      "wrong-source-subject"
+    ],
+    "runner": "scripts/metric-cohort-counterexamples",
+    "source_job": "concept-operation-observation",
+    "source_identity": "Exact original subject/run/attempt and producer artifact ID/archive/member bytes precede mutations.",
+    "mutations": "Resealed adversarial inputs keep their own status; they do not acquire upstream authority.",
+    "success": "All16actualconsumercalls must refuse with the exact declared reason. The3produced partial/unknown receipts retain the source-declared denominator.",
+    "unknown_case_scope": "An extra unmapped concept-operation observation uses an existing registered execution carrier. Expected-set coverage and unknown count remain separate.",
+    "execution_accounting": "Declared, attempted, actualconsumer calls and passed counts are separate. Harness setup errors do not count as native execution.",
+    "storage": "Only changed payloads are saved; unchanged member/hash references bind the original producer archive; absent payloads stay explicit.",
+    "timing": "Setup/case wall times are observational nanoseconds outside the semantic receipt.",
+    "unrelated_scope": "The existing positive path compares23unrelated status/reason results. Refused countercases return no readiness snapshot.",
+    "execution_origin": "Producer source/run/artifact identity and observer checkout/workflow-definition/event/job/runtime origins stay distinct. First-attempt originalCI requires a clean matching checkout. Git observations have a30s per-command budget. Local observations retain their own kind.",
+    "refusal_rule": "Exact full consumer error and the declared producer state are required; unrelated failures do not satisfy a case."
+  },
+  "scope_limits": {
+    "native_results": "Predecessor original16cases observed and retained with ownidentity; successor requires its own originalCI.",
+    "issue791": "Original six clauses remain open until native artifacts and exact refusal paths are reviewed.",
+    "mechanisms": "Go retains union/sorting, transport, actual execution and independent verification. Gooo owns terminal membership and roles.",
+    "nested_record_collections": "Unsupported by this body route.",
+    "adapter_names": "Registry record/field adapters now match explicit semantic IDs and typed Go gooo tags. At/Count activity names remain configured. See stable-record-bridge observations; prior native artifacts retain their own source identity.",
+    "performance": "No runtime speedup claim."
+  },
+  "source_checks": {
+    "go_modernizer_fixed_point": true,
+    "go_modernizer_source_diffs": 0,
+    "go_module_graph_changed": false,
+    "new_go_declaration_limit": 75,
+    "new_workflow_shell_blocks": 17,
+    "maximum_checked_go_declaration_lines": 58,
+    "go_source_files_compared": 8253
+  },
+  "predecessor_original_native": {
+    "source_head": "b3da7e58b0b9c697b4649d7287a87b127aced319",
+    "run": 38852243934,
+    "attempt": 1,
+    "artifact_id": 12025942993,
+    "artifact_digest": "sha256:ca9d213dc1fd648000df72300036c21e2d75b5efd8aa52ecf94afbd9db8b51b8",
+    "cases_declared": 16,
+    "cases_attempted": 16,
+    "cases_executed": 16,
+    "cases_passed": 16,
+    "expected_count": 9,
+    "elapsed_nanoseconds": 4315905538,
+    "scope": "Original #1613 artifact; it is not successor acceptance. Extra unknown is an unmapped observation on registered carrier."
+  },
+  "security_successor": {
+    "predecessor_pr": 1613,
+    "predecessor_head": "b3da7e58b0b9c697b4649d7287a87b127aced319",
+    "original_pr_findings": [
+      26,
+      27,
+      28
+    ],
+    "default_branch_open_at_review": 0,
+    "repairs": [
+      "Canonical trusted names drive filesystem reads after complete archive member validation.",
+      "Producer and independent verifier remove len(source)+1 speculative allocation capacity."
+    ],
+    "fresh_local_leaf_checks": 19,
+    "current_native_runs_executed_locally": 0,
+    "successor_original_codeql": "PENDING",
+    "successor_original_native": "PENDING"
+  }
+}

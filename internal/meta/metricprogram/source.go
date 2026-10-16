@@ -9,8 +9,8 @@ import (
 )
 
 type entitySpec struct {
-	Name string
-	ID   string
+	Name string `gooo:"gooo://metric-registry/EntityDeclaration/Name"`
+	ID   string `gooo:"gooo://metric-registry/EntityDeclaration/ID"`
 }
 
 var canonicalEntities = sourceEntities()

@@ -20,6 +20,37 @@ entity EntityDeclaration id "gooo://metric-registry/EntityDeclaration" fields {
     field ID id "gooo://metric-registry/EntityDeclaration/ID" type string required one
 }
 
+entity CohortTerminalDeclaration id "gooo://metric-registry/CohortTerminalDeclaration" fields {
+    field Subject id "gooo://metric-registry/CohortTerminalDeclaration/Subject" type string required one
+    field Carrier id "gooo://metric-registry/CohortTerminalDeclaration/Carrier" type string required one
+    field Family id "gooo://metric-registry/CohortTerminalDeclaration/Family" type string required one
+    field Trilemma id "gooo://metric-registry/CohortTerminalDeclaration/Trilemma" type string required one
+}
+
+activity CohortTerminalCount(seed Integer) -> Integer
+    id "gooo://metric-registry/cohort/terminals/count" computes `return 2`
+
+activity CohortTerminalAt(index Integer) -> CohortTerminalDeclaration
+    id "gooo://metric-registry/cohort/terminals/at" computes `
+if index == 0 {
+    return CohortTerminalDeclaration{
+        Subject: "terminate-at-fixed-point",
+        Carrier: "replay-counterfactual",
+        Family: "REGRESSION",
+        Trilemma: "REGRESS",
+    }
+}
+if index == 1 {
+    return CohortTerminalDeclaration{
+        Subject: "preserve-non-promoting-terminal",
+        Carrier: "preserve-non-promoting-terminal",
+        Family: "REGRESSION",
+        Trilemma: "REGRESS",
+    }
+}
+return CohortTerminalDeclaration{Subject: "", Carrier: "", Family: "", Trilemma: ""}
+`
+
 activity OperationCount(seed Integer) -> Integer
     id "gooo://metric-registry/operations/count" computes `return 9`
 

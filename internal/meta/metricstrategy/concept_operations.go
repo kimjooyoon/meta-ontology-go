@@ -7,6 +7,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept"
 	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram"
 )
 
 type conceptOperation struct {
@@ -88,8 +89,9 @@ func conceptOperationSpecs(source []Binding) ([]ConceptOperationSpec, error) {
 		}
 		byOperation[current.subject] = current
 	}
-	byOperation["terminate-at-fixed-point"] = conceptOperation{"terminate-at-fixed-point", "replay-counterfactual", "REGRESSION", "REGRESS"}
-	byOperation["preserve-non-promoting-terminal"] = conceptOperation{"preserve-non-promoting-terminal", "preserve-non-promoting-terminal", "REGRESSION", "REGRESS"}
+	for _, terminal := range metricprogram.CanonicalCohortTerminals() {
+		byOperation[terminal.Subject] = conceptOperation{terminal.Subject, terminal.Carrier, terminal.Family, terminal.Trilemma}
+	}
 	keys := make([]string, 0, len(byOperation))
 	for operation := range byOperation {
 		keys = append(keys, operation)
