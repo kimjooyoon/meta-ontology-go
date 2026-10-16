@@ -1,0 +1,16 @@
+package wire
+namespace wire
+
+entity Payload id "wire://payload" fields {
+    field a id "wire://payload/a" type string required one
+    field b id "wire://payload/b" type string required one
+    field c id "wire://payload/c" type string required one
+    field d id "wire://payload/d" type string required one
+    field e id "wire://payload/e" type string required one
+    field f id "wire://payload/f" type string required one
+    field revision id "wire://payload/revision" type integer required one
+}
+
+activity First(Payload) -> Payload id "wire://first" computes "return input"
+activity Second(Payload) -> Payload id "wire://second" computes "return input"
+bind First.result -> Second.input

@@ -8,6 +8,17 @@ import (
 // The Cases field owns the sequence. Follow only its finite source expression;
 // unrelated literals and helpers do not supply registration destinations.
 func (source *goSource) registryCaseTail(function *ast.FuncDecl) (*ast.CompositeLit, error) {
+	leaves, err := source.registryCaseLeaves(function)
+	if err != nil {
+		return nil, err
+	}
+	if len(leaves) == 0 || len(leaves[len(leaves)-1].Elts) == 0 {
+		return nil, fmt.Errorf("native case tail is empty or unresolved")
+	}
+	return leaves[len(leaves)-1], nil
+}
+
+func (source *goSource) registryCaseLeaves(function *ast.FuncDecl) ([]*ast.CompositeLit, error) {
 	if function.Body == nil || len(function.Body.List) != 1 {
 		return nil, fmt.Errorf("native registry must have one direct return")
 	}
@@ -34,14 +45,7 @@ func (source *goSource) registryCaseTail(function *ast.FuncDecl) (*ast.Composite
 		return nil, fmt.Errorf("native Cases field is missing")
 	}
 	walk := registryOriginWalk{source: source, functions: map[string]bool{}, literals: map[*ast.CompositeLit]bool{}}
-	leaves, err := walk.expression(value)
-	if err != nil {
-		return nil, err
-	}
-	if len(leaves) == 0 || len(leaves[len(leaves)-1].Elts) == 0 {
-		return nil, fmt.Errorf("native case tail is empty or unresolved")
-	}
-	return leaves[len(leaves)-1], nil
+	return walk.expression(value)
 }
 
 func namedRegistryType(expression ast.Expr, name string) bool {

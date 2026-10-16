@@ -36,3 +36,30 @@ if !registered {
 }
 return "CONTINUE_SOURCE_OPERATION"
 `
+
+entity OperationDisposition id "gooo://metric-operation-origin/disposition-record" fields {
+    field resolution id "gooo://metric-operation-origin/disposition-record/resolution" type string required one
+    field reason id "gooo://metric-operation-origin/disposition-record/reason" type string required one
+    field next_operation id "gooo://metric-operation-origin/disposition-record/next-operation" type string required one
+    field readiness_credit id "gooo://metric-operation-origin/disposition-record/readiness-credit" type boolean required one
+    field repository_workspace_writes id "gooo://metric-operation-origin/disposition-record/repository-workspace-writes" type boolean required one
+    field promotion_authorized id "gooo://metric-operation-origin/disposition-record/promotion-authorized" type boolean required one
+}
+
+activity DescribeOperation(registered Boolean, originRecorded Boolean) -> OperationDisposition
+    id "gooo://metric-operation-origin/describe-operation" computes `
+return OperationDisposition{
+    resolution: OperationResolution(registered, originRecorded),
+    reason: OperationReason(registered, originRecorded),
+    next_operation: OperationNextStep(registered, originRecorded),
+    readiness_credit: false,
+    repository_workspace_writes: false,
+    promotion_authorized: false,
+}
+` assembling {
+    value_case "[true,true]" -> "{\"resolution\":\"exact_operation\",\"reason\":\"REGISTERED_SOURCE_OPERATION\",\"next_operation\":\"CONTINUE_SOURCE_OPERATION\",\"readiness_credit\":false,\"repository_workspace_writes\":false,\"promotion_authorized\":false}"
+    value_case "[false,true]" -> "{\"resolution\":\"invariant_only\",\"reason\":\"OPERATION_NOT_IN_SOURCE_REGISTRY\",\"next_operation\":\"DECLARE_SOURCE_OPERATION\",\"readiness_credit\":false,\"repository_workspace_writes\":false,\"promotion_authorized\":false}"
+    value_case "[true,false]" -> "{\"resolution\":\"invariant_only\",\"reason\":\"OPERATION_ORIGIN_REQUIRED\",\"next_operation\":\"CAPTURE_OPERATION_ORIGIN\",\"readiness_credit\":false,\"repository_workspace_writes\":false,\"promotion_authorized\":false}"
+    value_case "[false,false]" -> "{\"resolution\":\"invariant_only\",\"reason\":\"OPERATION_ORIGIN_REQUIRED\",\"next_operation\":\"CAPTURE_OPERATION_ORIGIN\",\"readiness_credit\":false,\"repository_workspace_writes\":false,\"promotion_authorized\":false}"
+    attempts "1"
+}

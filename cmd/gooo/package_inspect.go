@@ -7,21 +7,23 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
 const packageInspectUsage = "usage: gooo package inspect [--json] <workspace.json>"
 
 type workspaceInspectionReceipt struct {
-	Schema            string                      `json:"schema"`
-	Decision          string                      `json:"decision"`
-	Manifest          string                      `json:"manifest"`
-	ManifestDigest    string                      `json:"manifest_digest,omitempty"`
-	Program           *workspaceexecution.Program `json:"program,omitempty"`
-	ProgramExecutions int                         `json:"program_executions"`
-	ModelPredictions  int                         `json:"model_predictions"`
-	Error             string                      `json:"error,omitempty"`
-	Scope             string                      `json:"scope"`
+	Schema            string                            `json:"schema"`
+	Decision          string                            `json:"decision"`
+	Manifest          string                            `json:"manifest"`
+	ManifestDigest    string                            `json:"manifest_digest,omitempty"`
+	Program           *workspaceexecution.Program       `json:"program,omitempty"`
+	ProgramExecutions int                               `json:"program_executions"`
+	ModelPredictions  int                               `json:"model_predictions"`
+	Capacity          bodyexecution.CompositionCapacity `json:"transport_capacity"`
+	Error             string                            `json:"error,omitempty"`
+	Scope             string                            `json:"scope"`
 }
 
 func runPackageInspect(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -30,6 +32,7 @@ func runPackageInspect(args []string, reader SourceReader, stdout, stderr io.Wri
 		return reportUsage(jsonMode, stdout, stderr, "package inspect", packageInspectUsage)
 	}
 	receipt := workspaceInspectionReceipt{Schema: "gooo/workspace-source-inspection/v1", Decision: "FAIL_CLOSED",
+		Capacity: bodyexecution.CompositionTransportCapacity(),
 		Manifest: filepath.ToSlash(args[0]),
 		Scope:    "source package graph and prepared entry call closure; no body construction, predicate evaluation, model prediction or native execution"}
 	program, manifestDigest, err := inspectWorkspaceSource(reader, args[0])

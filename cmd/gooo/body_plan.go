@@ -34,7 +34,11 @@ func runBodyPlan(args []string, reader SourceReader, stdout, stderr io.Writer) i
 	}
 	switch mode {
 	case "--json":
-		err = json.NewEncoder(stdout).Encode(plan)
+		// Operational hints belong to this view, outside the structural plan.
+		err = json.NewEncoder(stdout).Encode(struct {
+			bodyexecution.CompositionInspection
+			Capacity bodyexecution.CompositionCapacity `json:"transport_capacity"`
+		}{plan, bodyexecution.CompositionTransportCapacity()})
 	case "--inputs-template":
 		var raw []byte
 		raw, err = bodyexecution.CompositionInputTemplate(plan)

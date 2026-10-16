@@ -34,7 +34,8 @@ activity Main(Integer) -> Result computes "let foreign = core.Make(input); retur
 	}
 	result, err := ExecuteWorkspace(context.Background(), m, suite, "", "")
 	if err != nil || result.Runtime.FinitePassed != 2 || len(result.Program.EntityAliases) != 2 {
-		t.Fatal("called record types lost package identity or value semantics", err, result.Runtime)
+		observation, encodeErr := json.Marshal(result.Runtime)
+		t.Fatalf("workspace record execution: error=%v runtime_json=%s encode_error=%v", err, observation, encodeErr)
 	}
 }
 

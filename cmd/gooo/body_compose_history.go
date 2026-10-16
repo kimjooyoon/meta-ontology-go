@@ -24,14 +24,14 @@ func readCompositionSuites(flags map[string]string) ([]bodyexecution.Composition
 		if flags["--inputs"] != "" {
 			path, decode = flags["--inputs"], bodyexecution.DecodeCompositionInputs
 		}
-		raw, err := readBodyExecutionFile(path, 32<<10)
+		raw, err := readBodyExecutionFile(path, bodyexecution.CompositionInputMaxBytes)
 		if err != nil {
 			return nil, nil, nil, err
 		}
 		suite, err := decode(raw)
 		return []bodyexecution.CompositionCases{suite}, raw, nil, err
 	}
-	raw, err := readBodyExecutionFile(flags["--case-series"], 512<<10)
+	raw, err := readBodyExecutionFile(flags["--case-series"], bodyexecution.CompositionSeriesMaxBytes)
 	if err != nil {
 		return nil, nil, nil, err
 	}

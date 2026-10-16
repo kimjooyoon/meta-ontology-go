@@ -42,6 +42,7 @@ type CaseDefinition struct {
 	OrderedCollections    bool   `json:"ordered_collections,omitempty"`
 	EntityFields          bool   `json:"entity_fields,omitempty"`
 	ImplicitActivityPorts bool   `json:"implicit_activity_ports,omitempty"`
+	EntityFieldsProfile   string `json:"entity_fields_profile,omitempty"`
 }
 
 type PackageDefinition struct {

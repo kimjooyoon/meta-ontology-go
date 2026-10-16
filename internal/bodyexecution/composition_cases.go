@@ -19,10 +19,10 @@ type CompositionCases struct {
 
 func DecodeCompositionCases(raw []byte) (CompositionCases, error) {
 	var suite CompositionCases
-	if err := decodeCompositionTextData(raw, &suite, 32<<10); err != nil {
+	if err := decodeCompositionInputData(raw, &suite); err != nil {
 		return suite, err
 	}
-	if suite.Schema != "gooo/body-composition-cases/v1" || len(suite.Cases) < 1 || len(suite.Cases) > 128 {
+	if suite.Schema != "gooo/body-composition-cases/v1" || len(suite.Cases) < 1 || len(suite.Cases) > compositionRowsMax {
 		return suite, fmt.Errorf("composition cases require schema and 1..128 cases")
 	}
 	return suite, nil
@@ -43,12 +43,15 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 	if err := validateCompositionInputMode(suite); err != nil {
 		return nil, err
 	}
-	if len(suite.Cases) < 1 || len(suite.Cases) > 128 {
+	if len(suite.Cases) < 1 || len(suite.Cases) > compositionRowsMax {
 		return nil, fmt.Errorf("composition cases require schema and 1..128 cases")
 	}
 	raw, err := json.Marshal(suite)
-	if err != nil || len(raw) > 32<<10 {
-		return nil, fmt.Errorf("composition cases exceed 32 KiB")
+	if err != nil {
+		return nil, err
+	}
+	if err := checkCompositionInputSize(raw, "normalized suite"); err != nil {
+		return nil, err
 	}
 	rows := make([][]json.RawMessage, len(suite.Cases))
 	for c, test := range suite.Cases {

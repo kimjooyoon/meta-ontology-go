@@ -45,10 +45,12 @@ func NewOperationRefusal(origin OperationOrigin) (*OperationRefusal, error) {
 		return nil, fmt.Errorf("operation origin policy projection: %w", err)
 	}
 	recorded := origin.recorded()
+	disposition := sourceOperationDisposition(false, recorded)
 	return &OperationRefusal{
 		Schema: "gooo/unresolved-source-operation/v1", Origin: origin, Policy: Origin(), OriginRecorded: recorded,
-		Resolution: OperationResolution(false, recorded), Reason: OperationReason(false, recorded),
-		NextOperation: OperationNextStep(false, recorded),
+		Resolution: disposition.Resolution, Reason: disposition.Reason, NextOperation: disposition.NextOperation,
+		ReadinessCredit: disposition.ReadinessCredit, RepositoryWorkspaceWrites: disposition.RepositoryWorkspaceWrites,
+		PromotionAuthorized: disposition.PromotionAuthorized,
 	}, nil
 }
 

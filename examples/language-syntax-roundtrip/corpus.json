@@ -1206,7 +1206,8 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
-      "scope": "LANGUAGE_CAPABILITY"
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields_profile": "gooo.entityfields.go-projection.v2"
     },
     {
       "id": "fixed-record-value-contract",
@@ -1317,6 +1318,7 @@
     "internal/meta/generation/self_improvement_outcome_contract.gooo",
     "internal/meta/policycompilation/revision-operation.gooo",
     "examples/relay-game-contract/main.gooo",
-    "internal/meta/generation/experience_memory_receipt_contract.gooo"
+    "internal/meta/generation/experience_memory_receipt_contract.gooo",
+    "internal/meta/syntaxregistration/profile_migration.gooo"
   ]
 }

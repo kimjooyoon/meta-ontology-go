@@ -14,10 +14,10 @@ func DecodeCompositionInputs(raw []byte) (CompositionCases, error) {
 		Schema string                       `json:"schema"`
 		Inputs []map[string]json.RawMessage `json:"inputs"`
 	}
-	if err := decodeCompositionTextData(raw, &input, 32<<10); err != nil {
+	if err := decodeCompositionInputData(raw, &input); err != nil {
 		return CompositionCases{}, err
 	}
-	if input.Schema != CompositionInputsSchema || len(input.Inputs) < 1 || len(input.Inputs) > 128 {
+	if input.Schema != CompositionInputsSchema || len(input.Inputs) < 1 || len(input.Inputs) > compositionRowsMax {
 		return CompositionCases{}, fmt.Errorf("composition inputs require schema and 1..128 input rows")
 	}
 	suite := CompositionCases{Schema: CompositionInputsSchema, Cases: make([]CompositionCase, len(input.Inputs))}
