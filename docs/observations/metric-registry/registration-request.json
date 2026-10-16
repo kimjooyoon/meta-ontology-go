@@ -1,0 +1,24 @@
+{
+  "case": {
+    "id": "executable-metric-registry",
+    "path": "internal/meta/metricprogram/registry.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY",
+    "ordered_collections": true
+  },
+  "base_version": 89,
+  "snapshot_digest": "sha256:19564f31b529662b843c795c9dce607f4dcd5a3bbc5ed5aa536534d9594d15bf",
+  "source_digest": "sha256:1d2c62977042f2483b9c7898af9631c13e1f76de18df8616640939bddf133ddf",
+  "toolchain": "go1.27.2",
+  "execution_identity": {
+    "go_version": "go1.27.2",
+    "goos": "darwin",
+    "goarch": "arm64",
+    "executable_sha256": "sha256:53bcedcbc76deeeacf4ac9be9d2cd08f0da7ce94058629b8ea497622790b8da4",
+    "go_command_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "compiler_sha256": "sha256:8a3add4030b0f724c535afe946a4fcd27ca235ba869d4d4b91091e0ef8a611e2"
+  }
+}
