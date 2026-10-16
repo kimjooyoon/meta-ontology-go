@@ -68,7 +68,9 @@
     "actual_handle_lock_release_leaves": 1,
     "entry": "Transformation effect ledger / cross-platform release windows-amd64",
     "status": "PENDING_NEW_ORIGINAL_SOURCE_CI",
-    "full_existing_platform_witness": "Preserved."
+    "full_existing_platform_witness": "Preserved.",
+    "retained_artifact": "native-workspace-cleanup-windows-amd64-<head>-<run>-<attempt>",
+    "execution_accounting": "Exact seven passing leaf names from real go test JSON; zero/missing/extra/duplicate leaves cannot satisfy the set."
   },
   "unchanged": {
     "gooo_source_and_projection_files": 5,

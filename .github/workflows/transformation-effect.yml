@@ -58,8 +58,31 @@ jobs:
         if: matrix.goos == 'windows'
         shell: bash
         run: |
-          go test ./internal/bodyexecution \
-            -run '^TestWindowsWorkspace(SharingErrorsFresh1713|LockReleaseFresh1715)$' -count=1
+          set -euo pipefail
+          report="$RUNNER_TEMP/workspace-cleanup-native.jsonl"
+          go test -json ./internal/bodyexecution \
+            -run '^TestWindowsWorkspace(SharingErrorsFresh1713|LockReleaseFresh1715)$' -count=1 | tee "$report"
+          jq -s -e '
+            [.[] | select(.Action == "pass" and (.Test | type) == "string") | .Test
+              | select(contains("/") or . == "TestWindowsWorkspaceLockReleaseFresh1715")]
+            | sort == ([
+              "TestWindowsWorkspaceSharingErrorsFresh1713/sharing",
+              "TestWindowsWorkspaceSharingErrorsFresh1713/lock",
+              "TestWindowsWorkspaceSharingErrorsFresh1713/wrapped",
+              "TestWindowsWorkspaceSharingErrorsFresh1713/permission",
+              "TestWindowsWorkspaceSharingErrorsFresh1713/message-only",
+              "TestWindowsWorkspaceSharingErrorsFresh1713/nil",
+              "TestWindowsWorkspaceLockReleaseFresh1715"
+            ] | sort)
+          ' "$report"
+      - name: Retain original Windows workspace cleanup checks
+        if: always() && matrix.goos == 'windows'
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-workspace-cleanup-windows-amd64-${{ env.HEAD_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/workspace-cleanup-native.jsonl
+          if-no-files-found: error
+          retention-days: 30
       - name: Build, execute, and replay native release candidate
         shell: bash
         run: |
