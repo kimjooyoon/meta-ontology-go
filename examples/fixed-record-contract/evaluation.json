@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"Decide.input0": true, "Decide.input1": true},
+      "expected": {"Decide": {"can_ship": true, "reason": "READY", "units": 1}}
+    },
+    {
+      "inputs": {"Decide.input0": false, "Decide.input1": true},
+      "expected": {"Decide": {"can_ship": false, "reason": "STOCK_PENDING", "units": 0}}
+    },
+    {
+      "inputs": {"Decide.input0": true, "Decide.input1": false},
+      "expected": {"Decide": {"can_ship": false, "reason": "PAYMENT_PENDING", "units": 0}}
+    },
+    {
+      "inputs": {"Decide.input0": false, "Decide.input1": false},
+      "expected": {"Decide": {"can_ship": false, "reason": "PAYMENT_PENDING", "units": 0}}
+    }
+  ]
+}

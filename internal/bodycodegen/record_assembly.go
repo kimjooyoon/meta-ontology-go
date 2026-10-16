@@ -90,6 +90,9 @@ func (g *TypedPathGenerator) rankRecordAssembly(plan recordAssemblyPlan, r *Reco
 }
 
 func (g *TypedPathGenerator) rankRecordAssemblyContext(ctx context.Context, plan recordAssemblyPlan, r *RecordAssemblyReceipt) error {
+	if len(plan.choices) == 0 {
+		return nil
+	}
 	r.ModelRequested = g.info.Loaded
 	if resolveRecordObservationRanking(r) {
 		if g.info.Loaded {
@@ -152,6 +155,9 @@ func newRecordAssemblyReceipt(source []byte, p recordAssemblyPlan) *RecordAssemb
 		ContractSHA256: digest([]byte(contract)), TestSuiteSHA256: digest(cases), AttemptBudget: &budget,
 		Choices: append([]RecordValueChoice(nil), p.choices...),
 		Scope:   "source-declared record field alternatives; finite case and field coverage; candidate interpretation followed by ordinary typed Go emission; no model updates"}
+	if len(p.choices) == 0 {
+		r.Scope = "source-declared fixed record body; one candidate; finite case and field coverage; ordinary typed Go emission; no model ranking"
+	}
 	if p.scalar != nil {
 		r.Schema = scalarCriteriaAssemblySchema
 		r.Scope = "source-declared Integer path choices with actual scalar results and fixed Gooo predicates; finite source inputs; record_assembly is the legacy receipt container; no record fields or model predicate understanding are implied"
