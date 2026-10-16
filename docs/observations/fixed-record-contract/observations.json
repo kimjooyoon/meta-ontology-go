@@ -1,0 +1,133 @@
+{
+  "schema": "gooo/fixed-record-value-contract-development/v1",
+  "state": "LOCAL_PHASES_RECORDED_OWN_ORIGINAL_CI_NATIVE_PENDING",
+  "accepted_dev_base": "6963179807ed305c09478090d8eb54e825cdbb40",
+  "source": "examples/fixed-record-contract/main.gooo",
+  "source_digest": "sha256:51a9bd53a8f0b5f4f8bba582021a765da0659361bc4fdcc442237b3e3c1ea891",
+  "declared_source_inputs": 4,
+  "source_record_fields": 3,
+  "declared_field_population": 12,
+  "candidates": 1,
+  "choices": 0,
+  "local_model_calls": 0,
+  "cli_observations": {
+    "complete": {
+      "cases_passed": 4,
+      "cases_total": 4,
+      "fields_passed": 12,
+      "fields_total": 12
+    },
+    "mismatched_expectation": {
+      "cases_passed": 3,
+      "cases_total": 4,
+      "fields_passed": 11,
+      "fields_total": 12
+    }
+  },
+  "phases": [
+    {
+      "phase": "fresh-disposition-profile-1751",
+      "leaves": [
+        "TestSourceDispositionProfileFresh1751/body-profile-source-record",
+        "TestSourceDispositionProfileFresh1751/explicit-record-profile",
+        "TestSourceDispositionProfileFresh1751/ordinary-parser-retains-deferred-contract"
+      ],
+      "count": 3
+    },
+    {
+      "phase": "fresh-finite-repair-1753",
+      "leaves": [
+        "TestDispositionFiniteSourceFresh1753"
+      ],
+      "count": 1
+    },
+    {
+      "phase": "fresh-fixed-boundaries-1755-1759",
+      "leaves": [
+        "TestFixedRecordSkipsRankingFresh1757",
+        "TestFixedValueBoundaryFresh1755/budget64",
+        "TestFixedValueBoundaryFresh1755/checkpoint",
+        "TestFixedValueBoundaryFresh1755/criteria",
+        "TestFixedValueBoundaryFresh1755/fixed",
+        "TestFixedValueBoundaryFresh1755/holdout-only",
+        "TestFixedValueBoundaryFresh1755/integer-case",
+        "TestFixedValueBoundaryFresh1755/large-budget",
+        "TestFixedValueBoundaryFresh1755/no-cases",
+        "TestFixedValueBoundaryFresh1755/observe",
+        "TestFixedValueBoundaryFresh1755/picked",
+        "TestFixedValueBoundaryFresh1755/seed",
+        "TestFixedValueBoundaryFresh1755/too-many-cases",
+        "TestFixedValueBoundaryFresh1755/too-many-choices",
+        "TestFixedValueBoundaryFresh1755/zero-budget",
+        "TestFixedValueOutcomesFresh1759/mismatch",
+        "TestFixedValueOutcomesFresh1759/missing-output-field",
+        "TestFixedValueOutcomesFresh1759/wrong-input-type",
+        "TestFixedValueOutcomesFresh1759/wrong-output-type"
+      ],
+      "count": 19
+    },
+    {
+      "phase": "fresh-validation-order-1761",
+      "leaves": [
+        "TestChoiceValidationOrderFresh1761/holdout-before-malformed-choice",
+        "TestChoiceValidationOrderFresh1761/missing-count-before-holdout"
+      ],
+      "count": 2
+    },
+    {
+      "phase": "fresh-cli-example-1763-initial",
+      "leaves": [
+        "TestFixedRecordCLIFresh1763/unused-seed"
+      ],
+      "count": 1,
+      "failed_then_repaired": [
+        "TestFixedRecordCLIFresh1763/complete",
+        "TestFixedRecordCLIFresh1763/one-expectation-mismatch"
+      ],
+      "cause": "Test assertion conflated original input bytes with normalized selected source. Both origins retained; only failed assertions repaired."
+    },
+    {
+      "phase": "fresh-cli-origin-repair-1763",
+      "leaves": [
+        "TestFixedRecordCLIFresh1763/complete",
+        "TestFixedRecordCLIFresh1763/one-expectation-mismatch"
+      ],
+      "count": 2
+    },
+    {
+      "phase": "fresh-registration92",
+      "leaves": [
+        "TestGeneratedRegistrationMigrationV92PreservesBaseline"
+      ],
+      "count": 1
+    }
+  ],
+  "local_phase_unique_leaves": 29,
+  "final_combined_suite": "UNPROVEN: prior completed phases were not replayed after later edits; own original CI must check final source.",
+  "native_ci": {
+    "state": "PENDING",
+    "entry": "Language example experiment / TestFixedRecordNativeFresh1767",
+    "test_functions": 1,
+    "declared_inputs": 4,
+    "runtime_process_runs": 2,
+    "scope": "Same Boolean domain compared through independently compiled Go; source-case and native denominators retained separately.",
+    "local_executions": 0
+  },
+  "registration": {
+    "operation": "RegisterSyntaxCapability",
+    "base_version": 91,
+    "version": 92,
+    "exact_members": 9,
+    "artifact_roles": 9,
+    "prior91_unchanged": true,
+    "source_files": 148,
+    "unregistered": 0,
+    "missing": 0
+  },
+  "remaining": [
+    "Own original final-source29 execution",
+    "Own original native fixed-record4 comparison and artifacts",
+    "Source-owned production diagnostic record and existing-case profile migration remain separate work."
+  ],
+  "scope": "Finite source behavior and typed projection/transport; no global language completion, inferred whole-intent accuracy, model improvement, performance savings or mutation authority."
+}

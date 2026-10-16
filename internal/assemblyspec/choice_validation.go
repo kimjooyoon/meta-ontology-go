@@ -9,6 +9,9 @@ func (s Spec) fixedValueContract() bool {
 }
 
 func (s Spec) validateChoices() error {
+	if len(s.Choices) == 0 && len(s.ValueCases) > 0 && !s.fixedValueContract() {
+		return fmt.Errorf("fixed value_case cannot combine with Integer cases, seed, criteria, observe or picked choices")
+	}
 	if len(s.Choices) > 16 || len(s.Choices) == 0 && !s.fixedValueContract() {
 		return fmt.Errorf("assembly requires 1..16 choices")
 	}
