@@ -1,13 +1,21 @@
 {
   "schema": "gooo/owned-projection-bundle/v1",
-  "source_digest": "sha256:2aba9945e3d7d35b12b6a3c442fd0b19fdbcd7bf2c2d0b355af9d573ac5d6dba",
+  "source_digest": "sha256:f37ed9de83c5fff0b777c71dd1c5a0686b1039f716c3018e90e128989ecbc06d",
   "members": [
     {
       "path": "policy.generated.go",
-      "digest": "sha256:e99b5fb08528066c1b098559a9a8ae96316ef60a6d65d5dc891a3109c3e047d8",
+      "digest": "sha256:b4f1518f83ba6ee7066f8a7c92429af2d191f259674588d2146272574553aefc",
       "region_ids": [
+        "gooo://metric-operation-origin/disposition-record",
+        "gooo://metric-operation-origin/describe-operation",
         "gooo://metric-operation-origin/resolution",
-        "gooo://metric-operation-origin/reason",
+        "gooo://metric-operation-origin/reason"
+      ]
+    },
+    {
+      "path": "policy_part02.generated.go",
+      "digest": "sha256:2b78d07660492af4d5b9b5ec7638e88b66595cac89a6e6a5aa3abf0659af067b",
+      "region_ids": [
         "gooo://metric-operation-origin/next-step"
       ]
     }
