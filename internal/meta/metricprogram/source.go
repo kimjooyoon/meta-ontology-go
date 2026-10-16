@@ -13,18 +13,7 @@ type entitySpec struct {
 	ID   string
 }
 
-var canonicalEntities = []entitySpec{
-	{Name: "SourceMetrics", ID: "gooo://metric-meta-program/entity/source-metrics"},
-	{Name: "BoundMetrics", ID: "gooo://metric-meta-program/entity/bound-metrics"},
-	{Name: "RootPolicy", ID: "gooo://metric-meta-program/entity/root-policy"},
-	{Name: "DimensionRegistry", ID: "gooo://metric-meta-program/entity/dimension-registry"},
-	{Name: "ProjectedMetrics", ID: "gooo://metric-meta-program/entity/projected-metrics"},
-	{Name: "CounterfactualBoundary", ID: "gooo://metric-meta-program/entity/counterfactual-boundary"},
-	{Name: "WorkspaceReceipt", ID: "gooo://metric-meta-program/entity/workspace-receipt"},
-	{Name: "VerificationEvidence", ID: "gooo://metric-meta-program/entity/verification-evidence"},
-	{Name: "FixedPointReceipt", ID: "gooo://metric-meta-program/entity/fixed-point-receipt"},
-	{Name: "NonPromotingTerminalReceipt", ID: "gooo://metric-meta-program/entity/non-promoting-terminal-receipt"},
-}
+var canonicalEntities = sourceEntities()
 
 func CanonicalSource() []byte {
 	var source strings.Builder

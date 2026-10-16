@@ -1,0 +1,93 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
+	"github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle"
+)
+
+func writeBundle(output string, source, projection []byte) error {
+	name := filepath.Base(output)
+	if !strings.HasSuffix(name, ".generated.go") {
+		return fmt.Errorf("projection output requires the .generated.go suffix")
+	}
+	parts, err := generator.PartitionProjection(projection, 75)
+	if err != nil {
+		return err
+	}
+	stem, directory := strings.TrimSuffix(name, ".generated.go"), filepath.Dir(output)
+	manifest := projectionbundle.Manifest{Schema: projectionbundle.Schema, SourceDigest: projectionbundle.Digest(source)}
+	files := make(map[string][]byte, len(parts))
+	for i, part := range parts {
+		path := name
+		if i > 0 {
+			path = fmt.Sprintf("%s_part%02d.generated.go", stem, i+1)
+		}
+		files[path] = part.Source
+		manifest.Members = append(manifest.Members, projectionbundle.Member{
+			Path: path, Digest: projectionbundle.Digest(part.Source), RegionIDs: part.RegionIDs,
+		})
+	}
+	raw, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return err
+	}
+	if _, err := projectionbundle.Decode(raw); err != nil {
+		return err
+	}
+	manifestPath := filepath.Join(directory, stem+".projection.json")
+	obsolete, err := obsoleteMembers(manifestPath, manifest)
+	if err != nil {
+		return err
+	}
+	for _, member := range manifest.Members {
+		if err := writeProjection(filepath.Join(directory, member.Path), files[member.Path]); err != nil {
+			return err
+		}
+	}
+	for _, path := range obsolete {
+		if err := os.Remove(filepath.Join(directory, path)); err != nil {
+			return err
+		}
+	}
+	// The manifest commits the file set last. Interrupted updates remain unbound.
+	return writeProjection(manifestPath, append(raw, '\n'))
+}
+
+func obsoleteMembers(path string, next projectionbundle.Manifest) ([]string, error) {
+	raw, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	previous, err := projectionbundle.Decode(raw)
+	if err != nil {
+		return nil, err
+	}
+	if previous.Members[0].Path != next.Members[0].Path {
+		return nil, fmt.Errorf("previous projection manifest belongs to another output")
+	}
+	keep := map[string]bool{}
+	for _, member := range next.Members {
+		keep[member.Path] = true
+	}
+	var obsolete []string
+	for _, member := range previous.Members {
+		if keep[member.Path] {
+			continue
+		}
+		content, err := os.ReadFile(filepath.Join(filepath.Dir(path), member.Path))
+		if err != nil || projectionbundle.Digest(content) != member.Digest {
+			return nil, fmt.Errorf("obsolete projection member %s is not owned by the previous manifest", member.Path)
+		}
+		obsolete = append(obsolete, member.Path)
+	}
+	return obsolete, nil
+}

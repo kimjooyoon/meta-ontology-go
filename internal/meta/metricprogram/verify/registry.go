@@ -1,5 +1,7 @@
 package verify
 
+// This compatibility kernel independently pins accepted operation meanings.
+// Production intent is projected from metricprogram/registry.gooo.
 var operations = []operationSpec{
 	{ID: "bind-exact-source-metrics", Activity: "BindExactSourceMetrics", ProofChoice: "FOUNDATION", InputEntity: "SourceMetrics", OutputEntity: "BoundMetrics", Mode: "BIND", Ordinal: 10},
 	{ID: "exempt-project-root-topology", Activity: "ExemptProjectRootTopology", ProofChoice: "FOUNDATION", InputEntity: "BoundMetrics", OutputEntity: "RootPolicy", Mode: "EXEMPT", Ordinal: 20},
