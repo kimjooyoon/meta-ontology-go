@@ -1,0 +1,212 @@
+{
+  "schema": "gooo/consumer-continuation-observations/v1",
+  "recorded_on": "2026-10-16",
+  "scope": "Fresh explicit continuation and Go consumer source; no manual dispatch, model/training call, or local positive native-consumption replay. Submitted original CI and production outcomes are separately observed.",
+  "source": {
+    "path": "internal/meta/executioncontinuation/policy/source.gooo",
+    "digest": "sha256:f3566a72a08be08070b8967732f6c70c13cf8fbbab6d0b844a153ad9d5a0a88b",
+    "activity_ids": [
+      "gooo://self-improvement/consumer/bind-subjects",
+      "gooo://self-improvement/consumer/permit-continuation",
+      "gooo://self-improvement/consumer/permit-wait",
+      "gooo://self-improvement/consumer/bind-target-run",
+      "gooo://self-improvement/consumer/observe-stage",
+      "gooo://self-improvement/consumer/artifact-label",
+      "gooo://self-improvement/consumer/workflow-path",
+      "gooo://self-improvement/consumer/missing-dependency",
+      "gooo://self-improvement/consumer/next-observation"
+    ],
+    "go_projections": 9
+  },
+  "domain": {
+    "identities": [
+      "logical_subject",
+      "grant_producer_workflow",
+      "contract_producer_workflow",
+      "consumer_workflow",
+      "immutable_artifact"
+    ],
+    "stages": [
+      "DISPATCH_UNKNOWN",
+      "DISPATCH_SENT",
+      "TARGET_RUN_OBSERVED",
+      "SOURCE_BOUND",
+      "EXECUTION_OBSERVED"
+    ],
+    "wait_relation": "Parent observes target creation; child may then observe parent completion. Source rejects a cyclic completion wait."
+  },
+  "registration": {
+    "operation": "RegisterSyntaxCapability",
+    "proposal_state": "PROPOSAL_ONLY",
+    "semantic_admission": "UNASSESSED",
+    "base_version": 88,
+    "next_version": 89,
+    "required_members": 9,
+    "emitted_members": 9,
+    "source_digest": "sha256:f3566a72a08be08070b8967732f6c70c13cf8fbbab6d0b844a153ad9d5a0a88b",
+    "input_digest": "sha256:b6dbb192c4756c6023f60dc5595062da2917090b4826d6187c38413d25875af7",
+    "generator_repository_writes": 0,
+    "generator_apply_authorized": false,
+    "source_preservation": "PASS: AST, byte, semantic, Get-Put and Put-Get for this source; inventory has no missing or unregistered files"
+  },
+  "fresh_local_checks": {
+    "schema": "gooo/consumer-continuation-fresh-local/v1",
+    "final_leaf_counts": {
+      "pass": 51
+    },
+    "initial_failed_functions": [
+      {
+        "record": "fresh-protocol-1617.jsonl",
+        "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/executioncontinuation",
+        "test": "TestPrepareOriginsFresh1617"
+      },
+      {
+        "record": "fresh-protocol-1617.jsonl",
+        "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/executioncontinuation",
+        "test": "TestPrepareNegativeFresh1617"
+      },
+      {
+        "record": "fresh-protocol-1617.jsonl",
+        "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/executioncontinuation",
+        "test": "TestDispatchStagesFresh1617"
+      },
+      {
+        "record": "fresh-protocol-1617.jsonl",
+        "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/executioncontinuation",
+        "test": "TestSubjectContradictionFresh1617"
+      },
+      {
+        "record": "fresh-protocol-1617.jsonl",
+        "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/executioncontinuation",
+        "test": "TestLocalReservationClaimFresh1617"
+      }
+    ],
+    "repair": "Verify the original live producer report with Live:true; previous Live:false compared a synthetic mode counter to a live report. Re-executed only the five failed protocol functions.",
+    "not_locally_executed": [
+      "TestGoConsumptionOriginalCIFresh1617",
+      "native common registration cohort",
+      "completed prior experiment cohorts"
+    ],
+    "records": [
+      "fresh-protocol-1617.jsonl",
+      "repair-protocol-1617.jsonl",
+      "fresh-protocol-1619.jsonl",
+      "fresh-registration-1619.jsonl",
+      "fresh-population-1621.jsonl"
+    ]
+  },
+  "workflow_syntax": [
+    {
+      "path": ".github/workflows/self-improvement-execution-consumer.yml",
+      "bash_blocks": 3,
+      "yaml": "PARSED",
+      "bash_syntax": "PASS"
+    },
+    {
+      "path": ".github/workflows/self-improvement-execution-grant.yml",
+      "bash_blocks": 6,
+      "yaml": "PARSED",
+      "bash_syntax": "PASS"
+    }
+  ],
+  "prior_original_observations": {
+    "scope": "Readonly inspection of already-produced original CI artifacts; historical observations remain unchanged. These grants do not record new consumer execution.",
+    "resolved_attestation": {
+      "run": 38823731928,
+      "artifact_id": 12014275716,
+      "archive_digest": "sha256:78dbcc2f86039a798c7bc985fe077ca9ef171d03354ec4dba96c6c2be6d7d52b",
+      "subject": "e812749b887dad606d4a4b20607398418d10c3fe",
+      "workflow": "50c6659abf1d0f2bc6631857dff2f1516a3b132f",
+      "fixed_obligation_total": 8,
+      "verified_total": 8
+    },
+    "contracts_and_grants": [
+      {
+        "run": 38823743673,
+        "kind": "contract",
+        "subject": "50c6659abf1d0f2bc6631857dff2f1516a3b132f",
+        "workflow_head": "50c6659abf1d0f2bc6631857dff2f1516a3b132f",
+        "artifact_id": 12012819986,
+        "archive_digest": "sha256:c7c9268e09955eb170dcabe152323b58c285f822be91a48de1d71400ff659b0f",
+        "decision": "CLOSED",
+        "resolution": "DECLARED",
+        "execution_count": 0,
+        "record_digest": "sha256:fb44c704a5c5306beb3ad4f099fb5a16192d2351e8d8d119e8b1108981166422"
+      },
+      {
+        "run": 38823864652,
+        "kind": "contract",
+        "subject": "e812749b887dad606d4a4b20607398418d10c3fe",
+        "workflow_head": "50c6659abf1d0f2bc6631857dff2f1516a3b132f",
+        "artifact_id": 12012889984,
+        "archive_digest": "sha256:25d92379f87daa1cd451aa98c872981a0bd7d98b66279e64155bd9fe30f8c4e8",
+        "decision": "CLOSED",
+        "resolution": "DECLARED",
+        "execution_count": 0,
+        "record_digest": "sha256:bdf7574db8fabb258169d1657e17a9c07f533b40ae474cf8719ca4f371b019fb"
+      },
+      {
+        "run": 38823837570,
+        "kind": "grant",
+        "subject": "50c6659abf1d0f2bc6631857dff2f1516a3b132f",
+        "workflow_head": "50c6659abf1d0f2bc6631857dff2f1516a3b132f",
+        "artifact_id": 12014505123,
+        "archive_digest": "sha256:3127b3a2e9d5e1b7cec5e597b30a6e33f9e308640d2c6dd9afa054355dbdfe7c",
+        "decision": "CLOSED",
+        "resolution": "GRANTED_UNCONSUMED",
+        "execution_count": 0,
+        "record_digest": "sha256:eb57fca1dd258599c69f7810342b9d54c68faacfc5e4c1cd8b62b6cec4faa820"
+      },
+      {
+        "run": 38823971596,
+        "kind": "grant",
+        "subject": "e812749b887dad606d4a4b20607398418d10c3fe",
+        "workflow_head": "50c6659abf1d0f2bc6631857dff2f1516a3b132f",
+        "artifact_id": 12014330911,
+        "archive_digest": "sha256:83aa0c59f7411beb655bcf32ac9a3dcf24e62ae28681af11f00b08fa7733a3e3",
+        "decision": "CLOSED",
+        "resolution": "GRANTED_UNCONSUMED",
+        "execution_count": 0,
+        "record_digest": "sha256:831d96a6f5bf5881a1f0f5045e92bc8200ed494adf885dade73c68c729937b92"
+      }
+    ],
+    "consumer_before_this_change": {
+      "total_runs": 4,
+      "latest_run": 36516045389,
+      "latest_created_at": "2026-09-29T03:11:32Z"
+    }
+  },
+  "original_ci_status_at_publication": "PENDING; positive Go five-value execution test is reserved for original CI",
+  "one_use_scope": {
+    "name": "SERIALIZED_CONSUMER_WITH_RETAINED_ARTIFACT_HISTORY",
+    "retention_days": 14,
+    "reservation_before_evaluation": true,
+    "history_across_workflow_heads": true,
+    "local_exclusive_claim": true,
+    "invocation_handle": "opaque, atomic, single use",
+    "unavailable_history": "UNKNOWN"
+  },
+  "limits": {
+    "http_request_seconds": 30,
+    "command_deadline_seconds": 240,
+    "metadata_pages": 8,
+    "archive_bytes": 16777216,
+    "archive_entries": 128,
+    "member_bytes": 8388608,
+    "performance_improvement": "UNKNOWN",
+    "general_language_completeness": "UNASSESSED"
+  },
+  "references": [
+    {
+      "title": "GitHub workflow dispatch response",
+      "url": "https://docs.github.com/en/rest/actions/workflows#create-a-workflow-dispatch-event",
+      "api_version": "2026-03-10",
+      "expected_status": 200,
+      "returned_run_key": "workflow_run_id"
+    },
+    {
+      "title": "GitHub workflow_run event semantics",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run"
+    }
+  ]
+}

@@ -383,3 +383,45 @@ jobs:
           path: ${{ runner.temp }}/self-improvement-execution-grant/output/*.json
           if-no-files-found: error
           retention-days: 14
+
+
+  dispatch-bounded-consumer:
+    name: Bind and observe the exact consumer run
+    needs: execution-grant
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
+    env:
+      SUBJECT_SHA: ${{ inputs.subject_sha || inputs.source_head_sha }}
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: '1.27.2'
+          cache: false
+      - name: Dispatch through the source-owned continuation policy
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/consumer-continuation/dispatch.json"
+          go run ./scripts/self-improvement-execution-consumer -mode dispatch -output "$output"
+          jq -r '"consumer continuation: \(.state)/\(.reason), target run \(.target_run_id)"' \
+            "$output" >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve the exact dispatch origin
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-improvement-consumer-dispatch-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/consumer-continuation/dispatch.json
+          if-no-files-found: warn
+          retention-days: 14
