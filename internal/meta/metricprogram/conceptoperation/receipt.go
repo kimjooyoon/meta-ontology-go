@@ -421,11 +421,10 @@ func reconstructCohort(indicators []metric.Indicator, operations []metricprogram
 		}
 		bySubject[current.Subject] = current
 	}
-	bySubject["terminate-at-fixed-point"] = cohortOperation{Subject: "terminate-at-fixed-point", Carrier: "replay-counterfactual", Family: "REGRESSION", Trilemma: "REGRESS"}
-	bySubject["preserve-non-promoting-terminal"] = cohortOperation{Subject: "preserve-non-promoting-terminal", Carrier: "preserve-non-promoting-terminal", Family: "REGRESSION", Trilemma: "REGRESS"}
-	for _, terminal := range []string{"terminate-at-fixed-point", "preserve-non-promoting-terminal"} {
-		if _, ok := available[bySubject[terminal].Carrier]; !ok {
-			return nil, fmt.Errorf("registered terminal carrier %q is missing", bySubject[terminal].Carrier)
+	for _, terminal := range metricprogram.CanonicalCohortTerminals() {
+		bySubject[terminal.Subject] = cohortOperation{terminal.Subject, terminal.Carrier, terminal.Family, terminal.Trilemma}
+		if _, ok := available[terminal.Carrier]; !ok {
+			return nil, fmt.Errorf("registered terminal carrier %q is missing", terminal.Carrier)
 		}
 	}
 	keys := make([]string, 0, len(bySubject))
