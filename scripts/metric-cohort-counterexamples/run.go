@@ -51,9 +51,11 @@ func run(cfg config) error {
 	result.UnregisteredUpstream = &upstream
 	observed, observedErr := observeSeparateObservations(cfg, f)
 	result.ObservedCohort = &observed
+	admission, admissionErr := observeAdmissionControls(cfg, f)
+	result.ObservedAdmission = &admission
 	if result.CasesAttempted == result.CasesDeclared && result.CasesPassed == result.CasesDeclared &&
 		result.CasesExecuted == result.CasesDeclared && upstreamErr == nil && upstream.Passed &&
-		observedErr == nil && observed.Decision == "PASS" {
+		observedErr == nil && observed.Decision == "PASS" && admissionErr == nil && admission.Decision == "PASS" {
 		result.Decision = "PASS"
 	}
 	finalOrigin, observationErr := observeExecution(cfg)
