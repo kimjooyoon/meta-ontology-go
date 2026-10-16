@@ -1,4 +1,4 @@
-package main
+package recordbridge
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-// Read the complete tag declaration so an earlier valid ID cannot hide a second
-// identity or malformed metadata later in the same field's source.
-func nativeTagID(raw string) (string, bool, error) {
+// TagID reads the entire tag so a valid earlier ID cannot hide malformed or
+// repeated metadata later in the same field declaration.
+func TagID(raw string) (string, bool, error) {
 	seen := map[string]bool{}
 	var id string
 	for raw = strings.TrimLeft(raw, " "); raw != ""; raw = strings.TrimLeft(raw, " ") {

@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
 func DecodeRequest(raw []byte) (Request, error) {
@@ -128,7 +127,8 @@ func validateCase(repository fs.FS, request Request, inputs map[string][]byte) e
 		definition.Scope != languagesyntax.ScopeLanguageCapability || definition.MetaOperation != "replay-language-syntax" ||
 		(definition.ProofChoice != "FOUNDATION" && definition.ProofChoice != "COHERENCE" && definition.ProofChoice != "REGRESSION") ||
 		(definition.EntityFields && definition.ImplicitActivityPorts) ||
-		(definition.OrderedCollections && (definition.EntityFields || definition.ImplicitActivityPorts)) {
+		(definition.OrderedCollections && (definition.EntityFields || definition.ImplicitActivityPorts)) ||
+		!languagesyntax.ValidProfileSelection(definition) {
 		return failure("REFUTED", "validate-case", "REGISTRATION_CASE_CONTRACT_MISMATCH", "", "correct-explicit-case")
 	}
 	var registry languagesyntax.Registry
@@ -148,16 +148,7 @@ func validateCase(repository fs.FS, request Request, inputs map[string][]byte) e
 			return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
 		}
 	}
-	var observed replay.Result
-	if definition.OrderedCollections {
-		observed = replay.ExecuteWithOrderedCollections(repository, definition.Path, definition.Kind, "")
-	} else if definition.EntityFields {
-		observed = replay.ExecuteWithEntityFieldsSupport(repository, definition.Path, definition.Kind, "")
-	} else if definition.ImplicitActivityPorts {
-		observed = replay.ExecuteWithImplicitActivityPorts(repository, definition.Path, definition.Kind, "")
-	} else {
-		observed = replay.Execute(repository, definition.Path, definition.Kind, "")
-	}
+	observed := languagesyntax.ReplayCase(repository, definition)
 	if !observed.ASTReplayed || !observed.ByteReplayed || !observed.SemanticReplayed || !observed.GetPut || !observed.PutGet {
 		return failure("REFUTED", "replay-source", "REGISTRATION_SOURCE_CONFORMANCE_FAILED", "", "report-source-counterexample")
 	}

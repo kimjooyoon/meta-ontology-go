@@ -5,6 +5,7 @@ on:
     paths:
       - 'internal/meta/syntaxregistration/**'
       - 'cmd/syntax-registration-candidate/**'
+      - 'cmd/syntax-profile-migration/**'
       - 'internal/meta/languagereadiness/languagesyntax/**'
       - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
       - 'examples/language-syntax-roundtrip/corpus.json'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'internal/meta/syntaxregistration/**'
       - 'cmd/syntax-registration-candidate/**'
+      - 'cmd/syntax-profile-migration/**'
       - 'internal/meta/languagereadiness/languagesyntax/**'
       - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
       - 'examples/language-syntax-roundtrip/corpus.json'
@@ -43,7 +45,9 @@ jobs:
       - name: Generate and apply candidate only to a temporary copy
         env:
           GOOO_SYNTAX_REGISTRATION_EVIDENCE_DIR: ${{ runner.temp }}/syntax-registration-evidence
-        run: go test -count=1 -v ./internal/meta/syntaxregistration ./cmd/syntax-registration-candidate
+        run: >-
+          go test -count=1 -v ./internal/meta/syntaxregistration
+          ./cmd/syntax-registration-candidate ./cmd/syntax-profile-migration
       - name: Preserve native candidate evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@v7

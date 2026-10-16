@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle"
 )
 
 func main() {
@@ -73,21 +74,5 @@ func generate(sourcePath, output string) error {
 }
 
 func writeProjection(output string, raw []byte) error {
-	file, err := os.CreateTemp(filepath.Dir(output), ".metric-registry-*")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(file.Name())
-	if err := file.Chmod(0644); err != nil {
-		file.Close()
-		return err
-	}
-	if _, err := file.Write(raw); err != nil {
-		file.Close()
-		return err
-	}
-	if err := file.Close(); err != nil {
-		return err
-	}
-	return os.Rename(file.Name(), output)
+	return projectionbundle.WriteAtomic(output, raw)
 }
