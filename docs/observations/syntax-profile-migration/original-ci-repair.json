@@ -26,11 +26,18 @@
       "run": 38897929730,
       "job": 116962801349,
       "cause": "Same map modernizer fixed-point failure."
+    },
+    {
+      "workflow": "Core conformance registry",
+      "run": 38897929891,
+      "job": 116962802603,
+      "cause": "Historical meta-source list required full equality, treating a current source-bound append as alteration of old identities."
     }
   ],
   "corrections": [
     "Source Gooo files149→150;capability cases131 and denominator versions unchanged.",
-    "maps.Clone for the separate candidate-overlay map; byte slices retain their existing read-only sharing."
+    "maps.Clone for the separate candidate-overlay map; byte slices retain their existing read-only sharing.",
+    "Historical meta sources retain their complete ordered prefix; decodeRegistry still requires exact current native/JSON membership. Reorder/remove/replace/insert and unregistered append are rejected."
   ],
   "local_failed_case_repair": {
     "log": "failed-source-inventory-repair.jsonl.gz",
@@ -48,5 +55,13 @@
     "scope": "Read-only targeted fixed-point check of the package that failed modernization."
   },
   "original_head_and_body": "IMMUTABLE",
-  "final_replacement_original_ci": "PENDING"
+  "final_replacement_original_ci": "PENDING",
+  "historical_failed_case_repair": {
+    "log": "historical-meta-source-repair.jsonl.gz",
+    "raw_digest": "sha256:ddbe01bd7daf34b519e9fcc76b34e63731b425977acd0994c6056576866cdf63",
+    "archive_digest": "sha256:7c7f18a49d6e950f6afd0774166f8a4d5a19a9d2bd8016c7ca796427a6bdec9b",
+    "test": "TestEverydayRegistryRetainsAllPriorCases67143",
+    "decision": "PASS",
+    "new_boundary_leaves": 6
+  }
 }

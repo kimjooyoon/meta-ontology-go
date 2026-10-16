@@ -2,7 +2,7 @@
   "schema": "gooo/source-profile-migration-observations/v1",
   "base": "57eecd55d9f0ffe80e0fda5addb0eb3b4e8640bb",
   "toolchain": "go1.27.2",
-  "local_unique_passed_leaves": 54,
+  "local_unique_passed_leaves": 60,
   "phases": [
     {
       "log": "profile-phase1.jsonl.gz",
@@ -356,6 +356,42 @@
         }
       ],
       "failures": []
+    },
+    {
+      "log": "historical-meta-source-repair.jsonl.gz",
+      "raw_digest": "sha256:ddbe01bd7daf34b519e9fcc76b34e63731b425977acd0994c6056576866cdf63",
+      "archive_digest": "sha256:7c7f18a49d6e950f6afd0774166f8a4d5a19a9d2bd8016c7ca796427a6bdec9b",
+      "raw_bytes": 9380,
+      "stored_bytes": 717,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestMetaSourceHistoryBoundaryFresh1862/append"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestMetaSourceHistoryBoundaryFresh1862/reorder"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestMetaSourceHistoryBoundaryFresh1862/remove"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestMetaSourceHistoryBoundaryFresh1862/replace"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestMetaSourceHistoryBoundaryFresh1862/insert"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestMetaSourceHistoryBoundaryFresh1862/append-needs-current-source-binding"
+        }
+      ],
+      "failures": [],
+      "actual_failed_legacy_case_repaired": "TestEverydayRegistryRetainsAllPriorCases67143",
+      "scope": "Six new history-boundary cases and one actual failed historical metadata case, no program/native cohort replay."
     }
   ],
   "final_source_expected_leaves": [
@@ -574,6 +610,30 @@
     {
       "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
       "test": "TestRegisteredProfileProposalFresh1857"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestMetaSourceHistoryBoundaryFresh1862/append"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestMetaSourceHistoryBoundaryFresh1862/reorder"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestMetaSourceHistoryBoundaryFresh1862/remove"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestMetaSourceHistoryBoundaryFresh1862/replace"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestMetaSourceHistoryBoundaryFresh1862/insert"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestMetaSourceHistoryBoundaryFresh1862/append-needs-current-source-binding"
     }
   ],
   "population": {
