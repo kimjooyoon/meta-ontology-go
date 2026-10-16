@@ -1,0 +1,38 @@
+package unresolvedpolicy
+namespace unresolvedpolicy
+
+entity Boolean id "urn:gooo:type:boolean"
+entity Text id "urn:gooo:type:string"
+
+activity OperationResolution(registered Boolean, originRecorded Boolean) -> Text
+    id "gooo://metric-operation-origin/resolution" computes `
+if !originRecorded {
+    return "invariant_only"
+}
+if !registered {
+    return "invariant_only"
+}
+return "exact_operation"
+`
+
+activity OperationReason(registered Boolean, originRecorded Boolean) -> Text
+    id "gooo://metric-operation-origin/reason" computes `
+if !originRecorded {
+    return "OPERATION_ORIGIN_REQUIRED"
+}
+if !registered {
+    return "OPERATION_NOT_IN_SOURCE_REGISTRY"
+}
+return "REGISTERED_SOURCE_OPERATION"
+`
+
+activity OperationNextStep(registered Boolean, originRecorded Boolean) -> Text
+    id "gooo://metric-operation-origin/next-step" computes `
+if !originRecorded {
+    return "CAPTURE_OPERATION_ORIGIN"
+}
+if !registered {
+    return "DECLARE_SOURCE_OPERATION"
+}
+return "CONTINUE_SOURCE_OPERATION"
+`

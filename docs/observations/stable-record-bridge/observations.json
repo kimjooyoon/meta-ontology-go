@@ -1,6 +1,6 @@
 {
   "schema": "gooo/stable-record-bridge-development/v1",
-  "state": "FRESH_IDENTITY_CHECKED_ORIGINAL_CI_PENDING",
+  "state": "OWN_ORIGINAL_SOURCE_CI_41_REVIEWED",
   "parent_source": "46523057a586900095c3e34f9edb087eec65dacb",
   "source": "internal/meta/metricprogram/registry.gooo",
   "source_digest": "sha256:b03df48baaf6141488278f62fd8846c33d5b9f02f5cf7402bbab5574f0a1379e",
@@ -56,7 +56,7 @@
   "model_calls": 0,
   "scope_limits": {
     "activity_lookup": "Existing At/Count activity names remain configured.",
-    "native_execution": "Own new original CI pending. Local checks generate renamed source and typecheck bridge code; no runtime rename parity claim.",
+    "native_execution": "Own original source CI passed producer/consumer and16native countercases; rename cases generate and typecheck code, with runtime rename parity unclaimed.",
     "generic_interop": "Metric registry adapters only; no general external-Go binding syntax added.",
     "nested_records": "Unchanged unsupported body route."
   },
@@ -88,11 +88,35 @@
     "behavior": "Complete quoted tag parsing, unique keys, exact decoded source ID, no ignored malformed suffix.",
     "earlier_completed_26_leaves_replayed_locally": 0
   },
-  "final_source_combined_suite": "Pending own original CI; 26 early adapter leaves and 15 later tag-parser leaves are separate local phases.",
+  "final_source_combined_suite": "41/41 actual uncached original race JSON leaves on source c3f78d98366e6a53900b4a23cfa1969158876d01; earlier local phases retain their original roles.",
   "runtime_cleanup_inherited_from": {
     "pr": 1616,
     "head": "475cbba4bd8a31fb3c1f8fc97855a33af49d3a06",
     "merge_commit": "48df81a7c03f9ba657141c2968e44e2d8e359b27",
     "tree": "9311be8cb9cec591dcd35cf7fb66f4a252d339ef"
-  }
+  },
+  "original_source_ci": {
+    "source_head": "c3f78d98366e6a53900b4a23cfa1969158876d01",
+    "pr": 1617,
+    "event": "pull_request",
+    "run": 38863565314,
+    "attempt": 1,
+    "race_job": 116852311997,
+    "log_digest": "sha256:9f18ec6d3a73c2b13f516180f2e681de87d58451441dd2f847a29560e758b27d",
+    "declared_final_source_leaves": 41,
+    "executed_final_source_leaves": 41,
+    "passed_final_source_leaves": 41,
+    "cached_package_result": false
+  },
+  "accepted_dev": {
+    "merge_commit": "90b8a171dd511493f72194806fa61e024f668793",
+    "tree": "b3d3f643e2dbfd13db8678ed15b448fbc43377c1",
+    "pr": 1617
+  },
+  "accepted_main": {
+    "merge_commit": "765efc7f5e5db2c624e3cd8dc84893936ec224c8",
+    "tree": "b3d3f643e2dbfd13db8678ed15b448fbc43377c1",
+    "pr": 1618
+  },
+  "observation_role": "Accepted prior source result; not relabeled as unresolved-origin follow-up execution."
 }
