@@ -30,6 +30,10 @@ go run ./cmd/gooo body-codegen --json --activity Decide examples/fixed-record-co
 go run ./cmd/gooo body-compose --source examples/fixed-record-contract/main.gooo --entry Decide --cases examples/fixed-record-contract/evaluation.json --out /tmp/gooo-fixed-record-contract
 ```
 
-본문의 단일 후보와 실제 프로그램의 네 실행은 각각 기록합니다. 모델 순위 요청은
-생략하며, 원본의 해시와 필드 안정 ID는 생성 기록에 남습니다. 실제 네이티브 실행은
-이 변경의 원래 CI에서 확인할 단계입니다.
+본문의 단일 후보와 실제 프로그램의 네 입력 대조는 각각 기록합니다. 생성 프로그램은
+두 프로세스에서 실행합니다. 원본의 해시와 필드 안정 ID는 생성 기록에 남습니다.
+[관찰 기록](../../docs/observations/fixed-record-contract/observations.json)에서 실행한 소스와
+검사 결과를 구분해 읽을 수 있습니다.
+
+[결과 읽기 안내](../../docs/language/fixed-record-contract.ko.md)는 입력 이름과 평가 JSON의
+연결, 부분 일치, 명령 종료 코드와 완전성 집계, 원본·선택 소스의 해시를 설명합니다.
