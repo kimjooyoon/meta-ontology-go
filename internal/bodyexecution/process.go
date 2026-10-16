@@ -56,6 +56,13 @@ func process(ctx context.Context, dir, binary string, input []byte, args ...stri
 
 func processWithWaitLimit(ctx context.Context, waitLimit time.Duration, dir, binary string,
 	input []byte, args ...string) ([]byte, ProcessObservation, error) {
+	return processWithOutputLimit(ctx, waitLimit, 64<<10, dir, binary, input, args...)
+}
+
+// Composition values use a separate stdout budget from compiler diagnostics.
+// Both paths retain the same process lifecycle, wait limit and stderr budget.
+func processWithOutputLimit(ctx context.Context, waitLimit time.Duration, stdoutLimit int, dir, binary string,
+	input []byte, args ...string) ([]byte, ProcessObservation, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
 	cmd := exec.CommandContext(ctx, binary, args...)
@@ -63,7 +70,7 @@ func processWithWaitLimit(ctx context.Context, waitLimit time.Duration, dir, bin
 	cmd.Dir, cmd.WaitDelay = dir, time.Second
 	cmd.Stdin = bytes.NewReader(input)
 	cmd.Env = childEnvironment()
-	stdout, stderr := &limitedBuffer{limit: 64 << 10}, &limitedBuffer{limit: 64 << 10}
+	stdout, stderr := &limitedBuffer{limit: stdoutLimit}, &limitedBuffer{limit: 64 << 10}
 	cmd.Stdout, cmd.Stderr = stdout, stderr
 	timing, wall, failurePhase, err := timedProcessCalls(ctx, cmd.Start, cmd.Wait, waitLimit, cancel)
 	timedOut := errors.Is(context.Cause(ctx), context.DeadlineExceeded)

@@ -298,7 +298,7 @@ func (graph compositionGraph) nativeOutcomeTraces(output []byte, suite Compositi
 }
 
 func runCompositionProcess(ctx context.Context, root, executable string, input []byte) ([]byte, ProcessObservation, error) {
-	return processWithWaitLimit(ctx, 2*time.Second, root, executable, input)
+	return processWithOutputLimit(ctx, 2*time.Second, compositionOutputMaxBytes, root, executable, input)
 }
 
 func (graph compositionGraph) nativeTraces(output []byte, suite CompositionCases) ([]CompositionTrace, int, error) {

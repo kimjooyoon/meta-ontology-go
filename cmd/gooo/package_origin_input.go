@@ -164,8 +164,8 @@ func encodePackageOriginInputs(raw []byte, target packageruntime.EntrySpec, limi
 		input.Inputs = append(input.Inputs, map[string]json.RawMessage{target.PackagePath + ":" + target.Activity: row})
 	}
 	encoded, err := json.Marshal(input)
-	if err == nil && len(encoded) > 32<<10 {
-		return nil, origin, fmt.Errorf("selected origin inputs exceed 32768 bytes; lower --origin-limit (currently %d)", limit)
+	if err == nil && len(encoded) > bodyexecution.CompositionOriginPageMaxBytes {
+		return nil, origin, fmt.Errorf("selected origin inputs exceed %d bytes; lower --origin-limit (currently %d)", bodyexecution.CompositionOriginPageMaxBytes, limit)
 	}
 	return encoded, origin, err
 }

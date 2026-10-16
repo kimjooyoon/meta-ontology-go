@@ -20,6 +20,7 @@ type CompositionInspection struct {
 	ModelCalls       int                        `json:"model_calls"`
 	CandidateTests   int                        `json:"candidate_tests"`
 	NativeExecutions int                        `json:"native_executions"`
+	Capacity         CompositionCapacity        `json:"transport_capacity"`
 	Scope            string                     `json:"scope"`
 }
 
@@ -50,6 +51,7 @@ type CompositionAssemblyInput struct {
 // without loading models, realizing candidates, invoking Go or running bodies.
 func InspectComposition(ctx context.Context, filename string, source []byte, entry string) (CompositionInspection, error) {
 	r := CompositionInspection{Schema: "gooo/body-composition-inspection/v1", SourceSHA256: digest(source),
+		Capacity:     CompositionTransportCapacity(),
 		CallerInputs: []CompositionCallerInput{}, Assemblies: []CompositionAssemblyInput{},
 		Scope: "structural input plan; body type checks, candidate selection, model compatibility and correctness are separate"}
 	graph, err := prepareCompositionGraphForEntry(ctx, filename, source, entry)
@@ -138,8 +140,8 @@ func CompositionInputTemplate(plan CompositionInspection) ([]byte, error) {
 		Schema string           `json:"schema"`
 		Inputs []map[string]any `json:"inputs"`
 	}{CompositionInputsSchema, []map[string]any{row}}, "", "  ")
-	if err == nil && len(raw) > 32<<10 {
-		err = fmt.Errorf("input template exceeds 32 KiB")
+	if err == nil {
+		err = checkCompositionInputSize(raw, "input template")
 	}
 	return raw, err
 }
