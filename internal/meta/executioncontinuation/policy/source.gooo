@@ -1,0 +1,89 @@
+package policy
+namespace consumercontinuation
+
+entity Text id "urn:gooo:type:string"
+entity Boolean id "urn:gooo:type:boolean"
+entity Integer id "urn:gooo:type:integer"
+
+# The two records and the explicit envelope must describe the same source.
+# A known disagreement remains visible when another field is missing.
+activity BindSubjects(declared Text, grant Text, contract Text) -> Text
+    id "gooo://self-improvement/consumer/bind-subjects" computes `
+if declared != "" && grant != "" && declared != grant { return "SUBJECT_REFUTED" }
+if declared != "" && contract != "" && declared != contract { return "SUBJECT_REFUTED" }
+if grant != "" && contract != "" && grant != contract { return "SUBJECT_REFUTED" }
+if declared == "" || grant == "" || contract == "" { return "SUBJECT_UNKNOWN" }
+return "SUBJECT_BOUND"
+`
+
+activity PermitContinuation(decision Text, resolution Text, remaining Integer, consumed Integer, executions Integer, verified Boolean) -> Boolean
+    id "gooo://self-improvement/consumer/permit-continuation" computes `
+return decision == "CLOSED" && resolution == "GRANTED_UNCONSUMED" && remaining == 1 && consumed == 0 && executions == 0 && verified
+`
+
+# A parent can finish after observing creation; waiting for completion would
+# create a cycle when the child needs its parent's completed run.
+activity PermitWait(wait Text, childNeedsCompletion Boolean) -> Boolean
+    id "gooo://self-improvement/consumer/permit-wait" computes `
+if childNeedsCompletion && wait == "COMPLETED" { return false }
+return wait == "CREATED" || wait == "NONE"
+`
+
+activity BindTargetRun(parent Integer, expected Integer, observed Integer) -> Text
+    id "gooo://self-improvement/consumer/bind-target-run" computes `
+if parent > 0 && expected > 0 && parent == expected { return "TARGET_RUN_REFUTED" }
+if expected > 0 && observed > 0 && expected != observed { return "TARGET_RUN_REFUTED" }
+if parent <= 0 || expected <= 0 || observed <= 0 { return "TARGET_RUN_UNKNOWN" }
+return "TARGET_RUN_BOUND"
+`
+
+activity ObserveStage(dispatched Boolean, observed Boolean, executed Boolean) -> Text
+    id "gooo://self-improvement/consumer/observe-stage" computes `
+if executed && !observed { return "CONTINUATION_REFUTED" }
+if observed && !dispatched { return "CONTINUATION_REFUTED" }
+if executed { return "EXECUTION_OBSERVED" }
+if observed { return "TARGET_RUN_OBSERVED" }
+if dispatched { return "DISPATCH_SENT" }
+return "DISPATCH_UNKNOWN"
+`
+
+activity ArtifactLabel(kind Text, subject Text) -> Text
+    id "gooo://self-improvement/consumer/artifact-label" computes `
+if kind == "grant" { return "self-improvement-execution-grant-" + subject }
+if kind == "contract" { return "self-improvement-execution-contract-" + subject }
+return ""
+`
+
+activity WorkflowPath(kind Text) -> Text
+    id "gooo://self-improvement/consumer/workflow-path" computes `
+if kind == "grant" { return ".github/workflows/self-improvement-execution-grant.yml" }
+if kind == "contract" { return ".github/workflows/self-improvement-execution-contract.yml" }
+if kind == "consumer" { return ".github/workflows/self-improvement-execution-consumer.yml" }
+return ""
+`
+
+activity MissingDependency(reason Text) -> Text
+    id "gooo://self-improvement/consumer/missing-dependency" computes `
+if reason == "SOURCE_RUN_UNAVAILABLE" || reason == "SOURCE_RUN_COMPLETION_UNKNOWN" || reason == "SOURCE_RUN_METADATA_UNKNOWN" || reason == "SOURCE_GRANT_JOB_UNAVAILABLE" { return "producer_run" }
+if reason == "SUBJECT_SOURCE_UNKNOWN" { return "subject_blob" }
+if reason == "GRANT_POLICY_UNAVAILABLE" { return "policy_source" }
+if reason == "SOURCE_ARTIFACT_EXPIRED" { return "expired_source_artifact" }
+if reason == "SOURCE_ARTIFACT_MISSING" || reason == "SOURCE_ARCHIVE_UNAVAILABLE" || reason == "SOURCE_MEMBER_MISSING" || reason == "ARTIFACT_POPULATION_UNKNOWN" || reason == "ARTIFACT_POPULATION_INCOMPLETE" { return "source_artifact" }
+if reason == "DISPATCH_RESPONSE_UNKNOWN" { return "dispatch_outcome" }
+if reason == "TARGET_REFERENCE_UNKNOWN" { return "target_run_reference" }
+if len(reason) >= 12 && reason[:12] == "RESERVATION_" { return "reservation_history" }
+return "target_run"
+`
+
+activity NextObservation(dependency Text) -> Text
+    id "gooo://self-improvement/consumer/next-observation" computes `
+if dependency == "producer_run" { return "observe_exact_source_run" }
+if dependency == "subject_blob" { return "observe_exact_subject_blob" }
+if dependency == "policy_source" { return "restore_policy_source" }
+if dependency == "expired_source_artifact" { return "produce_fresh_source_artifact" }
+if dependency == "source_artifact" { return "observe_exact_source_artifact" }
+if dependency == "dispatch_outcome" { return "observe_dispatch_outcome" }
+if dependency == "target_run_reference" { return "observe_dispatch_response" }
+if dependency == "reservation_history" { return "restore_retained_reservation_history" }
+return "observe_returned_target_run"
+`
