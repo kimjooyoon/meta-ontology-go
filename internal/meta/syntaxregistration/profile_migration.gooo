@@ -1,0 +1,20 @@
+package profilemigration
+namespace profilemigration
+
+entity ProfileMigrationRequest id "gooo://syntax-profile-migration/request"
+entity PinnedProfileMigrationInput id "gooo://syntax-profile-migration/pinned-input"
+entity ProfileMigrationCandidate id "gooo://syntax-profile-migration/candidate"
+entity ProfileCorpus id "gooo://syntax-profile-migration/corpus"
+entity ProfileNativeRegistry id "gooo://syntax-profile-migration/native-registry"
+entity ProfileProgram id "gooo://syntax-profile-migration/program"
+
+activity PinProfileMigration(ProfileMigrationRequest) -> PinnedProfileMigrationInput
+    id "gooo://syntax-profile-migration/pin-input"
+activity MigrateSyntaxProfile(PinnedProfileMigrationInput) -> ProfileMigrationCandidate
+    id "gooo://syntax-profile-migration/migrate" computes "syntax.profile-migrate:v1"
+activity ReviseProfileCorpus(PinnedProfileMigrationInput) -> ProfileCorpus
+    id "gooo://syntax-profile-migration/revise-corpus"
+activity ReviseProfileNativeRegistry(PinnedProfileMigrationInput) -> ProfileNativeRegistry
+    id "gooo://syntax-profile-migration/revise-native-registry"
+activity RetainProfileProgram(PinnedProfileMigrationInput) -> ProfileProgram
+    id "gooo://syntax-profile-migration/retain-program"

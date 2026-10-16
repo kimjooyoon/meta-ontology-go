@@ -1,0 +1,602 @@
+{
+  "schema": "gooo/source-profile-migration-observations/v1",
+  "base": "57eecd55d9f0ffe80e0fda5addb0eb3b4e8640bb",
+  "toolchain": "go1.27.2",
+  "local_unique_passed_leaves": 54,
+  "phases": [
+    {
+      "log": "profile-phase1.jsonl.gz",
+      "raw_digest": "sha256:20f6addd01cc64a4faddcc5c6f98bb761e8ed53998244970d6b57ee383e8d0ce",
+      "archive_digest": "sha256:3e4a58ecea8e1061abf932cf614beff97ac09382cb442aae4f43b8d77da700bd",
+      "raw_bytes": 14820,
+      "stored_bytes": 1056,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/bool-deferred"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/bool-v1"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/bool-v2"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/integer-v2"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/integer-v3"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/many-v4"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/many-v5"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/optional-v3"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/optional-v4"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestExactEntityProfileFresh1841/unknown"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+          "test": "TestProfileSelectionBoundaryFresh1842"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestExplicitProfileNativeProjectionFresh1843"
+        }
+      ],
+      "failures": []
+    },
+    {
+      "log": "profile-phase2.jsonl.gz",
+      "raw_digest": "sha256:de7e5c1d83c24794b6c5c15b7700ef84265437bf49295009af0a77afcb492b3d",
+      "archive_digest": "sha256:5ec86bab03dc73fb29555f89facbb443b39c3f27913264db2e916bcde1f0a7e7",
+      "raw_bytes": 7695,
+      "stored_bytes": 682,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestOwnedCaseLeavesFresh1845"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationContractFresh1844/extra-node"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationContractFresh1844/renamed-display"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationContractFresh1844/source"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationContractFresh1844/wrong-input"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationContractFresh1844/wrong-program"
+        }
+      ],
+      "failures": []
+    },
+    {
+      "log": "profile-phase3.jsonl.gz",
+      "raw_digest": "sha256:757700afae5e2167d8dcac2aeb162a4e2361d46edb187481f41459c39cb015e9",
+      "archive_digest": "sha256:6c572aa2c5a9414121715923d11a9dbfa2c483f008108445fdb4ce359bc2c9da",
+      "raw_bytes": 9289,
+      "stored_bytes": 841,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileNativeCounterexamplesFresh1847/cycle"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileNativeCounterexamplesFresh1847/duplicate-field"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileNativeCounterexamplesFresh1847/shadow-bool"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileNativeCounterexamplesFresh1847/typed-mismatch"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileNativeCounterexamplesFresh1847/unknown-field"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileNativeCounterexamplesFresh1847/variable"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileNativePopulationFresh1846"
+        }
+      ],
+      "failures": []
+    },
+    {
+      "log": "profile-phase4.jsonl.gz",
+      "raw_digest": "sha256:7b9b8b0de3327a54e97677ca772ce5e8230df2e1e95e2ea6f025348cbaa39868",
+      "archive_digest": "sha256:565bb97601b3dce38fe8aa0b116f1544768ae128ed7aa58297ba4fceea07a0a7",
+      "raw_bytes": 15457,
+      "stored_bytes": 1113,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationCandidateRefusalsFresh1849/authority"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationCandidateRefusalsFresh1849/origin-bytes"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationCandidateRefusalsFresh1849/population"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationCandidateRefusalsFresh1849/resealed-output"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationCandidateRefusalsFresh1849/semantic-role"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationPlanFresh1848"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationRequestRefusalsFresh1850/invalid-after"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationRequestRefusalsFresh1850/mixed-profile"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationRequestRefusalsFresh1850/stale-replacement"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationRequestRefusalsFresh1850/stale-source"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationRequestRefusalsFresh1850/unknown-profile"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationSnapshotFresh1851"
+        }
+      ],
+      "failures": []
+    },
+    {
+      "log": "profile-phase5.jsonl.gz",
+      "raw_digest": "sha256:27924e64be309af1b13d177209e7a681f47d571f187b3418dec7ec22ac1994d5",
+      "archive_digest": "sha256:b7f6da20c39ebcac858e0f881b77aa1fc5c624e05e64b0628c729cf5c87c1b38",
+      "raw_bytes": 10589,
+      "stored_bytes": 829,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIInputBoundariesFresh1855/missing-mode"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIInputBoundariesFresh1855/mixed-mode"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIInputBoundariesFresh1855/source-limit"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIInputBoundariesFresh1855/unknown-flag"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIOutputBoundariesFresh1856/existing"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIOutputBoundariesFresh1856/inside"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIOutputBoundariesFresh1856/symlink-parent"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIProtocolFresh1854"
+        }
+      ],
+      "failures": []
+    },
+    {
+      "log": "profile-phase6.jsonl.gz",
+      "raw_digest": "sha256:8b0c87fd1e707c1bf2ad4bdd72b580fee530108c6b004ce09a31e87ccf86bbdd",
+      "archive_digest": "sha256:d2ca484087e0e9468c9eb92ed264de239845723cb81012db6ed33b395f399f3c",
+      "raw_bytes": 4921,
+      "stored_bytes": 560,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationNativeBoundariesFresh1853/native-membership"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationNativeBoundariesFresh1853/unrelated-format"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationObservationFresh1852"
+        }
+      ],
+      "failures": []
+    },
+    {
+      "log": "profile-phase7.jsonl.gz",
+      "raw_digest": "sha256:97bed9e93de99a9d859ca73eeed812875efd23975cc3e3c5c2bb5af8714ef26e",
+      "archive_digest": "sha256:9d5de2ff61d3962c8cffeec288710bc6f35c8289524260b69757708038a9a158",
+      "raw_bytes": 3013,
+      "stored_bytes": 508,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationMixedLegacyFresh1858"
+        }
+      ],
+      "failures": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestRegisteredProfileProposalFresh1857",
+          "output": null
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": null,
+          "output": null
+        }
+      ]
+    },
+    {
+      "log": "profile-phase7-repair-and-8.jsonl.gz",
+      "raw_digest": "sha256:99afbc0b1c6a5b8516d368a928bf18ef711daf1468eba845fd5ae1fdfedd92ec",
+      "archive_digest": "sha256:f1ca0bddb6cf52766313c64d2504de4efee9bfa044552e161e70faaa5932f601",
+      "raw_bytes": 7400,
+      "stored_bytes": 778,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestRegisteredProfileProposalFresh1857"
+        }
+      ],
+      "failures": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true}",
+          "output": null
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true_/*_origin1859_*/}",
+          "output": null
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true,}",
+          "output": null
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationPunctuationFresh1859",
+          "output": null
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": null,
+          "output": null
+        }
+      ]
+    },
+    {
+      "log": "profile-phase8-fixture-repair.jsonl.gz",
+      "raw_digest": "sha256:2f1b42c9508a71014c061a8b1cdbc26ee754abf41837161cb9d4438a8427e06f",
+      "archive_digest": "sha256:fe4553ec465c18734e83ff1aa19312ecc532676e1aded7bcca53c4ec235d9760",
+      "raw_bytes": 5057,
+      "stored_bytes": 509,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true,}"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true_/*_origin1859_*/}"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+          "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true}"
+        }
+      ],
+      "failures": []
+    },
+    {
+      "log": "profile-phase9.jsonl.gz",
+      "raw_digest": "sha256:b93723262647d5f5595416f9abdd5297e86a17a0e5169c1bcc689426cdb6ac03",
+      "archive_digest": "sha256:146d108937bd12ab11f2d9900f3c334ccf866899c8e9cf52fd22069e06edaf3a",
+      "raw_bytes": 1645,
+      "stored_bytes": 350,
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+          "test": "TestProfileCLIPinnedRequestFresh1860"
+        }
+      ],
+      "failures": []
+    }
+  ],
+  "final_source_expected_leaves": [
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIInputBoundariesFresh1855/missing-mode"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIInputBoundariesFresh1855/mixed-mode"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIInputBoundariesFresh1855/source-limit"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIInputBoundariesFresh1855/unknown-flag"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIOutputBoundariesFresh1856/existing"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIOutputBoundariesFresh1856/inside"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIOutputBoundariesFresh1856/symlink-parent"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIPinnedRequestFresh1860"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/cmd/syntax-profile-migration",
+      "test": "TestProfileCLIProtocolFresh1854"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/bool-deferred"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/bool-v1"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/bool-v2"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/integer-v2"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/integer-v3"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/many-v4"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/many-v5"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/optional-v3"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/optional-v4"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestExactEntityProfileFresh1841/unknown"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax",
+      "test": "TestProfileSelectionBoundaryFresh1842"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestExplicitProfileNativeProjectionFresh1843"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestOwnedCaseLeavesFresh1845"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationCandidateRefusalsFresh1849/authority"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationCandidateRefusalsFresh1849/origin-bytes"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationCandidateRefusalsFresh1849/population"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationCandidateRefusalsFresh1849/resealed-output"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationCandidateRefusalsFresh1849/semantic-role"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationContractFresh1844/extra-node"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationContractFresh1844/renamed-display"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationContractFresh1844/source"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationContractFresh1844/wrong-input"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationContractFresh1844/wrong-program"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationMixedLegacyFresh1858"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationNativeBoundariesFresh1853/native-membership"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationNativeBoundariesFresh1853/unrelated-format"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationObservationFresh1852"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationPlanFresh1848"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true,}"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true_/*_origin1859_*/}"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationPunctuationFresh1859/EntityFields:true}"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationRequestRefusalsFresh1850/invalid-after"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationRequestRefusalsFresh1850/mixed-profile"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationRequestRefusalsFresh1850/stale-replacement"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationRequestRefusalsFresh1850/stale-source"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationRequestRefusalsFresh1850/unknown-profile"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileMigrationSnapshotFresh1851"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileNativeCounterexamplesFresh1847/cycle"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileNativeCounterexamplesFresh1847/duplicate-field"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileNativeCounterexamplesFresh1847/shadow-bool"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileNativeCounterexamplesFresh1847/typed-mismatch"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileNativeCounterexamplesFresh1847/unknown-field"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileNativeCounterexamplesFresh1847/variable"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestProfileNativePopulationFresh1846"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration",
+      "test": "TestRegisteredProfileProposalFresh1857"
+    }
+  ],
+  "population": {
+    "before": 131,
+    "after": 131,
+    "new_capability_cases": 0,
+    "meta_sources_before": 10,
+    "meta_sources_after": 11,
+    "denominator_changes": 0
+  },
+  "repairs": [
+    {
+      "failed": "TestRegisteredProfileProposalFresh1857",
+      "cause": "A last value and closing brace shared one insertion offset; separate comma and field edits had wrong order.",
+      "repair": "One combined insertion at the same offset. Only failed case replayed."
+    },
+    {
+      "failed": "TestProfileMigrationPunctuationFresh1859/*",
+      "cause": "New fixture contained one excess closing brace.",
+      "repair": "Removed excess brace; reran only its three failed cases."
+    }
+  ],
+  "scope": "Separate evolving local phases. Later source changes are not verified by summing these earlier successes. Final fixed PR source requires its own original CI. Native metadata population is not executed program count. No completed cohort/model/native program replay.",
+  "production_six_field_policy": "NOT_APPLIED",
+  "models_executed": 0
+}

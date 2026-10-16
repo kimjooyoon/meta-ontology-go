@@ -50,8 +50,12 @@ func generateRegistry(source *goSource, request Request) error {
 		return err
 	}
 	value := request.Case
-	row := fmt.Sprintf("\n{ID: %q, Path: %q, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: %q, MetaOperation: %q, Scope: ScopeLanguageCapability, EntityFields: %t, ImplicitActivityPorts: %t, OrderedCollections: %t},\n",
-		value.ID, value.Path, value.ProofChoice, value.MetaOperation, value.EntityFields, value.ImplicitActivityPorts, value.OrderedCollections)
+	profile := ""
+	if value.EntityFieldsProfile != "" {
+		profile = fmt.Sprintf(", EntityFieldsProfile: %q", value.EntityFieldsProfile)
+	}
+	row := fmt.Sprintf("\n{ID: %q, Path: %q, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: %q, MetaOperation: %q, Scope: ScopeLanguageCapability, EntityFields: %t, ImplicitActivityPorts: %t, OrderedCollections: %t%s},\n",
+		value.ID, value.Path, value.ProofChoice, value.MetaOperation, value.EntityFields, value.ImplicitActivityPorts, value.OrderedCollections, profile)
 	if source.registryTailNeedsComma(list) {
 		last := list.Elts[len(list.Elts)-1].End()
 		if last == list.Rbrace {
