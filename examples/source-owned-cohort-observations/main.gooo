@@ -1,0 +1,89 @@
+package cohortobservations
+namespace cohortobservations
+
+entity Boolean id "urn:gooo:type:boolean"
+entity Text id "urn:gooo:type:string"
+
+entity OperationIDs id "urn:cohort:operation-ids" fields {
+    field ids id "urn:cohort:operation-ids/ids" type string required many
+}
+
+entity Assessment id "urn:cohort:assessment" fields {
+    field expected_count id "urn:cohort:assessment/expected-count" type integer required one
+    field bound_count id "urn:cohort:assessment/bound-count" type integer required one
+    field unknown_count id "urn:cohort:assessment/unknown-count" type integer required one
+    field coverage_bps id "urn:cohort:assessment/coverage-bps" type integer required one
+    field status id "urn:cohort:assessment/status" type string required one
+    field unknown_class id "urn:cohort:assessment/unknown-class" type string required one
+    field reason id "urn:cohort:assessment/reason" type string required one
+    field next_operation id "urn:cohort:assessment/next-operation" type string required one
+    field observed_ids id "urn:cohort:assessment/observed-ids" type string required many
+    field readiness_credit id "urn:cohort:assessment/readiness-credit" type boolean required one
+}
+
+activity Alpha(seed Boolean) -> Text id "urn:cohort:alpha" computes `return "urn:cohort:alpha"`
+activity Beta(seed Boolean) -> Text id "urn:cohort:beta" computes `return "urn:cohort:beta"`
+activity Gamma(seed Boolean) -> Text id "urn:cohort:gamma" computes `return "urn:cohort:gamma"`
+
+activity Declared(seed Boolean) -> OperationIDs id "urn:cohort:declared" computes `
+return OperationIDs{ids: []string{Alpha(seed), Beta(seed), Gamma(seed)}}
+`
+
+activity Assess(OperationIDs) -> Assessment id "urn:cohort:assess" computes `
+return AssessDeclared(Declared(true), input)
+`
+
+activity AssessDeclared(declared OperationIDs, observed OperationIDs) -> Assessment
+    id "urn:cohort:assess-declared" computes `
+let expected = int64(len(declared.ids))
+let bound = 0
+let unknown = 0
+for operation in declared.ids {
+    let count = 0
+    for operation_id in observed.ids {
+        if operation_id == operation { count = count + 1 }
+    }
+    if count == 1 { bound = bound + 1 }
+    if count > 1 { unknown = unknown + count - 1 }
+}
+for operation_id in observed.ids {
+    let known = false
+    for operation in declared.ids {
+        if operation_id == operation { known = true }
+    }
+    if !known { unknown = unknown + 1 }
+}
+let coverage = 0
+if expected > 0 { coverage = bound * 10000 / expected }
+let status = "FAIL_CLOSED"
+let unknown_class = "DIRECT_MISSING"
+let reason = "CONCEPT_OPERATION_DIRECT_EVIDENCE_MISSING"
+let next_operation = "CAPTURE_EXACT_PRODUCER_INPUTS"
+if expected == 0 {
+    unknown_class = "UNBOUNDED"
+    reason = "CONCEPT_OPERATION_BINDING_BOUNDARY_UNBOUNDED"
+}
+if unknown > 0 {
+    unknown_class = "AMBIGUOUS"
+    reason = "CONCEPT_OPERATION_BINDING_AMBIGUOUS"
+    next_operation = "DISAMBIGUATE_CONCEPT_OPERATION_BINDINGS"
+}
+if expected > 0 && bound == expected && unknown == 0 {
+    status = "VERIFIED"
+    unknown_class = ""
+    reason = ""
+    next_operation = ""
+}
+return Assessment{
+    expected_count: expected,
+    bound_count: bound,
+    unknown_count: unknown,
+    coverage_bps: coverage,
+    status: status,
+    unknown_class: unknown_class,
+    reason: reason,
+    next_operation: next_operation,
+    observed_ids: observed.ids,
+    readiness_credit: false,
+}
+`

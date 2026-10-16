@@ -67,6 +67,7 @@ type SourceInputs struct {
 	ProgramSource            []byte
 	ProgramVerification      []byte
 	ScratchDirectory         string
+	Observation              *ObservationInputs
 }
 
 type Receipt struct {

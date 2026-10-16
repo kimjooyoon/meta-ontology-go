@@ -1,0 +1,173 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Assess": {
+          "ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:beta",
+            "urn:cohort:gamma"
+          ]
+        }
+      },
+      "expected": {
+        "Assess": {
+          "expected_count": 3,
+          "bound_count": 3,
+          "unknown_count": 0,
+          "coverage_bps": 10000,
+          "status": "VERIFIED",
+          "unknown_class": "",
+          "reason": "",
+          "next_operation": "",
+          "observed_ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:beta",
+            "urn:cohort:gamma"
+          ],
+          "readiness_credit": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:beta",
+            "urn:cohort:gamma",
+            "urn:cohort:outside"
+          ]
+        }
+      },
+      "expected": {
+        "Assess": {
+          "expected_count": 3,
+          "bound_count": 3,
+          "unknown_count": 1,
+          "coverage_bps": 10000,
+          "status": "FAIL_CLOSED",
+          "unknown_class": "AMBIGUOUS",
+          "reason": "CONCEPT_OPERATION_BINDING_AMBIGUOUS",
+          "next_operation": "DISAMBIGUATE_CONCEPT_OPERATION_BINDINGS",
+          "observed_ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:beta",
+            "urn:cohort:gamma",
+            "urn:cohort:outside"
+          ],
+          "readiness_credit": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:beta"
+          ]
+        }
+      },
+      "expected": {
+        "Assess": {
+          "expected_count": 3,
+          "bound_count": 2,
+          "unknown_count": 0,
+          "coverage_bps": 6666,
+          "status": "FAIL_CLOSED",
+          "unknown_class": "DIRECT_MISSING",
+          "reason": "CONCEPT_OPERATION_DIRECT_EVIDENCE_MISSING",
+          "next_operation": "CAPTURE_EXACT_PRODUCER_INPUTS",
+          "observed_ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:beta"
+          ],
+          "readiness_credit": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:beta",
+            "urn:cohort:outside"
+          ]
+        }
+      },
+      "expected": {
+        "Assess": {
+          "expected_count": 3,
+          "bound_count": 2,
+          "unknown_count": 1,
+          "coverage_bps": 6666,
+          "status": "FAIL_CLOSED",
+          "unknown_class": "AMBIGUOUS",
+          "reason": "CONCEPT_OPERATION_BINDING_AMBIGUOUS",
+          "next_operation": "DISAMBIGUATE_CONCEPT_OPERATION_BINDINGS",
+          "observed_ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:beta",
+            "urn:cohort:outside"
+          ],
+          "readiness_credit": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:alpha",
+            "urn:cohort:beta",
+            "urn:cohort:gamma"
+          ]
+        }
+      },
+      "expected": {
+        "Assess": {
+          "expected_count": 3,
+          "bound_count": 2,
+          "unknown_count": 1,
+          "coverage_bps": 6666,
+          "status": "FAIL_CLOSED",
+          "unknown_class": "AMBIGUOUS",
+          "reason": "CONCEPT_OPERATION_BINDING_AMBIGUOUS",
+          "next_operation": "DISAMBIGUATE_CONCEPT_OPERATION_BINDINGS",
+          "observed_ids": [
+            "urn:cohort:alpha",
+            "urn:cohort:alpha",
+            "urn:cohort:beta",
+            "urn:cohort:gamma"
+          ],
+          "readiness_credit": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "ids": []
+        }
+      },
+      "expected": {
+        "Assess": {
+          "expected_count": 3,
+          "bound_count": 0,
+          "unknown_count": 0,
+          "coverage_bps": 0,
+          "status": "FAIL_CLOSED",
+          "unknown_class": "DIRECT_MISSING",
+          "reason": "CONCEPT_OPERATION_DIRECT_EVIDENCE_MISSING",
+          "next_operation": "CAPTURE_EXACT_PRODUCER_INPUTS",
+          "observed_ids": [],
+          "readiness_credit": false
+        }
+      }
+    }
+  ]
+}
