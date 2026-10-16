@@ -43,7 +43,8 @@
     "ownership": "Child-completion gate remains held; artifact reference is cleared only after successful removal.",
     "program_reexecution": false,
     "persistent_owned_cleanup_error": "Return to caller; retain artifact reference.",
-    "existing_unowned_release_callbacks": "Existing best-effort error propagation unchanged; same bounded helper applied."
+    "existing_unowned_release_callbacks": "Existing best-effort error propagation unchanged; same bounded helper applied.",
+    "budget_scope": "One cleanup invocation; concurrent/canceled callers retain their own lifecycle calls."
   },
   "local_checks": {
     "fresh_leaf_count": 9,
