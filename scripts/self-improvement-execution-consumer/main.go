@@ -28,7 +28,7 @@ func main() {
 	flag.StringVar(&o.subject, "subject", os.Getenv("SUBJECT_SHA"), "logical subject")
 	flag.StringVar(&o.workflow, "workflow", os.Getenv("GITHUB_SHA"), "producer workflow commit")
 	flag.Int64Var(&o.run, "run", envInt("GITHUB_RUN_ID"), "current workflow run")
-	flag.IntVar(&o.attempt, "attempt", int(envInt("GITHUB_RUN_ATTEMPT")), "current attempt")
+	flag.IntVar(&o.attempt, "attempt", envAttempt("GITHUB_RUN_ATTEMPT"), "current attempt")
 	flag.Parse()
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
@@ -39,6 +39,14 @@ func main() {
 }
 
 func envInt(key string) int64 { v, _ := strconv.ParseInt(os.Getenv(key), 10, 64); return v }
+
+func envAttempt(key string) int {
+	value, err := strconv.Atoi(os.Getenv(key))
+	if err != nil || value < 1 {
+		return 0
+	}
+	return value
+}
 
 func run(ctx context.Context, o options) error {
 	if o.output == "" {

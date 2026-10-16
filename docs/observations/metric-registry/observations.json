@@ -1,0 +1,134 @@
+{
+  "schema": "gooo/executable-metric-registry-observation/v1",
+  "status": "LOCAL_SOURCE_BOUNDARY_CHECKS_PASSED_ORIGINAL_CI_PENDING",
+  "origin": {
+    "source_path": "internal/meta/metricprogram/registry.gooo",
+    "source_digest": "sha256:1d2c62977042f2483b9c7898af9631c13e1f76de18df8616640939bddf133ddf",
+    "projection_path": "internal/meta/metricprogram/registry.generated.go",
+    "projection_digest": "sha256:451d433581b6936d62dc3a4f74d63c6540ce78686e8f7a0842c160a03dc387c6"
+  },
+  "source_activities": [
+    "gooo://metric-registry/operations/count",
+    "gooo://metric-registry/operations/at",
+    "gooo://metric-registry/entities/count",
+    "gooo://metric-registry/entities/at"
+  ],
+  "declared_operations": 9,
+  "declared_entities": 10,
+  "preserved_global_readiness_denominator": 24,
+  "source_registration": {
+    "base_version": 89,
+    "next_version": 90,
+    "applied_members": 9,
+    "inventory_sources": 146,
+    "all_source_bytes_preserved_during_registration": true,
+    "native_executions": 0
+  },
+  "authority": {
+    "producer": "Executable Gooo typed record/count functions, projected through the existing body compiler.",
+    "adapter": "Generated field/type correspondence inside the declared record entity region.",
+    "verifier": "Existing independent Go compatibility kernel retains accepted nine-operation meanings and entity IDs.",
+    "execution": "Existing Go task implementations and transport remain in place.",
+    "receipt_schema": "gooo/metric-meta-concept-operation-binding/v2",
+    "source_consumer": "Checks compiled origin and both actual repository members after requiring producer inputs.",
+    "historical_v1": "Retained as historical format; never automatically treated as v2 source-origin evidence."
+  },
+  "fresh_check_phases": [
+    {
+      "input_phase": "fresh-source-1631-1639.jsonl",
+      "passed_leaf_cases": 21,
+      "leaves": [
+        "TestRegistryBridgeFresh1637/typed-field",
+        "TestRegistryBridgeFresh1637/missing-record",
+        "TestRegistryBridgeFresh1637/duplicate-record",
+        "TestRegistryBridgeFresh1637/type-mismatch",
+        "TestRegistryProjectionFresh1631",
+        "TestRegistryTargetFieldsFresh1631/absent",
+        "TestRegistryTargetFieldsFresh1631/duplicate",
+        "TestRegistryTargetFieldsFresh1631/grouped",
+        "TestRegistryTargetFieldsFresh1631/nested",
+        "TestRegistryOriginFresh1635/exact-members",
+        "TestRegistryOriginFresh1635/changed-source",
+        "TestRegistryOriginFresh1635/changed-projection",
+        "TestRegistryOriginFresh1635/missing-source",
+        "TestRegistryOriginFresh1635/resealed-origin",
+        "TestRegistryMeaningFresh1633/operation-meaning",
+        "TestRegistryMeaningFresh1633/canonical-program",
+        "TestRegistryMeaningFresh1633/declared-denominator",
+        "TestReceiptRegistryOriginFresh1639/source",
+        "TestReceiptRegistryOriginFresh1639/projection",
+        "TestReceiptRegistryOriginFresh1639/operation-count",
+        "TestReceiptRegistryOriginFresh1639/entity-count"
+      ]
+    },
+    {
+      "input_phase": "fresh-registration-1641-1643.jsonl",
+      "passed_leaf_cases": 5,
+      "leaves": [
+        "TestRegistryMembershipFresh1641",
+        "TestRegistryBoundsFresh1643/operation-before-first",
+        "TestRegistryBoundsFresh1643/operation-after-last",
+        "TestRegistryBoundsFresh1643/entity-before-first",
+        "TestRegistryBoundsFresh1643/entity-after-last"
+      ]
+    },
+    {
+      "input_phase": "fresh-layout-1645.jsonl",
+      "passed_leaf_cases": 2,
+      "leaves": [
+        "TestBoundedRegistryProjectionFresh1645",
+        "TestRecordLayoutTokensFresh1645"
+      ]
+    },
+    {
+      "input_phase": "fresh-consumer-1647.jsonl",
+      "passed_leaf_cases": 2,
+      "leaves": [
+        "TestRegistryOriginReadinessBoundaryFresh1647/missing-declaration",
+        "TestRegistryOriginReadinessBoundaryFresh1647/changed-declaration"
+      ]
+    }
+  ],
+  "failures_and_repairs": [
+    {
+      "stage": "source-representation-probe",
+      "observed": "Lowercase activity is a reserved field name. After renaming it, a nested record collection failed with unknown semantic record type.",
+      "chosen_source_shape": "Complete indexed typed record declarations and explicit counts, using the current compiler capabilities."
+    },
+    {
+      "stage": "post-registration-inventory",
+      "observed": "The v89 compiled inventory reader rejected the v90 denominator.",
+      "repair": "Built the updated reader and inspected source membership; registration was not replayed."
+    },
+    {
+      "stage": "new-declaration-cap",
+      "observed": "Readable multiline source records projected to an OperationAt function of122lines.",
+      "repair": "The generator compacts Go record-literal layout; source bytes and registered member hashes are unchanged. All new Go declarations now satisfy75lines."
+    }
+  ],
+  "limits": {
+    "nested_record_collections": "UNSUPPORTED_IN_THIS_BODY_ROUTE",
+    "automatic_arbitrary_registry_extension": "UNASSESSED; compatibility kernel changes require explicit review",
+    "speedup": "UNKNOWN",
+    "model_calls": 0,
+    "local_native_experiment_executions": 0,
+    "prior_completed_cohort_replays": 0,
+    "final_original_ci": "PENDING; local phase records are not a substitute"
+  },
+  "publication_source_checks": {
+    "modernizer_fixed_point": true,
+    "changed_go_files": 26,
+    "new_go_files": 13,
+    "new_declaration_cap": 75,
+    "gofmt": "PASS",
+    "registration_member_hashes_preserved": 9
+  },
+  "workflow_source_syntax": {
+    "path": ".github/workflows/metric-counterfactual.yml",
+    "yaml": "PARSED",
+    "bash_blocks": 16,
+    "bash_syntax": "PASS",
+    "native_executions": 0
+  },
+  "source_consumer_diagnostics": "Missing producer inputs retain their prior first-cause ordering; actual declaration/projection reads follow required-input presence."
+}

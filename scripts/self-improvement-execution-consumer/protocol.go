@@ -64,7 +64,7 @@ func prepare(ctx context.Context, c continuation.Client, o options) error {
 
 func envelopeFromEnvironment() continuation.Envelope {
 	return continuation.Envelope{Repository: os.Getenv("SOURCE_REPOSITORY"), WorkflowSHA: os.Getenv("SOURCE_HEAD_SHA"),
-		SubjectSHA: os.Getenv("SUBJECT_SHA"), RunID: envInt("SOURCE_RUN_ID"), Attempt: int(envInt("SOURCE_RUN_ATTEMPT")),
+		SubjectSHA: os.Getenv("SUBJECT_SHA"), RunID: envInt("SOURCE_RUN_ID"), Attempt: envAttempt("SOURCE_RUN_ATTEMPT"),
 		ArtifactID: envInt("SOURCE_ARTIFACT_ID"), ArchiveDigest: os.Getenv("SOURCE_ARTIFACT_DIGEST"),
 		RequestDigest: os.Getenv("GRANT_REQUEST_DIGEST"), Wait: os.Getenv("SOURCE_WAIT"), PolicyDigest: os.Getenv("SOURCE_POLICY_DIGEST")}
 }

@@ -1,0 +1,66 @@
+{
+  "schema": "gooo/consumer-attempt-boundary-repair/v1",
+  "state": "LOCAL_BOUNDARY_CHECKS_PASSED_ORIGINAL_CI_PENDING",
+  "findings": [
+    {
+      "number": 24,
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/security/code-scanning/24",
+      "path": "scripts/self-improvement-execution-consumer/main.go",
+      "input": "GITHUB_RUN_ATTEMPT"
+    },
+    {
+      "number": 25,
+      "url": "https://github.com/kimjooyoon/meta-ontology-go/security/code-scanning/25",
+      "path": "scripts/self-improvement-execution-consumer/protocol.go",
+      "input": "SOURCE_RUN_ATTEMPT"
+    }
+  ],
+  "rule": "go/incorrect-integer-conversion",
+  "observed_scope": {
+    "dev": "85c197613df6449a59ad99a59bc4c670d0bd4896",
+    "main": "2d49a38af9708db7b732735ac607aabb7d4c25f3",
+    "most_recent_instances": "Both live branches contain the two open warnings. PR-only zero-result analyses do not close these branch instances."
+  },
+  "cause": "A signed64-bit parsed environment value was converted to native int without checking representability. On narrower int targets a large positive input could wrap.",
+  "repair": "Read attempts with strconv.Atoi, which checks the native int range. Parse errors and nonpositive values become the existing invalid0sentinel. Run and artifact IDs keep their existing int64representation. Existing source-owned single-attempt and exact-run checks still decide whether execution is allowed.",
+  "local_checks": {
+    "fresh_leaf_cases": 15,
+    "leaves": [
+      "TestAttemptEnvironmentBoundsFresh1651/first",
+      "TestAttemptEnvironmentBoundsFresh1651/second",
+      "TestAttemptEnvironmentBoundsFresh1651/zero",
+      "TestAttemptEnvironmentBoundsFresh1651/negative",
+      "TestAttemptEnvironmentBoundsFresh1651/empty",
+      "TestAttemptEnvironmentBoundsFresh1651/malformed",
+      "TestAttemptEnvironmentBoundsFresh1651/space",
+      "TestAttemptEnvironmentBoundsFresh1651/positive-sign",
+      "TestAttemptEnvironmentBoundsFresh1651/leading-zero",
+      "TestAttemptEnvironmentBoundsFresh1651/native-maximum",
+      "TestAttemptEnvironmentBoundsFresh1651/signed-overflow",
+      "TestAttemptEnvironmentBoundsFresh1651/unsigned-overflow",
+      "TestSourceAttemptEnvironmentFresh1653/1",
+      "TestSourceAttemptEnvironmentFresh1653/9223372036854775808",
+      "TestOverflowAttemptInvocationFresh1655"
+    ],
+    "native_value_experiments": 0,
+    "model_calls": 0,
+    "completed_local_cohort_replays": 0,
+    "new_go_declarations_within75lines": true,
+    "go_toolchain": "go1.27.2"
+  },
+  "active_codeql_scope": {
+    "effective_categories": [
+      "/language:go",
+      "/language:actions",
+      "/language:javascript-typescript"
+    ],
+    "setup_updated_at": "2026-10-16T01:32:47Z",
+    "python": "Not in the current configured language set; the repository contains no .py sources. Its earlier error is historical and is not a fourth current-category obligation.",
+    "setup_or_protection_changes": 0
+  },
+  "acceptance_remaining": [
+    "Own original CI and CodeQL analysis for the published repair head.",
+    "Normal dev integration and exact-dev-tree main promotion.",
+    "Fresh automatic analyses on both live branches must close alerts24and25; do not dismiss them by hand."
+  ]
+}

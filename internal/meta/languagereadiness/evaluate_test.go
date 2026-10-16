@@ -88,6 +88,7 @@ func conceptOperationEvidenceFixture() conceptoperation.Receipt {
 		Schema: conceptoperation.Schema, Repository: "owner/repository", SubjectSHA: strings.Repeat("a", 40),
 		ExecutionPolicy: conceptoperation.ExecutionPolicy, MetricID: conceptoperation.MetricID,
 		CohortRule: conceptoperation.CohortRule, SourceAuthority: conceptoperation.SourceAuthority,
+		RegistryOrigin: metricprogram.RegistrySourceOrigin(),
 		StrategyDigest: digestFixture(), StrategyVerificationDigest: digestFixture(),
 		InterventionDigest: digestFixture(), ProgramDigest: digestFixture(),
 		ProgramVerificationDigest: digestFixture(), ProgramSourcePath: metricprogram.ProgramSourceFilename,
