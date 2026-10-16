@@ -1,0 +1,360 @@
+{
+  "schema": "gooo/source-disposition-record-observations/v1",
+  "source_base": "2eecc5ae2df423043b0f41b015f045b10cb1933a",
+  "state": "DEVELOPMENT_SOURCE_NOT_YET_ORIGINAL_CI_ACCEPTED",
+  "local_unique_passed_leaves": 25,
+  "phases": [
+    {
+      "phase": 1,
+      "log": "native-disposition-phase1.jsonl.gz",
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+          "test": "TestNativeFieldIdentityBridgeFresh1863/native-name"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+          "test": "TestNativeFieldIdentityBridgeFresh1863/renamed-native"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+          "test": "TestNativeFieldIdentityBridgeFresh1863/missing-ID"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+          "test": "TestNativeFieldIdentityBridgeFresh1863/duplicate-ID"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+          "test": "TestNativeFieldIdentityBridgeFresh1863/late-tag-corruption"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+          "test": "TestNativeDispositionRecordFresh1864/registered-origin"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+          "test": "TestNativeDispositionRecordFresh1864/unregistered-origin"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+          "test": "TestNativeDispositionRecordFresh1864/registered-missing-origin"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+          "test": "TestNativeDispositionRecordFresh1864/unregistered-missing-origin"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+          "test": "TestDispositionOriginBindingFresh1865"
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "log": "native-disposition-phase2.jsonl.gz",
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+          "test": "TestDispositionStableIdentityNativeFresh1866/renamed-record-activity-field"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+          "test": "TestDispositionStableIdentityNativeFresh1866/source-controls-all-Boolean-values"
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "log": "native-disposition-phase3.jsonl.gz",
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+          "test": "TestOwnedProjectionRetirementFresh1868/owned"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+          "test": "TestOwnedProjectionRetirementFresh1868/changed-obsolete"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+          "test": "TestOwnedProjectionRetirementFresh1868/foreign-family"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+          "test": "TestOwnedProjectionRetirementFresh1868/empty-next"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+          "test": "TestOwnedProjectionRetirementFresh1868/invalid-previous"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+          "test": "TestOwnedProjectionAtomicWriteFresh1868"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+          "test": "TestDispositionContractBoundaryFresh1869/activity-ID"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+          "test": "TestDispositionContractBoundaryFresh1869/null-is-not-false"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+          "test": "TestDispositionContractBoundaryFresh1869/duplicate-case"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+          "test": "TestDispositionContractBoundaryFresh1869/single-attempt"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+          "test": "TestDispositionLayoutObservationFresh1867"
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "log": "native-disposition-phase4.jsonl.gz",
+      "passed_leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-unresolved-policy-codegen",
+          "test": "TestPolicyBundleRetirementFresh1870/owned-shrink"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-unresolved-policy-codegen",
+          "test": "TestPolicyBundleRetirementFresh1870/conflicting-part"
+        }
+      ],
+      "scope": "New policy-writer owned-part retirement/conflict fixtures only; no source/model/native value replay."
+    }
+  ],
+  "final_source_expected_leaves": [
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+      "test": "TestDispositionLayoutObservationFresh1867"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+      "test": "TestDispositionOriginBindingFresh1865"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+      "test": "TestNativeDispositionRecordFresh1864/registered-missing-origin"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+      "test": "TestNativeDispositionRecordFresh1864/registered-origin"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+      "test": "TestNativeDispositionRecordFresh1864/unregistered-missing-origin"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy",
+      "test": "TestNativeDispositionRecordFresh1864/unregistered-origin"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+      "test": "TestDispositionContractBoundaryFresh1869/activity-ID"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+      "test": "TestDispositionContractBoundaryFresh1869/duplicate-case"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+      "test": "TestDispositionContractBoundaryFresh1869/null-is-not-false"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+      "test": "TestDispositionContractBoundaryFresh1869/single-attempt"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+      "test": "TestDispositionStableIdentityNativeFresh1866/renamed-record-activity-field"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy/projection",
+      "test": "TestDispositionStableIdentityNativeFresh1866/source-controls-all-Boolean-values"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+      "test": "TestOwnedProjectionAtomicWriteFresh1868"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+      "test": "TestOwnedProjectionRetirementFresh1868/changed-obsolete"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+      "test": "TestOwnedProjectionRetirementFresh1868/empty-next"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+      "test": "TestOwnedProjectionRetirementFresh1868/foreign-family"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+      "test": "TestOwnedProjectionRetirementFresh1868/invalid-previous"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle",
+      "test": "TestOwnedProjectionRetirementFresh1868/owned"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+      "test": "TestNativeFieldIdentityBridgeFresh1863/duplicate-ID"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+      "test": "TestNativeFieldIdentityBridgeFresh1863/late-tag-corruption"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+      "test": "TestNativeFieldIdentityBridgeFresh1863/missing-ID"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+      "test": "TestNativeFieldIdentityBridgeFresh1863/native-name"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/internal/recordbridge",
+      "test": "TestNativeFieldIdentityBridgeFresh1863/renamed-native"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-unresolved-policy-codegen",
+      "test": "TestPolicyBundleRetirementFresh1870/owned-shrink"
+    },
+    {
+      "package": "github.com/kimjooyoon/meta-ontology-go/scripts/metric-unresolved-policy-codegen",
+      "test": "TestPolicyBundleRetirementFresh1870/conflicting-part"
+    }
+  ],
+  "archives": [
+    {
+      "path": "profile-candidate.json.gz",
+      "raw_digest": "sha256:821eef13c58323be0145aec78d2dda0c8568e7630479ae98703dd3ea9b17e5df",
+      "archive_digest": "sha256:c04093495b6595843518e11b25e00167a3fa72de1d38794b1eed9de00c73255e",
+      "raw_bytes": 154866,
+      "stored_bytes": 16644
+    },
+    {
+      "path": "pinned-request.json.gz",
+      "raw_digest": "sha256:bcaa0b97b95193908523f215ed5b79b432d48363462edf06146f0775954f3a8e",
+      "archive_digest": "sha256:ed8a233c952f79db9d14f69b02713f9dab06dc3fb1469b9b2d7afd954b65482b",
+      "raw_bytes": 1179,
+      "stored_bytes": 697
+    },
+    {
+      "path": "profile-application.json.gz",
+      "raw_digest": "sha256:5e534a39433955749ea561da4d8b253a9583026087ff6a80c1e17edd9d2bf854",
+      "archive_digest": "sha256:1114dc561f604df944a7fbb89d878d8b7c091d9997e650c8d6ed7b9a4109569f",
+      "raw_bytes": 3380,
+      "stored_bytes": 1462
+    },
+    {
+      "path": "native-policy-generation.json.gz",
+      "raw_digest": "sha256:28b44bd4c52b152576d612b13f4fbefe0ed210c9879bf6f1997841447ffba5c5",
+      "archive_digest": "sha256:2a97f076823f7dac4e4374328778a18c8f7543d645e0eae2024f6c33727b284b",
+      "raw_bytes": 50030,
+      "stored_bytes": 7464
+    },
+    {
+      "path": "native-disposition-phase1.jsonl.gz",
+      "raw_digest": "sha256:44b34027d480703c7ae9a5d11dff30d391dba934e29ab157ae0edcda0c08d33a",
+      "archive_digest": "sha256:501dfe58153820a199709778acdda3a0b853b921632bae70cad57f345714257c",
+      "raw_bytes": 14300,
+      "stored_bytes": 1176
+    },
+    {
+      "path": "native-disposition-phase2.jsonl.gz",
+      "raw_digest": "sha256:5cb2639d3776ad5450f05d5209e09c568338b90e5741d5e88042b0290a87ea9e",
+      "archive_digest": "sha256:442cca29e2f38599dc7439ccb130ba8564e55edcfced741cc5c6efd4dd367e20",
+      "raw_bytes": 6848,
+      "stored_bytes": 1317
+    },
+    {
+      "path": "native-disposition-phase3.jsonl.gz",
+      "raw_digest": "sha256:42a449855f51549b3738ca93bd24dfb119d9eeece907481fe97efbbbc3cff11b",
+      "archive_digest": "sha256:5d0cdd94d583a9af945c122f7bdc393b5aa14167e3c6d6d803d2362a26ada872",
+      "raw_bytes": 16382,
+      "stored_bytes": 1380
+    },
+    {
+      "path": "native-disposition-phase4.jsonl.gz",
+      "raw_digest": "sha256:db9fe18e9241481935eb59b7e2a838396928479d3fa8fd52cfdb364d7503f8a3",
+      "archive_digest": "sha256:72ee05bf0f36a88cf212b2b89a8a561469d9465cc58ff7bf03f31374574f23f4",
+      "raw_bytes": 3870,
+      "stored_bytes": 483
+    }
+  ],
+  "actual_policy_generation": {
+    "source_path": "internal/meta/metricprogram/unresolvedpolicy/policy.gooo",
+    "source_digest": "sha256:f37ed9de83c5fff0b777c71dd1c5a0686b1039f716c3018e90e128989ecbc06d",
+    "activity_id": "gooo://metric-operation-origin/describe-operation",
+    "status": "COMPLETE_FINITE",
+    "source_cases": 4,
+    "passed_source_cases": 4,
+    "source_fields_total": 24,
+    "source_fields_passed": 24,
+    "model_calls": 0,
+    "source_assembly_generation_ns": 8465667,
+    "timing_scope": "One source assembly observation, before final combined-source CI. Excludes full command startup, native bridge typecheck, compiler/linker, RSS and end-to-end percentiles."
+  },
+  "actual_compiled_policy": {
+    "native_boolean_inputs": 4,
+    "field_values": 24,
+    "passes": 24,
+    "domain": "Same four Boolean pairs as declared Gooo cases; no holdout claim."
+  },
+  "new_native_mutation_fixtures": [
+    {
+      "binary_digest": "sha256:67e8aa3e11b42e5b44ed1ffe49f0da1242f0ca49a5ecf34014309336b1eaa79f",
+      "field_values": 24,
+      "go_version": "go1.27.2",
+      "goarch": "arm64",
+      "goos": "darwin",
+      "harness_digest": "sha256:3a1ad764b9a0dfa568e4262d86fcbaf49378299fb803c6757c66651ef780ee95",
+      "inputs": 4,
+      "native_processes": 1,
+      "projection_digest": "sha256:e0ec94d3445cf97587ca6123f53f7fa68e4c94173fe0331000134efe51cbc456",
+      "scope": "New display/value mutation fixture. All four inputs overlap its declared cases; no holdout or execution authority.",
+      "source_digest": "sha256:a1feffbfe47136e52c08d9f854a617fae0443822f85f304c719209fdeb9873cf",
+      "target_digest": "sha256:2c7cfa61d4699f66ec9c78ece8812cc5f6a08f57bdf98c87b44bc6a763ea8998",
+      "transcript_digest": "sha256:988c438f0e813f1cccfb4785bf24b7165c26ceba1714c38a781798c54cecd0d7"
+    },
+    {
+      "binary_digest": "sha256:9f52fc92a8bfaeccfbf5f6707a9ee3ae9918b816d1042d2be17eda72040335b2",
+      "field_values": 24,
+      "go_version": "go1.27.2",
+      "goarch": "arm64",
+      "goos": "darwin",
+      "harness_digest": "sha256:d188ac9787dd96bd9410ff95b0d1b20bf032099a00ff386be423e940ea0ca3e1",
+      "inputs": 4,
+      "native_processes": 1,
+      "projection_digest": "sha256:a21d2ddd9bd4a755a08cf1b910d321ae385cccff1468ed57581090e6db4c8410",
+      "scope": "New display/value mutation fixture. All four inputs overlap its declared cases; no holdout or execution authority.",
+      "source_digest": "sha256:d24e6d1e2de2893c706e30fa9cc18b87862618c4ad54e19fb2b34b2b278e2436",
+      "target_digest": "sha256:2c7cfa61d4699f66ec9c78ece8812cc5f6a08f57bdf98c87b44bc6a763ea8998",
+      "transcript_digest": "sha256:745301a5fdc3c67ea22963b38548c325a3cc52eb105ffe1279e09b806e11655a"
+    }
+  ],
+  "layout_observations": [
+    "disposition_layout_fresh_test.go:10: DISPOSITION_LAYOUT goos=darwin goarch=arm64 disposition_inline_bytes=56 refusal_inline_bytes=304 scope=Go_sizeof_excludes_string_backing_and_allocator_RSS;no_baseline_improvement_claim"
+  ],
+  "language_case_population_before": 131,
+  "language_case_population_after": 131,
+  "new_capability_cases": 0,
+  "denominator_changes": 0,
+  "semantic_admission": "UNASSESSED",
+  "models_executed": 0,
+  "source_notes": [
+    "Six result field values originate in Gooo, including three Boolean fields formerly filled by Go defaults.",
+    "Stable activity/record/field IDs bind renamed source names and renamed native field names.",
+    "Boolean true probes are pure diagnostic-data fixtures, not authority to perform a repository operation.",
+    "Historical three-label experiments retain an exact pre-change source fixture.",
+    "Separate evolving local phases are not a final-source acceptance by summation. The public source original CI is independently required."
+  ]
+}

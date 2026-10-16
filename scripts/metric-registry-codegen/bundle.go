@@ -60,34 +60,5 @@ func writeBundle(output string, source, projection []byte) error {
 }
 
 func obsoleteMembers(path string, next projectionbundle.Manifest) ([]string, error) {
-	raw, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	previous, err := projectionbundle.Decode(raw)
-	if err != nil {
-		return nil, err
-	}
-	if previous.Members[0].Path != next.Members[0].Path {
-		return nil, fmt.Errorf("previous projection manifest belongs to another output")
-	}
-	keep := map[string]bool{}
-	for _, member := range next.Members {
-		keep[member.Path] = true
-	}
-	var obsolete []string
-	for _, member := range previous.Members {
-		if keep[member.Path] {
-			continue
-		}
-		content, err := os.ReadFile(filepath.Join(filepath.Dir(path), member.Path))
-		if err != nil || projectionbundle.Digest(content) != member.Digest {
-			return nil, fmt.Errorf("obsolete projection member %s is not owned by the previous manifest", member.Path)
-		}
-		obsolete = append(obsolete, member.Path)
-	}
-	return obsolete, nil
+	return projectionbundle.ObsoleteMembers(path, next)
 }

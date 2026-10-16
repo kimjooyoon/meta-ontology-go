@@ -1206,7 +1206,8 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
-      "scope": "LANGUAGE_CAPABILITY"
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields_profile": "gooo.entityfields.go-projection.v2"
     },
     {
       "id": "fixed-record-value-contract",
