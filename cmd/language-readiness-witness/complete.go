@@ -89,10 +89,15 @@ func readConceptOperationInputs(directory string) (conceptoperation.SourceInputs
 	if err != nil {
 		return conceptoperation.SourceInputs{}, err
 	}
+	observation, err := readObservationInputs(directory)
+	if err != nil {
+		return conceptoperation.SourceInputs{}, err
+	}
 	return conceptoperation.SourceInputs{
 		Strategy: strategy, StrategyVerification: strategyVerification, SourceMetrics: sourceMetrics,
 		Intervention: intervention, InterventionVerification: interventionVerification,
 		Program: program, ProgramSource: programSource, ProgramVerification: programVerification,
+		Observation: observation,
 	}, nil
 }
 
