@@ -1,0 +1,16 @@
+{"Time":"2026-10-16T19:29:03.293905+09:00","Action":"start","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens"}
+{"Time":"2026-10-16T19:29:03.730081+09:00","Action":"run","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Test":"TestOriginProfileArchiveChainFresh1816"}
+{"Time":"2026-10-16T19:29:03.730197+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Test":"TestOriginProfileArchiveChainFresh1816","Output":"=== RUN   TestOriginProfileArchiveChainFresh1816\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:29:03.774771+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Test":"TestOriginProfileArchiveChainFresh1816","Output":"--- PASS: TestOriginProfileArchiveChainFresh1816 (0.04s)\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:29:03.774802+09:00","Action":"pass","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Test":"TestOriginProfileArchiveChainFresh1816","Elapsed":0.04}
+{"Time":"2026-10-16T19:29:03.774823+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:29:03.77544+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Output":"ok  \tgithub.com/kimjooyoon/meta-ontology-go/internal/viewlens\t0.481s\n"}
+{"Time":"2026-10-16T19:29:03.775467+09:00","Action":"pass","Package":"github.com/kimjooyoon/meta-ontology-go/internal/viewlens","Elapsed":0.482}
+{"Time":"2026-10-16T19:29:06.739905+09:00","Action":"start","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo"}
+{"Time":"2026-10-16T19:29:07.22+09:00","Action":"run","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Test":"TestOriginArchiveCLIRefusalFresh1817"}
+{"Time":"2026-10-16T19:29:07.220145+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Test":"TestOriginArchiveCLIRefusalFresh1817","Output":"=== RUN   TestOriginArchiveCLIRefusalFresh1817\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:29:07.22095+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Test":"TestOriginArchiveCLIRefusalFresh1817","Output":"--- PASS: TestOriginArchiveCLIRefusalFresh1817 (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:29:07.220958+09:00","Action":"pass","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Test":"TestOriginArchiveCLIRefusalFresh1817","Elapsed":0}
+{"Time":"2026-10-16T19:29:07.22097+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-10-16T19:29:07.221606+09:00","Action":"output","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Output":"ok  \tgithub.com/kimjooyoon/meta-ontology-go/cmd/gooo\t0.482s\n"}
+{"Time":"2026-10-16T19:29:07.221621+09:00","Action":"pass","Package":"github.com/kimjooyoon/meta-ontology-go/cmd/gooo","Elapsed":0.482}

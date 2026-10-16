@@ -1,0 +1,9 @@
+{
+  "decision": "EXACT_NINE_CANDIDATE_MEMBERS_APPLIED",
+  "members": 9,
+  "from_version": 92,
+  "to_version": 93,
+  "generator_repository_writes": 0,
+  "candidate_semantic_admission": "UNASSESSED",
+  "meaning": "Source syntax inventory only; no compiler/execution authority for view hints."
+}

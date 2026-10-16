@@ -215,6 +215,7 @@ Gooo source + intent + permitted choices + finite expectations
 · [typed choices and requirement graphs, 한국어](docs/criteria-source-flow.ko.md)
 · [source choices and small decision models, 한국어](docs/scalar-source-model.ko.md)
 · [source and origin, 한국어](docs/language/source-origins.ko.md)
+· [advisory origin views and detached preferences, 한국어](docs/language/advisory-origin-views.ko.md)
 · [related ontology languages and gaps, 한국어](docs/ontology-language-comparison.ko.md)
 · [file-local imported types, 한국어](docs/qualified-activity-types.ko.md)
 · [source-preserving formatting, 한국어](docs/source-preserving-format.ko.md)

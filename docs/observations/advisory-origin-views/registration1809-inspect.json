@@ -1,0 +1,14 @@
+{
+  "execution_identity": {
+    "go_version": "go1.27.2",
+    "goos": "darwin",
+    "goarch": "arm64",
+    "executable_sha256": "sha256:7a7e1845e548887ebdf3616b4b222994c52aebfb6fcc497fb3b449c0f3c3e8d0",
+    "go_command_sha256": "sha256:516c1fbb53b5f8f4852f0c3c379d45bcff53a1032e5cd1a9ca1738f03ba07cb1",
+    "compiler_sha256": "sha256:8a3add4030b0f724c535afe946a4fcd27ca235ba869d4d4b91091e0ef8a611e2"
+  },
+  "semantic_admission": "UNASSESSED",
+  "snapshot_digest": "sha256:c147ee568af0b953b91f3b58b87d5b1214835b99c6d38b6621e12ed56174348a",
+  "source_digest": "sha256:9e093ae8061e8bb19d1e25c93db8153410648168fa5b10a866a810067f667244",
+  "toolchain": "go1.27.2"
+}

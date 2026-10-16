@@ -1,6 +1,6 @@
 # Gooo가 만들고 있는 언어와 작은 모델
 
-2026-10-15 개발 소스 기준. 공개 바이너리의 지원 범위는 각
+2026-10-16 개발 소스 기준. 공개 바이너리의 지원 범위는 각
 [릴리스 안내](releases/0.6.34-dev.md)에서 확인할 수 있습니다.
 
 Gooo는 계산의 의미, 허용한 구현 선택, 그 결과의 출처를 함께 다루는 언어를
@@ -24,6 +24,7 @@ Gooo는 계산의 의미, 허용한 구현 선택, 그 결과의 출처를 함�
 | 후보가 만족해야 할 관계 | [소스의 판단 조건](../examples/source-behavior-criteria/README.md) |
 | 확인할 입력과 별도 평가 | [추가 관측](../examples/source-record-observation/README.md), [별도 평가](../examples/record-field-holdouts/README.md) |
 | 반환값까지 이어지는 소스 | [읽기 쉬운 기원 조회](language/readable-source-origins.ko.md) |
+| 에이전트와 사람의 보조 보기, 별도로 기억하는 선호 | [출처 보기 힌트](language/advisory-origin-views.ko.md) |
 | 실행 기록을 해석하는 메타프로그램 | [기원 읽기 프로젝트](language/project-starters.md#start-an-origin-reader) |
 | 선언·호출·값 버전을 구분하는 메타프로그램 | [지역 값 버전과 생성 관계](../examples/local-version-origins/README.md) |
 | 값 버전의 생성·읽기, 짧은 설명과 RDF 교환 | [기록된 사용 관계](../examples/recorded-use-origins/README.md) |
