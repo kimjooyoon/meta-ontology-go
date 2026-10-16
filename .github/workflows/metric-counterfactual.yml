@@ -1033,6 +1033,14 @@ jobs:
             .execution_origin.checkout_sha == .origin.subject_sha and .execution_origin.run_id == .origin.run_id and
             .cases_declared == 16 and .cases_attempted == .cases_declared and
             .cases_executed == .cases_declared and .cases_passed == .cases_declared and
+            .unregistered_upstream.passed == true and .unregistered_upstream.consumer_attempted == true and
+            .unregistered_upstream.program_produced == false and .unregistered_upstream.coverage_bps == null and
+            .unregistered_upstream.added_expected_count == 1 and
+            .unregistered_upstream.consumer.status == "VERIFIED_SOURCE_ORIGIN_REFUSAL" and
+            .unregistered_upstream.consumer.upstream_verification == "UNASSESSED" and
+            .unregistered_upstream.refusal.readiness_credit == false and
+            .unregistered_upstream.refusal.repository_workspace_writes == false and
+            .unregistered_upstream.refusal.promotion_authorized == false and
             .readiness_total == 24 and .repository_writes == 0 and .promotion_authorized == false' \
             "$work/counterexamples/report.json"
           test -z "$(git status --porcelain --untracked-files=all)"

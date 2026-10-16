@@ -47,8 +47,10 @@ func run(cfg config) error {
 		observed, caseErr := executeCase(cfg, f, row)
 		recordCase(&result, observed, caseErr)
 	}
+	upstream, upstreamErr := observeUnregisteredUpstream(cfg, f)
+	result.UnregisteredUpstream = &upstream
 	if result.CasesAttempted == result.CasesDeclared && result.CasesPassed == result.CasesDeclared &&
-		result.CasesExecuted == result.CasesDeclared {
+		result.CasesExecuted == result.CasesDeclared && upstreamErr == nil && upstream.Passed {
 		result.Decision = "PASS"
 	}
 	finalOrigin, observationErr := observeExecution(cfg)

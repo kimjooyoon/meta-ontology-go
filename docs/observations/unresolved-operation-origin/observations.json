@@ -1,0 +1,177 @@
+{
+  "schema": "gooo/unresolved-operation-origin-development/v1",
+  "state": "FRESH_PHASES_RECORDED_OWN_ORIGINAL_CI_PENDING",
+  "integration_base_dev": "90b8a171dd511493f72194806fa61e024f668793",
+  "policy_source": "internal/meta/metricprogram/unresolvedpolicy/policy.gooo",
+  "policy_source_digest": "sha256:2aba9945e3d7d35b12b6a3c442fd0b19fdbcd7bf2c2d0b355af9d573ac5d6dba",
+  "policy_activities": 3,
+  "phases": [
+    {
+      "phase": "fresh-policy-1721-1725",
+      "passed_leaves": [
+        "TestUnresolvedClassificationFresh1721/registered-missing-origin",
+        "TestUnresolvedClassificationFresh1721/registered-origin",
+        "TestUnresolvedClassificationFresh1721/unregistered-missing-origin",
+        "TestUnresolvedClassificationFresh1721/unregistered-origin",
+        "TestUnresolvedOriginTransportFresh1725/false",
+        "TestUnresolvedOriginTransportFresh1725/true",
+        "TestUnresolvedPolicyProjectionFresh1723"
+      ],
+      "leaf_count": 7,
+      "log_digest": "sha256:deda440e10182f9f53b8230d8c7e2fcbab19730b8553183fb0bee81e6f9a27cb",
+      "scope": "New local source/protocol checks at this phase; no completed prior phase replay."
+    },
+    {
+      "phase": "fresh-boundary-repair-1727-1729",
+      "passed_leaves": [
+        "TestCompileUnregisteredOriginFresh1727/missing-indicator",
+        "TestCompileUnregisteredOriginFresh1727/missing-operation",
+        "TestCompileUnregisteredOriginFresh1727/original-context",
+        "TestCompileUnregisteredOriginFresh1727/unicode-operation",
+        "TestKnownBindingFailureScopeFresh1729/evidence",
+        "TestKnownBindingFailureScopeFresh1729/proof-family",
+        "TestKnownBindingFailureScopeFresh1729/status"
+      ],
+      "leaf_count": 7,
+      "log_digest": "sha256:f57123b906131852655a549627379796e7802b5e90a264b89fe66ca4209f52cc",
+      "scope": "New local source/protocol checks at this phase; no completed prior phase replay."
+    },
+    {
+      "phase": "fresh-request-byte-repair-1731",
+      "passed_leaves": [
+        "TestCompileRequestBytesOriginFresh1731/original",
+        "TestCompileRequestBytesOriginFresh1731/strategy-format",
+        "TestCompileRequestBytesOriginFresh1731/verification-format"
+      ],
+      "leaf_count": 3,
+      "log_digest": "sha256:5b11d318d16319b77e6636a3540ec92072596adbdb9c31c31a67853676c0e41f",
+      "scope": "New local source/protocol checks at this phase; no completed prior phase replay."
+    },
+    {
+      "phase": "fresh-command-repair-1733-1735",
+      "passed_leaves": [
+        "TestCommandOriginOutputFailureFresh1735/error",
+        "TestCommandOriginOutputFailureFresh1735/short-write",
+        "TestCommandUnresolvedOriginFresh1733/ascii",
+        "TestCommandUnresolvedOriginFresh1733/input-format",
+        "TestCommandUnresolvedOriginFresh1733/unicode"
+      ],
+      "leaf_count": 5,
+      "log_digest": "sha256:54a658bdc49688c7dbc60fceab0afa254026267b4011a36f9c69f8743e6aca90",
+      "scope": "New local source/protocol checks at this phase; no completed prior phase replay."
+    },
+    {
+      "phase": "fresh-independent-consumer-1737-1739",
+      "passed_leaves": [
+        "TestRefusalConsumerFresh1737/classification",
+        "TestRefusalConsumerFresh1737/indicator",
+        "TestRefusalConsumerFresh1737/missing-ID",
+        "TestRefusalConsumerFresh1737/next-step",
+        "TestRefusalConsumerFresh1737/origin-recorded",
+        "TestRefusalConsumerFresh1737/policy",
+        "TestRefusalConsumerFresh1737/policy-member",
+        "TestRefusalConsumerFresh1737/policy-source",
+        "TestRefusalConsumerFresh1737/promotion",
+        "TestRefusalConsumerFresh1737/readiness",
+        "TestRefusalConsumerFresh1737/registered",
+        "TestRefusalConsumerFresh1737/registry",
+        "TestRefusalConsumerFresh1737/registry-source",
+        "TestRefusalConsumerFresh1737/repository",
+        "TestRefusalConsumerFresh1737/requested-operation",
+        "TestRefusalConsumerFresh1737/retained",
+        "TestRefusalConsumerFresh1737/schema",
+        "TestRefusalConsumerFresh1737/strategy-bytes",
+        "TestRefusalConsumerFresh1737/subject",
+        "TestRefusalConsumerFresh1737/verification-bytes",
+        "TestRefusalConsumerFresh1737/writes",
+        "TestRefusalRegistryScopeFresh1739/both-known",
+        "TestRefusalRegistryScopeFresh1739/kernel-only",
+        "TestRefusalRegistryScopeFresh1739/neither-known",
+        "TestRefusalRegistryScopeFresh1739/source-only"
+      ],
+      "leaf_count": 25,
+      "log_digest": "sha256:05611c41e50ee348a9dc40318c9186c34ab99604f0289f736895d951a62dbe7f",
+      "scope": "New local source/protocol checks at this phase; no completed prior phase replay."
+    },
+    {
+      "phase": "fresh-upstream-protocol-1743-1745",
+      "passed_leaves": [
+        "TestUpstreamLedgerIdentityFresh1743/already-present",
+        "TestUpstreamLedgerIdentityFresh1743/extend-source-cohort",
+        "TestUpstreamLedgerIdentityFresh1743/malformed-ledger",
+        "TestUpstreamLedgerIdentityFresh1743/malformed-verification",
+        "TestUpstreamObservationBoundaryFresh1745/carrier-replacement",
+        "TestUpstreamObservationBoundaryFresh1745/consumer-credit",
+        "TestUpstreamObservationBoundaryFresh1745/duplicate",
+        "TestUpstreamObservationBoundaryFresh1745/invented-coverage",
+        "TestUpstreamObservationBoundaryFresh1745/missing-original",
+        "TestUpstreamObservationBoundaryFresh1745/producer-credit",
+        "TestUpstreamObservationBoundaryFresh1745/program-output",
+        "TestUpstreamObservationBoundaryFresh1745/retained-cohort",
+        "TestUpstreamObservationBoundaryFresh1745/upstream-authority"
+      ],
+      "leaf_count": 13,
+      "log_digest": "sha256:928e01c9ef02cc8c64023c4cd2a3490a72555afd9098675be7bc4bab1d8030b1",
+      "scope": "New local source/protocol checks at this phase; no completed prior phase replay."
+    },
+    {
+      "phase": "fresh-upstream-cardinality-1747",
+      "passed_leaves": [
+        "TestUpstreamCohortCardinalityFresh1747/added-count",
+        "TestUpstreamCohortCardinalityFresh1747/claimed-count",
+        "TestUpstreamCohortCardinalityFresh1747/extra-unaccounted-subject"
+      ],
+      "leaf_count": 3,
+      "log_digest": "sha256:f190c5020c4dcc9abd4fa77d8a785d948404a93b4738b0cf6d63ae9ba66e53ea",
+      "scope": "New local source/protocol checks at this phase; no completed prior phase replay."
+    },
+    {
+      "phase": "fresh-registration-v91",
+      "passed_leaves": [
+        "TestGeneratedRegistrationMigrationV91PreservesBaseline"
+      ],
+      "leaf_count": 1,
+      "log_digest": "sha256:644880db1b0fa87439043b2962acb7188e11923039231abb991eef948de77a96",
+      "scope": "New local source/protocol checks at this phase; no completed prior phase replay."
+    }
+  ],
+  "local_phase_leaf_count": 64,
+  "final_source_combined_suite": "UNPROVEN: own original CI must execute final source; earlier phase results are not relabeled.",
+  "classification_authority": "Gooo computes resolution/reason/next operation; Go retains and transports input context.",
+  "consumer": "Independent source membership and compatibility kernel; source/registry/policy bundle verification against repository contents.",
+  "upstream_verification": "UNASSESSED; byte/context binding does not establish actual upstream execution.",
+  "new_native_case": {
+    "state": "ORIGINAL_CI_PENDING",
+    "case": "unregistered-upstream-operation",
+    "input": "Resealed adversarial original intervention ledger with actual new operation before strategy synthesis.",
+    "expected_cohort": "Original declared cohort union one unregistered subject; original members/terminals preserved.",
+    "program_produced": false,
+    "coverage_bps": null,
+    "readiness_credit": false,
+    "repository_writes": 0,
+    "promotion_authorized": false
+  },
+  "existing_native_case_count": 16,
+  "global_readiness_obligations": 24,
+  "registration": {
+    "operation": "RegisterSyntaxCapability",
+    "base_version": 90,
+    "new_version": 91,
+    "members": 9,
+    "artifacts": 9,
+    "old_v90_unchanged": true,
+    "sources": 147,
+    "unregistered": 0,
+    "missing": 0,
+    "inventory_digest": "sha256:e698851f1d01550e0c92b0851d6fa38572df84241e20a20134fa08c6c760c820"
+  },
+  "remaining": [
+    "Structured source/policy unavailable record",
+    "Partial execution program semantics",
+    "Full expected-set observation plus extra unknown quantitative case",
+    "Native original new-case observation",
+    "Issue791 whole six-clause completion unclaimed"
+  ],
+  "model_calls": 0,
+  "native_program_cohorts_replayed_locally": 0
+}

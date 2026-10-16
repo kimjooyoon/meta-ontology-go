@@ -29,4 +29,5 @@ type report struct {
 	PromotionAuthorized     bool                                  `json:"promotion_authorized"`
 	SetupError              string                                `json:"setup_error,omitempty"`
 	Cases                   []caseResult                          `json:"cases"`
+	UnregisteredUpstream    *upstreamObservation                  `json:"unregistered_upstream,omitempty"`
 }
