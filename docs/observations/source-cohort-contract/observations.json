@@ -1,6 +1,6 @@
 {
   "schema": "gooo/source-cohort-contract-development/v1",
-  "state": "FRESH_SOURCE_PROTOCOL_CHECKED_ORIGINAL_NATIVE_CI_PENDING",
+  "state": "PREDECESSOR_ORIGINAL_NATIVE_OBSERVED_SECURITY_SUCCESSOR_PENDING",
   "base_dev": "a2879b9059dd1977478bbbb9b255a83d66b951fd",
   "source": {
     "path": "internal/meta/metricprogram/registry.gooo",
@@ -182,7 +182,7 @@
     "refusal_rule": "Exact full consumer error and the declared producer state are required; unrelated failures do not satisfy a case."
   },
   "scope_limits": {
-    "native_results": "Await this source candidate originalCI; the16cases were not locally executed.",
+    "native_results": "Predecessor original16cases observed and retained with ownidentity; successor requires its own originalCI.",
     "issue791": "Original six clauses remain open until native artifacts and exact refusal paths are reviewed.",
     "mechanisms": "Go retains union/sorting, transport, actual execution and independent verification. Gooo owns terminal membership and roles.",
     "nested_record_collections": "Unsupported by this body route.",
@@ -197,5 +197,37 @@
     "new_workflow_shell_blocks": 17,
     "maximum_checked_go_declaration_lines": 58,
     "go_source_files_compared": 8253
+  },
+  "predecessor_original_native": {
+    "source_head": "b3da7e58b0b9c697b4649d7287a87b127aced319",
+    "run": 38852243934,
+    "attempt": 1,
+    "artifact_id": 12025942993,
+    "artifact_digest": "sha256:ca9d213dc1fd648000df72300036c21e2d75b5efd8aa52ecf94afbd9db8b51b8",
+    "cases_declared": 16,
+    "cases_attempted": 16,
+    "cases_executed": 16,
+    "cases_passed": 16,
+    "expected_count": 9,
+    "elapsed_nanoseconds": 4315905538,
+    "scope": "Original #1613 artifact; it is not successor acceptance. Extra unknown is an unmapped observation on registered carrier."
+  },
+  "security_successor": {
+    "predecessor_pr": 1613,
+    "predecessor_head": "b3da7e58b0b9c697b4649d7287a87b127aced319",
+    "original_pr_findings": [
+      26,
+      27,
+      28
+    ],
+    "default_branch_open_at_review": 0,
+    "repairs": [
+      "Canonical trusted names drive filesystem reads after complete archive member validation.",
+      "Producer and independent verifier remove len(source)+1 speculative allocation capacity."
+    ],
+    "fresh_local_leaf_checks": 19,
+    "current_native_runs_executed_locally": 0,
+    "successor_original_codeql": "PENDING",
+    "successor_original_native": "PENDING"
   }
 }

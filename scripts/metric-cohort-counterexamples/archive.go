@@ -23,20 +23,14 @@ func transportPayloads(cfg config) (map[string][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(archive.File) != len(transportNames()) {
-		return nil, fmt.Errorf("producer archive member population differs")
-	}
-	allowed := map[string]bool{}
-	for _, name := range transportNames() {
-		allowed[name] = true
+	members, err := transportMembers(archive)
+	if err != nil {
+		return nil, err
 	}
 	files := map[string][]byte{}
 	var total int64
-	for _, member := range archive.File {
-		_, duplicate := files[member.Name]
-		if !allowed[member.Name] || duplicate || member.UncompressedSize64 > 32<<20 {
-			return nil, fmt.Errorf("producer archive has an unbound member")
-		}
+	for _, name := range transportNames() {
+		member := members[name]
 		reader, err := member.Open()
 		if err != nil {
 			return nil, err
@@ -47,11 +41,29 @@ func transportPayloads(cfg config) (map[string][]byte, error) {
 		if readErr != nil || closeErr != nil || len(content) > 32<<20 || total > 64<<20 {
 			return nil, fmt.Errorf("producer archive cannot be read within its member budget")
 		}
-		actual, err := readBounded(filepath.Join(cfg.Input, member.Name), 32<<20)
+		actual, err := readBounded(filepath.Join(cfg.Input, name), 32<<20)
 		if err != nil || !bytes.Equal(actual, content) {
-			return nil, fmt.Errorf("unpacked producer member differs: %s", member.Name)
+			return nil, fmt.Errorf("unpacked producer member differs: %s", name)
 		}
-		files[member.Name] = content
+		files[name] = content
 	}
 	return files, nil
+}
+
+func transportMembers(archive *zip.Reader) (map[string]*zip.File, error) {
+	if len(archive.File) != len(transportNames()) {
+		return nil, fmt.Errorf("producer archive member population differs")
+	}
+	allowed := map[string]bool{}
+	for _, name := range transportNames() {
+		allowed[name] = true
+	}
+	members := map[string]*zip.File{}
+	for _, member := range archive.File {
+		if !allowed[member.Name] || members[member.Name] != nil || member.UncompressedSize64 > 32<<20 {
+			return nil, fmt.Errorf("producer archive has an unbound member")
+		}
+		members[member.Name] = member
+	}
+	return members, nil
 }
