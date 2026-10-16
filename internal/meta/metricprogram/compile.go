@@ -1,6 +1,10 @@
 package metricprogram
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy"
+)
 
 func Compile(strategyPayload, verificationPayload []byte) (Program, []byte, error) {
 	var strategy StrategyPlan
@@ -11,7 +15,9 @@ func Compile(strategyPayload, verificationPayload []byte) (Program, []byte, erro
 	if err := decodeExact(verificationPayload, &verification); err != nil {
 		return Program{}, nil, fmt.Errorf("decode strategy verification: %w", err)
 	}
-	if err := validateStrategy(strategy, verification); err != nil {
+	inputs := unresolvedpolicy.InputDigests{StrategyPayloadDigest: bytesDigest(strategyPayload),
+		VerificationPayloadDigest: bytesDigest(verificationPayload)}
+	if err := validateStrategy(strategy, verification, inputs); err != nil {
 		return Program{}, nil, err
 	}
 	operations := CanonicalOperations()

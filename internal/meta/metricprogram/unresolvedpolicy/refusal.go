@@ -2,6 +2,11 @@ package unresolvedpolicy
 
 import "fmt"
 
+type InputDigests struct {
+	StrategyPayloadDigest     string `json:"strategy_payload_digest"`
+	VerificationPayloadDigest string `json:"verification_payload_digest"`
+}
+
 // OperationOrigin records the supplied request and declared source snapshot.
 // Presence describes retained context; it does not authenticate that context.
 type OperationOrigin struct {
@@ -10,13 +15,15 @@ type OperationOrigin struct {
 	IndicatorID        string           `json:"indicator_id"`
 	RequestedOperation string           `json:"requested_operation"`
 	Registry           ProjectionOrigin `json:"registry"`
+	Inputs             InputDigests     `json:"inputs"`
 }
 
 func (origin OperationOrigin) recorded() bool {
 	return origin.Repository != "" && origin.SubjectSHA != "" && origin.IndicatorID != "" &&
 		origin.RequestedOperation != "" && origin.Registry.SourcePath != "" &&
 		origin.Registry.SourceDigest != "" && origin.Registry.ProjectionPath != "" &&
-		origin.Registry.ProjectionDigest != ""
+		origin.Registry.ProjectionDigest != "" && origin.Inputs.StrategyPayloadDigest != "" &&
+		origin.Inputs.VerificationPayloadDigest != ""
 }
 
 // OperationRefusal is diagnostic data. It never permits the requested execution.

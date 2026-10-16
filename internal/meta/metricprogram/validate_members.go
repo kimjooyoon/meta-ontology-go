@@ -3,16 +3,21 @@ package metricprogram
 import (
 	"fmt"
 	"slices"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/unresolvedpolicy"
 )
 
-func validateStrategyMembers(plan StrategyPlan, verification StrategyVerification) error {
+func validateStrategyMembers(plan StrategyPlan, verification StrategyVerification, inputs unresolvedpolicy.InputDigests) error {
 	if !slices.IsSortedFunc(plan.Bindings, func(left, right StrategyBinding) int { return compareString(left.IndicatorID, right.IndicatorID) }) {
 		return fmt.Errorf("strategy bindings are not canonical")
 	}
 	bindings := make(map[string]StrategyBinding, len(plan.Bindings))
 	for _, binding := range plan.Bindings {
 		operation, ok := findOperation(binding.MetaOperation)
-		if binding.IndicatorID == "" || !ok || binding.Status != "SATISFIED" || !validDigest(binding.EvidenceDigest) {
+		if !ok {
+			return unregisteredBindingError(plan, binding, inputs)
+		}
+		if binding.IndicatorID == "" || binding.Status != "SATISFIED" || !validDigest(binding.EvidenceDigest) {
 			return fmt.Errorf("indicator %q is not resolved", binding.IndicatorID)
 		}
 		if _, duplicate := bindings[binding.IndicatorID]; duplicate {

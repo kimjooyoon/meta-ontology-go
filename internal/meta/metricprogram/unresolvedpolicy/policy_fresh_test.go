@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle"
 )
 
 func TestUnresolvedClassificationFresh1721(t *testing.T) {
@@ -33,6 +35,8 @@ func TestUnresolvedOriginTransportFresh1725(t *testing.T) {
 		t.Run(fmt.Sprint(recorded), func(t *testing.T) {
 			origin := OperationOrigin{Repository: "example/compiler", SubjectSHA: "original-head",
 				IndicatorID: "upstream://indicator/new", RequestedOperation: "upstream://operation/new", Registry: Origin()}
+			origin.Inputs = InputDigests{StrategyPayloadDigest: projectionbundle.Digest([]byte("strategy")),
+				VerificationPayloadDigest: projectionbundle.Digest([]byte("verification"))}
 			if !recorded {
 				origin.Registry.SourceDigest = ""
 			}
