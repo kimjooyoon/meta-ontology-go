@@ -13,12 +13,10 @@ func EvaluateWithConceptOperation(raw, evidenceRaw []byte, inputs conceptoperati
 	if repositoryRoot == "" || expectedRepository == "" || expectedSubjectSHA == "" || inputs.ScratchDirectory == "" {
 		return Snapshot{}, fmt.Errorf("concept-operation observation requires exact repository, head, root, and external scratch")
 	}
-	evidence, err := conceptoperation.Verify(evidenceRaw, expectedRepository, expectedSubjectSHA)
+	evidence, err := conceptoperation.VerifyEvidence(evidenceRaw, inputs, os.DirFS(repositoryRoot),
+		repositoryRoot, expectedRepository, expectedSubjectSHA)
 	if err != nil {
-		return Snapshot{}, fmt.Errorf("verify concept-operation evidence: %w", err)
-	}
-	if err := conceptoperation.VerifySource(evidence, inputs, os.DirFS(repositoryRoot), repositoryRoot, expectedRepository, expectedSubjectSHA); err != nil {
-		return Snapshot{}, fmt.Errorf("verify concept-operation source: %w", err)
+		return Snapshot{}, err
 	}
 	if evidence.Status != "VERIFIED" {
 		return Snapshot{}, fmt.Errorf("concept-operation evidence is not verified")
