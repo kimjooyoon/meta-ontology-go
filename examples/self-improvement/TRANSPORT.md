@@ -8,11 +8,18 @@ collapse:
 - `T`: the immutable artifact ID, producer run, and archive digest.
 
 The fixed `EHT-8` denominator is declared by the eight `Observe...` activities
-in `transport.gooo`. The current CI can verify seven obligations. Authenticated
-producer attestation remains `UNKNOWN`, so the receipt is deliberately
+in `transport.gooo`. The initial unsigned receipt verifies seven obligations.
+Authenticated producer attestation starts as `UNKNOWN`, so that receipt is
 `OBSERVED / LOWER_RESOLUTION` at `7/8 = 8750` basis points. This lower
 resolution authorizes only the existing read-only, non-executing candidate.
 Any known identity or digest mismatch is `FAIL_CLOSED`.
+
+The separate authenticated-attestation workflow can subsequently resolve the
+eighth obligation. Original runs
+[38823453060](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38823453060)
+and [38823731928](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38823731928)
+each recorded `8/8`, including the second run's distinct subject and workflow
+commits. The unsigned receipt and the resolved attestation keep separate records.
 
 Artifact names are lookup labels only. The consumer selects one artifact from
 the exact producer run and attempt, downloads it by immutable artifact ID,
@@ -125,3 +132,18 @@ selected member. Old candidate bundles without a delivery manifest remain
 `UNKNOWN`; readers do not reconstruct missing provenance from a filename.
 Fresh observations and their bounded case counts are recorded
 [here](../../docs/observations/candidate-delivery-origins/observations.json).
+
+## Reaching the bounded execution consumer
+
+The next continuation keeps the grant producer, logical subject and consumer
+workflow commits separate. Its executable rules live in
+[`executioncontinuation/policy/source.gooo`](../../internal/meta/executioncontinuation/policy/source.gooo).
+The parent receives the exact target run ID from GitHub's versioned dispatch
+response. It records creation without waiting for the child to finish. The
+child independently binds the completed grant, its contract and the exact
+subject file before reserving a use.
+
+The [consumer protocol](../self-improvement-execution-consumer/README.md)
+explains the Go execution path, partial observations and one-use scope.
+New source and local protocol observations are retained
+[separately](../../docs/observations/consumer-continuation/observations.json).

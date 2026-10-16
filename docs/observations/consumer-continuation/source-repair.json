@@ -1,0 +1,92 @@
+{
+  "schema": "gooo/consumer-continuation-source-repair/v1",
+  "predecessor": {
+    "pr": 1607,
+    "head": "b6719e94c23f585d8e756b55c6191c903afecc9c",
+    "original_workflows": 32,
+    "terminal_states": {
+      "success": 29,
+      "failure": 3
+    },
+    "all_attempts": 1,
+    "failed_workflows": [
+      {
+        "run": 38831020403,
+        "name": "CI Plan Use Case",
+        "conclusion": "failure"
+      },
+      {
+        "run": 38831020233,
+        "name": "Language utility evidence",
+        "conclusion": "failure"
+      },
+      {
+        "run": 38831020327,
+        "name": "CI [PR authoritative]",
+        "conclusion": "failure"
+      }
+    ],
+    "core_run": 38831020327,
+    "canonical_checks": {
+      "go vet": "success",
+      "gofmt": "failure",
+      "CI policy": "failure",
+      "go test -race": "success",
+      "Semantic conformance": "success",
+      "go test": "success"
+    }
+  },
+  "failure_analysis": {
+    "primary": "Go1.27 modernizer fixed-point differences in errorState and the fresh run fixture: errors.AsType and promoted struct literal fields.",
+    "format_followups": "Source identity refused later commands after go fix modified tracked files; remediation upload then had no artifact.",
+    "policy": "Canonical join refused the failed gofmt result.",
+    "evidence_and_proof": "Failed canonical inputs withheld the evidence bundle; exact lineage therefore remained unavailable.",
+    "utility_and_ci_plan": "Both independently reported the same two modernizer diffs; the CI plan upload lacked output after its early exit."
+  },
+  "repairs": [
+    "Use Go1.27 errors.AsType while preserving typed/wrapped failure origin.",
+    "Use promoted literal fields supported by the pinned Go1.27 compiler.",
+    "Route unavailable grant policy to GRANT_POLICY_UNAVAILABLE and restore_policy_source.",
+    "Document that evaluator timing excludes input verification, retrieval, startup and queues."
+  ],
+  "unchanged_source_authority": {
+    "gooo_policy_digest": "sha256:f3566a72a08be08070b8967732f6c70c13cf8fbbab6d0b844a153ad9d5a0a88b",
+    "generated_projections": 9,
+    "registration_member_hashes_preserved": 9
+  },
+  "fresh_local_checks": {
+    "passed_leaf_cases": 7,
+    "leaves": [
+      "TestWrappedFailureFresh1623/direct",
+      "TestWrappedFailureFresh1623/wrapped",
+      "TestWrappedFailureFresh1623/untyped",
+      "TestWrappedFailureFresh1623/nil",
+      "TestPromotedRunIdentityFresh1623",
+      "TestUnavailableGrantPolicyFresh1625/no-policy-root",
+      "TestUnavailableGrantPolicyFresh1625/missing-policy-file"
+    ],
+    "modernizer": {
+      "scope": "Successor sources including new1623/1625 tests; no evaluator or native/model experiment invoked",
+      "modernizer_fixed_point": true,
+      "source_files": 39,
+      "changed_files": []
+    },
+    "positive_value_evaluator_executions": 0,
+    "completed_cohort_replays": 0
+  },
+  "predecessor_original_observations": {
+    "positive_go_consumption": "Unconditional TestGoConsumptionOriginalCIFresh1617 included in successful original go test ./... and race jobs; asserts 5/5 values and single-use handle. Local positive experiment remains unexecuted.",
+    "native": {
+      "source_head": "b6719e94c23f585d8e756b55c6191c903afecc9c",
+      "source_run": 38831020185,
+      "artifact_id": 12017425888,
+      "archive_digest": "sha256:3cc06774eef1e27af6b0a141810aa4dded291da24c985fe6d2b143b04806ad96",
+      "decision": "CONFORMANT",
+      "independent_operations": 2,
+      "observed_receipts": 2,
+      "replay_comparisons": 2,
+      "scope": "own original exact-source CI artifact; readonly inspection, no local native replay"
+    },
+    "source_acceptance": "Predecessor remains rejected; successor requires its own original canonical and native results."
+  }
+}
