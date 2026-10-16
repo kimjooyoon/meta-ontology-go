@@ -60,3 +60,22 @@ Gooo 예제는 [`wire-capacity.gooo.fixture`](../../internal/bodyexecution/testd
 Saved replay는 기존 소스·선택을 재구성한 뒤 새 실행 관찰을 만든다. 과거 출력의
 모든 표시 필드를 인증하는 동작과 구분한다. 두 부모 해시가 각각 어떤 바이트를
 가리키는지는 [사용 예제](../../examples/workspace-input-observations/README.md)에 명시했다.
+
+## 의미 계획과 표시 힌트의 분리
+
+첫 공개 후보 #1634의 원래 투영 검사 `38919600787`, 작업 `117035787496`에서
+`TestPlanInspectionReleaseRejectsMissingCountersAndChangedSource`가 실패했다.
+`CompositionInspection`에 추가한 용량 필드가 원래 구조 계획과 함께 동등성 비교에
+들어갔다. 과거 검사 자료에는 이 필드가 없어 비교가 달라졌다. 원래 로그 해시는
+`efa940cf9824e24e381560195014453b9b5d6613017dba9b580f093ea4f33b7f`다.
+
+후속 변경은 용량을 `body-plan --json`의 표시층에 둔다. 정규화된 구조 계획에는
+넣지 않는다. 기존 릴리스 검증기와 과거 검사 자료는 수정하지 않는다. 유효한 JSON
+안에서 힌트가 없거나 타입·버전·내용이 잘못돼도 구조 계획의 해석과 입력 템플릿은
+유지된다. 원본 해시, 계획, 필수 카운터의 누락·변경은 계속 거부한다. 전체 JSON이
+깨진 경우까지 유효한 구조 계획으로 취급하는 동작은 제공하지 않는다.
+
+새 힌트 경계 사례 12개와 원래 실패 검사의 기존 반례 8개를 구분해
+[`hint-boundary/observations.json`](../observations/hint-boundary/observations.json)에 기록했다.
+이 로컬 확인에는 새 네이티브 프로그램·모델 실행이 없다. 원래 실패 후보의 소스와
+관측 기록을 유지하고 후속 소스의 원래 CI를 별도로 확인한다.

@@ -81,15 +81,11 @@ func TestCompositionWireInspectionFresh1875(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c := plan.Capacity
+	c := CompositionTransportCapacity()
 	if c.Schema != "gooo/composition-transport-capacity/v1" || c.InputJSONBytes != 1048576 ||
 		c.NormalizedSuiteJSONBytes != 1048576 || c.NativeStdoutBytes != 1048576 || c.SeriesJSONBytes != 16777216 ||
 		c.TextUTF8Bytes != 1024 || c.Rows != 128 || plan.NativeExecutions != 0 || plan.ModelCalls != 0 {
 		t.Fatal(c)
-	}
-	plan.Capacity.InputJSONBytes = 0
-	if _, err := CompositionInputTemplate(plan); err != nil {
-		t.Fatal("display hint changed template admission", err)
 	}
 }
 
