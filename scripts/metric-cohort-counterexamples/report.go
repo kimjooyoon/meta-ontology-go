@@ -31,4 +31,5 @@ type report struct {
 	Cases                   []caseResult                          `json:"cases"`
 	UnregisteredUpstream    *upstreamObservation                  `json:"unregistered_upstream,omitempty"`
 	ObservedCohort          *observedCohortReport                 `json:"observed_cohort,omitempty"`
+	ObservedAdmission       *admissionReport                      `json:"observed_receipt_admission,omitempty"`
 }
