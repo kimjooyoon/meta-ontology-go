@@ -1,6 +1,6 @@
 {
   "schema": "gooo/owned-projection-bundle/v1",
-  "source_digest": "sha256:1d2c62977042f2483b9c7898af9631c13e1f76de18df8616640939bddf133ddf",
+  "source_digest": "sha256:b03df48baaf6141488278f62fd8846c33d5b9f02f5cf7402bbab5574f0a1379e",
   "members": [
     {
       "path": "registry.generated.go",
@@ -18,6 +18,15 @@
         "gooo://metric-registry/EntityDeclaration",
         "gooo://metric-registry/entities/at",
         "gooo://metric-registry/entities/count"
+      ]
+    },
+    {
+      "path": "registry_part03.generated.go",
+      "digest": "sha256:8f949e09f10ca79e1efe64927f6c3f67c92488365eefc4c334b0ba3487b59172",
+      "region_ids": [
+        "gooo://metric-registry/CohortTerminalDeclaration",
+        "gooo://metric-registry/cohort/terminals/at",
+        "gooo://metric-registry/cohort/terminals/count"
       ]
     }
   ]

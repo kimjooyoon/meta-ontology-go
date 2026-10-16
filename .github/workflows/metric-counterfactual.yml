@@ -1009,6 +1009,33 @@ jobs:
             '"### Concept-operation readiness observation\n- producer receipt: \($producer_status), coverage \($producer_coverage) bps, promotion authority: \($producer_authorized)\n- readiness: \([.snapshot.obligations[] | select(.id == $obligation)][0].status)\n- fixed point: \(.fixed_point.decision)\n- deterministic replay: verified\n- unrelated obligations: unchanged"' \
             "$work/readiness/first/artifact.json" >> "$GITHUB_STEP_SUMMARY"
           test -z "$(git status --porcelain --untracked-files=all)"
+      - name: Exercise source-bound native cohort counterexamples
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/metric-concept-operation-observation"
+          go run ./scripts/metric-cohort-counterexamples \
+            -root "$GITHUB_WORKSPACE" \
+            -scratch "$work/counterexample-scratch" \
+            -input "$work/unpacked" \
+            -concept "$work/concept/first/artifact.json" \
+            -metadata "$work/producer-artifact.json" \
+            -archive "$work/producer.zip" \
+            -output "$work/counterexamples" \
+            -repository "$GITHUB_REPOSITORY" \
+            -subject-sha "$SUBJECT_SHA" \
+            -run-id "$GITHUB_RUN_ID" \
+            -run-attempt "$GITHUB_RUN_ATTEMPT" \
+            -artifact-id "$PRODUCER_ARTIFACT_ID" \
+            -artifact-digest "$PRODUCER_ARTIFACT_DIGEST"
+          jq -e '.decision == "PASS" and .producer_binding == "EXACT_ORIGINAL_ARCHIVE" and
+            .execution_origin.kind == "ORIGINAL_GITHUB_ACTIONS" and
+            .execution_origin.checkout_sha == .origin.subject_sha and .execution_origin.run_id == .origin.run_id and
+            .cases_declared == 16 and .cases_attempted == .cases_declared and
+            .cases_executed == .cases_declared and .cases_passed == .cases_declared and
+            .readiness_total == 24 and .repository_writes == 0 and .promotion_authorized == false' \
+            "$work/counterexamples/report.json"
+          test -z "$(git status --porcelain --untracked-files=all)"
       - name: Upload concept-operation readiness observation
         if: always()
         uses: actions/upload-artifact@v7
