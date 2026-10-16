@@ -1,6 +1,6 @@
 {
   "schema": "gooo/native-workspace-lifecycle-development/v1",
-  "state": "FRESH_LOCAL_PROTOCOL_CHECKED_WINDOWS_ORIGINAL_CI_PENDING",
+  "state": "ORIGINAL_SOURCE_WINDOWS_CI_REVIEWED",
   "base_dev": "61eb4ec3a36299541a2c9fa2637d726420cd361a",
   "original_failure": {
     "pr": 1615,
@@ -67,10 +67,29 @@
     "classification_leaves": 6,
     "actual_handle_lock_release_leaves": 1,
     "entry": "Transformation effect ledger / cross-platform release windows-amd64",
-    "status": "PENDING_NEW_ORIGINAL_SOURCE_CI",
+    "status": "PASS",
     "full_existing_platform_witness": "Preserved.",
     "retained_artifact": "native-workspace-cleanup-windows-amd64-<head>-<run>-<attempt>",
-    "execution_accounting": "Exact seven passing leaf names from real go test JSON; zero/missing/extra/duplicate leaves cannot satisfy the set."
+    "execution_accounting": "Exact seven passing leaf names from real go test JSON; zero/missing/extra/duplicate leaves cannot satisfy the set.",
+    "source_pr": 1616,
+    "source_head": "475cbba4bd8a31fb3c1f8fc97855a33af49d3a06",
+    "run": 38860680553,
+    "attempt": 1,
+    "executed_leaves": 7,
+    "passed_leaves": 7,
+    "artifacts": [
+      {
+        "id": 12028838908,
+        "name": "native-workspace-cleanup-windows-amd64-475cbba4bd8a31fb3c1f8fc97855a33af49d3a06-38860680553-1",
+        "digest": "sha256:a10890369ac0f28c7508274454c46dd9dd006fa3df018660e68a6bffb4c23705"
+      },
+      {
+        "id": 12028898766,
+        "name": "toolchain-release-platform-windows-amd64-475cbba4bd8a31fb3c1f8fc97855a33af49d3a06",
+        "digest": "sha256:f9447f40c8ab367d329402d45a1ee38e9cea4710215a33b76dbbf695f56ad0fe"
+      }
+    ],
+    "windows_receipt_digest": "sha256:1f3b3ad6b4ecf2db65854560404499da074c3c5088cf86495da3527757139713"
   },
   "unchanged": {
     "gooo_source_and_projection_files": 5,
@@ -82,5 +101,14 @@
   "source_references": [
     "https://learn.microsoft.com/windows/win32/debug/system-error-codes--0-499-",
     "https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea"
-  ]
+  ],
+  "source_integration": {
+    "pr": 1616,
+    "head": "475cbba4bd8a31fb3c1f8fc97855a33af49d3a06",
+    "merge_commit": "48df81a7c03f9ba657141c2968e44e2d8e359b27",
+    "tree": "9311be8cb9cec591dcd35cf7fb66f4a252d339ef",
+    "original_source_run": 38860680562,
+    "proof_bundle_digest": "65dec55242bc6c2aabb64a19fdf4ba900ad12bd4a4c446d50c2e4e1fac73097b"
+  },
+  "observation_role": "Completed original runtime-fix source CI; not relabeled as this follow-up feature execution."
 }

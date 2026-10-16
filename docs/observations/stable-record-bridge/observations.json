@@ -61,8 +61,8 @@
     "nested_records": "Unchanged unsupported body route."
   },
   "parent_source_role": "Original development input; fresh local source checks were recorded before unpublished ancestry alignment.",
-  "integration_base_dev": "61eb4ec3a36299541a2c9fa2637d726420cd361a",
-  "integration_alignment": "The private branch was rebased onto the accepted squash with byte-identical contents; no completed test/native/model cohort was rerun.",
+  "integration_base_dev": "48df81a7c03f9ba657141c2968e44e2d8e359b27",
+  "integration_alignment": "Private feature rebased onto accepted runtime cleanup dev; all feature file blobs matched before provenance-only documentation updates. Earlier local phases retain their original development roles; final combined suite requires this feature original CI.",
   "tag_parser_phase": {
     "phase": "fresh-tag-repair-1707-1709",
     "earlier_reproduced_failures": 3,
@@ -88,5 +88,11 @@
     "behavior": "Complete quoted tag parsing, unique keys, exact decoded source ID, no ignored malformed suffix.",
     "earlier_completed_26_leaves_replayed_locally": 0
   },
-  "final_source_combined_suite": "Pending own original CI; 26 early adapter leaves and 15 later tag-parser leaves are separate local phases."
+  "final_source_combined_suite": "Pending own original CI; 26 early adapter leaves and 15 later tag-parser leaves are separate local phases.",
+  "runtime_cleanup_inherited_from": {
+    "pr": 1616,
+    "head": "475cbba4bd8a31fb3c1f8fc97855a33af49d3a06",
+    "merge_commit": "48df81a7c03f9ba657141c2968e44e2d8e359b27",
+    "tree": "9311be8cb9cec591dcd35cf7fb66f4a252d339ef"
+  }
 }
