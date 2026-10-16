@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"maps"
 	"reflect"
 	"strconv"
 )
@@ -65,10 +66,7 @@ func editProfileLiteral(source *goSource, literal *ast.CompositeLit, target stri
 
 func (plan ProfileMigrationPlan) validateProfileNative(before *goSource, literal *ast.CompositeLit,
 	path string, output []byte) error {
-	inputs := make(map[string][]byte, len(plan.inputs))
-	for name, raw := range plan.inputs {
-		inputs[name] = raw
-	}
+	inputs := maps.Clone(plan.inputs)
 	inputs[path] = output
 	after, err := parseSourceUnits(inputs, syntaxRoot, "languagesyntax", false)
 	if err != nil {

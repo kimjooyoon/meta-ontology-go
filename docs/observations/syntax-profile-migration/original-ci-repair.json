@@ -1,0 +1,52 @@
+{
+  "schema": "gooo/profile-migration-original-ci-repair/v1",
+  "original_pr": 1627,
+  "original_head": "65c73a3e6c70405851cb1dc650365d1aadd6b8a4",
+  "original_failures_reviewed": [
+    {
+      "workflow": "Syntax registration candidate",
+      "run": 38897929819,
+      "job": 116962801732,
+      "cause": "Conformance source-file inventory count omitted new registered meta source."
+    },
+    {
+      "workflow": "Native registration common execution",
+      "run": 38897929889,
+      "job": 116962803112,
+      "cause": "Same source inventory assertion in generated-candidate validation."
+    },
+    {
+      "workflow": "CI Plan Use Case",
+      "run": 38897929987,
+      "job": 116962803496,
+      "cause": "go fix requires modern map copying; source was changed by the check."
+    },
+    {
+      "workflow": "Language utility evidence",
+      "run": 38897929730,
+      "job": 116962801349,
+      "cause": "Same map modernizer fixed-point failure."
+    }
+  ],
+  "corrections": [
+    "Source Gooo files149→150;capability cases131 and denominator versions unchanged.",
+    "maps.Clone for the separate candidate-overlay map; byte slices retain their existing read-only sharing."
+  ],
+  "local_failed_case_repair": {
+    "log": "failed-source-inventory-repair.jsonl.gz",
+    "raw_digest": "sha256:e92c6c8131359d5b1331f109695f73c0b82759157b535fa5616b9bbd64f3401d",
+    "archive_digest": "sha256:a47b13777b898d944499ffeed1499981aaa42d0c764303fd49bce20048ce30cd",
+    "test": "TestCompleteCorpusProvesSyntaxRoundTrip",
+    "decision": "PASS",
+    "scope": "Only an actual failed original CI case was replayed. Not all completed native/source cohorts."
+  },
+  "modernizer_repair": {
+    "command": "go fix -diff ./internal/meta/syntaxregistration",
+    "toolchain": "go1.27.2",
+    "exit_code": 0,
+    "stdout_bytes": 0,
+    "scope": "Read-only targeted fixed-point check of the package that failed modernization."
+  },
+  "original_head_and_body": "IMMUTABLE",
+  "final_replacement_original_ci": "PENDING"
+}
