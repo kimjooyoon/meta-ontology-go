@@ -1,6 +1,6 @@
 {
   "schema": "gooo/unresolved-operation-origin-development/v1",
-  "state": "FRESH_PHASES_RECORDED_OWN_ORIGINAL_CI_PENDING",
+  "state": "ACCEPTED_DEV_ORIGINAL_SOURCE_64_AND_NATIVE_UPSTREAM_REVIEWED",
   "integration_base_dev": "90b8a171dd511493f72194806fa61e024f668793",
   "policy_source": "internal/meta/metricprogram/unresolvedpolicy/policy.gooo",
   "policy_source_digest": "sha256:2aba9945e3d7d35b12b6a3c442fd0b19fdbcd7bf2c2d0b355af9d573ac5d6dba",
@@ -136,12 +136,12 @@
     }
   ],
   "local_phase_leaf_count": 64,
-  "final_source_combined_suite": "UNPROVEN: own original CI must execute final source; earlier phase results are not relabeled.",
+  "final_source_combined_suite": "Actual original source race64/64 passed; six packages, uncached, source9c1b231522b01a1dbcb414591c184967f6f7a745. Earlier local phase observations retain their own origins.",
   "classification_authority": "Gooo computes resolution/reason/next operation; Go retains and transports input context.",
   "consumer": "Independent source membership and compatibility kernel; source/registry/policy bundle verification against repository contents.",
   "upstream_verification": "UNASSESSED; byte/context binding does not establish actual upstream execution.",
   "new_native_case": {
-    "state": "ORIGINAL_CI_PENDING",
+    "state": "OWN_ORIGINAL_SOURCE_CI_REVIEWED",
     "case": "unregistered-upstream-operation",
     "input": "Resealed adversarial original intervention ledger with actual new operation before strategy synthesis.",
     "expected_cohort": "Original declared cohort union one unregistered subject; original members/terminals preserved.",
@@ -149,7 +149,12 @@
     "coverage_bps": null,
     "readiness_credit": false,
     "repository_writes": 0,
-    "promotion_authorized": false
+    "promotion_authorized": false,
+    "run": 38872091280,
+    "artifact_id": 12033334049,
+    "artifact_digest": "sha256:3d655f6987e50fc98026d80cd414eec5d0d00798b6749d24fa315973de6ce6be",
+    "original_expected_count": 9,
+    "new_expected_count": 10
   },
   "existing_native_case_count": 16,
   "global_readiness_obligations": 24,
@@ -169,9 +174,47 @@
     "Structured source/policy unavailable record",
     "Partial execution program semantics",
     "Full expected-set observation plus extra unknown quantitative case",
-    "Native original new-case observation",
     "Issue791 whole six-clause completion unclaimed"
   ],
   "model_calls": 0,
-  "native_program_cohorts_replayed_locally": 0
+  "native_program_cohorts_replayed_locally": 0,
+  "accepted_dev": {
+    "pr": 1621,
+    "head": "9c1b231522b01a1dbcb414591c184967f6f7a745",
+    "base": "90b8a171dd511493f72194806fa61e024f668793",
+    "merge_commit": "6963179807ed305c09478090d8eb54e825cdbb40",
+    "tree": "9febae52f29c34016d2811059a1eb63db94a5565"
+  },
+  "original_source_ci": {
+    "run": 38872091272,
+    "attempt": 1,
+    "race_job": 116878757172,
+    "source_head": "9c1b231522b01a1dbcb414591c184967f6f7a745",
+    "declared_leaves": 64,
+    "executed_leaves": 64,
+    "passed_leaves": 64,
+    "log_digest": "sha256:e504f5a4618be86ad345cb72179d501fb66fe55eb0447f659f577faedb0aa16c",
+    "cached_package_results": false
+  },
+  "actual_dev_native": {
+    "decision": "OWN_ORIGINAL_PUSH_NATIVE16_PLUS_UPSTREAM1_REVIEWED",
+    "branch": "dev",
+    "head": "6963179807ed305c09478090d8eb54e825cdbb40",
+    "tree": "9febae52f29c34016d2811059a1eb63db94a5565",
+    "event": "push",
+    "run": 38875846089,
+    "attempt": 1,
+    "existing_declared": 16,
+    "existing_executed": 16,
+    "existing_passed": 16,
+    "new_upstream_cases": 1,
+    "new_upstream_passed": 1,
+    "upstream_expected_before": 9,
+    "upstream_expected_after": 10,
+    "coverage_bps": null,
+    "artifact_id": 12035312530,
+    "artifact_digest": "sha256:e78ac243d304bee6675197ecbd88f374c4847ebc18eb6512f81cd7ffc64c72e5",
+    "scope": "Actual accepted-branch original push artifacts; source-PR/candidate executions remain distinct. No local native/model replay."
+  },
+  "observation_role": "Accepted prior source/dev results; not relabeled as fixed-value-contract follow-up execution."
 }

@@ -1,0 +1,325 @@
+{
+  "schema": "gooo/advisory-origin-view-observation/v1",
+  "date": "2026-10-16",
+  "toolchain": "go1.27.2",
+  "platform": "darwin/arm64",
+  "base": "546e40981f93ed75225aedc43e44ef377af09702",
+  "source_scope": "Local evolving stages; final combined source requires its own frozen-head original CI. Stage passes are not final-source passes.",
+  "phases": [
+    {
+      "file": "fresh-phase1.jsonl",
+      "log_digest": "sha256:05ba922c219adc4a6986bcf0cc677ac374dcf6bae0a90c529b13d51c0afbdec4",
+      "leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginPackFresh1805/bytes"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginPackFresh1805/unicode"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginPackFresh1805/repeated"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginPackFresh1805/at-bound"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginPackFresh1805/empty"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginEnvelopeRefusalsFresh1806/expanded-bound"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginEnvelopeRefusalsFresh1806/trailing-data"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginEnvelopeRefusalsFresh1806/missing-footer"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginEnvelopeRefusalsFresh1806/truncated"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestRawOriginEnvelopeRefusalsFresh1806/raw-digest"
+        }
+      ],
+      "failures": [
+        {
+          "ImportPath": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "Action": "build-fail"
+        },
+        {
+          "Time": "2026-10-16T19:21:45.687167+09:00",
+          "Action": "fail",
+          "Package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "Elapsed": 0,
+          "FailedBuild": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens"
+        },
+        {
+          "Time": "2026-10-16T19:21:47.618364+09:00",
+          "Action": "fail",
+          "Package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "Elapsed": 0,
+          "FailedBuild": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens"
+        }
+      ],
+      "build_output": [
+        "# github.com/kimjooyoon/meta-ontology-go/internal/viewlens\n",
+        "internal/viewlens/store.go:7:2: \"os\" imported and not used\n"
+      ],
+      "source_binding": "LOCAL_EVOLVING_STAGE_NOT_FINAL_HEAD",
+      "log_path": "original-fresh-phase1.jsonl",
+      "failure_resolution": "Removed unused os import. Only previously unexecuted view/CLI tests were run after repair; completed originpack leaves were not replayed locally."
+    },
+    {
+      "file": "fresh-phase1-build-repair.jsonl",
+      "log_digest": "sha256:972e3751a09cb4249b76781bf7416c92f46ef731c46555905c7a9612a0caa429",
+      "leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestAdvisoryOriginHintFresh1801/default-person"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestAdvisoryOriginHintFresh1801/explicit-full"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestAdvisoryOriginHintFresh1801/malformed-json"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestAdvisoryOriginHintFresh1801/oversize"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestAdvisoryOriginHintFresh1801/unknown-view"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestAdvisoryOriginHintFresh1801/wrong-domain"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestAdvisorySnapshotScopeFresh1804"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestDetachedOriginLedgerFresh1802"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestDetachedBusyHintFresh1803"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestCanonicalViewIsolationFresh1807/default"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestCanonicalViewIsolationFresh1807/full"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestCanonicalViewIsolationFresh1807/broken-json"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestCanonicalViewIsolationFresh1807/unknown-view"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestCanonicalViewIsolationFresh1807/bad-identity"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestCanonicalViewIsolationFresh1807/hint-bound"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestViewSourceErrorsRemainFresh1808"
+        }
+      ],
+      "failures": [],
+      "build_output": [],
+      "source_binding": "LOCAL_EVOLVING_STAGE_NOT_FINAL_HEAD",
+      "log_path": "original-fresh-phase1-build-repair.jsonl"
+    },
+    {
+      "file": "fresh-phase2.jsonl",
+      "log_digest": "sha256:f87f8bd5913da74eb7acb9194a103ea43a658379c41a6fdcb861bd933b5a2cdf",
+      "leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestDetachedArchiveGrowthFresh1810"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestDetachedViewCLIProtocolFresh1811"
+        }
+      ],
+      "failures": [],
+      "build_output": [],
+      "source_binding": "LOCAL_EVOLVING_STAGE_NOT_FINAL_HEAD",
+      "log_path": "original-fresh-phase2.jsonl"
+    },
+    {
+      "file": "fresh-phase3.jsonl",
+      "log_digest": "sha256:9c46418c62e10300688470f4b4b26d9a91f95dbf27667d735d8e0e4808a19ce2",
+      "leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestSourceLensPolicyFresh1814/explicit"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestSourceLensPolicyFresh1814/pinned"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestSourceLensPolicyFresh1814/named-count"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestSourceLensPolicyFresh1814/full-count"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestSourceLensPolicyFresh1814/person-tie"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestSourceLensPolicyFresh1814/agent-default"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/originpack",
+          "test": "TestSmallOriginAllocationFresh1813"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestAdvisoryInputLayoutBoundsFresh1812"
+        }
+      ],
+      "failures": [],
+      "build_output": [],
+      "source_binding": "LOCAL_EVOLVING_STAGE_NOT_FINAL_HEAD",
+      "log_path": "original-fresh-phase3.jsonl"
+    },
+    {
+      "file": "fresh-phase4.jsonl",
+      "log_digest": "sha256:b6e94ea42b43d74c906e27b6ed365c8ffc7124b5039e737d4928c53bf21386fd",
+      "leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestOriginProfileArchiveChainFresh1816"
+        },
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestOriginArchiveCLIRefusalFresh1817"
+        }
+      ],
+      "failures": [],
+      "build_output": [],
+      "source_binding": "LOCAL_EVOLVING_STAGE_NOT_FINAL_HEAD",
+      "log_path": "original-fresh-phase4.jsonl"
+    },
+    {
+      "file": "fresh-phase5.jsonl",
+      "log_path": "original-fresh-phase5.jsonl",
+      "log_digest": "sha256:35cd8e8149d761664119e83cb44ea6ec6154bac0bb3ae75f1150ef9e2ba629c0",
+      "leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/cmd/gooo",
+          "test": "TestAdvisoryCapabilitiesRoutingFresh1819"
+        }
+      ],
+      "failures": [],
+      "source_binding": "LOCAL_EVOLVING_STAGE_NOT_FINAL_HEAD"
+    },
+    {
+      "file": "fresh-phase6.jsonl",
+      "log_path": "original-fresh-phase6.jsonl",
+      "log_digest": "sha256:2ef92c403bca4d5e3ea3bb24ee7642cf3d0a333b927a083be88ad665802a1cdd",
+      "leaves": [
+        {
+          "package": "github.com/kimjooyoon/meta-ontology-go/internal/viewlens",
+          "test": "TestCopiedProfileOriginPreservationFresh1820"
+        }
+      ],
+      "failures": [],
+      "source_binding": "LOCAL_EVOLVING_STAGE_NOT_FINAL_HEAD"
+    }
+  ],
+  "unique_passed_leaves": 40,
+  "metrics": {
+    "event_corpus": {
+      "id": "detached-growth-1810",
+      "events": 40,
+      "raw_bytes": 45520,
+      "stored_bytes": 25230,
+      "restored_byte_matches": 40,
+      "physical_allocated_bytes": null,
+      "includes_header": true,
+      "includes_profile_archives": false
+    },
+    "current_profile": {
+      "raw_bytes": 18660,
+      "stored_bytes": 891,
+      "recent_rows": 32,
+      "historical_profiles_included": false
+    },
+    "small_allocation_probe": {
+      "id": "small-origin-allocation-1813",
+      "raw_bytes": 684,
+      "stored_bytes": 109,
+      "raw_allocated_bytes": 4096,
+      "stored_allocated_bytes": 4096
+    },
+    "inline_layout": {
+      "snapshot_bytes": 120,
+      "choice_bytes": 136,
+      "referenced_backing_storage_included": false
+    },
+    "query_p95_ns": null,
+    "query_p99_ns": null,
+    "peak_rss_bytes": null
+  },
+  "inventory": {
+    "sources": 149,
+    "unregistered": 0,
+    "missing": 0,
+    "native_executions": 0,
+    "semantic_admission": "UNASSESSED",
+    "stale_tool_note": "A v92-built inventory binary refused the v93 repository with language syntax scope denominator mismatch; a newly built v93 reader produced this membership-only observation."
+  },
+  "scope_limits": [
+    "This is not a model, training or native-program quality experiment.",
+    "Forty event archives existed in a temporary protocol case; they are not retained product data in the repository.",
+    "Selection count is not a measure of human reading, satisfaction or intent.",
+    "Logical byte reduction is not repository-wide or physical disk reduction.",
+    "Current-profile metrics exclude all historical profile versions; a separate three-version source-chain case checks archival reachability.",
+    "No original source or previous denominator was deleted."
+  ],
+  "next_milestones": [
+    "detached boundary original CI",
+    "immutable block archive with exact raw hashes",
+    "graph dictionary/array comparison",
+    "paired latency, allocation and RSS baseline"
+  ],
+  "windows": {
+    "scope": "Windows test executable cross-compilation is a build check only. Native lock, hardlink and profile replacement behavior requires this new source head original Windows CI case TestWindowsAdvisoryStoreFresh1818.",
+    "native_case_declared": 1,
+    "native_local_execution": 0,
+    "cross_compilation": "PASS",
+    "executable_digest": "sha256:6923f8371fb22d723035e2528c76da2a3b2cc3ed03b848f7854c4f9fed0ee978",
+    "source_binding": "Private evolving stage before the Windows-only build constraint was added; not a final-source native execution."
+  }
+}

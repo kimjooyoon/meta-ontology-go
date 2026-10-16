@@ -29,6 +29,8 @@ Commands:
   run              Resolve an activity or execute a supported value plan
   body-codegen     Fill declared IR holes and generate Go
   body-origins     Inspect typed field origins or export Gooo ancestry inputs
+  body-view        Inspect canonical origins with advisory presentation hints
+  view-lens        Load hints or record view choices outside rendering
   body-context     Inspect source input and local model compatibility
   body-plan        List caller inputs and assembly dependencies without execution
   body-compose     Assemble, compile and execute a typed program

@@ -1,0 +1,48 @@
+package originlenspolicy
+namespace originlenspolicy
+
+entity Boolean id "urn:gooo:type:boolean"
+entity Integer id "urn:gooo:type:integer"
+entity Text id "urn:gooo:type:string"
+
+activity SelectLens(requested Text, preferred Text, full Integer, named Integer, person Boolean) -> Text
+    id "gooo://origin-lens/select" computes `
+if requested == "gooo://origin-lens/full" || requested == "gooo://origin-lens/named-inputs" {
+    return requested
+}
+if preferred == "gooo://origin-lens/full" || preferred == "gooo://origin-lens/named-inputs" {
+    return preferred
+}
+if named > full {
+    return "gooo://origin-lens/named-inputs"
+}
+if full > named {
+    return "gooo://origin-lens/full"
+}
+if person {
+    return "gooo://origin-lens/named-inputs"
+}
+return "gooo://origin-lens/full"
+`
+
+activity SelectionReason(requested Text, preferred Text, full Integer, named Integer, person Boolean) -> Text
+    id "gooo://origin-lens/selection-reason" computes `
+if requested == "gooo://origin-lens/full" || requested == "gooo://origin-lens/named-inputs" {
+    return "EXPLICIT_VIEW_REQUEST"
+}
+if preferred == "gooo://origin-lens/full" || preferred == "gooo://origin-lens/named-inputs" {
+    return "EXPLICIT_PREFERENCE"
+}
+if full > named || named > full {
+    return "MOST_SELECTED_VIEW"
+}
+if full > 0 {
+    return "TIED_SELECTION_COUNTS"
+}
+return "AUDIENCE_DEFAULT"
+`
+
+activity LensAvailable(lens Text) -> Boolean
+    id "gooo://origin-lens/available" computes `
+return lens == "gooo://origin-lens/full" || lens == "gooo://origin-lens/named-inputs"
+`
