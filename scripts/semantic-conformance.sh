@@ -211,8 +211,12 @@ write_extraction_result() {
 run_projected_compile() {
   local stdout="$projection_work/projected-compile.stdout"
   local stderr="$projection_work/projected-compile.stderr"
+  # A test package may build and run its own bounded native child. Admit one
+  # package at a time so another package cannot overlap that owned workload.
+  # This changes package scheduling; all tests and native deadlines remain.
+  local -a command=(go test -p=1 ./...)
   local status=0
-  if go test ./... > "$stdout" 2> "$stderr"; then
+  if "${command[@]}" > "$stdout" 2> "$stderr"; then
     status=0
   else
     status=$?
@@ -226,13 +230,14 @@ run_projected_compile() {
   stdout_digest="sha256:$(sha256sum "$stdout" | cut -d' ' -f1)"
   stderr_digest="sha256:$(sha256sum "$stderr" | cut -d' ' -f1)"
   jq -n \
+    --argjson command "$(printf '%s\n' "${command[@]}" | jq -R . | jq -s .)" \
     --arg cwd "$repo_root" \
     --arg stdout_digest "$stdout_digest" \
     --arg stderr_digest "$stderr_digest" \
     --argjson exit_code "$status" \
     --argjson stdout_bytes "$stdout_bytes" \
     --argjson stderr_bytes "$stderr_bytes" \
-    '{schema:"gooo.projected-compile-observation/v1", command:["go","test","./..."], cwd:$cwd,
+    '{schema:"gooo.projected-compile-observation/v1", command:$command, cwd:$cwd,
       exit_code:$exit_code, stdout_bytes:$stdout_bytes, stdout_digest:$stdout_digest,
       stderr_bytes:$stderr_bytes, stderr_digest:$stderr_digest, observed:($exit_code == 0)}' \
     > "$projection_work/projected-compile.json"
