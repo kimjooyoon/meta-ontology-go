@@ -1,0 +1,206 @@
+{
+  "schema": "gooo/owned-registry-projection-repair/v1",
+  "state": "FRESH_SOURCE_CHECKS_PASSED_OWN_ORIGINAL_CI_PENDING",
+  "predecessor_review": {
+    "schema": "gooo/registry-projection-predecessor-review/v1",
+    "predecessor": 1610,
+    "head": "604ba3bdab8b48e3ef884da57fa5802a38338a3f",
+    "all_original_workflows_terminal": 31,
+    "terminal_states": {
+      "failure": 2,
+      "success": 29
+    },
+    "canonical_checks": {
+      "go vet": "success",
+      "Semantic conformance": "failure",
+      "gofmt": "success",
+      "go test": "success",
+      "CI policy": "failure",
+      "go test -race": "success"
+    },
+    "primary_failures": [
+      {
+        "run": 38840774077,
+        "job": 116780094770,
+        "stage": "projected module test",
+        "failed_cases": [
+          "TestBoundedRegistryProjectionFresh1645",
+          "TestRegistryProjectionFresh1631"
+        ]
+      },
+      {
+        "run": 38840774041,
+        "job": 116781156102,
+        "stage": "semantic projected module test",
+        "failed_cases": [
+          "TestBoundedRegistryProjectionFresh1645",
+          "TestRegistryProjectionFresh1631"
+        ]
+      }
+    ],
+    "cause": "The physical75line splitter moved the130line generated file declarations into separate files, leaving an incomplete original file. Exact reproduction checks correctly rejected that original-file comparison.",
+    "original_rewrite_artifact": {
+      "id": 12020644734,
+      "digest": "sha256:dfa37074c3c99c45848cc512f4d33517de2ae0696e5e6c0364b98a44a4f2e374",
+      "original_file_lines": 130,
+      "rewritten_original_file_lines": 10
+    },
+    "downstream_failures": [
+      {
+        "job": 116781156196,
+        "name": "CI policy",
+        "cause": "Canonical join rejected failed Semantic conformance."
+      },
+      {
+        "job": 116787653176,
+        "name": "CI evidence",
+        "cause": "Failed canonical semantic result could not authenticate an evidence bundle."
+      },
+      {
+        "job": 116787963465,
+        "name": "CI proof bundle",
+        "cause": "No accepted evidence lineage was available after the failed canonical job."
+      }
+    ],
+    "positive_scope_retained": {
+      "unit": "success",
+      "race": "success",
+      "original_native": {
+        "source_head": "604ba3bdab8b48e3ef884da57fa5802a38338a3f",
+        "source_run": 38840774191,
+        "artifact_id": 12021326950,
+        "archive_digest": "sha256:ba0268b3e1905ee5387d9eb26f1772232e14ac51f7c52aa68ba66a5a9810144a",
+        "decision": "CONFORMANT",
+        "independent_operations": 2,
+        "observed_receipts": 2,
+        "replay_comparisons": 2,
+        "scope": "own original exact-source CI artifact; readonly inspection, no local native replay"
+      },
+      "original_metric_native_review": "https://github.com/kimjooyoon/meta-ontology-go/pull/1610#issuecomment-6206826675"
+    },
+    "predecessor_head_and_body_unchanged": true,
+    "source_ancestry_required": "Successor must descend from604ba3bd; prepared security1e44already retains this parent.",
+    "review_decision": "REJECTED_SOURCE_REPAIR_REQUIRED",
+    "manual_workflow_reruns": 0
+  },
+  "repair": {
+    "mechanism": "Generic import-free projection partitioning keeps each complete ownership region in one file within an explicit physical line budget. No source-file exclusion or verifier bypass.",
+    "current_projection_parts": [
+      {
+        "path": "registry.generated.go",
+        "lines": 69,
+        "digest": "sha256:6eb4aa0a0ed17de83b62dddfb442896051ff60a006e44a1d060a98caf92b5378",
+        "regions": [
+          "gooo://metric-registry/OperationDeclaration",
+          "gooo://metric-registry/operations/at",
+          "gooo://metric-registry/operations/count"
+        ]
+      },
+      {
+        "path": "registry_part02.generated.go",
+        "lines": 65,
+        "digest": "sha256:ba503c1bd1c2f781fe4f472cf12404bb6adc05e67c3a7bc54eefd68e2d8f5b01",
+        "regions": [
+          "gooo://metric-registry/EntityDeclaration",
+          "gooo://metric-registry/entities/at",
+          "gooo://metric-registry/entities/count"
+        ]
+      }
+    ],
+    "manifest": "internal/meta/metricprogram/registry.projection.json",
+    "manifest_digest": "sha256:d5a189e186fa49e6bdc10f839cb8d5c4130c1a587abd12a5b97c4340c8a7125e",
+    "identity": "Each member path, byte digest and ordered source region ID is retained. The producer verifies the compiled bundle; the consumer checks exact source/manifest plus every compiled and actual member, including the file population.",
+    "update_protocol": "Owned files are written before the manifest. A partial update is unbound. Obsolete files are selected only from the prior matching manifest and must still have their recorded bytes. This is not a filesystem-wide atomic transaction.",
+    "receipt_schema": "gooo/metric-meta-concept-operation-binding/v3",
+    "historical_receipts": "v1 and the rejected proposalv2 remain historical; they cannot acquire v3 authority by relabeling.",
+    "plan_validation": "Generated member names and manifest are validated before writing any output."
+  },
+  "preservation": {
+    "source_digest": "sha256:1d2c62977042f2483b9c7898af9631c13e1f76de18df8616640939bddf133ddf",
+    "source_activities": 4,
+    "record_regions": 2,
+    "activity_regions": 4,
+    "operation_definitions": 9,
+    "entity_definitions": 10,
+    "registered_member_hashes_unchanged": 9,
+    "syntax_denominator_version": 90,
+    "global_readiness_obligations": 24
+  },
+  "local_validation": {
+    "fresh_source_protocol_leaves": 30,
+    "repaired_original_failed_cases": [
+      "TestRegistryProjectionFresh1631",
+      "TestBoundedRegistryProjectionFresh1645"
+    ],
+    "fresh_leaves": [
+      "TestOwnedProjectionPartitionFresh1657",
+      "TestOwnedProjectionRefusalsFresh1657/indivisible-region",
+      "TestOwnedProjectionRefusalsFresh1657/missing-end",
+      "TestOwnedProjectionRefusalsFresh1657/unowned-code",
+      "TestOwnedProjectionRefusalsFresh1657/import-preamble",
+      "TestOwnedProjectionRefusalsFresh1657/empty-ownership",
+      "TestProjectionBundleViewsFresh1659/exact",
+      "TestProjectionBundleViewsFresh1659/changed-actual",
+      "TestProjectionBundleViewsFresh1659/changed-compiled",
+      "TestProjectionBundleViewsFresh1659/missing",
+      "TestProjectionBundleViewsFresh1659/extra",
+      "TestProjectionBundleViewsFresh1659/resealed-region",
+      "TestProjectionBundleViewsFresh1659/wrong-source",
+      "TestProjectionManifestRefusalsFresh1659/path-traversal",
+      "TestProjectionManifestRefusalsFresh1659/glob-path",
+      "TestProjectionManifestRefusalsFresh1659/duplicate-file",
+      "TestProjectionManifestRefusalsFresh1659/duplicate-region",
+      "TestProjectionManifestRefusalsFresh1659/trailing-object",
+      "TestRegistryProjectionBundleFresh1661/complete-bundle",
+      "TestRegistryProjectionBundleFresh1661/omit/registry_part02.generated.go",
+      "TestRegistryProjectionBundleFresh1661/change/registry_part02.generated.go",
+      "TestRegistryProjectionBundleFresh1661/omit/registry.generated.go",
+      "TestRegistryProjectionBundleFresh1661/change/registry.generated.go",
+      "TestRegistryProjectionBundleFresh1661/unlisted-part",
+      "TestBundleObsoleteOwnershipFresh1663/owned",
+      "TestBundleObsoleteOwnershipFresh1663/modified",
+      "TestBundleObsoleteOwnershipFresh1663/foreign-output",
+      "TestBundleObsoleteOwnershipFresh1663/malformed-manifest",
+      "TestCompiledRegistryBundleFresh1665",
+      "TestBundleInvalidOutputFresh1667"
+    ],
+    "source_bytes_preserved": true,
+    "registered_member_hashes_preserved": 9,
+    "projection_manifest_digest": "sha256:d5a189e186fa49e6bdc10f839cb8d5c4130c1a587abd12a5b97c4340c8a7125e",
+    "projection_parts": [
+      {
+        "path": "registry.generated.go",
+        "lines": 69,
+        "digest": "sha256:6eb4aa0a0ed17de83b62dddfb442896051ff60a006e44a1d060a98caf92b5378",
+        "regions": [
+          "gooo://metric-registry/OperationDeclaration",
+          "gooo://metric-registry/operations/at",
+          "gooo://metric-registry/operations/count"
+        ]
+      },
+      {
+        "path": "registry_part02.generated.go",
+        "lines": 65,
+        "digest": "sha256:ba503c1bd1c2f781fe4f472cf12404bb6adc05e67c3a7bc54eefd68e2d8f5b01",
+        "regions": [
+          "gooo://metric-registry/EntityDeclaration",
+          "gooo://metric-registry/entities/at",
+          "gooo://metric-registry/entities/count"
+        ]
+      }
+    ],
+    "workflow_shell_blocks_syntax_pass": 16,
+    "new_go_declaration_cap": 75,
+    "new_go_files_checked": 24,
+    "modernizer_fixed_point": true,
+    "local_native_experiments": 0,
+    "model_calls": 0
+  },
+  "scope_limits": {
+    "nested_record_collections": "Still unsupported by the current body route.",
+    "general_imported_projection_partitioning": "Not supported by this import-free partition entry point.",
+    "original_ci": "Successor must earn its own original canonical, native, projection and security results. The predecessor is rejected.",
+    "issue791": "Native positive source/receipt path is observed for the rejected source candidate; original counterexample closure requirements remain open.",
+    "speedup": "UNKNOWN"
+  }
+}

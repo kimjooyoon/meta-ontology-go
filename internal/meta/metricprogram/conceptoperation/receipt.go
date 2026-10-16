@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	Schema   = "gooo/metric-meta-concept-operation-binding/v2"
+	Schema   = "gooo/metric-meta-concept-operation-binding/v3"
 	MetricID = "gooo.metric.meta.concept-operation-binding-bps.v1"
 
 	ExecutionPolicy = "READ_ONLY_CONCEPT_OPERATION_RECEIPT"
@@ -146,6 +146,9 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 		programReceipt.ProgramDigest != program.Digest || programReceipt.SourceDigest != program.SourceDigest ||
 		programReceipt.SemanticDigest != program.SemanticDigest || programReceipt.RegistryDigest != program.RegistryDigest {
 		return Receipt{}, fmt.Errorf("program identity is not bound")
+	}
+	if err := metricprogram.VerifyCompiledRegistry(); err != nil {
+		return Receipt{}, fmt.Errorf("compiled registry projection is not source-bound: %w", err)
 	}
 
 	cohort, err := reconstructCohort(ledger.Indicators, program.Operations)

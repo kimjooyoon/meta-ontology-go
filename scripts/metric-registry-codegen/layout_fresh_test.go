@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"os"
 	"path/filepath"
 	"testing"
 )
@@ -16,24 +15,28 @@ func TestBoundedRegistryProjectionFresh1645(t *testing.T) {
 	if err := generate(filepath.Join(directory, "registry.gooo"), output); err != nil {
 		t.Fatal(err)
 	}
-	raw, err := os.ReadFile(output)
-	if err != nil {
-		t.Fatal(err)
-	}
-	expected, err := os.ReadFile(filepath.Join(directory, "registry.generated.go"))
-	if err != nil || !bytes.Equal(raw, expected) {
-		t.Fatal("bounded registry projection differs", err)
-	}
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, output, raw, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, declaration := range file.Decls {
-		if function, ok := declaration.(*ast.FuncDecl); ok {
-			lines := fset.Position(function.End()).Line - fset.Position(function.Pos()).Line + 1
-			if lines > 75 {
-				t.Fatalf("generated %s exceeds the declaration bound: %d", function.Name.Name, lines)
+	actual, expected := projectionFiles(t, filepath.Dir(output)), projectionFiles(t, directory)
+	for name, raw := range actual {
+		if !bytes.Equal(raw, expected[name]) {
+			t.Fatal("bounded registry projection differs:", name)
+		}
+		if filepath.Ext(name) != ".go" {
+			continue
+		}
+		if bytes.Count(raw, []byte{'\n'}) > 75 {
+			t.Fatal("generated file exceeds the physical line budget:", name)
+		}
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, name, raw, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, declaration := range file.Decls {
+			if function, ok := declaration.(*ast.FuncDecl); ok {
+				lines := fset.Position(function.End()).Line - fset.Position(function.Pos()).Line + 1
+				if lines > 75 {
+					t.Fatalf("generated %s exceeds the declaration bound: %d", function.Name.Name, lines)
+				}
 			}
 		}
 	}

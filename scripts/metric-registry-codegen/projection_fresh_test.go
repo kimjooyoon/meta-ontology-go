@@ -15,21 +15,23 @@ func TestRegistryProjectionFresh1631(t *testing.T) {
 	if err := generate(filepath.Join(directory, "registry.gooo"), output); err != nil {
 		t.Fatal(err)
 	}
-	actual, err := os.ReadFile(output)
-	if err != nil {
-		t.Fatal(err)
+	actual, expected := projectionFiles(t, filepath.Dir(output)), projectionFiles(t, directory)
+	if len(actual) != len(expected) {
+		t.Fatal("registry projection file population differs")
 	}
-	expected, err := os.ReadFile(filepath.Join(directory, "registry.generated.go"))
-	if err != nil {
-		t.Fatal(err)
+	regions := 0
+	for name, content := range actual {
+		if !bytes.Equal(content, expected[name]) {
+			t.Fatal("registry projection differs from its executable Gooo declaration:", name)
+		}
+		if filepath.Ext(name) == ".go" {
+			if err := protectedregions.Check(content); err != nil {
+				t.Fatal(err)
+			}
+			regions += bytes.Count(content, []byte("//gooo:generated:start"))
+		}
 	}
-	if !bytes.Equal(actual, expected) {
-		t.Fatal("registry projection differs from its executable Gooo declaration")
-	}
-	if err := protectedregions.Check(actual); err != nil {
-		t.Fatal(err)
-	}
-	if bytes.Count(actual, []byte("//gooo:generated:start")) != 6 {
+	if regions != 6 {
 		t.Fatal("expected four activity and two record regions")
 	}
 }

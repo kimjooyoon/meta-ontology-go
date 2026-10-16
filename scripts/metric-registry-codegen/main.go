@@ -66,7 +66,7 @@ func generate(sourcePath, output string) error {
 	if err != nil {
 		return err
 	}
-	return writeProjection(output, formatted)
+	return writeBundle(output, raw, formatted)
 }
 
 func writeProjection(output string, raw []byte) error {

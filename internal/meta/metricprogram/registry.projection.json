@@ -1,0 +1,24 @@
+{
+  "schema": "gooo/owned-projection-bundle/v1",
+  "source_digest": "sha256:1d2c62977042f2483b9c7898af9631c13e1f76de18df8616640939bddf133ddf",
+  "members": [
+    {
+      "path": "registry.generated.go",
+      "digest": "sha256:6eb4aa0a0ed17de83b62dddfb442896051ff60a006e44a1d060a98caf92b5378",
+      "region_ids": [
+        "gooo://metric-registry/OperationDeclaration",
+        "gooo://metric-registry/operations/at",
+        "gooo://metric-registry/operations/count"
+      ]
+    },
+    {
+      "path": "registry_part02.generated.go",
+      "digest": "sha256:ba503c1bd1c2f781fe4f472cf12404bb6adc05e67c3a7bc54eefd68e2d8f5b01",
+      "region_ids": [
+        "gooo://metric-registry/EntityDeclaration",
+        "gooo://metric-registry/entities/at",
+        "gooo://metric-registry/entities/count"
+      ]
+    }
+  ]
+}

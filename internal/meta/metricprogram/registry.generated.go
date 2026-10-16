@@ -24,6 +24,7 @@ func sourceOperations() []OperationSpec {
 }
 
 //gooo:generated:end id="gooo://metric-registry/OperationDeclaration" kind="entity"
+
 //gooo:generated:start id="gooo://metric-registry/operations/at" kind="activity"
 func OperationAt(index int64) GoooRecord3c898e3339d389081fca377ea866622d3d01a77e2f3e1ca04ca5846b1fdb0a5a {
 
@@ -66,65 +67,3 @@ func OperationCount(seed int64) int64 {
 }
 
 //gooo:generated:end id="gooo://metric-registry/operations/count" kind="activity"
-
-//gooo:generated:start id="gooo://metric-registry/EntityDeclaration" kind="entity"
-type GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f struct {
-	GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079 string `json:"Name"`
-	GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60 string `json:"ID"`
-}
-
-func sourceEntities() []entitySpec {
-	values := make([]entitySpec, EntityCount(0))
-	for index := range values {
-		row := EntityAt(int64(index))
-		values[index] = entitySpec{Name: row.GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079, ID: row.GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60}
-	}
-	return values
-}
-
-//gooo:generated:end id="gooo://metric-registry/EntityDeclaration" kind="entity"
-//gooo:generated:start id="gooo://metric-registry/entities/at" kind="activity"
-func EntityAt(index int64) GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f {
-
-	if index == 0 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "SourceMetrics", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/source-metrics"}
-	}
-	if index == 1 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "BoundMetrics", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/bound-metrics"}
-	}
-	if index == 2 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "RootPolicy", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/root-policy"}
-	}
-	if index == 3 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "DimensionRegistry", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/dimension-registry"}
-	}
-	if index == 4 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "ProjectedMetrics", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/projected-metrics"}
-	}
-	if index == 5 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "CounterfactualBoundary", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/counterfactual-boundary"}
-	}
-	if index == 6 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "WorkspaceReceipt", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/workspace-receipt"}
-	}
-	if index == 7 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "VerificationEvidence", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/verification-evidence"}
-	}
-	if index == 8 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "FixedPointReceipt", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/fixed-point-receipt"}
-	}
-	if index == 9 {
-		return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "NonPromotingTerminalReceipt", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: "gooo://metric-meta-program/entity/non-promoting-terminal-receipt"}
-	}
-	return GoooRecord8bc6cfe1a003813d2157f6a246ed9e29b61705528d1bf23c87879187f0bf8a7f{GoooField9d457133173cb572781e99746613c99318ac39309e80008da5422457c4d05079: "", GoooFieldea824372f5589de617163c3f15d8a91b6d8120e8bcbec4b816849bc60c669b60: ""}
-
-}
-
-//gooo:generated:end id="gooo://metric-registry/entities/at" kind="activity"
-
-//gooo:generated:start id="gooo://metric-registry/entities/count" kind="activity"
-func EntityCount(seed int64) int64 {
-	return 10
-}
-
-//gooo:generated:end id="gooo://metric-registry/entities/count" kind="activity"

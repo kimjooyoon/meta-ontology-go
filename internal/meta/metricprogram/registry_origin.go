@@ -1,9 +1,12 @@
 package metricprogram
 
 import (
-	_ "embed"
+	"embed"
 	"fmt"
 	"io/fs"
+	"path"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/projectionbundle"
 )
 
 //go:generate go run ../../../scripts/metric-registry-codegen registry.gooo registry.generated.go
@@ -11,8 +14,11 @@ import (
 //go:embed registry.gooo
 var registrySource []byte
 
-//go:embed registry.generated.go
+//go:embed registry.projection.json
 var registryProjection []byte
+
+//go:embed registry*.generated.go
+var registryParts embed.FS
 
 // RegistryOrigin binds the executable declaration to the projection used by this binary.
 type RegistryOrigin struct {
@@ -27,9 +33,13 @@ type RegistryOrigin struct {
 func RegistrySourceOrigin() RegistryOrigin {
 	return RegistryOrigin{
 		SourcePath: "internal/meta/metricprogram/registry.gooo", SourceDigest: bytesDigest(registrySource),
-		ProjectionPath:   "internal/meta/metricprogram/registry.generated.go",
+		ProjectionPath:   "internal/meta/metricprogram/registry.projection.json",
 		ProjectionDigest: bytesDigest(registryProjection), OperationCount: OperationCount(0), EntityCount: EntityCount(0),
 	}
+}
+
+func VerifyCompiledRegistry() error {
+	return projectionbundle.Verify(registrySource, registryProjection, registryParts, registryParts)
 }
 
 // VerifyRegistrySource also reads the subject repository; receipt self-hashes alone cannot bind origin.
@@ -47,6 +57,13 @@ func VerifyRegistrySource(repository fs.FS, origin RegistryOrigin) error {
 		if bytesDigest(raw) != member.digest {
 			return fmt.Errorf("metric registry member %s differs from compiled origin", member.path)
 		}
+	}
+	actual, err := fs.Sub(repository, path.Dir(origin.SourcePath))
+	if err != nil {
+		return err
+	}
+	if err := projectionbundle.Verify(registrySource, registryProjection, registryParts, actual); err != nil {
+		return fmt.Errorf("metric registry member bundle: %w", err)
 	}
 	return nil
 }

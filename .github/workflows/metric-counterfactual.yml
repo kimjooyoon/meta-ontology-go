@@ -802,14 +802,14 @@ jobs:
             --arg semantic_digest "$(jq -r '.semantic_digest' "$first/program.json")" \
             --arg registry_digest "$(jq -r '.registry_digest' "$first/program.json")" \
             --arg registry_source "sha256:$(sha256sum internal/meta/metricprogram/registry.gooo | cut -d' ' -f1)" \
-            --arg registry_projection "sha256:$(sha256sum internal/meta/metricprogram/registry.generated.go | cut -d' ' -f1)" \
+            --arg registry_projection "sha256:$(sha256sum internal/meta/metricprogram/registry.projection.json | cut -d' ' -f1)" \
             '
-            .schema == "gooo/metric-meta-concept-operation-binding/v2" and
+            .schema == "gooo/metric-meta-concept-operation-binding/v3" and
             .metric_id == "gooo.metric.meta.concept-operation-binding-bps.v1" and
             .source_authority == "EXECUTABLE_GOOO_REGISTRY_TO_TYPED_GO_PROJECTION_TO_PARSED_LOWERED_IR" and
             .registry_origin.source_path == "internal/meta/metricprogram/registry.gooo" and
             .registry_origin.source_digest == $registry_source and
-            .registry_origin.projection_path == "internal/meta/metricprogram/registry.generated.go" and
+            .registry_origin.projection_path == "internal/meta/metricprogram/registry.projection.json" and
             .registry_origin.projection_digest == $registry_projection and
             .registry_origin.operation_count == 9 and .registry_origin.entity_count == 10 and
             .program_source_path == "program.gooo" and

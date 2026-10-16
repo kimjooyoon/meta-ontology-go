@@ -17,9 +17,12 @@ func TestRegistryOriginFresh1635(t *testing.T) {
 		{"missing-source", "", string(registryProjection), false},
 	} {
 		t.Run(item.name, func(t *testing.T) {
-			members := fstest.MapFS{origin.ProjectionPath: {Data: []byte(item.projection)}}
+			members := registryFilesFixture(t)
+			members[origin.ProjectionPath] = &fstest.MapFile{Data: []byte(item.projection)}
 			if item.source != "" {
 				members[origin.SourcePath] = &fstest.MapFile{Data: []byte(item.source)}
+			} else {
+				delete(members, origin.SourcePath)
 			}
 			if err := VerifyRegistrySource(members, origin); (err == nil) != item.allowed {
 				t.Fatalf("origin verification: %v", err)
