@@ -59,5 +59,8 @@
     "native_execution": "Own new original CI pending. Local checks generate renamed source and typecheck bridge code; no runtime rename parity claim.",
     "generic_interop": "Metric registry adapters only; no general external-Go binding syntax added.",
     "nested_records": "Unchanged unsupported body route."
-  }
+  },
+  "parent_source_role": "Original development input; fresh local source checks were recorded before unpublished ancestry alignment.",
+  "integration_base_dev": "61eb4ec3a36299541a2c9fa2637d726420cd361a",
+  "integration_alignment": "The private branch was rebased onto the accepted squash with byte-identical contents; no completed test/native/model cohort was rerun."
 }
