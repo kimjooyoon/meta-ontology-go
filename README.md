@@ -6,6 +6,10 @@ This repository contains its Go compiler. Source files use the `.gooo` extension
 
 [한국어: 언어의 방향과 현재 기능](docs/language-direction.ko.md)
 
+**Start here:** the [pinned first program](docs/getting-started.md) works without a
+model. Agents and CI consumers should read the [JSON result and exit-code guide](docs/getting-started.md#use-results-from-an-agent-or-ci).
+Development-source examples below may need a compiler newer than that walkthrough.
+
 [![Go / Gooo physical lines: 561,120 / 5,389](https://img.shields.io/badge/Go%20%2F%20Gooo%20lines-561%2C120%20%2F%205%2C389-546e7a)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
 [![Gooo share of Go and Gooo physical lines: 0.95%](https://img.shields.io/badge/Gooo%20share-0.95%25-8e44ad)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
 
