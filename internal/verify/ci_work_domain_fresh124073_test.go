@@ -62,7 +62,7 @@ func TestSharedWorkClockRetainsCommandPopulation124073(t *testing.T) {
 			}
 		}
 	}
-	if strings.Count(workflow, "go install github.com/kimjooyoon/gooo-ci-domain/") != 1 ||
+	if workDomainToolPreparationCount124073(workflow) != 1 ||
 		!strings.Contains(workflow, "shell: bash ./scripts/ci-work-shell.sh {0}") {
 		t.Fatal("tool preparation duplicated or command adapter absent")
 	}

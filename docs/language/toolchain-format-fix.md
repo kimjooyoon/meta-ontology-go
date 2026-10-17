@@ -94,3 +94,38 @@ two 64 KiB output streams per invocation: 3 MiB of captured output, up to 18 MiB
 JSON string escaping expands every byte sixfold, plus fixed report metadata.
 The input limit is a reader contract, not a measured bound on total decoder heap.
 Custom reports exceeding the limit are unsupported by this internal command.
+
+## Process completion and output recovery
+
+The internal CLI runner keeps its five-second execution context and limits
+output recovery after the direct process exits to one second. It owns the two
+capture pipes so that a nonzero parent exit cannot hide an incomplete drain.
+Available stdout/stderr remain in the observation. An incomplete drain retains
+the parent exit and returns `INVOCATION_OUTPUT_INCOMPLETE` with the original
+process error and capture cause. Existing deadline and output-limit classifications
+take precedence when they also apply, keeping their `exit_code=-1` sentinel.
+Their additional capture cause remains attached to the Go error. These failures
+keep readiness unresolved and stop replay through partial-observation handling.
+
+The internal `OutputCaptureError` exposes stdout/stderr EOF, deadline-close
+request, limit-exceeded flag and retained byte count. Reaching EOF and retaining
+all bytes are separate: the 64 KiB stream limit can retain only a prefix. These
+extra details are available at the Go error boundary; the existing readiness
+JSON schema does not serialize them. A report digest binds the partial record
+and does not establish complete output or successful execution.
+
+EOF and a deadline-close request may both be recorded when completion races
+the request. EOF comes from the copy result; the request and its error are kept
+separately. A retained deadline cause still makes capture incomplete. These
+fields describe what the reader observed and requested, without inferring which
+event won at the operating-system boundary.
+
+The [Go process API](https://pkg.go.dev/os/exec@go1.27.2#Cmd) distinguishes process
+termination from output-pipe completion. This change does not establish that
+all descendants terminated and does not bound before/after filesystem snapshots.
+
+The retained prefix is byte-preserving at the Go capture boundary, including a
+UTF-8 character split at the size limit. Existing string-based report JSON can
+replace invalid UTF-8 during encoding; see the [Go JSON contract](https://pkg.go.dev/encoding/json@go1.27.2#Marshal).
+A later versioned report contract must separate raw bytes and their length/digest
+from a readable text projection before claiming byte-exact persisted output.

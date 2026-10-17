@@ -18,14 +18,16 @@ runs:
         EXPECTED_SOURCE_HEAD: ${{ inputs.expected-sha }}
       run: |
         set -euo pipefail
+        [[ "$GOOO_CI_DOMAIN_REVISION" =~ ^[0-9a-f]{40}$ ]]
         root="$RUNNER_TEMP/ci-domain-tool"
         digest="$(sha256sum "$root/gooo-ci-domain" | cut -d ' ' -f 1)"
         jq -e --arg head "$EXPECTED_SOURCE_HEAD" --arg run "$GITHUB_RUN_ID" \
           --arg attempt "$GITHUB_RUN_ATTEMPT" --arg sha "$digest" \
+          --arg revision "$GOOO_CI_DOMAIN_REVISION" \
           '.schema == "gooo/work-domain-tool-origin/v1" and .source_head == $head and
             .run_id == $run and .run_attempt == $attempt and .tool_sha256 == $sha and
              .clock_scope == "admitted_source_work" and
-            .tool_revision == "aa0e33f2e5ec36f319232080361e5fc967d6c442"' \
+            .tool_revision == $revision' \
           "$root/origin.json" > /dev/null
         started="$(jq -r .started_at "$root/origin.json")"
         remaining=$((GOOO_CI_BUDGET_MS / 1000 - ($(date +%s) - $(date -d "$started" +%s))))
@@ -44,6 +46,6 @@ runs:
       uses: actions/cache/restore@v6
       with:
         path: ${{ runner.temp }}/command-origins-${{ github.job }}/command-origins.jsonl
-        key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+        key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-
+          command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-
