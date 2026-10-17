@@ -67,11 +67,18 @@ JSON 이스케이프 해석은 기존 `internal/meta/textinput/escapes.gooo`의 
 전달한 것으로 기록하거나, 실행 영수증에 정답률 점수를 만들어 넣지는 않습니다.
 같은 필드 조건과 안정 ID를 사용하는 `--cases` 비교와 각각의 입력 출처를 보존합니다.
 
-작업공간 영수증의 `result.program.lowered_gooo_source`는 여러 원문을 합친 실행용
-Gooo 소스입니다. `result.execution_source_sha256`는 그 실행용 소스의 바이트를
-가리킵니다. `inputs_digest`는 제공한 입력 파일을, `result.runtime.producer_source_sha`는
-실제 실행한 컴파일러의 빌드 기원을 가리킵니다. 입력 파일·원문 선언·합쳐진 실행용
-소스·컴파일러 빌드가 각각 어떤 단계에 속하는지 함께 읽습니다.
+작업공간 영수증의 `result.program.lowered_gooo_source`는 여러 원문을 합쳐 이름을
+내린 초기 Gooo 소스입니다. `result.execution_source_sha256`는 그 소스에 본문 채우기를
+적용한 뒤 실행 구성에 전달하는 바이트를 가리킵니다. 본문을 채웠다면 초기 소스와
+다를 수 있습니다. `inputs_digest`는 제공한 입력 파일을,
+`result.runtime.producer_source_sha`는 실행한 컴파일러의 빌드 기원을 가리킵니다.
+입력 파일·원문 선언·본문을 구성한 소스·컴파일러 빌드의 단계를 함께 읽습니다.
+
+`result.program.workspace_image.packages[].sources[].source_digest`는 해당 소스
+문자열을 Go `json.Marshal`로 직렬화한 값의 해시입니다. 따옴표와 이스케이프가
+포함되므로 원본 파일의 바이트 해시와 직접 비교하지 않습니다. 패키지 경로와
+파일명, 전체 필드 경로를 함께 사용합니다. [첫 실행 안내의 해시 대상 표](../getting-started.md#read-a-digest-with-its-full-field-path)에
+각 입력의 대상을 정리했습니다.
 
 ## 수용할 관측
 

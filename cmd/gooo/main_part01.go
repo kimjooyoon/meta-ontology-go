@@ -45,23 +45,25 @@ activity Clamp(Integer) -> Integer computes "if input < 0 { return 0 } else if i
 This project keeps its activity contract in [main.gooo](main.gooo). The
 assembling block declares permitted source choices and a small finite
 input/output suite. Gooo uses that contract for deterministic generation; a
-local Laya service can optionally rank the eligible choices.
+compatible decision provider can optionally rank the eligible choices.
 
 ## Check and generate
 
-Install the Gooo CLI, then run these commands from this directory:
+Use the installed compiler that created this project. Keep its version with
+your source and receipts; treat a compiler upgrade as a separate change.
+Run these commands from this directory:
 
 ~~~sh
-go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@dev
+gooo version --build --json
 gooo check main.gooo
 gooo body-codegen --json --activity Clamp main.gooo
 ~~~
 
 Generation prints a receipt to standard output and does not edit this project.
-Without a model, the compiler uses its deterministic choice. To let local Laya
-rank only the declared alternatives, set GOOO_LAYA_URL to its
-/v1/systemone endpoint before running the same command. The model
-cannot add choices or bypass type checking and the declared cases.
+With no provider configured, the compiler uses its deterministic choice.
+Optional provider setup is explained in the guide below. A provider may rank
+the declared alternatives; it cannot add choices or bypass type checking and
+the declared cases.
 
 The finite score describes only these three examples; it is not a proof for all
 integer inputs. See the compiler's body generation guide for the model setup and
