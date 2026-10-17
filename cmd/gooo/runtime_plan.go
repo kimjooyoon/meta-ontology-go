@@ -45,26 +45,7 @@ func runtimePlanSourceDigest(source []byte) string {
 }
 
 func buildRuntimePlanDataWithTypedPlan(source []byte, ir semantic.IR, typedPlan bidir.TypedPlan) ([]byte, error) {
-	bindings := make([]runtimePlanBinding, 0, len(ir.RuntimeBindings))
-	for _, binding := range ir.RuntimeBindings {
-		bindings = append(bindings, runtimePlanBinding{
-			Schema: binding.Schema, ProducerActivity: string(binding.ProducerActivity), ProducerPort: binding.ProducerPort,
-			ConsumerActivity: string(binding.ConsumerActivity), ConsumerPort: binding.ConsumerPort, Entity: string(binding.Entity),
-		})
-	}
-	sort.Slice(bindings, func(i, j int) bool {
-		left, right := bindings[i], bindings[j]
-		if left.ProducerActivity != right.ProducerActivity {
-			return left.ProducerActivity < right.ProducerActivity
-		}
-		if left.ConsumerActivity != right.ConsumerActivity {
-			return left.ConsumerActivity < right.ConsumerActivity
-		}
-		if left.ProducerPort != right.ProducerPort {
-			return left.ProducerPort < right.ProducerPort
-		}
-		return left.ConsumerPort < right.ConsumerPort
-	})
+	bindings := runtimePlanBindings(ir)
 	document := runtimePlanDocument{
 		Schema: runtimePlanSchema, SourceDigest: runtimePlanSourceDigest(source), SemanticHash: ir.StableHash(),
 		RuntimeBindingCount: len(bindings), Bindings: bindings,
@@ -85,4 +66,28 @@ func buildRuntimePlanDataWithTypedPlan(source []byte, ir semantic.IR, typedPlan 
 		return nil, err
 	}
 	return append(data, '\n'), nil
+}
+
+func runtimePlanBindings(ir semantic.IR) []runtimePlanBinding {
+	bindings := make([]runtimePlanBinding, 0, len(ir.RuntimeBindings))
+	for _, binding := range ir.RuntimeBindings {
+		bindings = append(bindings, runtimePlanBinding{
+			Schema: binding.Schema, ProducerActivity: string(binding.ProducerActivity), ProducerPort: binding.ProducerPort,
+			ConsumerActivity: string(binding.ConsumerActivity), ConsumerPort: binding.ConsumerPort, Entity: string(binding.Entity),
+		})
+	}
+	sort.Slice(bindings, func(i, j int) bool {
+		left, right := bindings[i], bindings[j]
+		if left.ProducerActivity != right.ProducerActivity {
+			return left.ProducerActivity < right.ProducerActivity
+		}
+		if left.ConsumerActivity != right.ConsumerActivity {
+			return left.ConsumerActivity < right.ConsumerActivity
+		}
+		if left.ProducerPort != right.ProducerPort {
+			return left.ProducerPort < right.ProducerPort
+		}
+		return left.ConsumerPort < right.ConsumerPort
+	})
+	return bindings
 }

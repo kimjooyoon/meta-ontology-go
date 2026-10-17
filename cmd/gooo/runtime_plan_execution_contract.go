@@ -1,13 +1,9 @@
 package main
 
 import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
-
-func loadRuntimePlanContract(reader SourceReader, filename string, source []byte, plan valueexecution.Plan) (string, error) {
-	_, digest, err := loadRuntimePlanExecutionEvidence(reader, filename, source, plan)
-	return digest, err
-}
 
 func loadRuntimePlanExecutionEvidence(
 	reader SourceReader,
@@ -27,11 +23,10 @@ func loadRuntimePlanExecutionEvidence(
 			Code: valueexecution.ReasonPlanInvalid, Stage: "PLAN", Step: "validate-runtime-plan-contract", Detail: err.Error(),
 		}
 	}
-	digest, err := validateRuntimePlanContract(source, plan, raw)
-	if err != nil {
+	if err := validateRuntimePlanContract(source, plan, document); err != nil {
 		return runtimePlanDocument{}, "", valueexecution.Failure{
 			Code: valueexecution.ReasonPlanInvalid, Stage: "PLAN", Step: "validate-runtime-plan-contract", Detail: err.Error(),
 		}
 	}
-	return document, digest, nil
+	return document, "sha256:" + cache.HashBytes(raw).String(), nil
 }
