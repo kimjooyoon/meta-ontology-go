@@ -1331,6 +1331,7 @@
     "internal/meta/generation/experience_memory_receipt_contract.gooo",
     "internal/meta/syntaxregistration/profile_migration.gooo",
     "examples/source-owned-cohort-observations/main.gooo",
-    "internal/meta/publictestreuse/policy.gooo"
+    "internal/meta/publictestreuse/policy.gooo",
+    "examples/measurement-metadata/main.gooo"
   ]
 }
