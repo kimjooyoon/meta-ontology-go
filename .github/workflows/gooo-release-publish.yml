@@ -5,6 +5,8 @@ on:
     branches: [dev]
     paths:
       - '.github/workflows/gooo-release-publish.yml'
+      - 'cmd/gooo/version.go'
+      - 'cmd/gooo/version_test.go'
       - 'docs/external/gooo-release-publication-v3.md'
       - 'examples/gooo-release-publication/**'
       - 'internal/verify/scope_gooo_experimental_release.go'
@@ -23,7 +25,7 @@ on:
       tag:
         description: Experimental release tag
         required: true
-        default: v0.6.34-dev
+        default: v0.6.35-dev
         type: string
 
 permissions: {}
@@ -44,7 +46,7 @@ jobs:
       contents: read
     env:
       EXACT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.validated_sha || github.event.pull_request.head.sha }}
-      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.34-dev' }}
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.35-dev' }}
       GOTOOLCHAIN: go1.27.2
     steps:
       - name: Bind dispatched source to current dev before executing it
@@ -75,12 +77,12 @@ jobs:
           output="$RUNNER_TEMP/gooo-release-publication-contract"
           mkdir -p "$output"
           test "$(git rev-parse HEAD)" = "$EXACT_SHA"
-          test "$RELEASE_TAG" = "v0.6.34-dev"
+          test "$RELEASE_TAG" = "v0.6.35-dev"
           go run ./cmd/gooo check "$source" > "$output/check.stdout"
           version_json="$(go run ./cmd/gooo version --json)"
           jq -e '
             .schema_version == "gooo-version/v1" and
-            .language == "gooo" and .version == "0.6.34-dev" and
+            .language == "gooo" and .version == "0.6.35-dev" and
             .status == "development"
           ' <<< "$version_json"
           activity_total="$(awk '$1 == "activity" { count++ } END { print count + 0 }' "$source")"
@@ -99,7 +101,7 @@ jobs:
               head_sha:$head,
               meta_operation:"publish-exact-experimental-release",
               meta_source:{path:$source,digest:$source_digest,check_digest:$check_digest,activities:$activities},
-              identity:{tag:$tag,version:"0.6.34-dev",status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
+              identity:{tag:$tag,version:"0.6.35-dev",status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
               cells:[
                 {id:"VALIDATED_MERGE_EVIDENCE",proof_choice:"FOUNDATION"},
                 {id:"EXPERIMENTAL_RELEASE_IDENTITY",proof_choice:"FOUNDATION"},
@@ -191,7 +193,7 @@ jobs:
           grep -Fx 'activity AssembleReleasePayload(ValidatedMergeEvidence, ReleaseIdentity) -> ReleasePayload' "$source"
           jq -e '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
-            .version == "0.6.34-dev" and .status == "development" and
+            .version == "0.6.35-dev" and .status == "development" and
             .semantic_ir == "semantic-ir/v1" and .semantic_check == "gooo-semantic-check/v1" and
             .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
           ' "$output/probe-version.json"
@@ -272,7 +274,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$RELEASE_TAG" = "v0.6.34-dev"
+          test "$RELEASE_TAG" = "v0.6.35-dev"
           [[ "$VALIDATED_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$READINESS_RUN_ID" =~ ^[1-9][0-9]*$ ]]
           test "$(git rev-parse HEAD)" = "$VALIDATED_SHA"
@@ -359,7 +361,7 @@ jobs:
           dist="$RUNNER_TEMP/gooo-release-dist"
           jq -e '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
-            .version == "0.6.34-dev" and .status == "development" and
+            .version == "0.6.35-dev" and .status == "development" and
             .semantic_ir == "semantic-ir/v1" and
             .semantic_check == "gooo-semantic-check/v1" and
             .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
@@ -401,7 +403,7 @@ jobs:
             --slurpfile assets "$RUNNER_TEMP/release-assets.json" \
             '{
               schema:"gooo/release-manifest/v1",
-              tag:$tag,head_sha:$head,version:"0.6.34-dev",status:"development",
+              tag:$tag,head_sha:$head,version:"0.6.35-dev",status:"development",
               prerelease:true,latest:false,readiness_run_id:$run_id,
               release_report_digest:$report_digest,
               source_report_digest:$source_report_digest,
@@ -469,13 +471,13 @@ jobs:
         run: |
           set -euo pipefail
           dist="$RUNNER_TEMP/gooo-release-dist"
-          test "$RELEASE_TAG" = "v0.6.34-dev"
+          test "$RELEASE_TAG" = "v0.6.35-dev"
           dev_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)"
           test "$dev_sha" = "$VALIDATED_SHA"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID" \
             --jq '.conclusion' | grep -Fx success
           jq -e --arg sha "$VALIDATED_SHA" --arg tag "$RELEASE_TAG" '
-            .head_sha == $sha and .tag == $tag and .version == "0.6.34-dev" and
+            .head_sha == $sha and .tag == $tag and .version == "0.6.35-dev" and
             .status == "development" and .prerelease == true and .latest == false and
             .payload_total == 7 and (.assets | length) == 7 and
             .repository_writes == 0
@@ -501,111 +503,33 @@ jobs:
           dist="$RUNNER_TEMP/gooo-release-dist"
           notes="$RUNNER_TEMP/release-notes.md"
           cat > "$notes" <<EOF
-          # Gooo v0.6.34-dev
+          # Gooo v0.6.35-dev
 
-          Experimental Gooo CLI prerelease for exact commit \`$VALIDATED_SHA\`.
+          Development prerelease for exact source \`$VALIDATED_SHA\`, built with Go 1.27.2.
 
-          ## Experimental V3 output relationships
+          ## Read programs through their source and origins
 
-          The included SDK0.2.44 connects an explicit V3 decision artifact to source inspection, finite codegen, native construction and saved replay. The model reads declared integer goals in relation to the resolved source constants and predicate ranges. Source input remains528 cells and model tensor storage76,136 bytes.
+          - Name activity inputs in Korean or English while keeping positional external inputs and bindings. The [named-input example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/named-inputs/README.md) connects a credit calculation and a subtraction using the original source identities.
+          - Declare per-field UTF-8 bounds for returned Text and use bounded ordered collections. The [0.6.35 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.35-dev.md) links the supported shapes, limits and examples.
+          - Inspect declared and derived candidates, local value versions and recorded uses through Gooo readers. Original source references, unresolved mappings and incomplete recordings remain visible.
+          - Choose an advisory origin view for reading. Saved preferences are hints outside execution and source identity.
 
-          The new paired evaluation had first completion V2 21/64 and V3 18/64, with bilingual mask agreement11/32 and5/32. V3 remains an explicit experimental option. The new zero-weight release profile checks source/model/input identity, six outputs, three Boolean requirements, caller1/1, native8/8 and saved8/8 after deleting the model file, with zero new predictions. These platform checks have a separate denominator from fitted quality.
+          ## Checks for this release source
 
-          See the [0.6.34 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.34-dev.md) and [V3 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/source-relative-v3-contract-model.md).
+          The exact-source readiness run built each of the four native platform archives twice and checked matching binary and archive bytes. Each candidate also executed the named-input example and its saved replay: two authored input rows and four output expectations per execution. The reader checked the current source/manifest/cases, original input and bind ports, typed values, generated program identity and exact saved-receipt link. New model calls were zero in this journey.
 
-          ## String operations and one-condition assembly
+          Other native language and compatibility journeys retain their separate denominators. Repeating an input on another platform adds platform coverage. The release keeps 26 structural release cases, 39 release indicators, eight publication activities and nine publication assets, with eight entries in SHA256SUMS. Source-readiness artifacts identify the actual completed observations.
 
-          The [string operations example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/bounded-string-operations/README.md) implements substring search, non-overlapping counts and rune counts in Gooo. An importing caller returns a record; twenty committed queries are compared with Go strings.Index, strings.Count and utf8.RuneCountInString.
+          ## Install and retain the matching origin
 
-          The [single-condition example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/single-condition-byte-search/README.md) leaves one byte predicate open while the source declares its loop and returns. Source fill supports one through eight holes. Two declared predicates are checked against six selection cases; four held-out cases are reported separately. The ten package rows reuse those inputs. Its first deterministic predicate matched 1/6 selection cases before the selected predicate matched 6/6 and 4/4 held-out cases, with zero model calls. These are finite observations of this operation.
+          Choose the archive for your platform, verify SHA256SUMS and inspect \`gooo version --build --json\`. Native execution uses Go 1.27.2. Saved-record inspection uses the Gooo binary. Keep the matching historical compiler when replaying records whose source or receipt format has changed.
 
-          Native release preparation executes both packages and saved-program replay on each platform. Readers require exact source, manifest, cases, original receipt and generated program identities, every actual result, full denominators and zero model calls. Text inputs remain valid UTF-8 up to 1,024 bytes. Repeating cases across platforms expands platform coverage without adding unseen inputs.
-
-          Existing model files and their original learning observations remain available through the linked guides. This release's new checks exercise compiler behavior and saved execution.
-
-          ## Earlier construction capabilities and recorded observations
-
-          Record assembly keeps failed local candidates and tries the next declared candidate within the source budget. A failed evaluation retains the inputs it reached and receives no completed case score. Cancellation stops the request without starting fallback work.
-
-          Body-fill assignments can use fixed pure Gooo helpers, including helpers introduced by a selected expression. Composition assembles required helper bodies first, and emission and replay keep their source identities.
-
-          Context-dependent search retains the initial expression pool at the actual helper checkpoint. Caller combinations use that fixed pool while checking each expression against the current helper. This fixes source-plan mismatches caused by regenerating candidates against an earlier helper body. The finite space covers those initial pools; newly regenerated contextual grammars remain outside it.
-
-          Local record, search and fill histories, including failed prefixes, contribute actual helper inputs to construction exposure. Search and fill preflight retain their original source checkpoints and observations. Saved replay checks those records without inference; recorded preflight validation is repeated during replay. Historical absence remains absent, and incomplete capture keeps other inputs UNKNOWN.
-
-          The [helper-checkpoint example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/caller-search-checkpoint/README.md) records one development construction and saved replay, each matching 3/3 finite cases with no model. Whole-command times were 1.00s and 0.36s, with maximum RSS 87,605,248 and 85,082,112 bytes. All three evaluation inputs retained UNKNOWN construction exposure. These original measurements predate this release binary and establish no controlled speedup or generalization result.
-
-          The included decision-runtime remains v0.2.41-experimental, with unchanged public model files. The [model-to-fill example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/caller-model-fill/README.md) retains a first model proposal matching 0/4 declared output cases, followed by a permitted candidate matching 4/4. Model quality, final output matches and input exposure remain separate measurements.
-
-          ## Read and share a construction result
-
-          Use \`body-construct --format text\` or \`--format markdown\` for a short view of the same recorded construction and evaluation. The summary separates local checks, caller expectations used during selection, and later evaluation. It retains failed, faulted, blocked and unobserved outcomes with named denominators.
-
-          - Initial typed-path rows show the first candidate's outputs and intermediate conditions, plus the first unmet condition. The selected caller-program body is shown separately.
-          - Capture the normal full JSON stdout as \`result.json\`, then use \`gooo body-construct --report result.json\` to read it later. Add \`--format markdown\` to share it. This mode needs no source, model weights or Go toolchain and makes no model calls or generated-program executions.
-          - Every row in a saved report describes its recorded invocation. Exit0 means the file was read; a recorded failure remains visible and recorded claims are not reverified. JSON output preserves the exact original bytes. The split \`--out\` construction/evaluation files lack the full envelope.
-          - In one retained canonical-model observation, the first candidate matched outputs8/8 but conditions1/3; the selected body matched outputs8/8 and conditions3/3. The same eight authored inputs were reused for evaluation. This is formatting and compatibility evidence, not a new accuracy measurement.
-
-          ## Compare workflow results after a rule change
-
-          Use \`gooo body-outcomes-delta --before before.json --after after.json\` to compare saved construction or composition results. Add \`--markdown\` for a shareable table, or \`--json\` to retain every input group, including unchanged observations and original case indices.
-
-          - Changed expectations, changed actual values, regressions under unchanged expectations, missing observations and conflicting duplicate records are shown separately.
-          - Matching uses the complete external caller input tuple and stable activity ID. Reordered rows and changed intermediate values do not replace the original inputs; int64 values above 2^53 remain exact.
-          - The comparator reads saved records with zero model calls and zero generated-program executions. Exit0 means the report was produced; the assessment counts show whether an unchanged requirement regressed.
-          - On the retained batch-limit example, ten input groups contain five changed requirements/results and five unchanged matches. This is one synthetic rule's observed behavior; customer savings and unseen behavior remain unmeasured.
-
-          The native release preparation compares retained input records on four platforms against their exact stored comparison outputs, without repeating the original model study.
-
-          ## Explicit local models and construction
-
-          Gooo source describes available branches, comparisons and operand choices together with expected outputs. The small model scores those choices; Gooo assembles a body and checks every declared output and intermediate condition. Failed proposals leave evidence and continue through the remaining candidates.
-
-          - Use the public SDK0.2.37 \`model-choice-v1.json\` with \`body-context --model\`, \`body-codegen --path-model\` or \`body-construct --model\`. The choice-conditioned model uses 51,272 bytes of FP32 weight arrays and runs locally in Go. Shared-mean and global-pooling formats also remain supported.
-          - Inspect the source features and all authored output cases with \`body-context\`. Inspection makes zero predictions and tests zero candidates. Each fresh declared-case construction makes one initial prediction; subsequent candidates reuse that ordering.
-          - Omit the model option for deterministic ordering. A supplied invalid model is reported as a load error. Sampling, repeated model feedback and an external execution oracle are currently separate from declared-case fixed ranking.
-          - Retain the selected construction and replay it with new caller cases. Saved replay needs no model file and makes zero new predictions. Integer values above 2^53 remain exact.
-          - The included SDK0.2.44 also loads the ordered-source interaction and canonical branch models in native construction. Supported equivalent direct-return and assignment forms give the canonical model identical input arrays; the original Gooo source continues to own execution and semantic identity. Unsupported forms record a reason and use deterministic order without a prediction.
-
-          Start with the [0.6.34 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.34-dev.md) and [source-relative model guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/source-relative-contract-model.md) for model files, input inspection, construction, replay and the original measurements. The earlier [canonical model](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/canonical-contract-model.md), [interaction model](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/interaction-contract-model.md) and [declared-case formats](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.26-dev.md) remain available.
-
-          ## Continue working with Gooo programs
-
-          - Plan caller bindings and called-body order with \`body-plan\`; use \`--inputs-template\` to prepare an editable input file.
-          - Observe actual values using \`body-compose --inputs\`, then supply \`--cases\` to evaluate the retained program. An unlabelled execution reports unknown correctness and zero expectations.
-          - Declare intermediate expectations with \`condition_case\`. Gooo checks them alongside output cases and retains mismatched or unreached conditions in the attempt record.
-          - Preserve stable activity IDs through display-name changes, use Korean or English names for canonical scalar types, and retain saved source and composition receipts for replay.
-          - Continue package and multi-body assembly with the [ecosystem workbench](https://github.com/kimjooyoon/gooo-ecosystem-workbench). The existing native release profiles check finite source, input, identity and replay observations on four platforms.
-
-          This release uses Go 1.27.2 and public decision-runtime v0.2.41-experimental. Native execution requires Go 1.27.2 on the host. Reading a saved report needs only the Gooo binary. Models are explicit local files. Source-declared cases and finite budgets bound construction; unlisted behavior remains unmeasured. Keep the matching compiler for historical receipts when source and receipt formats evolve.
-
-          ## Release evidence
-
-          - readiness run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID
-          - release cases: 26/26
-          - saved construction reports per target: text, Markdown and byte-identical JSON for two retained observations; six reads, zero new model or generated-program executions; outputs accompany the readiness platform artifacts
-          - native language examples per target: division 8/8, retry 12/12 and filenames 12/12, each constructed and replayed
-          - typed-path profile per target: original unary decline and ready record input, one record call/zero typed calls, bounded v7 construction and saved replay, three separate exact native values; raw outputs accompany the readiness platform artifacts
-          - package interface per target: two byte-identical JSON projections and plain output, original manifest/source digests, two owning packages, imported activity types and three optional record fields
-          - package text per target: three actual input outputs checked field by field, saved replay, no supplied-expectation score and zero new predictions
-          - imported packages per target: explicit and source-derived metadata, each constructed and replayed; four input rows and eight named outputs per run, identical generated program and zero new runtime/replay predictions
-          - caller-guided construction per target: two program attempts, caller score 0/1 then 1/1, helper score 1/1 throughout; four evaluation rows including an exact integer above 2^53, followed by saved history replay with zero new predictions
-          - native arithmetic per target: partial five-attempt 1/4, complete six-attempt 4/4 and saved replay; two preflight rejections and one native fault retained in each history, zero new inference
-          - native dependency graph per target: six matched outputs, one arithmetic fault and one blocked activity across two rows, then saved replay; original large integers and independent outputs retained
-          - package caller construction per target: partial five-attempt 1/4, complete six-attempt 4/4 and saved replay; original imported source image and caller cases, all rejections/faults and unchanged saved history, zero new inference
-          - package actual inputs per target: fresh partial/complete execution, execution from a scored receipt, repeated input-only replay, later labelled evaluation and exact plain values; eight total JSON receipts, zero invented evaluation scores and zero new replay inference
-          - graph context per target: exact source binding, v3 SDK decoding and feature extraction, zero predictions and zero candidate execution; raw observations accompany the readiness platform artifacts
-          - meta-bound indicators: 39/39
-          - release-readiness cells: 7/7
-          - publication assets: 9/9
-          - repository writes during readiness: 0
-
-          Language and receipt formats may evolve between development prereleases. Finite case results apply to the recorded checks and inputs.
+          Decision models remain explicit local inputs. Omit a model to use deterministic ordering. This publication adds compiler and platform observations; historical model learning results remain in their original guides.
           EOF
 
           tag_object="$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/tags" \
             -f tag="$RELEASE_TAG" \
-            -f message="Gooo v0.6.34-dev experimental prerelease" \
+            -f message="Gooo v0.6.35-dev experimental prerelease" \
             -f object="$VALIDATED_SHA" \
             -f type="commit" \
             --jq .sha)"
@@ -619,7 +543,7 @@ jobs:
             --draft \
             --prerelease \
             --latest=false \
-            --title "Gooo v0.6.34-dev" \
+            --title "Gooo v0.6.35-dev" \
             --notes-file "$notes"
       - name: Verify draft and publish prerelease
         shell: bash
@@ -661,7 +585,7 @@ jobs:
               manifest_digest:$manifest_digest,
               publication_meta_source_digest:$meta_source_digest,
               release:{url:.url,prerelease:.isPrerelease,draft:.isDraft,asset_names:[.assets[].name]|sort},
-              claim:{id:"release://gooo/v0.6.34-dev",entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
+              claim:{id:"release://gooo/v0.6.35-dev",entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
               summary:{total_work:9,closed:9,unknown:0,refuted:0,assets_published:(.assets|length),assets_total:9,checksum_entries:8,repository_writes:0}
             }' "$release_json" > "$RUNNER_TEMP/publication.json"
       - name: Upload publication result
@@ -704,7 +628,7 @@ jobs:
               mutation_allowed:false,
               upstream:{prepare:$prepare,publish:$publish},
               claim:{
-                id:"release://gooo/v0.6.34-dev",entity:"GoooExperimentalPrerelease",
+                id:"release://gooo/v0.6.35-dev",entity:"GoooExperimentalPrerelease",
                 status:"ACTIVE",state:"UNKNOWN",resolution:"OPERATION_CLASS",
                 stage:"RELEASE",step:"PUBLISH_PRERELEASE",
                 reason:"RELEASE_PUBLICATION_UPSTREAM_NOT_SUCCESS",

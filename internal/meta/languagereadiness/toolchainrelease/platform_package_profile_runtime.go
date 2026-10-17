@@ -1,6 +1,10 @@
 package toolchainrelease
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
+)
 
 type packageProfileRuntime struct {
 	Stage, Failure string
@@ -12,10 +16,16 @@ type packageProfileRuntime struct {
 	Replay         *bool  `json:"runtime_replayed"`
 	Traces         []struct {
 		Index      *int `json:"case_index"`
-		Deliveries []struct {
-			ID                      string `json:"activity_id"`
-			Input, Actual, Expected json.RawMessage
-			Passed                  *bool
-		}
+		Deliveries []packageProfileDelivery
 	}
+}
+
+// A delivery keeps the original positional ports as well as its native value.
+type packageProfileDelivery struct {
+	ID                      string `json:"activity_id"`
+	Input, Actual, Expected json.RawMessage
+	Inputs                  []bodyexecution.CompositionPortDelivery `json:"inputs"`
+	Passed                  *bool
+	Fault                   json.RawMessage `json:"fault"`
+	BlockedBy               []string        `json:"blocked_by"`
 }
