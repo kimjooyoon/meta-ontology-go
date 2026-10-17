@@ -19,8 +19,8 @@ func TestPolicyRequiresObservedPackageContract(t *testing.T) {
 	if policy.Schema != PolicySchema || len(policy.Bindings) != 12 || policy.Bindings[10] != "execution-package-inputs" {
 		t.Fatal("current policy omitted observed execution package inputs")
 	}
-	for _, marker := range []string{"test-reuse-contract=v1", "test-reuse-contract="} {
-		changed := bytes.Replace(source, []byte("test-reuse-contract=v2"), []byte(marker), 1)
+	for _, marker := range []string{"test-reuse-contract=v1", "test-reuse-contract=v2", "test-reuse-contract="} {
+		changed := bytes.Replace(source, []byte("test-reuse-contract=v3"), []byte(marker), 1)
 		if bytes.Equal(source, changed) {
 			t.Fatal("fixture contract marker was not found")
 		}
