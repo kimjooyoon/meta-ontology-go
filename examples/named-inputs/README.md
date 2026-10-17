@@ -12,18 +12,22 @@ return minuend - subtrahend
 실제 실행 파일은 [main.gooo](main.gooo)입니다. `Credit`이 원금에 23을
 더하고, `Net`이 그 결과와 외부 공제액을 `Difference`에 전달합니다.
 
-저장소 루트에서 실행합니다. 현재 설치된 릴리스에는 이 개발 문법이 없을 수
-있으므로 아래 명령은 체크아웃의 컴파일러를 사용합니다.
+공개 [0.6.35-dev](../../docs/releases/0.6.35-dev.md) 컴파일러를 설치하고,
+같은 버전의 소스 체크아웃 루트에서 실행합니다.
 
 ```sh
-go run ./cmd/gooo package execute --json \
+gooo package execute --json \
   --cases examples/named-inputs/cases.json examples/named-inputs/workspace.json
-go run ./cmd/gooo body-origins --activity Difference --format text \
+gooo body-origins --activity Difference --format text \
   examples/named-inputs/main.gooo
-go run ./cmd/gooo package interface --json examples/named-inputs/workspace.json
+gooo package interface --json examples/named-inputs/workspace.json
 ```
 
-첫 실행에서 별도 입력 사례 2개, 출력 조건 4개가 모두 맞았고 모델 호출은
+0.6.35 게시 전 원본 네 플랫폼 검사에서 실행과 저장 재실행을 확인했습니다.
+입력 사례는 2개, 각 실행의 출력 조건은 4개이며 모델 호출은 0회입니다.
+[공개 설치와 관찰 범위](../../docs/releases/0.6.35-dev.md#public-installation-observations)에 연결했습니다.
+
+이전 개발 소스의 첫 실행에서 별도 입력 사례 2개, 출력 조건 4개가 모두 맞았고 모델 호출은
 0회였습니다. 로컬 명령 벽시계 시간은 1.109초였습니다. 이 사례에 관한
 관찰이며 컴파일러 전체의 성능이나 정답률을 나타내지는 않습니다.
 

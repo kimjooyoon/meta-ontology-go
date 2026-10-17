@@ -8,7 +8,7 @@ This repository contains its Go compiler. Source files use the `.gooo` extension
 
 **Start here:** the [pinned first program](docs/getting-started.md) works without a
 model. Agents and CI consumers should read the [JSON result and exit-code guide](docs/getting-started.md#use-results-from-an-agent-or-ci).
-Development-source examples below may need a compiler newer than that walkthrough.
+The walkthrough pins 0.6.35-dev; each example records its own source and limits.
 
 [![Go / Gooo physical lines: 565,085 / 5,564](https://img.shields.io/badge/Go%20%2F%20Gooo%20lines-565%2C085%20%2F%205%2C564-546e7a)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
 [![Gooo share of Go and Gooo physical lines: 0.98%](https://img.shields.io/badge/Gooo%20share-0.98%25-8e44ad)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
@@ -105,8 +105,8 @@ The [Gooo reader](examples/derived-candidate-origins/README.md) classifies those
 locations with its own conditions. Listing makes zero model calls and executes
 no candidate. Four of six describes the retained construction space; functional
 case matches have a separate denominator. The
-[0.6.35 development guide](docs/releases/0.6.35-dev.md) records the pending release
-of these source features. The published walkthrough below stays on0.6.34.
+[0.6.35 guide](docs/releases/0.6.35-dev.md) records the published source, native
+archives and a Gooo reader consuming a fresh execution record.
 
 ## Try a working Gooo program
 
@@ -116,7 +116,7 @@ directory on macOS or Linux:
 
 ```sh
 GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.2 \
-  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.34-dev
+  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.35-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -124,9 +124,10 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.34 compiler. The
-[0.6.34 guide](docs/releases/0.6.34-dev.md) records its accepted source, platform
-archives and explicit V2/V3 model routes. The earlier
+This walkthrough pins the published 0.6.35 compiler. The
+[0.6.35 guide](docs/releases/0.6.35-dev.md) links its source and installation
+observations. The earlier [0.6.34 guide](docs/releases/0.6.34-dev.md) retains
+its source, platform archives and V2/V3 model observations. The earlier
 [0.6.33 guide](docs/releases/0.6.33-dev.md) connects the V2 return layout
 to source inspection, body construction and saved replay. Source-owned
 assignments, comparison order and Integer division remain visible to the model;
@@ -609,7 +610,7 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| [Compiler 0.6.34](docs/releases/0.6.34-dev.md) | SDK0.2.44; explicit V2/V3 source/requirement inspection, finite construction and source-bound replay | Neutral/V4 model integration and bounded semantic context |
+| [Compiler 0.6.35](docs/releases/0.6.35-dev.md) | SDK0.2.51; named inputs, bounded Text fields, Gooo origin readers and saved replay | More retained value/call links and source-owned metaprogramming |
 | [SDK0.2.51 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.51-experimental) | Separate return-branch output relations, explicit neutral input policy and numerical compatibility checks | [First V4 study regressed](docs/source-branch-output-v4.md#the-first-fitted-comparison-regressed); decision-head learning and broader behavior coverage need work |
 | [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
 | [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |

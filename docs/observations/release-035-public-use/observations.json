@@ -1,0 +1,132 @@
+{
+  "release": "v0.6.35-dev",
+  "published_at_utc": "2026-10-17T21:52:23Z",
+  "release_url": "https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.35-dev",
+  "source": "de99b770b8b5adea608233c3c0664902336e3310",
+  "readiness_run": 39072027242,
+  "publication_run": 39072560154,
+  "public_assets": 9,
+  "checksum_entries": 8,
+  "public_bytes_independently_hashed": 62565913,
+  "archive_build_identity": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.35-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.0.0-20261017214145-de99b770b8b5",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.0.0-20261017214145-de99b770b8b5"
+    },
+    "compiler_source_sha": "de99b770b8b5adea608233c3c0664902336e3310",
+    "source_status": "CLEAN_VCS",
+    "vcs_revision": "de99b770b8b5adea608233c3c0664902336e3310",
+    "vcs_modified": "false",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.51-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "module_install_identity": {
+    "schema": "gooo/build-identity/v1",
+    "language": "gooo",
+    "version": "0.6.35-dev",
+    "status": "development",
+    "build_info_observed": true,
+    "go_version": "go1.27.2",
+    "module_version": "v0.6.35-dev",
+    "module": {
+      "path": "github.com/kimjooyoon/meta-ontology-go",
+      "version": "v0.6.35-dev",
+      "sum": "h1:0Bk8cpXKMAuGV04jEDNpGJaj+P8aDiJKysGvhLyp1+Q="
+    },
+    "compiler_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "source_status": "UNOBSERVED_VCS",
+    "vcs_revision": "unobserved",
+    "vcs_modified": "unobserved",
+    "decision_runtime": {
+      "module_path": "github.com/kimjooyoon/gooo-decision-runtime",
+      "version": "v0.2.51-experimental",
+      "replaced": false
+    },
+    "native_go_required": "go1.27.2"
+  },
+  "module_proxy_origin": {
+    "VCS": "git",
+    "URL": "https://github.com/kimjooyoon/meta-ontology-go",
+    "Hash": "de99b770b8b5adea608233c3c0664902336e3310",
+    "Ref": "refs/tags/v0.6.35-dev"
+  },
+  "first_use": {
+    "compiler_source": "de99b770b8b5adea608233c3c0664902336e3310",
+    "decision": "PUBLIC_INSTALLED_AGENT_FIRST_USE_ACCEPTED",
+    "inspection": {
+      "program_executions": 0,
+      "model_predictions": 0
+    },
+    "source_cases": 4,
+    "expected_outputs": 8,
+    "matched_outputs": 8,
+    "new_input_rows": 3,
+    "new_input_deliveries": 6,
+    "new_input_runtime_expected_fields": 0,
+    "manual_literal_new_input_output_comparisons": 6,
+    "model_calls": 0,
+    "new_inputs_classification": "OBSERVED / INPUT_ONLY; six independent literal comparisons made by this review; no runtime case score",
+    "receipt_sha256": "sha256:8a753e217b8483c9e82743b7a3341365277b19daca74d878d96c8d126ce42330",
+    "public_release_installation": true,
+    "checks": {
+      "large_integer_input_preserved": true
+    }
+  },
+  "metaprogram": {
+    "decision": "PUBLIC_GOOO_METAPROGRAM_READS_FRESH_PUBLIC_BINARY_EXECUTION_ACCEPTED",
+    "source": "de99b770b8b5adea608233c3c0664902336e3310",
+    "producer_saved_document": "sha256:8a753e217b8483c9e82743b7a3341365277b19daca74d878d96c8d126ce42330",
+    "case": 0,
+    "use": 0,
+    "version_assignment": 1,
+    "earlier_assignment_exists": true,
+    "selected_assignment_completed": true,
+    "producer_program_executions_for_query": 0,
+    "producer_model_calls_for_query": 0,
+    "consumer_model_calls": 0,
+    "query_rows": 1,
+    "total_retained_uses": 3,
+    "page_truncated": true,
+    "rdf_triples": 26,
+    "independent_structural_relation_comparisons": 7,
+    "parser": "github.com/knakk/rdf@v0.0.0-20260907062454-42e760e83a4d",
+    "scope": "one retained same-frame completed version/use; independent parser acceptance and seven bounded relation assertions; not complete provenance or formal PROV-wide conformance",
+    "runtime_case_score": "OBSERVED/0 expected outputs"
+  },
+  "documents": [
+    {
+      "path": "first-execution.json.gz",
+      "original_bytes": 170773,
+      "original_sha256": "sha256:8a753e217b8483c9e82743b7a3341365277b19daca74d878d96c8d126ce42330",
+      "gzip_bytes": 20269,
+      "gzip_sha256": "sha256:55c7fe39161d9873db22fb9b0c07963c6d45e080f186d446a4ea35f40c4ec869"
+    },
+    {
+      "path": "new-input-replay.json.gz",
+      "original_bytes": 166787,
+      "original_sha256": "sha256:e94582c74c3b37749f8aed1ec1ebdce6cdd4df7b4c1900cdf91ebd5d5648cc35",
+      "gzip_bytes": 20329,
+      "gzip_sha256": "sha256:323c5e8f432fff2ca4ce4fa4ebb10e239fe382acfa8433165b43ea5dbfbe22db"
+    },
+    {
+      "path": "recorded-use-rdf.json.gz",
+      "original_bytes": 2490995,
+      "original_sha256": "sha256:7321a8d64b78b7c3afbe09e54e084e5f2ba8bada0ac6649456cf2e83307d075e",
+      "gzip_bytes": 160399,
+      "gzip_sha256": "sha256:e3e85a1ee2b6252bf15c74088995cdacde0097ae7ec056419c46fc6e507a02fb"
+    }
+  ],
+  "compression": "gzip level9/mtime0; decompressed bytes verified equal to original saved stdout; no normalization or metadata removal",
+  "scope": "maintainer local macOS arm64 first use plus original four-platform CI. The RDF query reads one retained use of three; 26 parsed triples and7 independently checked structural relations do not imply complete provenance or PROV-wide conformance. Whole-command timings, external adoption and model quality are outside this record."
+}
