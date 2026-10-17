@@ -22,15 +22,19 @@ func TestReceiptBindsObservedPackageInputs(t *testing.T) {
 	if err := ValidateReceipt(tampered); err == nil {
 		t.Fatal("package input observation was outside the receipt content identity")
 	}
-	contradictory := receipt
-	contradictory.Binding.PackageInputs.Members[0].Digest = strings.Repeat("b", 64)
-	var err error
-	contradictory.ReceiptID, err = ReceiptContentDigest(contradictory)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := ValidateReceipt(contradictory); err == nil {
-		t.Fatal("resealed contradictory test contract digests were accepted")
+	for _, member := range []int{0, 2} {
+		t.Run(receipt.Binding.PackageInputs.Members[member].Role, func(t *testing.T) {
+			contradictory := receipt
+			contradictory.Binding.PackageInputs.Members[member].Digest = strings.Repeat("b", 64)
+			var err error
+			contradictory.ReceiptID, err = ReceiptContentDigest(contradictory)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := ValidateReceipt(contradictory); err == nil {
+				t.Fatal("resealed contradictory selected-file digests were accepted")
+			}
+		})
 	}
 }
 

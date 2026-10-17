@@ -27,6 +27,26 @@ func TestExecutionPackageInputsMapPublishedCopies(t *testing.T) {
 	if err != nil || changed == observed || changed.Members[0] != observed.Members[0] || changed.Members[2] != observed.Members[2] {
 		t.Fatalf("module bytes were not bound independently: %v", err)
 	}
+	for _, name := range []string{"missing-module", "changed-program", "wrong-copy-name"} {
+		t.Run(name, func(t *testing.T) {
+			root, _, program, contract := writePackageInputFixture(t, true)
+			var err error
+			switch name {
+			case "missing-module":
+				err = os.Remove(filepath.Join(root, "go.mod"))
+			case "changed-program":
+				err = os.WriteFile(filepath.Join(root, "test-reuse-baseline-program.go"), []byte("changed"), 0o600)
+			case "wrong-copy-name":
+				err = os.Rename(filepath.Join(root, "test-reuse-baseline-program.go"), filepath.Join(root, "semantic.gooo.go"))
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := readPublishedPackageInputs(root, program, contract); err == nil {
+				t.Fatal("incorrect published input mapping was accepted")
+			}
+		})
+	}
 }
 
 func TestExecutionPackageInputsRejectUnobservedMembers(t *testing.T) {
