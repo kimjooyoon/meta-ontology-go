@@ -53,6 +53,14 @@ func fieldParentInput(t *testing.T, raw []byte, shape string) (map[string]json.R
 	return document.Inputs[0]["origin/fieldparent:Inspect"], report
 }
 
+func TestFieldParentExecuteUsage(t *testing.T) {
+	var output, diagnostic bytes.Buffer
+	code := run([]string{"package", "execute"}, &output, &diagnostic)
+	if code != exitUsage || !bytes.Contains(diagnostic.Bytes(), []byte("field-parent-columns")) {
+		t.Fatalf("field-parent input shape missing from CLI usage: code=%d stderr=%s", code, diagnostic.String())
+	}
+}
+
 func TestFieldParentProjectionIdentity(t *testing.T) {
 	raw, _ := fieldParentFixture(t)
 	for shape, count := range map[string]int{"field-lineage-columns": 26, "field-local-columns": 32, "field-parent-columns": 29} {

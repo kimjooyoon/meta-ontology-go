@@ -4,6 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/gooo-recorded-field-parent-20261018"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		"cmd/gooo/package_execute.go",
 		"cmd/gooo/package_field_parent_test.go",
 		"cmd/gooo/package_origin_input.go",
 		"examples/field-parent-origins.workspace.json",
