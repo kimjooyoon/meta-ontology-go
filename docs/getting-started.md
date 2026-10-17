@@ -97,6 +97,76 @@ then repeat `package execute` to create a fresh receipt. A source edit invalidat
 the old receipt; keep the old source and receipt together if you need both versions.
 The [starter guide](language/project-starters.md) also explains imported library projects.
 
+## Use results from an agent or CI
+
+Use `--json` when another program consumes the result. Keep stdout, stderr and
+the process exit code separately. Missing or malformed JSON does not satisfy an
+acceptance rule. The command's exit code reports whether the
+operation completed; the receipt records what was observed:
+
+| Result | Meaning and next action |
+| --- | --- |
+| `decision: "PASS"`, exit 0 | All supplied expected observations matched. Read `result.runtime.finite_passed` and `finite_total` for this finite scope. |
+| `decision: "PROGRESS"`, exit 0 | The operation completed and some supplied expectations differed. Inspect the mismatched fields; a CI acceptance rule should reject this result when it requires all supplied cases to match. |
+| `decision: "OBSERVED"`, exit 0 | Input-only observation without expected answers. Inspect the actual values and per-row fault/blocked details; there is no correctness percentage. |
+| `decision: "FAIL_CLOSED"`, exit 1 | The operation failed. Read `error` and any retained execution details before changing the source or environment. |
+| Exit 2 | The command arguments were rejected. Usage is written to stderr; stdout need not contain a JSON receipt. |
+
+`finite_total` counts expected field comparisons across the supplied rows;
+`finite_passed` counts matching field values. Retain the number of input rows
+separately when reporting a result.
+
+For the pinned walkthrough's `--cases` command, a shell CI step can use its
+existing JSON parser to require `PASS`, a positive `finite_total`, and equal
+`finite_passed` / `finite_total`. For example, in a POSIX shell with **jq** available:
+
+```sh
+set -eu
+gooo package execute --json --cases cases.json gooo.workspace.json > execution.json
+jq -e '.schema == "gooo/workspace-body-execution-receipt/v1" and
+       .decision == "PASS" and .error == null and
+       .result.runtime.finite_total > 0 and
+       .result.runtime.finite_passed == .result.runtime.finite_total' execution.json
+```
+
+Run these as separate CI steps or stop the shell on command failure. The JSON
+assertion is additional to the execute command's exit status. An input-only
+`OBSERVED` receipt does not satisfy this case-matching assertion. Choose expected
+outputs independently of the implementation you are checking.
+
+Keep the compiler version, source, workspace, inputs/cases and receipt together.
+After editing `.gooo`, run `package execute` again to select and save the new
+program. `package replay` checks the saved choices against the source and really
+executes the new inputs; it does not return saved outputs. A changed source can
+therefore reject an older receipt. Keep the old source with it if both versions
+are needed.
+
+Consumer CI checks the application's own source, contracts and cases with its
+pinned compiler. The compiler repository's internal six-check pipeline and
+experimental observation workflows are not installation requirements for this
+walkthrough. No model setup is needed. A later compiler upgrade is a separate
+compatibility change with its own cases.
+
+### Read a digest with its full field path
+
+The receipt keeps several different source representations. In the pinned
+compiler's direct `--cases` / `--inputs` walkthrough, these fields describe
+different inputs to SHA-256:
+
+| Receipt field | What it describes |
+| --- | --- |
+| `manifest_digest`, `inputs_digest`, `cases_digest` | The bytes of the corresponding supplied file, when that input mode is present. |
+| `result.program.workspace_image.packages[].sources[].source_digest` | The stored source string serialized by Go `json.Marshal`, including JSON quoting and escaping. This is different from hashing the raw `.gooo` file. |
+| The same source entry's `semantic_digest` | The compiler's semantic IR digest. |
+| `result.execution_source_sha256` | The combined, lowered Gooo source after applying body fills, passed to composition execution. If fills changed it, it differs from the initial `result.program.lowered_gooo_source`. |
+
+Match the source entry by package path and filename. Use the existing replay
+command to validate a saved program against its current sources; do not replace
+that check with equality between unrelated digest fields. When reporting a
+mismatch, retain the compiler version, full JSON path and the bytes or
+representation you compared. The source string's JSON digest is not a raw file
+checksum.
+
 ## Variables, conditions and source origins
 
 The development source includes a small [ordinary program](../examples/everyday-program/README.md).

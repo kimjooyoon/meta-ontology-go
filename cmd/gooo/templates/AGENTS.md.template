@@ -3,6 +3,7 @@
 Read README.md and the existing .gooo examples first. They show this project's
 supported syntax, construction choices and commands. Discover installed commands
 with `gooo help`; record the compiler identity with `gooo version --build --json`.
+Keep this compiler version for the task; review an upgrade as a separate change.
 Native execution uses Go 1.27.2 for the same host architecture as Gooo.
 
 ## Find the declaration to change
@@ -28,7 +29,7 @@ gooo package interface --json gooo.workspace.json
 imports and record fields. Consult `gooo help context` or `gooo help package`
 for the installed command's scope.
 
-## Implement and retain the evidence
+## Implement and retain source origins
 
 - Edit intent, conditions, assignments, choices and expected cases in .gooo
   source. Keep stable declaration IDs when changing display names.
@@ -45,3 +46,24 @@ for the installed command's scope.
 - Reuse a saved program through replay when only caller inputs change. Source
   changes require a fresh construction receipt. Report unmeasured behavior and
   remaining requirements alongside the finite results.
+
+## Read the operation result
+
+For workspace execution or replay, retain stdout JSON, stderr and the exit code.
+Exit 0 can carry `PROGRESS` when supplied expectations differ. CI that requires
+all cases to match should require `decision=PASS`, positive `finite_total` and
+`finite_passed=finite_total` in `result.runtime`. These counters count expected
+field comparisons; retain the input row count separately. Input-only `OBSERVED` is an
+execution observation with no correctness score. Argument errors can return
+exit 2 with usage on stderr and no JSON.
+
+Check this project's source, contracts and cases with its pinned compiler.
+The compiler repository's full internal CI is not this project's default check.
+
+Read digests by their full field paths. In a workspace source entry,
+`source_digest` hashes the source string serialized by Go `json.Marshal`;
+it is not the raw file checksum. `result.execution_source_sha256` hashes the
+combined source after body fills, which can differ from the initial
+`result.program.lowered_gooo_source`. Use package path and filename to identify
+the source, and use replay for the saved program's source check. Include the full
+JSON path and compared representation when reporting a mismatch.
