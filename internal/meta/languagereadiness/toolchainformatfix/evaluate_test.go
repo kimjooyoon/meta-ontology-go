@@ -22,4 +22,10 @@ func TestEvaluateProvesExecutablePlansAndFixedPoints(t *testing.T) {
 		report.RepositoryWrites != 0 {
 		t.Fatalf("report = %#v", report)
 	}
+	for _, result := range report.Cases {
+		if result.First.PeakRSSKiB <= 0 || result.Replay.PeakRSSKiB <= 0 ||
+			result.First.PeakRSSKiB == result.Replay.PeakRSSKiB || !result.ReplayMatched {
+			t.Fatal("runner observations were lost or changed format/fix replay equality", result)
+		}
+	}
 }

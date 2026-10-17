@@ -11,7 +11,7 @@ for deterministic order. A supplied unreadable or incompatible file is an error.
 
 Check the compiler's included SDK with gooo version --build --json.
 This source checkout includes the explicitly versioned V3 output-relation connection.
-The public compiler 0.6.33 includes SDK 0.2.42 and the V2 connection.
+Match a published compiler's release guide and the model's declared input format.
 
 Typed integer branches, comparisons and variables:
   1. From the matching source checkout, get model-choice-v1.json and its checksum
