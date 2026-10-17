@@ -28,6 +28,7 @@ func Collect(guardPath, transformationPath, expectedHead string) Source {
 		ReportDigest: guard.ReportDigest, HeadSHA: guard.Source.CurrentHeadSHA,
 		Decision: guard.Decision, Reason: guard.Reason, Resolution: guard.Resolution,
 		Satisfied: guard.Summary.Satisfied, Total: guard.Summary.Total,
+		NotSatisfied:                 guard.Summary.NotSatisfied,
 		Unresolved:                   guard.Summary.Unresolved,
 		RepositoryWrites:             guard.Summary.RepositoryWrites,
 		RepositoryMutationAuthorized: guard.Source.RepositoryMutationAuthorized}
