@@ -10,6 +10,9 @@ import (
 )
 
 func run(cfg config) error {
+	if cfg.compare != "" {
+		return compareSavedReports(cfg)
+	}
 	if cfg.root == "" || cfg.executable == "" || cfg.head == "" || cfg.concept == "" || cfg.corpus == "" {
 		return fmt.Errorf("root, executable, expected-head, concept, and corpus are required")
 	}

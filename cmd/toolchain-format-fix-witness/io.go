@@ -1,12 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	metaff "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix"
 )
 
 func readJSON[T any](filename string) (T, error) {
@@ -21,22 +22,19 @@ func readJSON[T any](filename string) (T, error) {
 	return *value, nil
 }
 
-func writeOrCheck(output, check string, value any) error {
+func writeOrCheck(output, check string, value metaff.Report) error {
+	if check != "" {
+		existing, err := readComparedReport(check)
+		if err != nil {
+			return err
+		}
+		return metaff.CompareReplayReports(existing, value, value.Source.ExpectedHeadSHA)
+	}
 	raw, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
 		return err
 	}
 	raw = append(raw, '\n')
-	if check != "" {
-		existing, err := os.ReadFile(check)
-		if err != nil {
-			return err
-		}
-		if !bytes.Equal(existing, raw) {
-			return fmt.Errorf("FAIL_CLOSED: toolchain format/fix replay mismatch")
-		}
-		return nil
-	}
 	if err := os.MkdirAll(filepath.Dir(output), 0o755); err != nil {
 		return err
 	}

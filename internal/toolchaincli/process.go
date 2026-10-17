@@ -26,6 +26,9 @@ func invoke(executable, root string, arguments []string) (Observation, error) {
 		result.ExitCode, result.Failure = -1, "INVOCATION_DEADLINE"
 	} else if stdout.overflow || stderr.overflow {
 		result.ExitCode, result.Failure = -1, "INVOCATION_OUTPUT_LIMIT"
+	} else if err != nil && command.ProcessState == nil {
+		result.ExitCode = -1
+		return result, err
 	} else if resourceErr != nil {
 		result.ExitCode, result.Failure = -1, "INVOCATION_RESOURCE_UNKNOWN"
 	} else if err != nil {
