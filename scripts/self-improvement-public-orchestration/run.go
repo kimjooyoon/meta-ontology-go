@@ -530,6 +530,9 @@ func readTestReuseReport(filename string) (publictestreuse.Report, error) {
 	} else if !errors.Is(err, io.EOF) {
 		return report, err
 	}
+	if err := publictestreuse.VerifyAssessment(report); err != nil {
+		return report, err
+	}
 	return report, nil
 }
 
