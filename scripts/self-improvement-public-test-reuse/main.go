@@ -9,7 +9,7 @@ import (
 
 func main() {
 	mode := flag.String("mode", "", "baseline, reuse, or verify")
-	policy := flag.String("policy", "", "canonical .gooo policy and source")
+	policy := flag.String("policy", "", "canonical .gooo project with reuse metadata")
 	source := flag.String("source", "", "canonical source .gooo")
 	program := flag.String("program", "", "generated program")
 	manifest := flag.String("manifest", "", "generated manifest")

@@ -1,6 +1,7 @@
 package publictestreuse
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,13 +10,13 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
 const (
-	PolicySchema        = "gooo/public-test-reuse-policy/v2"
-	EvaluatorSchema     = "gooo/public-test-reuse-policy-evaluator/v2"
+	PolicySchema        = "gooo/public-test-reuse-policy/v3"
 	PolicyActivity      = "Compile"
-	PolicyContract      = "v2"
+	PolicyContract      = "v3"
 	PolicyName          = "EXPLICIT_OPT_IN_IMMUTABLE_RECEIPT"
 	Operation           = "gooo.test.generated-public-reuse"
 	ArtifactDenominator = 24
@@ -37,6 +38,9 @@ const (
 	ReasonPolicy               = "REUSE_POLICY_MISMATCH"
 )
 
+//go:embed policy.gooo
+var decisionSource []byte
+
 var requiredBindings = []string{
 	"canonical-source", "canonical-semantic", "generated-output", "generated-semantic",
 	"generated-manifest", "compiler", "released-tool", "toolchain", "test-command",
@@ -53,24 +57,21 @@ var canonicalJourney = []string{
 	"authorize", "replay-validate", "reused-test", "evidence",
 }
 
-type Case struct {
-	ID       string
-	Decision string
-}
-
 type Policy struct {
-	Schema          string
-	SourceDigest    string
-	SemanticDigest  string
-	EvaluatorDigest string
-	Package         string
-	Namespace       string
-	Activity        string
-	Name            string
-	Bindings        []string
-	Journey         []string
-	ArtifactDenom   int
-	Cases           []Case
+	Schema               string
+	SourceDigest         string
+	DecisionSourceDigest string
+	SemanticDigest       string
+	EvaluatorDigest      string
+	Package              string
+	Namespace            string
+	Activity             string
+	Name                 string
+	Bindings             []string
+	Journey              []string
+	ArtifactDenom        int
+	filename             string
+	source               []byte
 }
 
 func CanonicalCaseIDs() []string { return append([]string(nil), canonicalCaseIDs...) }
@@ -79,71 +80,105 @@ func CanonicalJourney() []string { return append([]string(nil), canonicalJourney
 
 func RequiredBindings() []string { return append([]string(nil), requiredBindings...) }
 
-func (policy Policy) Decision(caseID string) (string, bool) {
-	for _, item := range policy.Cases {
-		if item.ID == caseID {
-			return item.Decision, true
-		}
-	}
-	return "", false
+func Load(filename string, source []byte) (Policy, error) {
+	return loadWithDecisionSource(filename, source, decisionSource)
 }
 
-func Load(filename string, source []byte) (Policy, error) {
-	if len(source) == 0 {
-		return Policy{}, errors.New("public test reuse policy source is empty")
+func loadWithDecisionSource(filename string, source, program []byte) (Policy, error) {
+	if len(source) == 0 || len(source) > 128<<10 || len(program) == 0 || len(program) > 128<<10 {
+		return Policy{}, errors.New("public test reuse policy source requires 1..131072 bytes")
 	}
-	file, diagnostics := syntax.ParseFile(filename, string(source))
-	if file == nil || diagnostics.HasErrors() {
-		return Policy{}, errors.New("public test reuse policy source has syntax diagnostics")
-	}
-	ir, err := bidir.Lower(file)
+	ir, err := lowerPolicy(filename, source)
 	if err != nil {
-		return Policy{}, fmt.Errorf("lower public test reuse policy: %w", err)
+		return Policy{}, err
 	}
-	if ir.Package != "publicdiscoveryexample" || ir.Namespace.String() != "public_discovery_example" {
-		return Policy{}, errors.New("public test reuse policy is not bound to the canonical public discovery project")
+	markers, err := policyMarkers(ir)
+	if err != nil {
+		return Policy{}, err
 	}
-	var activity semantic.Node
-	activityCount := 0
-	for _, node := range ir.Graph.Nodes() {
-		if node.Kind == semantic.Activity && node.Name == PolicyActivity {
-			activity = node
-			activityCount++
-		}
-	}
-	if activityCount != 1 || activity.ValueProgram == "" {
-		return Policy{}, errors.New("public test reuse policy activity is missing or ambiguous")
-	}
-	markers := parseMarkers(activity.ValueProgram)
 	if markers["test-reuse-contract"] != PolicyContract {
 		return Policy{}, errors.New("public test reuse policy contract version is unsupported")
 	}
-	policy := Policy{
-		Schema:         PolicySchema,
-		SourceDigest:   cache.HashBytes(source).String(),
-		SemanticDigest: ir.StableHash(),
-		Package:        ir.Package,
-		Namespace:      ir.Namespace.String(),
-		Activity:       PolicyActivity,
-		Name:           markers["test-reuse-policy"],
-		Bindings:       strings.Split(markers["test-reuse-bindings"], ","),
-		Journey:        strings.Split(markers["test-reuse-journey"], ">"),
-		ArtifactDenom:  parsePositiveInt(markers["test-reuse-artifact-denominator"]),
-		Cases:          parseCases(markers),
+	_, runtimeEvaluator := valueexecution.RuntimeEvidenceIdentities()
+	evaluator, err := sha256IdentityDigest(runtimeEvaluator)
+	if err != nil {
+		return Policy{}, fmt.Errorf("public test reuse evaluator identity: %w", err)
 	}
-	policy.EvaluatorDigest = evaluatorDigest(policy)
+	policy := Policy{
+		Schema:               PolicySchema,
+		SourceDigest:         cache.HashBytes(source).String(),
+		DecisionSourceDigest: cache.HashBytes(program).String(),
+		SemanticDigest:       ir.StableHash(),
+		EvaluatorDigest:      evaluator,
+		Package:              ir.Package,
+		Namespace:            ir.Namespace.String(),
+		Activity:             PolicyActivity,
+		Name:                 markers["test-reuse-policy"],
+		Bindings:             strings.Split(markers["test-reuse-bindings"], ","),
+		Journey:              strings.Split(markers["test-reuse-journey"], ">"),
+		ArtifactDenom:        parsePositiveInt(markers["test-reuse-artifact-denominator"]),
+		filename:             "internal/meta/publictestreuse/policy.gooo",
+		source:               append([]byte(nil), program...),
+	}
 	if err := policy.Validate(); err != nil {
 		return Policy{}, err
 	}
 	return policy, nil
 }
 
+// Runtime identities carry an algorithm prefix; receipt bindings retain the
+// existing lowercase SHA-256 representation. Convert only that exact contract.
+func sha256IdentityDigest(identity string) (string, error) {
+	digest, prefixed := strings.CutPrefix(identity, "sha256:")
+	if !prefixed || !cache.Digest(digest).Known() {
+		return "", errors.New("public test reuse requires a known sha256 identity")
+	}
+	return digest, nil
+}
+
+func knownSHA256Identity(identity string) bool {
+	_, err := sha256IdentityDigest(identity)
+	return err == nil
+}
+
+func lowerPolicy(filename string, source []byte) (semantic.IR, error) {
+	file, diagnostics := syntax.ParseFile(filename, string(source))
+	if file == nil || diagnostics.HasErrors() {
+		return semantic.IR{}, errors.New("public test reuse policy source has syntax diagnostics")
+	}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return semantic.IR{}, fmt.Errorf("lower public test reuse policy: %w", err)
+	}
+	return ir, nil
+}
+
+func policyMarkers(ir semantic.IR) (map[string]string, error) {
+	if ir.Package != "publicdiscoveryexample" || ir.Namespace.String() != "public_discovery_example" {
+		return nil, errors.New("public test reuse policy is not bound to the canonical public discovery project")
+	}
+	var activity semantic.Node
+	count := 0
+	for _, node := range ir.Graph.Nodes() {
+		if node.Kind != semantic.Activity {
+			continue
+		}
+		activity = node
+		count++
+	}
+	if count != 1 || activity.Name != PolicyActivity || activity.ValueProgram == "" {
+		return nil, errors.New("public test reuse metadata requires exactly one Compile activity")
+	}
+	return parseMarkers(activity.ValueProgram), nil
+}
+
 func (policy Policy) Validate() error {
 	if policy.Schema != PolicySchema || policy.Name != PolicyName || policy.Activity != PolicyActivity ||
 		policy.Package != "publicdiscoveryexample" || policy.Namespace != "public_discovery_example" ||
 		policy.ArtifactDenom != ArtifactDenominator || len(policy.Bindings) != len(requiredBindings) ||
-		len(policy.Journey) != len(canonicalJourney) || len(policy.Cases) != len(canonicalCaseIDs) {
-		return errors.New("public test reuse policy identity is invalid")
+		len(policy.Journey) != len(canonicalJourney) || !cache.Digest(policy.EvaluatorDigest).Known() ||
+		!cache.Digest(policy.SourceDigest).Known() || !cache.Digest(policy.DecisionSourceDigest).Known() {
+		return errors.New("public test reuse policy identity is invalid or its evaluator is unobserved")
 	}
 	for index, binding := range requiredBindings {
 		if policy.Bindings[index] != binding {
@@ -155,52 +190,7 @@ func (policy Policy) Validate() error {
 			return fmt.Errorf("public test reuse journey step %d is %q, want %q", index+1, policy.Journey[index], step)
 		}
 	}
-	seen := make(map[string]struct{}, len(policy.Cases))
-	for index, expectedID := range canonicalCaseIDs {
-		item := policy.Cases[index]
-		if item.ID != expectedID || (item.Decision != DecisionClosed && item.Decision != DecisionUnknown && item.Decision != DecisionRefuted) {
-			return fmt.Errorf("public test reuse case %d is not canonical", index+1)
-		}
-		if _, exists := seen[item.ID]; exists {
-			return fmt.Errorf("public test reuse case %q is duplicated", item.ID)
-		}
-		seen[item.ID] = struct{}{}
-	}
-	counts := map[string]int{}
-	for _, item := range policy.Cases {
-		counts[item.Decision]++
-	}
-	if counts[DecisionClosed] != 2 || counts[DecisionUnknown] != 2 || counts[DecisionRefuted] != 2 {
-		return fmt.Errorf("public test reuse policy decisions are %v, want 2/2/2", counts)
-	}
 	return nil
-}
-
-func EvaluatorDigest(policy Policy) string { return evaluatorDigest(policy) }
-
-func evaluatorDigest(policy Policy) string {
-	var builder strings.Builder
-	builder.WriteString(EvaluatorSchema)
-	builder.WriteByte('\n')
-	builder.WriteString(policy.Name)
-	builder.WriteByte('\n')
-	for _, binding := range policy.Bindings {
-		builder.WriteString(binding)
-		builder.WriteByte(',')
-	}
-	builder.WriteByte('\n')
-	for _, step := range policy.Journey {
-		builder.WriteString(step)
-		builder.WriteByte('>')
-	}
-	builder.WriteByte('\n')
-	for _, item := range policy.Cases {
-		builder.WriteString(item.ID)
-		builder.WriteByte('=')
-		builder.WriteString(item.Decision)
-		builder.WriteByte('\n')
-	}
-	return cache.HashBytes([]byte(builder.String())).String()
 }
 
 func parseMarkers(value string) map[string]string {
@@ -212,21 +202,6 @@ func parseMarkers(value string) map[string]string {
 		}
 	}
 	return markers
-}
-
-func parseCases(markers map[string]string) []Case {
-	var cases []Case
-	for index := 1; ; index++ {
-		value, ok := markers[fmt.Sprintf("test-reuse-case-%d", index)]
-		if !ok {
-			break
-		}
-		id, decision, ok := strings.Cut(value, ":")
-		if ok {
-			cases = append(cases, Case{ID: id, Decision: decision})
-		}
-	}
-	return cases
 }
 
 func parsePositiveInt(value string) int {
