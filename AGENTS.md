@@ -14,10 +14,6 @@ more consistent. The detailed policy is in [docs/governance.md](docs/governance.
   Record selection evidence and separate evaluation with their own denominators.
 - Design model decisions around the choices owned by Gooo source, with the
   deterministic execution path available when a model is absent.
-- Register a new `.gooo` corpus source through the existing
-  [syntax registration operation](docs/syntax-registration-candidate.md).
-  Its nine artifact roles keep the source registry and next denominator version
-  consistent while retaining previous cases and denominator bytes.
 
 ## Authority boundaries
 

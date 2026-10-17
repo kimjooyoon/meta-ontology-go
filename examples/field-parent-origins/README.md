@@ -61,3 +61,7 @@ go run ./cmd/gooo package execute --json \
 
 에이전트는 JSON의 `decision`, `finite_passed`, `finite_total`을 함께 확인합니다.
 부분 충족은 `PROGRESS`로 표현되며 명령 종료 코드는0일 수 있습니다.
+
+새 `.gooo` 예제를 언어 코퍼스에 추가할 때는 기존
+[문법 등록 작업](../../docs/syntax-registration-candidate.md)으로 아홉 등록 파일과
+분모 버전을 함께 구성합니다. 이전 코퍼스와 기록의 바이트는 보존합니다.
