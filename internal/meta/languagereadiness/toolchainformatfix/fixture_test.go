@@ -21,7 +21,7 @@ func (fake *fakeExecutor) Invoke(arguments []string) (cliruntime.Observation, er
 	exit, stdout, stderr := fakeOutput(strings.Join(arguments, "\x00"))
 	return cliruntime.Observation{Arguments: append([]string(nil), arguments...), ExitCode: exit,
 		Stdout: stdout, Stderr: stderr, TreeBeforeDigest: testDigest,
-		TreeAfterDigest: testDigest}, nil
+		TreeAfterDigest: testDigest, PeakRSSKiB: int64(10 + fake.calls)}, nil
 }
 
 func registryFixture(t interface{ Fatal(...any) }) []byte {

@@ -37,9 +37,13 @@ These laws connect the metric to `semantic.IR.SemanticCanonical`, not to a textu
 
 ## Munchhausen choices
 
-- `FOUNDATION`: bind the versioned 22-case registry and exact-head 19-case syntax receipt.
+- `FOUNDATION`: bind the versioned semantic case registry and the current-source
+  syntax receipt, including its source paths and digests.
 - `COHERENCE`: replay normalized IR, authoritative meaning, provenance, exact evidence, and the two positive authority laws.
 - `REGRESSION`: reject invalid syntax, candidate authority escalation, unknown evidence, effects, writes, and mutation authority.
+
+The 46-case denominator above belongs to the semantic registry. The upstream
+syntax receipt retains its own versioned cases and source inventory.
 
 ## gomacro reference boundary
 
