@@ -11,16 +11,20 @@ func executeCase(executor cliruntime.Executor, definition Definition) CaseResult
 		return unresolvedCase(result)
 	}
 	first, err := executor.Invoke(arguments)
-	if err != nil {
+	result.First, result.RepositoryWrites = first, first.RepositoryWrites
+	if err == nil {
+		result.Invocations = 1
+	}
+	if err != nil || first.Failure != "" {
 		return unresolvedCase(result)
 	}
-	result.First, result.Invocations = first, 1
 	replay, err := executor.Invoke(arguments)
-	if err != nil {
-		return unresolvedCase(result)
+	result.Replay = replay
+	result.RepositoryWrites += replay.RepositoryWrites
+	if err == nil {
+		result.Invocations = 2
 	}
-	result.Replay, result.Invocations = replay, 2
-	if first.Failure != "" || replay.Failure != "" {
+	if err != nil || replay.Failure != "" {
 		return unresolvedCase(result)
 	}
 	firstOutput, replayOutput := inspectOutput(definition, first), inspectOutput(definition, replay)
@@ -31,7 +35,6 @@ func executeCase(executor cliruntime.Executor, definition Definition) CaseResult
 	result.StructuredOutputs = firstOutput.structuredOutputs
 	result.LanguageOperations = firstOutput.languageOperations
 	result.DeclaredCommands = firstOutput.declaredCommands
-	result.RepositoryWrites = first.RepositoryWrites + replay.RepositoryWrites
 	result.Status, result.Reason = "NOT_SATISFIED", "CLI_CASE_MISMATCH"
 	if result.ExitMatched && result.StdoutMatched && result.StderrMatched &&
 		result.ReplayMatched && result.RepositoryWrites == 0 {
