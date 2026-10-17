@@ -167,6 +167,35 @@ mismatch, retain the compiler version, full JSON path and the bytes or
 representation you compared. The source string's JSON digest is not a raw file
 checksum.
 
+### Read values through the runtime trace
+
+For application results, read `result.runtime.traces[].deliveries[]`: each row
+keeps the activity ID, `actual` value and any `fault` or `blocked_by` condition.
+Use `case_index` to associate it with the supplied input row. Expected fields
+and their matching counts are present only for the corresponding case mode.
+
+The saved composition and the executable observation driver have separate origins:
+
+| Receipt field | Meaning |
+| --- | --- |
+| `result.composition.driver_source` and `driver_sha256` | The saved composition's base driver and its source digest. |
+| `result.runtime.observed_driver_sha256` | The driver actually derived for observation, when its source differs from the base driver. |
+| `result.runtime.runs[].stdout_sha256` | The exact bytes emitted by that native process, including its observation envelope and encoding. |
+
+For example, the arithmetic observer emits
+`gooo/arithmetic-outcome-observation/v1` with `outputs`, `faults`, `blocked` and
+`calls`, even when that run has zero faults. The outer runtime receipt can still
+use `gooo/body-composition-runtime/v1` in this case. Its version alone therefore
+does not identify the native stdout shape. A consumer that assumes the base
+driver's plain output matrix can reject a successful observation.
+
+The runtime trace already exposes the decoded values and conditions. Official
+replay checks the saved program and executes the new inputs through its own
+producer contract. If an independent audit needs native byte hashes, retain the
+exact producer revision and observation mode; re-encoding just the `actual`
+values describes different bytes. The [arithmetic observation notes](research/native-arithmetic-outcomes-20261009.md)
+describe this particular observation path.
+
 ## Variables, conditions and source origins
 
 The development source includes a small [ordinary program](../examples/everyday-program/README.md).
