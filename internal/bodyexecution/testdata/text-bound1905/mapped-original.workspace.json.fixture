@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "app/netip-mapped-output-probe",
+    "activity": "MappedOutput"
+  },
+  "packages": [
+    {
+      "path": "app/netip-mapped-output-probe",
+      "sources": ["mapped-output.gooo"]
+    }
+  ]
+}

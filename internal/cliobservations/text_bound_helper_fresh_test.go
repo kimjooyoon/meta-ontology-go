@@ -67,19 +67,23 @@ func executeTextBound1905(t *testing.T, name string, source []byte, activity str
 
 func retainTextBound1905(t *testing.T, name string, observation any) {
 	t.Helper()
+	retainTextBoundScope1907(t, "text-bound-native", name, observation)
+}
+
+func retainTextBoundScope1907(t *testing.T, scope, name string, observation any) {
+	t.Helper()
 	root := os.Getenv("GOOO_CI_ORIGIN_ROOT")
 	if root == "" {
 		return
 	}
-	dir := filepath.Join(root, "text-bound-native")
+	dir := filepath.Join(root, scope)
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	metadata := map[string]any{"source_head": os.Getenv("GOOO_CI_SOURCE_HEAD"),
 		"run_id": os.Getenv("GITHUB_RUN_ID"), "attempt": os.Getenv("GITHUB_RUN_ATTEMPT"),
-		"job": os.Getenv("GITHUB_JOB"), "observation": observation}
-	metadata["source_head_scope"] = "ADMITTED_WORK"
-	metadata["compiler_build_source_sha"] = commandSourceIdentity
+		"job": os.Getenv("GITHUB_JOB"), "observation": observation,
+		"source_head_scope": "ADMITTED_WORK", "compiler_build_source_sha": commandSourceIdentity}
 	raw, err := json.Marshal(metadata)
 	if err != nil {
 		t.Fatal(err)

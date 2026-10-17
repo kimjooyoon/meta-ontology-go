@@ -24,10 +24,12 @@ var commandBinary string
 var commandSourceIdentity string
 
 type packageExecutionReceipt struct {
-	Decision    string                           `json:"decision"`
-	Error       string                           `json:"error,omitempty"`
-	Result      *workspaceexecution.Result       `json:"result,omitempty"`
-	OriginInput *bodyexecution.NativeOriginInput `json:"origin_input,omitempty"`
+	Decision     string                           `json:"decision"`
+	Error        string                           `json:"error,omitempty"`
+	Result       *workspaceexecution.Result       `json:"result,omitempty"`
+	OriginInput  *bodyexecution.NativeOriginInput `json:"origin_input,omitempty"`
+	InputsDigest string                           `json:"inputs_digest,omitempty"`
+	CasesDigest  string                           `json:"cases_digest,omitempty"`
 }
 
 func TestMain(m *testing.M) {
