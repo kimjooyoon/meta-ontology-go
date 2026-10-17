@@ -1,4 +1,4 @@
-package main
+package sourcerepack
 
 import (
 	"flag"
@@ -17,7 +17,8 @@ type config struct {
 	check   bool
 }
 
-func run(args []string) error {
+// Run observes or applies plans selected by exact-source metrics.
+func Run(args []string) error {
 	cfg, err := parseConfig(args)
 	if err != nil {
 		return err

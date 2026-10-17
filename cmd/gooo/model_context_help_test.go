@@ -15,6 +15,10 @@ func TestRecordModelHelpConnectsInspectionAssemblyAndReplay(t *testing.T) {
 			!strings.Contains(out.String(), "examples/scalar-identity/model/model.json") {
 			t.Fatal("implemented model route has no executable guide", args, out.String(), stderr.String())
 		}
+		if args[1] == "models" && (!strings.Contains(out.String(), "gooo version --build --json") ||
+			!strings.Contains(out.String(), "release guide")) {
+			t.Fatal("model guide does not identify installed compiler and release scope", out.String())
+		}
 	}
 	var out, stderr bytes.Buffer
 	if run([]string{"help", "body-context"}, &out, &stderr) != exitOK ||
