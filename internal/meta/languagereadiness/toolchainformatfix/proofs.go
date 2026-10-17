@@ -14,7 +14,7 @@ func proofs(report Report, cycle cycleEvidence) []Proof {
 			EvidenceDigest: digestJSON(report.Source), Passed: foundation},
 		{Choice: "COHERENCE", MetaOperation: "apply-plan-to-fixed-point-in-memory",
 			EvidenceDigest: digestJSON(cycle), Passed: coherence},
-		{Choice: "REGRESSION", MetaOperation: "reject-unknown-and-write-boundaries",
+		{Choice: "REGRESSION", MetaOperation: caseProofOperation,
 			EvidenceDigest: digestJSON(report.Cases), Passed: regression},
 	}
 }

@@ -1,6 +1,7 @@
 package toolchaincli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,10 +31,17 @@ func (session Session) Invoke(arguments []string) (Observation, error) {
 	}
 	result, invokeErr := invoke(session.Executable, session.Root, arguments)
 	after, err := snapshot(session.Root)
-	if err != nil {
-		return result, err
+	return completeInvocation(result, before, after, invokeErr, err)
+}
+
+func completeInvocation(
+	result Observation, before, after treeSnapshot, invokeErr, snapshotErr error,
+) (Observation, error) {
+	result.TreeBeforeDigest = before.Digest
+	if snapshotErr != nil {
+		return result, errors.Join(invokeErr, snapshotErr)
 	}
-	result.TreeBeforeDigest, result.TreeAfterDigest = before.Digest, after.Digest
+	result.TreeAfterDigest = after.Digest
 	result.RepositoryWrites = changedFiles(before, after)
 	return result, invokeErr
 }

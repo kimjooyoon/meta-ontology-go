@@ -1851,7 +1851,10 @@ jobs:
                 exit 1
               }
           done
-          cmp -s "$format_fix_first/artifact.json" "$format_fix_replay/artifact.json"
+          go run ./cmd/toolchain-format-fix-witness \
+            --compare "$format_fix_first/artifact.json" \
+            --check "$format_fix_replay/artifact.json" \
+            --expected-head "$HEAD_SHA"
           go run ./cmd/toolchain-format-fix-witness \
             --root "$GITHUB_WORKSPACE" \
             --executable "$cli_binary" \
