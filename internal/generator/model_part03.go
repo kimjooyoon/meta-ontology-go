@@ -2,25 +2,28 @@ package generator
 
 import (
 	"encoding/json"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/textbound"
 )
 
 // MarshalJSON keeps the established fieldless source-map wire form stable
 // while publishing the additional field metadata only for field mappings.
 func (mapping SourceMapping) MarshalJSON() ([]byte, error) {
 	type sourceMappingWire struct {
-		SemanticID     string      `json:"SemanticID"`
-		Kind           string      `json:"Kind"`
-		Ordinal        int         `json:"Ordinal"`
-		Source         SourceSpan  `json:"Source"`
-		Generated      SourceRange `json:"Generated"`
-		ParentID       string      `json:"parent_id,omitempty"`
-		TypeRefID      string      `json:"type_ref_id,omitempty"`
-		Presence       string      `json:"presence,omitempty"`
-		Cardinality    string      `json:"cardinality,omitempty"`
-		NameSource     *SourceSpan `json:"name_source,omitempty"`
-		ProfileID      string      `json:"profile_id,omitempty"`
-		ProfileVersion int         `json:"profile_version,omitempty"`
-		ProfileDigest  string      `json:"profile_digest,omitempty"`
+		SemanticID     string         `json:"SemanticID"`
+		Kind           string         `json:"Kind"`
+		Ordinal        int            `json:"Ordinal"`
+		Source         SourceSpan     `json:"Source"`
+		Generated      SourceRange    `json:"Generated"`
+		ParentID       string         `json:"parent_id,omitempty"`
+		TypeRefID      string         `json:"type_ref_id,omitempty"`
+		Presence       string         `json:"presence,omitempty"`
+		Cardinality    string         `json:"cardinality,omitempty"`
+		NameSource     *SourceSpan    `json:"name_source,omitempty"`
+		ProfileID      string         `json:"profile_id,omitempty"`
+		ProfileVersion int            `json:"profile_version,omitempty"`
+		ProfileDigest  string         `json:"profile_digest,omitempty"`
+		TextBound      textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 	}
 	var nameSource *SourceSpan
 	if !sourceSpanIsZero(mapping.NameSource) {
@@ -33,6 +36,7 @@ func (mapping SourceMapping) MarshalJSON() ([]byte, error) {
 		TypeRefID: mapping.TypeRefID, Presence: mapping.Presence, Cardinality: mapping.Cardinality,
 		NameSource: nameSource, ProfileID: mapping.ProfileID, ProfileVersion: mapping.ProfileVersion,
 		ProfileDigest: mapping.ProfileDigest,
+		TextBound:     mapping.TextBound,
 	})
 }
 

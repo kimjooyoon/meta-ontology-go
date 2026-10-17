@@ -25,6 +25,7 @@ func appendEntityFieldMappings(result *SourceMap, source []byte, region generate
 			ProfileID:      profile.ID,
 			ProfileVersion: profile.Version,
 			ProfileDigest:  profile.Digest,
+			TextBound:      field.TextBound,
 		})
 	}
 	return nil

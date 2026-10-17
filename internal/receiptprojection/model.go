@@ -55,108 +55,21 @@ func Compile(filename string, source []byte, root string) (Projection, error) {
 	if len(file.Bindings) != 0 {
 		return Projection{}, fmt.Errorf("receipt schema profile does not execute bindings")
 	}
-	p := Projection{Package: file.Package.Name, Root: root, SourceSHA256: fmt.Sprintf("%x", sha256.Sum256(source)), source: bytes.Clone(source), filename: filename, originalRoot: root}
-	byName := map[string]*syntax.EntityDecl{}
-	ids := map[string]bool{}
-	for _, decl := range file.Declarations {
-		entity, ok := decl.(*syntax.EntityDecl)
-		if !ok {
-			return Projection{}, fmt.Errorf("receipt schema profile accepts entity declarations only")
-		}
-		if _, ok := byName[entity.Name]; ok {
-			return Projection{}, fmt.Errorf("duplicate entity name %q", entity.Name)
-		}
-		if err := claimID(ids, entity.ID); err != nil {
-			return Projection{}, err
-		}
-		byName[entity.Name] = entity
+	byName, ids, err := collectReceiptEntities(file)
+	if err != nil {
+		return Projection{}, err
 	}
-	rootEntity, ok := byName[root]
-	if !ok || !rootEntity.FieldsPresent {
-		return Projection{}, fmt.Errorf("root receipt entity %q is absent or has no fields", root)
+	schema, err := receiptSchema(byName, root)
+	if err != nil {
+		return Projection{}, err
 	}
-	if !strings.HasPrefix(rootEntity.ID, "gooo://schema/") || rootEntity.ID == "gooo://schema/" {
-		return Projection{}, fmt.Errorf("root receipt ID must use gooo://schema/")
+	entities, err := projectReceiptEntities(file, byName, ids, root)
+	if err != nil {
+		return Projection{}, err
 	}
-	p.Schema = "gooo/" + strings.TrimPrefix(rootEntity.ID, "gooo://schema/")
-	boundSchema := false
-	for _, field := range rootEntity.Fields {
-		wireName := field.Name
-		if wireName == strings.ToUpper(wireName) {
-			wireName = strings.ToLower(wireName)
-		}
-		if wireName != "schema" {
-			continue
-		}
-		target, exists := byName[field.TypeRef.Spelling]
-		boundSchema = exists && target.ID == typePrefix+"text" && field.Presence == syntax.FieldPresenceRequired && field.Cardinality == syntax.FieldCardinalityOne
-	}
-	if !boundSchema {
-		return Projection{}, fmt.Errorf("root receipt requires a single required text schema field")
-	}
-	for _, decl := range file.Declarations {
-		entity := decl.(*syntax.EntityDecl)
-		if representation, scalar := scalarTypes[entity.ID]; scalar {
-			if representation == "" || entity.FieldsPresent {
-				return Projection{}, fmt.Errorf("scalar entity %q has structural fields", entity.Name)
-			}
-			continue
-		}
-		if !entity.FieldsPresent || len(entity.Fields) == 0 || !exportedName(entity.Name) {
-			return Projection{}, fmt.Errorf("unsupported scalar or structural entity %q", entity.Name)
-		}
-		if entity.Name == root+"Schema" || entity.Name == "DeclarationSHA256" || entity.Name == "ProjectionProfile" {
-			return Projection{}, fmt.Errorf("entity name %q collides with projection metadata", entity.Name)
-		}
-		e := Entity{ID: entity.ID, Name: entity.Name}
-		names := map[string]bool{}
-		goNames := map[string]bool{}
-		for _, field := range entity.Fields {
-			if err := claimID(ids, field.ID); err != nil {
-				return Projection{}, err
-			}
-			wireName := field.Name
-			if wireName == strings.ToUpper(wireName) {
-				wireName = strings.ToLower(wireName)
-			}
-			name := goFieldName(wireName)
-			if !exportedName(name) || names[wireName] || goNames[name] {
-				return Projection{}, fmt.Errorf("invalid or colliding field name %q", field.Name)
-			}
-			names[wireName] = true
-			goNames[name] = true
-			target, ok := byName[field.TypeRef.Spelling]
-			if !ok {
-				return Projection{}, fmt.Errorf("unresolved field type %q", field.TypeRef.Spelling)
-			}
-			goType, scalar := scalarTypes[target.ID]
-			if !scalar {
-				if !target.FieldsPresent || !exportedName(target.Name) {
-					return Projection{}, fmt.Errorf("unsupported type %q", target.Name)
-				}
-				goType = target.Name
-			}
-			if !field.Presence.Valid() || !field.Cardinality.Valid() {
-				return Projection{}, fmt.Errorf("unsupported presence or cardinality")
-			}
-			optional := field.Presence == syntax.FieldPresenceOptional
-			many := field.Cardinality == syntax.FieldCardinalityMany
-			if optional && many {
-				return Projection{}, fmt.Errorf("optional-many is outside receipt profile")
-			}
-			if !scalar && !optional && !many {
-				return Projection{}, fmt.Errorf("structural fields require optional-one or required-many; unbounded value recursion is rejected")
-			}
-			if many {
-				goType = "[]" + goType
-			} else if optional {
-				goType = "*" + goType
-			}
-			e.Fields = append(e.Fields, Field{ID: field.ID, Name: wireName, GoName: name, TypeID: target.ID, GoType: goType, Optional: optional, Many: many, Span: field.Span})
-		}
-		p.Entities = append(p.Entities, e)
-	}
-	return p, nil
+	return Projection{Package: file.Package.Name, Root: root, Schema: schema, Entities: entities,
+		SourceSHA256: fmt.Sprintf("%x", sha256.Sum256(source)), source: bytes.Clone(source),
+		filename: filename, originalRoot: root}, nil
 }
 
 func exportedName(name string) bool {

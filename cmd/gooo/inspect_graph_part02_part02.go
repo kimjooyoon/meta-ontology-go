@@ -18,7 +18,8 @@ func graphNodes(nodes []semantic.Node) []graphNode {
 			fields = append(fields, graphField{
 				ID: string(field.ID), Parent: string(field.Parent), Name: field.Name, Aliases: fieldAliases,
 				TypeRefID: string(field.TypeRef.ID), Presence: string(field.Presence), Cardinality: string(field.Cardinality),
-				Source: graphSpan{File: field.Span.File, Start: graphPosition{Offset: field.Span.Start.Offset, Line: field.Span.Start.Line, Column: field.Span.Start.Column}, End: graphPosition{Offset: field.Span.End.Offset, Line: field.Span.End.Line, Column: field.Span.End.Column}},
+				TextBound: field.TextBound,
+				Source:    graphSpan{File: field.Span.File, Start: graphPosition{Offset: field.Span.Start.Offset, Line: field.Span.Start.Line, Column: field.Span.Start.Column}, End: graphPosition{Offset: field.Span.End.Offset, Line: field.Span.End.Line, Column: field.Span.End.Column}},
 			})
 		}
 		result = append(result, graphNode{

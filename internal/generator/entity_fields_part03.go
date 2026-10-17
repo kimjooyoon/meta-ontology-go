@@ -5,7 +5,11 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func validateSupportedEntityFields(ir SemanticIR, profileID string) error {
+func validateSupportedEntityFields(ir SemanticIR, profile syntax.EntityFieldsProfile) error {
+	capabilities, err := profile.Capabilities()
+	if err != nil {
+		return err
+	}
 	used := make(map[string]string, len(ir.Entities)+len(ir.Activities))
 	for _, entity := range ir.Entities {
 		if previous, exists := used[entity.ID]; exists {
@@ -35,10 +39,8 @@ func validateSupportedEntityFields(ir SemanticIR, profileID string) error {
 		var previousStart int
 		var hasPrevious bool
 		for index, field := range entity.Fields {
-			if err := validateSupportedField(entity, index, field, used, seenNames, sourceURI, previousStart, hasPrevious,
-				profileID == syntax.EntityFieldsV2ProfileID || profileID == syntax.EntityFieldsV3ProfileID || profileID == syntax.EntityFieldsV4ProfileID || profileID == syntax.EntityFieldsV5ProfileID,
-				profileID == syntax.EntityFieldsV3ProfileID || profileID == syntax.EntityFieldsV4ProfileID || profileID == syntax.EntityFieldsV5ProfileID,
-				profileID == syntax.EntityFieldsV4ProfileID || profileID == syntax.EntityFieldsV5ProfileID, profileID == syntax.EntityFieldsV5ProfileID); err != nil {
+			if err := validateSupportedField(entity, index, field, used, seenNames, sourceURI,
+				previousStart, hasPrevious, capabilities); err != nil {
 				return err
 			}
 			if sourceURI == "" {

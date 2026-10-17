@@ -1,0 +1,14 @@
+package bounded_text
+namespace bounded_text
+
+entity Text id "urn:gooo:type:string"
+
+entity Expanded id "gooo://examples/bounded-text/expanded" fields {
+    field value id "gooo://examples/bounded-text/expanded/value" type string required one max_utf8_bytes "1030"
+}
+
+# The standalone Text input keeps its existing 1024-byte limit.
+# The result field declares room for the six-byte prefix before execution.
+activity Prefix(Text) -> Expanded id "gooo://examples/bounded-text/prefix" computes `
+return Expanded{value: "prefix" + input}
+`

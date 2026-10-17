@@ -36,7 +36,7 @@ func renderEntity(entity Entity) string {
 	} else {
 		fmt.Fprintf(&output, "type %s struct {\n", entity.GoName)
 		for _, field := range entity.Fields {
-			fmt.Fprintf(&output, "\t%s %s\n", field.GoName, field.GoType)
+			fmt.Fprintf(&output, "\t%s %s%s\n", field.GoName, field.GoType, fieldTextBoundTag(field))
 		}
 		output.WriteString("}\n")
 	}

@@ -94,20 +94,27 @@ func EntityFieldsV5Support() EntityFieldsSupport {
 
 const RepeatedFieldLimit = 256
 
-// EntityFieldsSupportForFile advances only source that declares many fields.
-// Scalar-only source retains the caller's original profile and fingerprints.
+// EntityFieldsSupportForFile advances only for declared field capabilities.
+// Source without collections or Text bounds retains the prior fingerprints.
 func EntityFieldsSupportForFile(file *File, prior EntityFieldsSupport) EntityFieldsSupport {
-	if file == nil {
+	if file == nil || prior.State != EntityFieldsSupported || prior.Validate() != nil {
 		return prior
 	}
+	many := false
 	for _, declaration := range file.Declarations {
 		if entity, ok := declaration.(*EntityDecl); ok {
 			for _, field := range entity.Fields {
+				if field.TextBound.IsSet() {
+					return EntityFieldsV6Support()
+				}
 				if field.Cardinality == FieldCardinalityMany {
-					return EntityFieldsV5Support()
+					many = true
 				}
 			}
 		}
+	}
+	if many && prior.Profile.Version < EntityFieldsV5ProfileVersion {
+		return EntityFieldsV5Support()
 	}
 	return prior
 }

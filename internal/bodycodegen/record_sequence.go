@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/types"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/textbound"
 )
 
 // Collections are immutable scalar sequences. Record copies can share their
@@ -26,6 +28,13 @@ func (s *recordBodySequence) MarshalJSON() ([]byte, error) {
 }
 
 func decodeRecordSequence(raw []byte, sequence *types.Slice, records []RecordType) (*recordBodySequence, error) {
+	return decodeRecordSequenceWithBound(raw, sequence, records, 0)
+}
+
+func decodeRecordSequenceWithBound(raw []byte, sequence *types.Slice, records []RecordType, bound textbound.UTF8) (*recordBodySequence, error) {
+	if bound.Validate() != nil || bound.IsSet() && sequence.Elem() != types.Typ[types.String] {
+		return nil, fmt.Errorf("max_utf8_bytes requires Text collection elements")
+	}
 	raw = bytes.TrimSpace(raw)
 	if len(raw) == 0 || raw[0] != '[' {
 		return nil, fmt.Errorf("repeated field requires an ordered array")
@@ -43,7 +52,7 @@ func decodeRecordSequence(raw []byte, sequence *types.Slice, records []RecordTyp
 	}
 	result := &recordBodySequence{Kind: kind, Values: make([]recordBodyScalar, len(encoded))}
 	for i, raw := range encoded {
-		value, err := decodeRecordCaseValue(raw, sequence.Elem(), records)
+		value, err := decodeRecordCaseField(raw, sequence.Elem(), records, bound)
 		if err != nil {
 			return nil, fmt.Errorf("element %d: %w", i, err)
 		}

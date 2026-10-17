@@ -3,7 +3,6 @@ package bidir
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 	"strings"
 )
 
@@ -30,13 +29,21 @@ func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistr
 		return classifyEntityFieldsTypeError(field, err)
 	}
 	stringType := typeID == semantic.BuiltinStringTypeID
-	booleanType := typeID == semantic.BuiltinBooleanTypeID && (support.Profile.ID == syntax.EntityFieldsV2ProfileID || support.Profile.ID == syntax.EntityFieldsV3ProfileID || support.Profile.ID == syntax.EntityFieldsV4ProfileID || support.Profile.ID == syntax.EntityFieldsV5ProfileID)
-	integerType := typeID == semantic.BuiltinIntegerTypeID && (support.Profile.ID == syntax.EntityFieldsV3ProfileID || support.Profile.ID == syntax.EntityFieldsV4ProfileID || support.Profile.ID == syntax.EntityFieldsV5ProfileID)
+	capabilities, err := support.Profile.Capabilities()
+	if err != nil {
+		return err
+	}
+	booleanType := typeID == semantic.BuiltinBooleanTypeID && capabilities.Boolean
+	integerType := typeID == semantic.BuiltinIntegerTypeID && capabilities.Integer
 	if !stringType && !booleanType && !integerType {
 		return entityFieldsProfileError(field, EntityFieldsUnsupportedTypeDiagnostic, fmt.Sprintf("resolved type %q is not in the bound profile", typeID))
 	}
-	validPresence := normalized.Presence == FieldPresenceRequired || (support.Profile.ID == syntax.EntityFieldsV4ProfileID || support.Profile.ID == syntax.EntityFieldsV5ProfileID) && normalized.Presence == FieldPresenceOptional
-	validCardinality := normalized.Cardinality == FieldCardinalityOne || support.Profile.ID == syntax.EntityFieldsV5ProfileID && normalized.Cardinality == FieldCardinalityMany
+	if normalized.TextBound.IsSet() && (!capabilities.TextBound || !stringType) {
+		return entityFieldsProfileError(field, EntityFieldsUnsupportedTypeDiagnostic,
+			"max_utf8_bytes requires Text under the V6 profile")
+	}
+	validPresence := normalized.Presence == FieldPresenceRequired || capabilities.Optional && normalized.Presence == FieldPresenceOptional
+	validCardinality := normalized.Cardinality == FieldCardinalityOne || capabilities.Many && normalized.Cardinality == FieldCardinalityMany
 	if !validPresence || !validCardinality {
 		return entityFieldsProfileError(field, EntityFieldsUnsupportedShapeDiagnostic, "the bound profile does not support this presence/cardinality shape")
 	}
