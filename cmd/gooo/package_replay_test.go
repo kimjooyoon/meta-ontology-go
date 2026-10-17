@@ -43,7 +43,8 @@ func TestRunPackageReplayRelocatesAndRunsNewInputsWithoutProvider(t *testing.T) 
 	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
 		t.Fatal(err)
 	}
-	if receipt.Decision != "OBSERVED" || receipt.InputsDigest == "" || receipt.CasesDigest != "" || receipt.ReplayedFrom == "" || receipt.Result == nil {
+	if receipt.Decision != "OBSERVED" || receipt.InputsDigest == "" || receipt.CasesDigest != "" ||
+		receipt.ReplayedFrom == "" || receipt.Result == nil || receipt.Failure != nil {
 		t.Fatal("replay envelope differs", receipt)
 	}
 	r := receipt.Result
@@ -54,6 +55,7 @@ func TestRunPackageReplayRelocatesAndRunsNewInputsWithoutProvider(t *testing.T) 
 	if code := run(append(append([]string(nil), args[:2]...), args[3:]...), &stdout, &stderr); code != exitOK || !strings.Contains(stdout.String(), "partial: missing branch result [repair-and-replay]") {
 		t.Fatal("entry values unavailable", code, stdout.String(), stderr.String())
 	}
+	assertPackageReplaySourceRefusals(t, args, copyRoot)
 	if err := os.WriteFile(filepath.Join(copyRoot, "app.gooo.fixture"), []byte("package changed\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -115,5 +117,61 @@ func TestRunPackageReplayRejectsAmbiguousOrInferenceOptions(t *testing.T) {
 		if code := run(append([]string{"package", "replay"}, args...), &stdout, &stderr); code != exitUsage {
 			t.Fatal("unsupported replay arguments accepted", args, code)
 		}
+	}
+}
+
+func assertPackageReplaySourceRefusals(t *testing.T, args []string, root string) {
+	t.Helper()
+	for _, tc := range []struct {
+		name, file, code, detail string
+		inputsRead              bool
+	}{
+		{
+			name:   "manifest",
+			file:   "gooo.workspace.json",
+			code:   "REPLAY_MANIFEST_MISMATCH",
+			detail: "saved execution envelope or workspace manifest differs",
+		},
+		{
+			name:       "source",
+			file:       "app.gooo.fixture",
+			code:       "REPLAY_SOURCE_MISMATCH",
+			detail:     "saved workspace differs from current sources, dependencies, entry or lowered graph",
+			inputsRead: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(root, tc.file)
+			raw, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			changed := append(append([]byte(nil), raw...), '\n')
+			if tc.inputsRead {
+				changed = bytes.Replace(raw, []byte("return input.code"), []byte(`return "changed:" + input.code`), 1)
+				if bytes.Equal(changed, raw) {
+					t.Fatal("source mutation did not change the body")
+				}
+			}
+			if err := os.WriteFile(path, changed, 0600); err != nil {
+				t.Fatal(err)
+			}
+			defer func() {
+				if err := os.WriteFile(path, raw, 0600); err != nil {
+					t.Fatal(err)
+				}
+			}()
+			var out, diagnostics bytes.Buffer
+			code := run(args, &out, &diagnostics)
+			var rejected packageExecutionReceipt
+			if err := json.Unmarshal(out.Bytes(), &rejected); err != nil {
+				t.Fatal(err, out.String())
+			}
+			if code != exitFailure || rejected.Decision != "FAIL_CLOSED" || rejected.Error != tc.detail ||
+				rejected.Failure == nil || rejected.Failure.Code != tc.code || rejected.Failure.Detail != tc.detail ||
+				(rejected.InputsDigest != "") != tc.inputsRead {
+				t.Fatalf("replay failure lost its check boundary: code=%d receipt=%+v", code, rejected)
+			}
+		})
 	}
 }

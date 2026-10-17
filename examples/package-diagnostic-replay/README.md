@@ -50,6 +50,30 @@ Supply `--go /path/to/go1.27.2` when the Go binary on PATH differs. This tool su
 an operation as data; it does not modify another project's source. Its fixed cases
 establish the stated finite behavior, with broader task coverage still open.
 
+## Replay failure codes in development source
+
+JSON failures retain `decision: "FAIL_CLOSED"`, the existing `error` text and a
+nonzero exit code. Three refusal points also provide the existing package
+`failure` shape with `code` and `detail`:
+
+| Code | Check that refused the saved input |
+| --- | --- |
+| `REPLAY_ENVELOPE_INVALID` | The decoded receipt has an unsupported envelope, a saved failure or no result. |
+| `REPLAY_MANIFEST_MISMATCH` | Current manifest bytes differ from the saved manifest digest. |
+| `REPLAY_SOURCE_MISMATCH` | The reconstructed workspace image differs, including source, dependencies, entry or lowered graph. |
+
+The envelope check precedes the manifest comparison. Both precede input loading,
+so their result can omit `inputs_digest` or `cases_digest`. Source comparison
+happens after inputs and package sources are read. A code names that failed check;
+it does not certify all earlier source relationships or whether every stage ran.
+Other failures can omit `failure`. An unknown or missing code keeps the failure
+result and requires inspection; it never grants automatic retry or successful reuse.
+
+Successful receipts omit this field. Old successful receipts keep the existing
+replay path. After editing the source, preserve its old receipt with the old
+source and use `package execute` to create the new source's record. Consumers on
+an earlier compiler pin keep that version's error contract until they upgrade.
+
 ## Recorded own-model use
 
 The [raw study](../../docs/research/workspace-replay-20261007/summary.json) used the
