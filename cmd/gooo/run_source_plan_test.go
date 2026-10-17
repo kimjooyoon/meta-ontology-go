@@ -50,6 +50,94 @@ func TestRunSourceInputExecutesRuntimeBindingPlan(t *testing.T) {
 }
 
 func TestRunSourceVerifiesRuntimePlanContractBeforeExecution(t *testing.T) {
+	source, runtimePlan := runtimeBindingPlanFixture(t)
+	reader := runSourceReaderWithFiles{
+		"fixture.gooo":      source,
+		"input.json":        []byte(`{"value":41}`),
+		"runtime-plan.json": runtimePlan,
+	}
+	var stdout, stderr bytes.Buffer
+	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "fixture.gooo"}, reader, &stdout, &stderr)
+	if code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+	}
+	var report struct {
+		Decision          string `json:"decision"`
+		RuntimePlanDigest string `json:"runtime_plan_digest"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.Decision != "PASS" || report.RuntimePlanDigest == "" {
+		t.Fatalf("runtime plan contract report = %#v", report)
+	}
+}
+
+func TestRunSourceRejectsStaleRuntimePlanBeforeExecution(t *testing.T) {
+	source, runtimePlan := runtimeBindingPlanFixture(t)
+	cases := []struct {
+		name string
+		edit func(*runtimePlanDocument)
+	}{
+		{"source digest", func(d *runtimePlanDocument) { d.SourceDigest = "sha256:stale" }},
+		{"missing rows", func(d *runtimePlanDocument) { d.Bindings = nil }},
+		{"extra row", func(d *runtimePlanDocument) { d.Bindings = append(d.Bindings, d.Bindings[0]) }},
+		{"duplicate row", func(d *runtimePlanDocument) { d.Bindings[1] = d.Bindings[0] }},
+		{"reordered rows", func(d *runtimePlanDocument) { d.Bindings[0], d.Bindings[1] = d.Bindings[1], d.Bindings[0] }},
+		{"schema", func(d *runtimePlanDocument) { d.Bindings[0].Schema = "gooo.runtime-binding/unknown" }},
+		{"producer", func(d *runtimePlanDocument) { d.Bindings[0].ProducerActivity = "urn:other:producer" }},
+		{"producer port", func(d *runtimePlanDocument) { d.Bindings[0].ProducerPort = "other" }},
+		{"consumer", func(d *runtimePlanDocument) { d.Bindings[0].ConsumerActivity = "urn:other:consumer" }},
+		{"consumer port", func(d *runtimePlanDocument) { d.Bindings[0].ConsumerPort = "other" }},
+		{"entity", func(d *runtimePlanDocument) { d.Bindings[0].Entity = "urn:other:entity" }},
+	}
+	for _, item := range cases {
+		t.Run(item.name, func(t *testing.T) {
+			var document runtimePlanDocument
+			if err := json.Unmarshal(runtimePlan, &document); err != nil {
+				t.Fatal(err)
+			}
+			if len(document.Bindings) != 2 {
+				t.Fatalf("fixture binding rows = %d, want 2", len(document.Bindings))
+			}
+			item.edit(&document)
+			stalePlan, err := json.Marshal(document)
+			if err != nil {
+				t.Fatal(err)
+			}
+			reader := runSourceReaderWithFiles{
+				"fixture.gooo":      source,
+				"input.json":        []byte(`{"value":41}`),
+				"runtime-plan.json": stalePlan,
+			}
+			var stdout, stderr bytes.Buffer
+			code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "fixture.gooo"}, reader, &stdout, &stderr)
+			if code != exitFailure || stderr.Len() != 0 {
+				t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+			}
+			var report struct {
+				Decision string `json:"decision"`
+				Reason   string `json:"reason"`
+				Failure  struct {
+					Stage string `json:"stage"`
+					Step  string `json:"step"`
+				} `json:"failure"`
+				Execution struct {
+					ApplyCalls int `json:"apply_calls"`
+				} `json:"execution"`
+			}
+			if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+				t.Fatal(err)
+			}
+			if report.Decision != "FAIL_CLOSED" || report.Reason != "VALUE_PLAN_INVALID" || report.Failure.Stage != "PLAN" || report.Failure.Step != "validate-runtime-plan-contract" || report.Execution.ApplyCalls != 0 {
+				t.Fatalf("stale runtime plan report = %#v", report)
+			}
+		})
+	}
+}
+
+func runtimeBindingPlanFixture(t *testing.T) ([]byte, []byte) {
+	t.Helper()
 	_, currentFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("resolve runtime binding fixture path")
@@ -78,92 +166,7 @@ func TestRunSourceVerifiesRuntimePlanContractBeforeExecution(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reader := runSourceReaderWithFiles{
-		"fixture.gooo":      source,
-		"input.json":        []byte(`{"value":41}`),
-		"runtime-plan.json": runtimePlan,
-	}
-	var stdout, stderr bytes.Buffer
-	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "fixture.gooo"}, reader, &stdout, &stderr)
-	if code != exitOK || stderr.Len() != 0 {
-		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
-	}
-	var report struct {
-		Decision          string `json:"decision"`
-		RuntimePlanDigest string `json:"runtime_plan_digest"`
-	}
-	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
-		t.Fatal(err)
-	}
-	if report.Decision != "PASS" || report.RuntimePlanDigest == "" {
-		t.Fatalf("runtime plan contract report = %#v", report)
-	}
-}
-
-func TestRunSourceRejectsStaleRuntimePlanBeforeExecution(t *testing.T) {
-	source := []byte(`package runtimebinding
-namespace runtimebinding
-entity Integer id "gooo://runtime-binding/entity/integer"
-activity Produce(Integer) -> Integer computes "int.add:1"
-activity Consume(Integer) -> Integer computes "int.add:1"
-bind Produce.result -> Consume.input
-`)
-	file, diagnostics := syntax.ParseFile("fixture.gooo", string(source))
-	if diagnostics.HasErrors() || file == nil {
-		t.Fatalf("parse fixture: diagnostics=%v file=%#v", diagnostics, file)
-	}
-	ir, err := bidir.Lower(file)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sourceDocument, err := bidir.DocumentFromSyntax(file)
-	if err != nil {
-		t.Fatal(err)
-	}
-	typedPlan, err := bidir.CompileTypedPlan(sourceDocument)
-	if err != nil {
-		t.Fatal(err)
-	}
-	runtimePlan, err := buildRuntimePlanDataWithTypedPlan(source, ir, typedPlan)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var planDocument runtimePlanDocument
-	if err := json.Unmarshal(runtimePlan, &planDocument); err != nil {
-		t.Fatal(err)
-	}
-	planDocument.SourceDigest = "sha256:stale"
-	stalePlan, err := json.Marshal(planDocument)
-	if err != nil {
-		t.Fatal(err)
-	}
-	reader := runSourceReaderWithFiles{
-		"fixture.gooo":      source,
-		"input.json":        []byte(`{"value":41}`),
-		"runtime-plan.json": stalePlan,
-	}
-	var stdout, stderr bytes.Buffer
-	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "fixture.gooo"}, reader, &stdout, &stderr)
-	if code != exitFailure || stderr.Len() != 0 {
-		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
-	}
-	var report struct {
-		Decision string `json:"decision"`
-		Reason   string `json:"reason"`
-		Failure  struct {
-			Stage string `json:"stage"`
-			Step  string `json:"step"`
-		} `json:"failure"`
-		Execution struct {
-			ApplyCalls int `json:"apply_calls"`
-		} `json:"execution"`
-	}
-	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
-		t.Fatal(err)
-	}
-	if report.Decision != "FAIL_CLOSED" || report.Reason != "VALUE_PLAN_INVALID" || report.Failure.Stage != "PLAN" || report.Failure.Step != "validate-runtime-plan-contract" || report.Execution.ApplyCalls != 0 {
-		t.Fatalf("stale runtime plan report = %#v", report)
-	}
+	return source, runtimePlan
 }
 
 func TestRunSourceRejectsBoundUnknownAndUnrelatedRootEntries(t *testing.T) {

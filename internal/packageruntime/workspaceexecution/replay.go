@@ -4,12 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 )
+
+// ErrReplaySourceMismatch identifies a difference in the reconstructed workspace image.
+var ErrReplaySourceMismatch = errors.New(
+	"saved workspace differs from current sources, dependencies, entry or lowered graph")
 
 type ReplayEvidence struct {
 	Schema            string `json:"schema"`
@@ -77,7 +82,7 @@ func reconstructWorkspace(ctx context.Context, manifest packageruntime.Manifest,
 	currentProgram, _ := json.Marshal(comparisonProgram)
 	savedProgram, _ := json.Marshal(prior.Program)
 	if !bytes.Equal(currentProgram, savedProgram) {
-		return Program{}, nil, fmt.Errorf("saved workspace differs from current sources, dependencies, entry or lowered graph")
+		return Program{}, nil, ErrReplaySourceMismatch
 	}
 	current, err := replayWorkspaceFills(ctx, program, prior.BodyFills)
 	if err != nil {

@@ -6,19 +6,12 @@ import (
 )
 
 func (g Graph) validateEntityFieldsIdentityDomain(node Node) error {
-	for existingID, existing := range g.nodes {
-		for _, field := range existing.Fields {
-			if field.ID == node.ID {
-				return fmt.Errorf("%w: node %s collides with field %s on %s", ErrInvalidField, node.ID, field.ID, existingID)
-			}
-			if existingID == node.ID {
-				continue
-			}
-			for _, incoming := range node.Fields {
-				if field.ID == incoming.ID {
-					return fmt.Errorf("%w: field %s cannot move from %s to %s", ErrInvalidField, incoming.ID, existingID, node.ID)
-				}
-			}
+	if owner, exists := g.fieldOwners[node.ID]; exists {
+		return fmt.Errorf("%w: node %s collides with field %s on %s", ErrInvalidField, node.ID, node.ID, owner)
+	}
+	for _, field := range node.Fields {
+		if owner, exists := g.fieldOwners[field.ID]; exists && owner != node.ID {
+			return fmt.Errorf("%w: field %s cannot move from %s to %s", ErrInvalidField, field.ID, owner, node.ID)
 		}
 	}
 	for _, field := range node.Fields {
