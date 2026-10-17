@@ -2,6 +2,7 @@ package semantic
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 )
 
@@ -48,5 +49,39 @@ func validateFactMap(g Graph, facts map[FactKey]Fact, expected FactStatus, issue
 	sort.Slice(keys, func(i, j int) bool { return factKeyLess(keys[i], keys[j]) })
 	for _, key := range keys {
 		validateStoredFact(g, key, facts[key], expected, issues)
+	}
+}
+
+// validateFieldOwnerIndex derives its expected owners from stored nodes rather
+// than trusting the lookup used during insertion.
+func validateFieldOwnerIndex(g Graph, expected map[ID]graphIdentityOwner, issues *ValidationErrors) {
+	actualIDs := make([]ID, 0, len(g.fieldOwners))
+	for id := range g.fieldOwners {
+		actualIDs = append(actualIDs, id)
+	}
+	slices.Sort(actualIDs)
+	for _, id := range actualIDs {
+		actual := g.fieldOwners[id]
+		want, exists := expected[id]
+		if !exists || want.kind != "field" {
+			issues.add("field-index-stale", fmt.Sprintf("%s has no declared field", id), actual, "")
+			continue
+		}
+		if actual != want.parent {
+			message := fmt.Sprintf("%s points to %s, want %s", id, actual, want.parent)
+			issues.add("field-index-owner", message, actual, want.parent)
+		}
+	}
+	missingIDs := make([]ID, 0)
+	for id, owner := range expected {
+		if owner.kind == "field" {
+			if _, exists := g.fieldOwners[id]; !exists {
+				missingIDs = append(missingIDs, id)
+			}
+		}
+	}
+	slices.Sort(missingIDs)
+	for _, id := range missingIDs {
+		issues.add("field-index-missing", fmt.Sprintf("%s is not indexed", id), expected[id].parent, "")
 	}
 }

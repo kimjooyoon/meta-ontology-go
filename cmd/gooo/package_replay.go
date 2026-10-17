@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -130,9 +131,12 @@ func executePackageSaved(ctx context.Context, reader SourceReader, manifestPath 
 	if err := bodyexecution.DecodeExecutionReceipt(raw, &saved); err != nil {
 		return receipt, fmt.Errorf("decode saved package execution: %w", err)
 	}
-	if saved.Schema != receipt.Schema || saved.Error != "" || saved.Result == nil || saved.ManifestDigest != receipt.ManifestDigest ||
+	if saved.Schema != receipt.Schema || saved.Error != "" || saved.Failure != nil || saved.Result == nil ||
 		(saved.Decision != "PASS" && saved.Decision != "PROGRESS" && saved.Decision != "OBSERVED") {
-		return receipt, fmt.Errorf("saved execution envelope or workspace manifest differs")
+		return rejectPackageSaved(receipt, "REPLAY_ENVELOPE_INVALID", "saved execution envelope or workspace manifest differs")
+	}
+	if saved.ManifestDigest != receipt.ManifestDigest {
+		return rejectPackageSaved(receipt, "REPLAY_MANIFEST_MISMATCH", "saved execution envelope or workspace manifest differs")
 	}
 	suite, digest, inputOnly, err := readPackageReplayInputs(reader, flags)
 	if err != nil {
@@ -148,6 +152,9 @@ func executePackageSaved(ctx context.Context, reader SourceReader, manifestPath 
 	}
 	result, err := runSavedWorkspace(ctx, reader, runtimeManifest, *saved.Result, suite, flags, resume)
 	receipt.Result = &result
+	if errors.Is(err, workspaceexecution.ErrReplaySourceMismatch) {
+		receipt.Failure = &packageruntime.Failure{Code: "REPLAY_SOURCE_MISMATCH", Detail: err.Error()}
+	}
 	receipt.Decision = "PASS"
 	if result.Runtime.FinitePassed < result.Runtime.FiniteTotal {
 		receipt.Decision = "PROGRESS"
@@ -182,4 +189,10 @@ func readPackageReplayInputs(reader SourceReader, flags map[string]string) (body
 	}
 	suite, err := decode(raw)
 	return suite, workspaceDigest(raw), inputOnly, err
+}
+
+// Failure codes describe the check that refused replay, not permission to retry.
+func rejectPackageSaved(receipt packageExecutionReceipt, code, detail string) (packageExecutionReceipt, error) {
+	receipt.Failure = &packageruntime.Failure{Code: code, Detail: detail}
+	return receipt, fmt.Errorf("%s", detail)
 }
