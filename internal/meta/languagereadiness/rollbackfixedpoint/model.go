@@ -9,6 +9,7 @@ type GuardEvidence struct {
 	Resolution                   string `json:"resolution"`
 	Satisfied                    int    `json:"satisfied"`
 	Total                        int    `json:"total"`
+	NotSatisfied                 int    `json:"not_satisfied,omitempty"`
 	Unresolved                   int    `json:"unresolved"`
 	RepositoryWrites             int    `json:"repository_writes"`
 	RepositoryMutationAuthorized bool   `json:"repository_mutation_authorized"`

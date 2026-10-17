@@ -45,6 +45,7 @@ env:
   GOWORK: off
   GOMAXPROCS: 2
   GOOO_CI_BUDGET_MS: 2400000
+  GOOO_CI_DOMAIN_REVISION: ae2a428e08367af5000bda46061a77d10fed0ba5
 
 jobs:
   work-domain:
@@ -73,20 +74,21 @@ jobs:
           SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
+          [[ "$GOOO_CI_DOMAIN_REVISION" =~ ^[0-9a-f]{40}$ ]]
           remaining=$((GOOO_CI_BUDGET_MS / 1000 - ($(date +%s) - $(date -d "$GOOO_CI_PREP_STARTED_AT" +%s))))
           test "$remaining" -gt 0
           root="$RUNNER_TEMP/ci-domain-tool"
           mkdir -p "$root"
           begin="$(date +%s%3N)"
           GOBIN="$root" timeout --signal=KILL "${remaining}s" \
-            go install github.com/kimjooyoon/gooo-ci-domain/cmd/gooo-ci-domain@aa0e33f2e5ec36f319232080361e5fc967d6c442
+            go install "github.com/kimjooyoon/gooo-ci-domain/cmd/gooo-ci-domain@${GOOO_CI_DOMAIN_REVISION}"
           elapsed=$(( $(date +%s%3N) - begin ))
           digest="$(sha256sum "$root/gooo-ci-domain" | cut -d ' ' -f 1)"
           work_started="$GOOO_CI_PREP_STARTED_AT"
           jq -n --arg schema gooo/work-domain-tool-origin/v1 --arg head "$SOURCE_HEAD" \
             --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
             --arg created "$GOOO_CI_STARTED_AT" --arg started "$work_started" --arg sha "$digest" \
-            --arg revision aa0e33f2e5ec36f319232080361e5fc967d6c442 --argjson elapsed "$elapsed" \
+            --arg revision "$GOOO_CI_DOMAIN_REVISION" --argjson elapsed "$elapsed" \
             '{schema:$schema,source_head:$head,run_id:$run,run_attempt:$attempt,workflow_created_at:$created,started_at:$started,clock_scope:"admitted_source_work",tool_sha256:$sha,tool_revision:$revision,compile_elapsed_ms:$elapsed}' \
             > "$root/origin.json"
       - name: Publish this run's prepared tool
@@ -306,7 +308,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -346,7 +348,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -386,7 +388,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -426,7 +428,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -472,7 +474,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -833,7 +835,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -993,7 +995,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -1342,7 +1344,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -1677,7 +1679,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -1811,7 +1813,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -1855,7 +1857,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -2216,7 +2218,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: ${{ env.GOOO_CI_ORIGIN_ROOT }}/command-origins.jsonl
-          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-aa0e33f-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: command-origin-v2-${{ runner.os }}-${{ runner.arch }}-${{ env.GOOO_CI_DOMAIN_REVISION }}-${{ github.event_name }}-${{ github.base_ref || github.ref_name }}-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Preserve original command work origins
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
