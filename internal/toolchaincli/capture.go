@@ -9,6 +9,9 @@ type cappedBuffer struct {
 
 func (buffer *cappedBuffer) Write(value []byte) (int, error) {
 	written := len(value)
+	if written == 0 {
+		return 0, nil
+	}
 	remaining := maxOutputBytes - len(buffer.data)
 	if remaining <= 0 {
 		buffer.overflow = true
