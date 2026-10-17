@@ -37,6 +37,9 @@ func computationPackageProgram(root string, raw []byte) (workspaceexecution.Prog
 			}
 			pkg.Sources = append(pkg.Sources, packageruntime.Source{Filename: name, Content: string(raw)})
 		}
+		if err := packageruntime.CompleteSourceMetadata(&pkg, p.Name, p.Imports); err != nil {
+			return workspaceexecution.Program{}, err
+		}
 		manifest.Packages = append(manifest.Packages, pkg)
 	}
 	return workspaceexecution.Prepare(manifest)
