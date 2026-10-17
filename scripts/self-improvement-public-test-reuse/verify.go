@@ -12,6 +12,12 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
 )
 
+type verificationRecords struct {
+	identity identity
+	reports  [6]publictestreuse.Report
+	receipt  publictestreuse.Receipt
+}
+
 func runVerification(manifestPath, outputPath, humanPath string) error {
 	if manifestPath == "" || outputPath == "" || humanPath == "" {
 		return errors.New("verification manifest, output, and human-output are required")
@@ -29,61 +35,56 @@ func runVerification(manifestPath, outputPath, humanPath string) error {
 	if input.Schema != "gooo/public-test-reuse-verification-input/v1" {
 		return errors.New("verification manifest schema is unknown")
 	}
-	policySource, err := readRegular(input.Policy)
+	records, err := readVerificationRecords(input)
 	if err != nil {
 		return err
 	}
-	policy, err := publictestreuse.Load(input.Policy, policySource)
-	if err != nil {
+	if err := verifyReuseRecords(input, records); err != nil {
 		return err
 	}
-	identity, err := loadIdentity(executionInput{Policy: input.Policy, Source: input.Source, Program: input.BaselineProgram, Manifest: input.Manifest, TestContract: input.TestContract, PackageDir: filepath.Dir(input.BaselineProgram), OutputDir: filepath.Dir(outputPath)})
+	return writeReuseVerification(outputPath, humanPath, records)
+}
+
+func readVerificationRecords(input verificationInput) (verificationRecords, error) {
+	var records verificationRecords
+	selection := executionInput{Policy: input.Policy, Source: input.Source, Program: input.BaselineProgram,
+		Manifest: input.Manifest, TestContract: input.TestContract, PackageDir: input.PublishedRoot}
+	observed, err := loadIdentityWithInputs(selection, readPublishedPackageInputs)
 	if err != nil {
-		return err
+		return records, err
 	}
+	records.identity = observed
 	replayProgram, err := readRegular(input.ReplayProgram)
 	if err != nil {
-		return err
+		return records, err
+	}
+	if !bytes.Equal(observed.ProgramBytes, replayProgram) {
+		return records, errors.New("baseline and replay generated program bytes differ")
 	}
 	testContract, err := readRegular(input.TestContract)
 	if err != nil {
-		return err
+		return records, err
 	}
-	baselineProgram, err := readRegular(input.BaselineProgram)
-	if err != nil {
-		return err
+	if !bytes.Equal(testContract, observed.TestBytes) {
+		return records, errors.New("test contract bytes changed during verification")
 	}
-	if !bytes.Equal(baselineProgram, replayProgram) {
-		return errors.New("baseline and replay generated program bytes differ")
+	paths := [6]string{input.BaselineReport, input.ReplayReport, input.MissingAuthorization,
+		input.StaleEvidence, input.TamperedReceipt, input.PolicyMismatch}
+	for index, path := range paths {
+		records.reports[index], err = readPublicReport(path)
+		if err != nil {
+			return records, err
+		}
 	}
-	baseline, err := readPublicReport(input.BaselineReport)
-	if err != nil {
-		return err
-	}
-	replay, err := readPublicReport(input.ReplayReport)
-	if err != nil {
-		return err
-	}
-	missingAuthorization, err := readPublicReport(input.MissingAuthorization)
-	if err != nil {
-		return err
-	}
-	staleEvidence, err := readPublicReport(input.StaleEvidence)
-	if err != nil {
-		return err
-	}
-	tamperedReceipt, err := readPublicReport(input.TamperedReceipt)
-	if err != nil {
-		return err
-	}
-	policyMismatch, err := readPublicReport(input.PolicyMismatch)
-	if err != nil {
-		return err
-	}
-	receipt, err := publictestreuse.ReadReceipt(input.BaselineReceipt)
-	if err != nil {
-		return err
-	}
+	records.receipt, err = publictestreuse.ReadReceipt(input.BaselineReceipt)
+	return records, err
+}
+
+func verifyReuseRecords(input verificationInput, records verificationRecords) error {
+	identity, receipt := records.identity, records.receipt
+	baseline, replay := records.reports[0], records.reports[1]
+	missingAuthorization, staleEvidence := records.reports[2], records.reports[3]
+	tamperedReceipt, policyMismatch := records.reports[4], records.reports[5]
 	if err := publictestreuse.VerifyReceipt(receipt, identity.Binding); err != nil {
 		return fmt.Errorf("baseline receipt: %w", err)
 	}
@@ -117,9 +118,19 @@ func runVerification(manifestPath, outputPath, humanPath string) error {
 	if err := verifyPublishedArtifacts(input.PublishedRoot, input.PublishedArtifacts); err != nil {
 		return err
 	}
+	if baseline.Binding != replay.Binding || receipt.Binding != replay.Binding {
+		return errors.New("baseline, replay, and receipt bindings differ")
+	}
+	return nil
+}
+
+func writeReuseVerification(outputPath, humanPath string, records verificationRecords) error {
+	identity := records.identity
+	policy, policySource := identity.Policy, identity.PolicyBytes
+	baseline, replay := records.reports[0], records.reports[1]
 	closed, unknown, refuted := 0, 0, 0
 	cases := make([]verifiedCase, 0, len(publictestreuse.CanonicalCaseIDs()))
-	for _, report := range []publictestreuse.Report{baseline, replay, missingAuthorization, staleEvidence, tamperedReceipt, policyMismatch} {
+	for _, report := range records.reports {
 		expected, ok := policy.Decision(report.CaseID)
 		if !ok || expected != report.Decision {
 			return fmt.Errorf("policy decision for %s = %s/%s", report.CaseID, report.Decision, expected)
@@ -137,12 +148,6 @@ func runVerification(manifestPath, outputPath, humanPath string) error {
 	}
 	if len(cases) != 6 || closed != 2 || unknown != 2 || refuted != 2 {
 		return fmt.Errorf("case decisions are %d/%d/%d, want 2/2/2", closed, unknown, refuted)
-	}
-	if baseline.Binding != replay.Binding || receipt.Binding != replay.Binding {
-		return errors.New("baseline, replay, and receipt bindings differ")
-	}
-	if !bytes.Equal(testContract, identity.TestBytes) {
-		return errors.New("test contract bytes changed during verification")
 	}
 	report := verificationReport{
 		Schema: "gooo/public-test-reuse-verification/v1", Decision: publictestreuse.DecisionClosed,
@@ -257,7 +262,7 @@ func writeVerificationOutputs(outputPath, humanPath string, report verificationR
 	if err := writeNew(outputPath, data, 0o444); err != nil {
 		return err
 	}
-	human := fmt.Sprintf("# Public generated-test reuse dossier\n\nDecision: `%s`\nReason: `%s`\n\n## DRIVER\n\nThe existing generated public-discovery program and its tagged Go acceptance test are the frozen equal-input pair. The public journey is `%s`. The receipt binds the canonical source and lowered semantic digest, generated bytes and semantic manifest, compiler and released-tool identities, Go 1.27 toolchain, test command, test contract, and successful original result.\n\n## OUTCOME\n\nCases: `%d CLOSED / %d UNKNOWN / %d REFUTED`\nTest executions before/after: `%d/%d`\nReused test executions before/after: `%d/%d`\nBuild executions before/after: `%d/%d`\nBuild/test ms before: `%d/%d`; after: `%d/%d`\nWall ms / peak RSS KiB before: `%d/%d`; after: `%d/%d`\nGenerated program bytes/lines: `%d/%d`; test contract bytes/lines: `%d/%d`\nReceipt hits/misses before: `%d/%d`; after: `%d/%d`\nGenerated bytes equal: `%t`; generated semantic equal: `%t`; test contract equal: `%t`\n\n## GUARDRAIL\n\nReuse is CLOSED only for explicit authorization plus one exact immutable successful receipt. Missing authorization and stale or unbounded evidence are UNKNOWN with no skipped test. Tampered receipt and policy mismatch are REFUTED and fail closed. No aggregate score is emitted. Repository writes=`%d`; local test executions=`%d`; published artifacts=`%d/%d`.\n\n### Cases\n\n%s", report.Decision, report.Reason, strings.Join(report.Journey, " -> "), report.ClosedCases, report.UnknownCases, report.RefutedCases, report.Before.TestExecutions, report.After.TestExecutions, report.Before.ReusedTestExecutions, report.After.ReusedTestExecutions, report.Before.BuildExecutions, report.After.BuildExecutions, report.Before.BuildMS, report.Before.TestMS, report.After.BuildMS, report.After.TestMS, report.Before.WallMS, report.Before.PeakRSSKib, report.After.WallMS, report.After.PeakRSSKib, report.GeneratedProgramBytes, report.GeneratedProgramLines, report.TestContractBytes, report.TestContractLines, report.Before.ReceiptHits, report.Before.ReceiptMisses, report.After.ReceiptHits, report.After.ReceiptMisses, report.Comparisons.GeneratedProgramBytesEqual, report.Comparisons.GeneratedSemanticEqual, report.Comparisons.TestContractBytesEqual, report.RepositoryWrites, report.LocalTestExecutions, report.ArtifactCount, report.ArtifactDenominator, renderCases(report.Cases))
+	human := fmt.Sprintf("# Public generated-test reuse dossier\n\nDecision: `%s`\nReason: `%s`\n\n## DRIVER\n\nThe existing generated public-discovery program and its tagged Go acceptance test are the frozen equal-input pair. The public journey is `%s`. The receipt binds the canonical source and lowered semantic digest, generated bytes and semantic manifest, compiler and released-tool identities, Go 1.27.2 toolchain, test command, test contract, observed three-file execution package profile, and successful original result.\n\n## OUTCOME\n\nCases: `%d CLOSED / %d UNKNOWN / %d REFUTED`\nTest executions before/after: `%d/%d`\nReused test executions before/after: `%d/%d`\nBuild executions before/after: `%d/%d`\nBuild/test ms before: `%d/%d`; after: `%d/%d`\nWall ms / peak RSS KiB before: `%d/%d`; after: `%d/%d`\nGenerated program bytes/lines: `%d/%d`; test contract bytes/lines: `%d/%d`\nReceipt hits/misses before: `%d/%d`; after: `%d/%d`\nGenerated bytes equal: `%t`; generated semantic equal: `%t`; test contract equal: `%t`\n\n## GUARDRAIL\n\nReuse is CLOSED only for explicit authorization plus one exact immutable successful receipt. Missing authorization and stale or unbounded evidence are UNKNOWN with no skipped test. Tampered receipt and policy mismatch are REFUTED and fail closed. No aggregate score is emitted. Repository writes=`%d`; local test executions=`%d`; published artifacts=`%d/%d`.\n\n### Cases\n\n%s", report.Decision, report.Reason, strings.Join(report.Journey, " -> "), report.ClosedCases, report.UnknownCases, report.RefutedCases, report.Before.TestExecutions, report.After.TestExecutions, report.Before.ReusedTestExecutions, report.After.ReusedTestExecutions, report.Before.BuildExecutions, report.After.BuildExecutions, report.Before.BuildMS, report.Before.TestMS, report.After.BuildMS, report.After.TestMS, report.Before.WallMS, report.Before.PeakRSSKib, report.After.WallMS, report.After.PeakRSSKib, report.GeneratedProgramBytes, report.GeneratedProgramLines, report.TestContractBytes, report.TestContractLines, report.Before.ReceiptHits, report.Before.ReceiptMisses, report.After.ReceiptHits, report.After.ReceiptMisses, report.Comparisons.GeneratedProgramBytesEqual, report.Comparisons.GeneratedSemanticEqual, report.Comparisons.TestContractBytesEqual, report.RepositoryWrites, report.LocalTestExecutions, report.ArtifactCount, report.ArtifactDenominator, renderCases(report.Cases))
 	return writeNew(humanPath, []byte(human), 0o444)
 }
 

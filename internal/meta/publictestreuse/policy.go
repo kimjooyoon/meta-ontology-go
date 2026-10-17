@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	PolicySchema        = "gooo/public-test-reuse-policy/v1"
-	EvaluatorSchema     = "gooo/public-test-reuse-policy-evaluator/v1"
+	PolicySchema        = "gooo/public-test-reuse-policy/v2"
+	EvaluatorSchema     = "gooo/public-test-reuse-policy-evaluator/v2"
 	PolicyActivity      = "Compile"
-	PolicyContract      = "v1"
+	PolicyContract      = "v2"
 	PolicyName          = "EXPLICIT_OPT_IN_IMMUTABLE_RECEIPT"
 	Operation           = "gooo.test.generated-public-reuse"
 	ArtifactDenominator = 24
@@ -40,7 +40,7 @@ const (
 var requiredBindings = []string{
 	"canonical-source", "canonical-semantic", "generated-output", "generated-semantic",
 	"generated-manifest", "compiler", "released-tool", "toolchain", "test-command",
-	"test-contract", "successful-result",
+	"test-contract", "execution-package-inputs", "successful-result",
 }
 
 var canonicalCaseIDs = []string{
@@ -115,6 +115,9 @@ func Load(filename string, source []byte) (Policy, error) {
 		return Policy{}, errors.New("public test reuse policy activity is missing or ambiguous")
 	}
 	markers := parseMarkers(activity.ValueProgram)
+	if markers["test-reuse-contract"] != PolicyContract {
+		return Policy{}, errors.New("public test reuse policy contract version is unsupported")
+	}
 	policy := Policy{
 		Schema:         PolicySchema,
 		SourceDigest:   cache.HashBytes(source).String(),
