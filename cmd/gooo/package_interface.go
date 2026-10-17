@@ -81,7 +81,11 @@ func writePackageInterface(output io.Writer, view packageruntime.Interface) erro
 			}
 			fmt.Fprintf(&text, "  %s %s id=%s\n", declaration.Shape, declaration.Name, declaration.ID)
 			for _, field := range declaration.Fields {
-				fmt.Fprintf(&text, "    %s: %s %s %s id=%s\n", field.Name, field.TypeID, field.Presence, field.Cardinality, field.ID)
+				fmt.Fprintf(&text, "    %s: %s %s %s id=%s", field.Name, field.TypeID, field.Presence, field.Cardinality, field.ID)
+				if field.TextBound.IsSet() {
+					fmt.Fprintf(&text, " %s", field.TextBound.Canonical())
+				}
+				text.WriteByte('\n')
 			}
 		}
 	}

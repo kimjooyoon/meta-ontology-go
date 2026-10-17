@@ -8,6 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/textbound"
 )
 
 const recordForwardProgram = "record.forward:v1"
@@ -19,6 +20,7 @@ type RecordField struct {
 	TypeID      string               `json:"type_id"`
 	Presence    semantic.Presence    `json:"presence"`
 	Cardinality semantic.Cardinality `json:"cardinality,omitempty"`
+	TextBound   textbound.UTF8       `json:"max_utf8_bytes,omitempty"`
 }
 
 type recordProgram struct {
@@ -130,7 +132,8 @@ func compileRecordFields(ir semantic.IR, name string) ([]RecordField, error) {
 			return nil, failAt(ReasonSignatureTypeMismatch, "TYPECHECK", "require-supported-record-fields", name+"."+field.Name)
 		}
 		seen[field.Name] = true
-		projected := RecordField{Name: field.Name, ID: field.ID.String(), TypeID: string(typeID), Presence: field.Presence}
+		projected := RecordField{Name: field.Name, ID: field.ID.String(), TypeID: string(typeID),
+			Presence: field.Presence, TextBound: field.TextBound}
 		if field.Cardinality == semantic.Many {
 			projected.Cardinality = semantic.Many
 		}

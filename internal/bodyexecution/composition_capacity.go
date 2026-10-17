@@ -21,7 +21,7 @@ type CompositionCapacity struct {
 	SeriesJSONBytes             int    `json:"series_json_bytes"`
 	NativeStdoutBytes           int    `json:"native_stdout_bytes"`
 	RecordedOriginPageJSONBytes int    `json:"recorded_origin_page_json_bytes"`
-	TextUTF8Bytes               int    `json:"text_utf8_bytes"`
+	TextUTF8Bytes               int    `json:"text_utf8_bytes"` // Default; explicit source field bounds are separate.
 	Rows                        int    `json:"rows"`
 	Scope                       string `json:"scope"`
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/textbound"
 )
 
 // RecordFieldLimit bounds both interpreted value slots and native record inputs.
@@ -22,12 +23,13 @@ type RecordType struct {
 }
 
 type RecordField struct {
-	Name        string `json:"name"`
-	ID          string `json:"id"`
-	TypeID      string `json:"type_id"`
-	GoName      string `json:"go_name"`
-	Presence    string `json:"presence,omitempty"`
-	Cardinality string `json:"cardinality,omitempty"`
+	Name        string         `json:"name"`
+	ID          string         `json:"id"`
+	TypeID      string         `json:"type_id"`
+	GoName      string         `json:"go_name"`
+	Presence    string         `json:"presence,omitempty"`
+	Cardinality string         `json:"cardinality,omitempty"`
+	TextBound   textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 }
 
 // RecordTypesFromModel accepts a model already validated under the body profile.
@@ -56,12 +58,16 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 			if typeID != string(semantic.BuiltinStringTypeID) && typeID != string(semantic.BuiltinBooleanTypeID) && typeID != string(semantic.BuiltinIntegerTypeID) {
 				return nil, fmt.Errorf("record %q field %q has unsupported type %q", node.Name, field.Name, typeID)
 			}
+			if field.TextBound.Validate() != nil || field.TextBound.IsSet() && typeID != string(semantic.BuiltinStringTypeID) {
+				return nil, fmt.Errorf("record %q field %q has an invalid Text byte bound", node.Name, field.Name)
+			}
 			presence := ""
 			if field.Presence == semantic.Optional {
 				presence = string(field.Presence)
 			}
 			record.Fields = append(record.Fields, RecordField{Name: field.Name, ID: string(field.ID),
-				TypeID: typeID, GoName: recordGoName("Field", string(field.ID)), Presence: presence, Cardinality: repeatedCardinality(field.Cardinality)})
+				TypeID: typeID, GoName: recordGoName("Field", string(field.ID)), Presence: presence,
+				Cardinality: repeatedCardinality(field.Cardinality), TextBound: field.TextBound})
 		}
 		result = append(result, record)
 	}
@@ -132,7 +138,7 @@ func resolveBodyModel(file *syntax.File) (bidir.Model, []RecordType, error) {
 }
 
 func bodyEntityFieldsSupport(file *syntax.File) bidir.EntityFieldsSupport {
-	if support := syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV3Support()); support.Profile.ID == syntax.EntityFieldsV5ProfileID {
+	if support := syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV3Support()); support.Profile != syntax.EntityFieldsV3Support().Profile {
 		return support
 	}
 	for _, declaration := range file.Declarations {

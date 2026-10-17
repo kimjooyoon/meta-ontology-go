@@ -2,6 +2,8 @@ package semantic
 
 import (
 	"errors"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/textbound"
 )
 
 var ErrInvalidField = errors.New("invalid semantic field")
@@ -49,6 +51,7 @@ type Field struct {
 	Presence    Presence
 	Cardinality Cardinality
 	Span        Span
+	TextBound   textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 }
 
 func NewField(id, parent ID, name string, typeRef TypeRef, presence Presence, cardinality Cardinality) (Field, error) {

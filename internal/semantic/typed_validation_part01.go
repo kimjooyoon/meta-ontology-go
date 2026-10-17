@@ -12,8 +12,12 @@ func (g Graph) ValidateWithTypes(registry TypeRegistry) error {
 	}
 	for _, node := range g.Nodes() {
 		for _, field := range node.Fields {
-			if _, err := registry.Resolve(field.TypeRef); err != nil {
+			definition, err := registry.Resolve(field.TypeRef)
+			if err != nil {
 				return fmt.Errorf("field %s on %s: %w", field.ID, node.ID, err)
+			}
+			if field.TextBound.IsSet() && definition.ID != BuiltinStringTypeID {
+				return fmt.Errorf("field %s on %s: max_utf8_bytes requires Text", field.ID, node.ID)
 			}
 		}
 	}

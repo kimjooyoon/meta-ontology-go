@@ -32,6 +32,12 @@ func (f Field) Normalized() (Field, error) {
 	if !f.Cardinality.Valid() {
 		return Field{}, fmt.Errorf("%w: unknown cardinality %q", ErrInvalidField, f.Cardinality)
 	}
+	if err := f.TextBound.Validate(); err != nil {
+		return Field{}, fmt.Errorf("%w: %v", ErrInvalidField, err)
+	}
+	if f.TextBound.IsSet() && typeRef.ID != "" && typeRef.ID != BuiltinStringTypeID {
+		return Field{}, fmt.Errorf("%w: max_utf8_bytes requires Text", ErrInvalidField)
+	}
 	span := f.Span.Normalized()
 	if err := span.Validate(); err != nil {
 		return Field{}, fmt.Errorf("%w: span: %v", ErrInvalidField, err)

@@ -1,13 +1,12 @@
 package bodyexecution
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/valuejson"
 )
 
 type CompositionRecordField struct {
@@ -62,8 +61,11 @@ func canonicalRecord(raw []byte, record bodycodegen.RecordType) (json.RawMessage
 		if !ok {
 			return nil, fmt.Errorf("record %q field %q has unsupported type %q", record.Name, field.Name, field.TypeID)
 		}
-		canonical, err := canonicalRecordField(value, fieldType, field.Cardinality)
+		canonical, err := canonicalRecordFieldWithBound(value, fieldType, field.Cardinality, field.TextBound)
 		if err != nil {
+			if field.TextBound.IsSet() {
+				return nil, fmt.Errorf("record %q field %q (%s): %w", record.Name, field.Name, field.ID, err)
+			}
 			return nil, fmt.Errorf("record %q field %q: %w", record.Name, field.Name, err)
 		}
 		canonicalValues[field.Name] = canonical
@@ -89,34 +91,7 @@ func compositionRecordFieldScalar(typeID string) (string, bool) {
 }
 
 func recordObject(raw []byte) (map[string]json.RawMessage, error) {
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	start, err := decoder.Token()
-	if err != nil || start != json.Delim('{') {
-		return nil, fmt.Errorf("explicit JSON object required")
-	}
-	values := make(map[string]json.RawMessage)
-	for decoder.More() {
-		key, err := decoder.Token()
-		if err != nil {
-			return nil, err
-		}
-		name, ok := key.(string)
-		if !ok || values[name] != nil || len(values) >= bodycodegen.RecordFieldLimit {
-			return nil, fmt.Errorf("record fields must be distinct names, at most %d", bodycodegen.RecordFieldLimit)
-		}
-		var value json.RawMessage
-		if err := decoder.Decode(&value); err != nil {
-			return nil, err
-		}
-		values[name] = value
-	}
-	if end, err := decoder.Token(); err != nil || end != json.Delim('}') {
-		return nil, fmt.Errorf("record object is incomplete")
-	}
-	if _, err := decoder.Token(); err != io.EOF {
-		return nil, fmt.Errorf("record object must contain one value")
-	}
-	return values, nil
+	return valuejson.Object(raw, bodycodegen.RecordFieldLimit)
 }
 
 func (graph compositionGraph) recordFieldValues(name string, raw []byte) []CompositionRecordField {

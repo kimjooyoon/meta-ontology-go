@@ -1,0 +1,40 @@
+// Copyright 2026 Gooo Go Ports contributors.
+// Original private capability scaffold, BSD-3-Clause; see the repository LICENSE.
+// The mapped formatting witness follows Go1.27.2 netip.go:884-892,
+// Copyright 2020 The Go Authors; immutable revision
+// 022c8636110ebac86a9b88724cda168ed713c21f, SHA256
+// 32295f4761825d8c6fdade4dad093b08683bdd1945010bee8a90a298e18cf208.
+// That source and its complete BSD notice remain at ../../upstream/netip.go.txt
+// and ../../upstream/LICENSE. This is NOT ParseAddr or a general address parser.
+// Only the exact ASCII fixture prefix plus a nonempty unchanged zone is handled.
+// Inputs require original decoded valid UTF-8 Text of at most 1024 bytes.
+// Unsupported fixtures return a probe-specific marker, not a Go error result.
+package netip_mapped_output_probe
+namespace gooo_private_capability_netip_mapped_output
+entity Text id "gooo://std/text"
+entity MappedOutput13 id "gooo://capability-probe/netip-mapped-output/result/v1" fields {
+ field parsed id "gooo://capability-probe/netip-mapped-output/result/v1/parsed" type boolean required one
+ field canonical id "gooo://capability-probe/netip-mapped-output/result/v1/canonical" type string required one
+ field family id "gooo://capability-probe/netip-mapped-output/result/v1/family" type integer required one
+ field zone id "gooo://capability-probe/netip-mapped-output/result/v1/zone" type string required one
+ field is4_in6 id "gooo://capability-probe/netip-mapped-output/result/v1/is4_in6" type boolean required one
+ field group0 id "gooo://capability-probe/netip-mapped-output/result/v1/group0" type integer required one
+ field group1 id "gooo://capability-probe/netip-mapped-output/result/v1/group1" type integer required one
+ field group2 id "gooo://capability-probe/netip-mapped-output/result/v1/group2" type integer required one
+ field group3 id "gooo://capability-probe/netip-mapped-output/result/v1/group3" type integer required one
+ field group4 id "gooo://capability-probe/netip-mapped-output/result/v1/group4" type integer required one
+ field group5 id "gooo://capability-probe/netip-mapped-output/result/v1/group5" type integer required one
+ field group6 id "gooo://capability-probe/netip-mapped-output/result/v1/group6" type integer required one
+ field group7 id "gooo://capability-probe/netip-mapped-output/result/v1/group7" type integer required one
+}
+
+activity MappedOutput(Text) -> MappedOutput13 id "gooo://capability-probe/netip-mapped-output/entry/v1" computes `let size = int64(len(input))
+if size < 18 || size > 1024 {
+ return MappedOutput13{parsed: false, canonical: "UNSUPPORTED_PROBE_INPUT", family: -1, zone: "", is4_in6: false, group0: 0, group1: 0, group2: 0, group3: 0, group4: 0, group5: 0, group6: 0, group7: 0}
+}
+if input[0:17] != "::ffff:ffff:ffff%" {
+ return MappedOutput13{parsed: false, canonical: "UNSUPPORTED_PROBE_INPUT", family: -1, zone: "", is4_in6: false, group0: 0, group1: 0, group2: 0, group3: 0, group4: 0, group5: 0, group6: 0, group7: 0}
+}
+let zone = input[17:size]
+let canonical = "::ffff:255.255.255.255%" + zone
+return MappedOutput13{parsed: true, canonical: canonical, family: 6, zone: zone, is4_in6: true, group0: 0, group1: 0, group2: 0, group3: 0, group4: 0, group5: 65535, group6: 65535, group7: 65535}`

@@ -1,5 +1,7 @@
 package generator
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/textbound"
+
 // SemanticIR is the local DTO consumed by the Go projection. IDs are stable
 // declaration identity; names are presentation and may change.
 type SemanticIR struct {
@@ -44,7 +46,8 @@ type Field struct {
 	TypeRefSpan     SourceSpan
 	PresenceSpan    SourceSpan
 	CardinalitySpan SourceSpan
-	NameSource      SourceSpan // compatibility alias; NameSpan is authoritative
+	NameSource      SourceSpan     // compatibility alias; NameSpan is authoritative
+	TextBound       textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 }
 
 // Activity is projected to a Go function. Port order is part of its boundary.

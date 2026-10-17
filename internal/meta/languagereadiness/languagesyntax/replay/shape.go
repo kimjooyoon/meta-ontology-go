@@ -24,6 +24,9 @@ func astShape(file *syntax.File) (string, error) {
 			for _, field := range value.Fields {
 				fmt.Fprintf(&shape, "field=%q,%q,%q,%q,%q\n", field.ID, field.Name,
 					field.TypeRef.Spelling, field.Presence, field.Cardinality)
+				if field.TextBound.IsSet() {
+					fmt.Fprintf(&shape, "field-text-bound=%q,%q\n", field.ID, field.TextBound.Canonical())
+				}
 			}
 		case *syntax.ActivityDecl:
 			inputs := value.Inputs

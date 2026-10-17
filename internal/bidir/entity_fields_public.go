@@ -7,6 +7,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/textbound"
 )
 
 // EntityFieldsV1Support is the explicit public activation boundary for the
@@ -27,6 +28,9 @@ func EntityFieldsV4Support() EntityFieldsSupport { return syntax.EntityFieldsV4S
 
 // EntityFieldsV5Support enables bounded ordered scalar collections.
 func EntityFieldsV5Support() EntityFieldsSupport { return syntax.EntityFieldsV5Support() }
+
+// EntityFieldsV6Support enables source-declared decoded Text byte limits.
+func EntityFieldsV6Support() EntityFieldsSupport { return syntax.EntityFieldsV6Support() }
 
 // DocumentFromSyntaxWithEntityFieldsSupport adapts a profile-bound AST.
 func DocumentFromSyntaxWithEntityFieldsSupport(file *syntax.File, support EntityFieldsSupport) (Document, error) {
@@ -128,6 +132,7 @@ type fieldEvidence struct {
 	Origin                        FieldOrigin
 	Presence                      FieldPresence
 	Cardinality                   FieldCardinality
+	TextBound                     textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 	Span, IDSpan                  SourceSpan
 	NameSpan, TypeRefSpan         SourceSpan
 	PresenceSpan, CardinalitySpan SourceSpan
@@ -153,7 +158,14 @@ func documentEvidence(document Document) canonicalDocumentEvidence {
 		id, _ := declarationIdentity(document.Namespace, declaration)
 		item := declarationEvidence{Kind: declaration.Kind, ID: id, Name: declaration.Name, Attributes: cloneStringMap(declaration.Attributes), Span: declaration.Span}
 		for _, field := range declaration.Fields {
-			item.Fields = append(item.Fields, fieldEvidence{ID: field.ID, Parent: field.Parent, Name: field.Name, TypeRef: field.TypeRef, TypeRefPresentation: canonicalTypeRefPresentation(field.TypeRefUse), Origin: field.Origin, Presence: field.Presence, Cardinality: field.Cardinality, Span: field.Span, IDSpan: field.IDSpan, NameSpan: field.NameSpan, TypeRefSpan: field.TypeRefSpan, PresenceSpan: field.PresenceSpan, CardinalitySpan: field.CardinalitySpan})
+			item.Fields = append(item.Fields, fieldEvidence{
+				ID: field.ID, Parent: field.Parent, Name: field.Name, TypeRef: field.TypeRef,
+				TypeRefPresentation: canonicalTypeRefPresentation(field.TypeRefUse), Origin: field.Origin,
+				Presence: field.Presence, Cardinality: field.Cardinality, TextBound: field.TextBound,
+				Span: field.Span, IDSpan: field.IDSpan, NameSpan: field.NameSpan,
+				TypeRefSpan: field.TypeRefSpan, PresenceSpan: field.PresenceSpan,
+				CardinalitySpan: field.CardinalitySpan,
+			})
 		}
 		for _, reference := range declaration.Inputs {
 			item.Inputs = append(item.Inputs, canonicalReferenceEvidence(reference, idsByName, document.Namespace))
