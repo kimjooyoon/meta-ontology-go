@@ -6,6 +6,13 @@ This repository contains its Go compiler. Source files use the `.gooo` extension
 
 [한국어: 언어의 방향과 현재 기능](docs/language-direction.ko.md)
 
+[![Go / Gooo physical lines: 561,120 / 5,389](https://img.shields.io/badge/Go%20%2F%20Gooo%20lines-561%2C120%20%2F%205%2C389-546e7a)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
+[![Gooo share of Go and Gooo physical lines: 0.95%](https://img.shields.io/badge/Gooo%20share-0.95%25-8e44ad)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
+
+Source snapshot: [`969eb8c`](https://github.com/kimjooyoon/meta-ontology-go/commit/969eb8c07fa3984d5287d049e2ffec1b2ce6a077).
+Counts include comments, blank lines, tests and generated Go. Gooo share is
+`Gooo lines / (Go lines + Gooo lines)`; the linked record gives the CI origin and scope.
+
 ## What you can build
 
 Gooo source declares calculations, stable concept identities and permitted

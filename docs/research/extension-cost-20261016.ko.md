@@ -301,3 +301,31 @@ Go 투영·실행 경계에서 이를 보존한다. 이 첫 구현에서 필요�
 선언을 하나 더 쓰는 데 의미 판정과 연결 코드를 다시 작성해야 한다면 확장 비용이
 남아 있다. 새 커널을 만드는 첫 비용·후속 선언 비용·독립 검사와 원본 보존 비용을
 각각 기록하고, 동일 유형의 후속 사례로 공통화의 효과를 판단한다.
+
+## 소스 구성 배지
+
+README의 두 배지는 기존 `scripts/line-metrics` CI 집계에서 프로젝트 루트의
+`go_lines`, `gooo_lines`를 읽은 스냅샷이다. 기준은 검증된 `main`
+[`969eb8c07fa3984d5287d049e2ffec1b2ce6a077`](https://github.com/kimjooyoon/meta-ontology-go/commit/969eb8c07fa3984d5287d049e2ffec1b2ce6a077)이다.
+
+| 집계 | 파일 | 물리적 행 |
+| --- | ---: | ---: |
+| Go (`.go`) | 8,413 | 561,120 |
+| Gooo (`.gooo`) | 151 | 5,389 |
+| 두 언어 합계 | 8,564 | 566,509 |
+
+Gooo 비중은 `5,389 / 566,509 × 100 = 0.951264…%`를 소수 둘째 자리로
+표시한 **0.95%**다. 주석·빈 행·테스트·생성 Go를 포함하고, `.git`과 `vendor`는
+기존 수집기 규칙으로 제외한다. 인라인 `computes` 본문은 소속 `.gooo` 파일의
+행에 포함된다. 원문의 의미 소유와 수작업 확장 비용은 앞 절의 기준으로 따로 읽는다.
+
+원본은 [CI run 38973916699, attempt 1](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38973916699)의
+[producer artifact 12077773447](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38973916699/artifacts/12077773447)에
+담긴 `source-metrics.json`이다. ZIP SHA256은
+`dfe1cd6a9b6039f186e6589cd76558c7d01bbcfc835db45fc6b51e4995db4534`,
+멤버 SHA256은 `65032691815de1c20af34f77f19202d4a1ed32cd6a34783b88fae76316419442`다.
+기존 출처 묶음이 보존하는 소스 SHA와 집계의 `commit_sha`가 같다.
+
+배지에는 집계한 커밋을 함께 표시한다. 다음 검증된 집계로 교체할 때도 같은 단위와
+분모를 사용한다. 기존 CI 산출물을 재사용하며 별도 수집기·필수 검사·게시 권한을
+추가하지 않는다. 새 배지 수치는 프로그램의 확장 비용과 함께 해석할 관찰값이다.
