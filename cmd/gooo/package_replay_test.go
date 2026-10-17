@@ -124,7 +124,7 @@ func assertPackageReplaySourceRefusals(t *testing.T, args []string, root string)
 	t.Helper()
 	for _, tc := range []struct {
 		name, file, code, detail string
-		inputsRead              bool
+		inputsRead               bool
 	}{
 		{
 			name:   "manifest",

@@ -39,7 +39,7 @@ type packageExecutionReceipt struct {
 	InputsDigest      string                           `json:"inputs_digest,omitempty"`
 	Result            *workspaceexecution.Result       `json:"result,omitempty"`
 	Error             string                           `json:"error,omitempty"`
-	Failure           *packageruntime.Failure           `json:"failure,omitempty"`
+	Failure           *packageruntime.Failure          `json:"failure,omitempty"`
 	ReplayedFrom      string                           `json:"replayed_from_sha256,omitempty"`
 	ContinuedFrom     string                           `json:"continued_from_sha256,omitempty"`
 	ConstructionInput *constructionInputEvidence       `json:"construction_input,omitempty"`

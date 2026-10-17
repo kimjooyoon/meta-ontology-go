@@ -2,6 +2,7 @@ package semantic
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 )
 
@@ -58,7 +59,7 @@ func validateFieldOwnerIndex(g Graph, expected map[ID]graphIdentityOwner, issues
 	for id := range g.fieldOwners {
 		actualIDs = append(actualIDs, id)
 	}
-	sort.Slice(actualIDs, func(i, j int) bool { return actualIDs[i] < actualIDs[j] })
+	slices.Sort(actualIDs)
 	for _, id := range actualIDs {
 		actual := g.fieldOwners[id]
 		want, exists := expected[id]
@@ -79,7 +80,7 @@ func validateFieldOwnerIndex(g Graph, expected map[ID]graphIdentityOwner, issues
 			}
 		}
 	}
-	sort.Slice(missingIDs, func(i, j int) bool { return missingIDs[i] < missingIDs[j] })
+	slices.Sort(missingIDs)
 	for _, id := range missingIDs {
 		issues.add("field-index-missing", fmt.Sprintf("%s is not indexed", id), expected[id].parent, "")
 	}
