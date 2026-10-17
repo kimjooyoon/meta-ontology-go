@@ -127,11 +127,7 @@ func runReuse(input executionInput) error {
 	}
 	receipt, err := publictestreuse.ReadReceipt(receiptPath)
 	if err != nil {
-		report.CaseID = publictestreuse.CaseTamperedReceipt
-		report.Decision = publictestreuse.DecisionRefuted
-		report.Reason = publictestreuse.ReasonTampered
-		report.ReceiptMisses = 1
-		return writeReport(input.OutputDir, report, "The receipt failed immutable decoding or content validation; reuse was rejected fail-closed.")
+		return writeInvalidReuseReceipt(input.OutputDir, report, err)
 	}
 	if receipt.Binding.PolicySourceDigest != identity.Binding.PolicySourceDigest ||
 		receipt.Binding.PolicySemanticDigest != identity.Binding.PolicySemanticDigest ||
@@ -166,6 +162,11 @@ func runReuse(input executionInput) error {
 }
 
 func loadIdentity(input executionInput) (identity, error) {
+	return loadIdentityWithInputs(input, readExecutionPackageInputs)
+}
+
+func loadIdentityWithInputs(input executionInput,
+	readInputs func(string, []byte, []byte) (publictestreuse.ExecutionPackageInputs, error)) (identity, error) {
 	for name, path := range map[string]string{
 		"policy": input.Policy, "source": input.Source, "program": input.Program,
 		"manifest": input.Manifest, "test contract": input.TestContract, "package directory": input.PackageDir,
@@ -201,7 +202,8 @@ func loadIdentity(input executionInput) (identity, error) {
 	if err != nil {
 		return identity{}, fmt.Errorf("read test contract: %w", err)
 	}
-	if err := validatePackageInputs(input.PackageDir, input.Program, program, input.TestContract, testContract); err != nil {
+	packageInputs, err := readInputs(input.PackageDir, program, testContract)
+	if err != nil {
 		return identity{}, err
 	}
 	generatedSemantic, err := manifestSemanticDigest(manifest)
@@ -218,7 +220,8 @@ func loadIdentity(input executionInput) (identity, error) {
 	}
 	commandDigest := publictestreuse.TestCommandDigest(testCommand, cache.HashBytes(testContract).String())
 	return identity{
-		Policy: policy, ProgramBytes: program, ManifestBytes: manifest, TestBytes: testContract,
+		Policy: policy, PolicyBytes: policySource, ProgramBytes: program,
+		ManifestBytes: manifest, TestBytes: testContract,
 		Binding: publictestreuse.Binding{
 			PolicySourceDigest: policy.SourceDigest, PolicySemanticDigest: policy.SemanticDigest, PolicyEvaluatorDigest: policy.EvaluatorDigest,
 			CanonicalSourceDigest: cache.HashBytes(source).String(), CanonicalSemanticDigest: policy.SemanticDigest,
@@ -226,31 +229,25 @@ func loadIdentity(input executionInput) (identity, error) {
 			GeneratedManifestDigest: cache.HashBytes(manifest).String(), CompilerDigest: compilerDigest,
 			ReleasedToolDigest: publictestreuse.ReleasedToolDigest(compilerDigest), ToolchainDigest: publictestreuse.ToolchainDigest(),
 			ToolchainVersion: toolchainVersion, TestCommand: testCommand, TestCommandDigest: commandDigest,
-			TestContractDigest: cache.HashBytes(testContract).String(),
+			TestContractDigest: cache.HashBytes(testContract).String(), PackageInputs: packageInputs,
 		},
 	}, nil
 }
 
-func validatePackageInputs(packageDir, programPath string, program []byte, testPath string, testContract []byte) error {
-	info, err := os.Stat(packageDir)
-	if err != nil || !info.IsDir() {
-		return fmt.Errorf("generated package directory is unavailable: %s", packageDir)
+func writeInvalidReuseReceipt(outputDir string, report publictestreuse.Report, err error) error {
+	report.ReceiptMisses = 1
+	if errors.Is(err, publictestreuse.ErrUnobservedPackageInputs) {
+		report.CaseID = publictestreuse.CaseStaleEvidence
+		report.Decision = publictestreuse.DecisionUnknown
+		report.Reason = "EXECUTION_PACKAGE_INPUTS_UNOBSERVED"
+		report.Unknown = publictestreuse.Unknown(report.Reason, publictestreuse.UnknownEvidence,
+			publictestreuse.UnknownNextEvidence, "execution_package_inputs")
+		return writeReport(outputDir, report, "The historical receipt has no execution package input observations; current reuse remains unresolved.")
 	}
-	if !bytes.Equal(program, mustRead(filepath.Join(packageDir, filepath.Base(programPath)))) {
-		return errors.New("generated program differs from the package file used by the test command")
-	}
-	if !bytes.Equal(testContract, mustRead(filepath.Join(packageDir, filepath.Base(testPath)))) {
-		return errors.New("test contract differs from the package file used by the test command")
-	}
-	if _, err := os.Stat(filepath.Join(packageDir, "go.mod")); err != nil {
-		return fmt.Errorf("generated package go.mod is unavailable: %w", err)
-	}
-	return nil
-}
-
-func mustRead(filename string) []byte {
-	data, _ := readRegular(filename)
-	return data
+	report.CaseID = publictestreuse.CaseTamperedReceipt
+	report.Decision = publictestreuse.DecisionRefuted
+	report.Reason = publictestreuse.ReasonTampered
+	return writeReport(outputDir, report, "The receipt failed immutable decoding or content validation; reuse was rejected fail-closed.")
 }
 
 func readRegular(filename string) ([]byte, error) {

@@ -64,19 +64,46 @@ reported independently. The published evidence denominator is exactly 32.
 
 ## Public generated-test reuse contract
 
-The same canonical project also declares a v1 test-reuse policy in its
-lowered \`Compile\` meta-code. An independent caller may run the fixed
-\`go test -tags generated_project -count=1 .\` contract once, publish an
+The development source declares a v2 test-reuse policy in its
+lowered `Compile` meta-code. A caller may run the fixed
+`go test -tags generated_project -count=1 .` contract once, publish an
 immutable caller-owned receipt, and later request reuse explicitly. The
 second public command validates the receipt against the canonical source and
 semantic digest, generated program and manifest, compiler and released-tool
-identity, Go 1.27 toolchain, test command, test contract, and successful
+identity, Go 1.27.2 toolchain, test command, test contract, and successful
 original result. It never auto-skips a test.
+
+The v2 binding records an ordered, fixed-size profile of the execution
+package: `generated_project_test.go` (test contract), `go.mod` (module), and
+`semantic.gooo.go` (generated program). Each member keeps its relative path,
+role, byte length and raw-byte digest. The execution reader checks the actual
+directory membership and regular-file contents. A changed `go.mod` therefore
+changes the binding even when the generated program and test are identical.
+
+Publication has a separate mapping: `test-reuse-test-contract.go` and
+`test-reuse-baseline-program.go` map to the original names, while `go.mod`
+keeps its name. Reports and explanatory files remain outside this execution
+profile. The verifier reconstructs the profile from these three copies and
+compares the separately published replay program with the baseline program.
+
+A historical v1 receipt lacks this observation. The reuse command reports
+`UNKNOWN` with `EXECUTION_PACKAGE_INPUTS_UNOBSERVED` and requests one current
+successful receipt. It preserves the old file and performs neither build nor
+test nor reuse on that path. Current malformed profiles are rejected; JSON
+arrays with fewer or more than three members cannot silently normalize.
+
+This is the existing three-file experiment's input contract. It does not
+close inherited process environment, transitive dependencies, external
+effects or concurrent filesystem changes. Those remain separate work before
+general customer test selection can use this result. The source policy still
+uses semicolon markers inside `Compile`; replacing host decision branches
+with typed Gooo observations and choices is subsequent language work. New
+profile checks have not yet been observed in this draft's original CI.
 
 The v13 journey is baseline generation -> baseline build -> baseline test ->
 receipt -> explicit authorization -> replay validation -> reused test ->
-evidence. The six cases are exactly two \`CLOSED\`, two \`UNKNOWN\`, and two
-\`REFUTED\`: successful baseline execution, authorized immutable receipt reuse,
+evidence. The six cases are exactly two `CLOSED`, two `UNKNOWN`, and two
+`REFUTED`: successful baseline execution, authorized immutable receipt reuse,
 missing authorization, stale or unbounded evidence, tampered receipt, and
 policy mismatch. No score is emitted; the artifact denominator is exactly 24.
 

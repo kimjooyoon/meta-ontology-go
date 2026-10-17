@@ -1,6 +1,8 @@
 package publictestreuse
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -23,6 +25,30 @@ type ExecutionPackageInput struct {
 	Role   string `json:"role"`
 	Bytes  int64  `json:"bytes"`
 	Digest string `json:"digest"`
+}
+
+// UnmarshalJSON checks the wire cardinality before copying into the fixed array.
+// encoding/json otherwise discards excess JSON array elements for Go arrays.
+func (inputs *ExecutionPackageInputs) UnmarshalJSON(data []byte) error {
+	var wire struct {
+		Profile string                  `json:"profile"`
+		Members []ExecutionPackageInput `json:"members"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&wire); err != nil {
+		return err
+	}
+	if len(wire.Members) != len(inputs.Members) {
+		return errors.New("generated test package input profile needs exactly three members")
+	}
+	observed := ExecutionPackageInputs{Profile: wire.Profile}
+	copy(observed.Members[:], wire.Members)
+	if err := observed.Validate(); err != nil {
+		return err
+	}
+	*inputs = observed
+	return nil
 }
 
 // ExecutionPackageNames returns the fixed profile in relative-path order.
