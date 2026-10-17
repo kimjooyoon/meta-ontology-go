@@ -171,8 +171,8 @@ checksum.
 
 For application results, read `result.runtime.traces[].deliveries[]`: each row
 keeps the activity ID, `actual` value and any `fault` or `blocked_by` condition.
-Use `case_index` to associate it with the supplied input row. Expected fields
-and their matching counts are present only for the corresponding case mode.
+Use `case_index` to associate it with the supplied input row. Expected values
+belong to `--cases`; input-only observation keeps the finite matching counts at zero.
 
 The saved composition and the executable observation driver have separate origins:
 
