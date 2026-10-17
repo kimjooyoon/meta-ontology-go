@@ -1,0 +1,103 @@
+package testreusechoice
+namespace testreusechoice
+
+entity Text id "urn:gooo:type:string"
+entity Boolean id "urn:gooo:type:boolean"
+
+entity ReuseObservation id "gooo://test-reuse/observation/v1" fields {
+    field requested id "gooo://test-reuse/observation/v1/requested" type boolean required one
+    field receipt_state id "gooo://test-reuse/observation/v1/receipt-state" type string required one
+    field policy_state id "gooo://test-reuse/observation/v1/policy-state" type string required one
+    field binding_state id "gooo://test-reuse/observation/v1/binding-state" type string required one
+    field input_profile id "gooo://test-reuse/observation/v1/input-profile" type string required one
+}
+
+entity OriginalObservation id "gooo://test-reuse/original-observation/v1" fields {
+    field build_passed id "gooo://test-reuse/original-observation/v1/build-passed" type boolean required one
+    field test_passed id "gooo://test-reuse/original-observation/v1/test-passed" type boolean required one
+    field semantic_matches id "gooo://test-reuse/original-observation/v1/semantic-matches" type boolean required one
+}
+
+entity ReuseAssessment id "gooo://test-reuse/assessment/v1" fields {
+    field case_id id "gooo://test-reuse/assessment/v1/case" type string required one
+    field decision id "gooo://test-reuse/assessment/v1/decision" type string required one
+    field reason id "gooo://test-reuse/assessment/v1/reason" type string required one
+    field step id "gooo://test-reuse/assessment/v1/step" type string required one
+    field next_operation id "gooo://test-reuse/assessment/v1/next-operation" type string required one
+    field blocked_by id "gooo://test-reuse/assessment/v1/blocked-by" type string required one
+    field reuse id "gooo://test-reuse/assessment/v1/reuse" type boolean required one
+}
+
+# Observations come from the host's file and receipt readers. This activity
+# classifies the three-file input profile; it does not establish dependency,
+# environment or effect closure. A host must compare current inputs itself
+# before consuming a reuse result.
+activity AssessReplay(ReuseObservation) -> ReuseAssessment
+    id "gooo://test-reuse/assess-replay/v1" computes `
+if !input.requested {
+    return Outcome("MISSING_EXPLICIT_AUTHORIZATION", "UNKNOWN", "MISSING_EXPLICIT_REUSE_AUTHORIZATION",
+        "AUTHORIZE_REUSE", "PROVIDE_EXPLICIT_REUSE_AUTHORIZATION", "explicit_reuse_authorization", false)
+}
+if input.receipt_state == "INVALID" {
+    return Outcome("TAMPERED_REUSE_RECEIPT", "REFUTED", "MALFORMED_OR_TAMPERED_REUSE_RECEIPT", "", "", "", false)
+}
+if input.receipt_state == "LEGACY_INPUTS_UNOBSERVED" {
+    return Unresolved("EXECUTION_PACKAGE_INPUTS_UNOBSERVED", "execution_package_inputs")
+}
+if input.receipt_state == "MISSING_REUSE_RECEIPT" || input.receipt_state == "AMBIGUOUS_REUSE_RECEIPT" {
+    return Unresolved(input.receipt_state, "caller_owned_reuse_receipt")
+}
+if input.receipt_state != "VALID" {
+    return Unresolved("RECEIPT_OBSERVATION_UNRECOGNIZED", "caller_owned_reuse_receipt")
+}
+if input.policy_state == "MISMATCH" {
+    return Outcome("POLICY_MISMATCH", "REFUTED", "REUSE_POLICY_MISMATCH", "", "", "", false)
+}
+if input.policy_state != "MATCH" {
+    return Unresolved("POLICY_BINDING_UNOBSERVED", "policy_binding")
+}
+if input.input_profile != "gooo/generated-test-package-inputs/v1" {
+    return Unresolved("EXECUTION_PACKAGE_INPUTS_UNOBSERVED", "execution_package_inputs")
+}
+if input.binding_state != "MATCH" {
+    return Unresolved("STALE_REUSE_EVIDENCE", "exact_receipt_binding")
+}
+return Outcome("AUTHORIZED_IMMUTABLE_RECEIPT_REUSE", "CLOSED", "AUTHORIZED_IMMUTABLE_RECEIPT_REUSE", "", "", "", true)
+`
+
+activity AssessOriginal(OriginalObservation) -> ReuseAssessment
+    id "gooo://test-reuse/assess-original/v1" computes `
+let state = "REFUTED"
+let reason = "FAILED_ORIGINAL_BUILD"
+if input.build_passed {
+    reason = "FAILED_ORIGINAL_TEST"
+    if input.test_passed {
+        reason = "DIGEST_CONTRADICTION"
+        if input.semantic_matches {
+            state = "CLOSED"
+            reason = "SUCCESSFUL_ORIGINAL_TEST_EXECUTION"
+        }
+    }
+}
+return Outcome("BASELINE_TEST_EXECUTION", state, reason, "", "", "", false)
+`
+
+activity Unresolved(reason Text, blocked Text) -> ReuseAssessment
+    id "gooo://test-reuse/unresolved/v1" computes `
+return Outcome("STALE_OR_UNBOUNDED_REUSE_EVIDENCE", "UNKNOWN", reason,
+    "LOAD_REUSE_RECEIPT", "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT", blocked, false)
+`
+
+activity Outcome(case_id Text, decision Text, reason Text, step Text,
+    next_operation Text, blocked_by Text, reuse Boolean) -> ReuseAssessment
+    id "gooo://test-reuse/outcome/v1" computes `
+return ReuseAssessment{
+    case_id: case_id,
+    decision: decision,
+    reason: reason,
+    step: step,
+    next_operation: next_operation,
+    blocked_by: blocked_by,
+    reuse: reuse,
+}
+`

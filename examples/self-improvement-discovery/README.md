@@ -64,8 +64,11 @@ reported independently. The published evidence denominator is exactly 32.
 
 ## Public generated-test reuse contract
 
-The development source declares a v2 test-reuse policy in its
-lowered `Compile` meta-code. A caller may run the fixed
+The development source declares v3 test-reuse metadata in `Compile`. The
+separate [Gooo policy](../../internal/meta/publictestreuse/policy.gooo) defines
+`AssessOriginal` and `AssessReplay`, which compute decisions from typed
+observations. The evaluator embeds that source; the tested project retains
+its ordinary two-entity shape and journey metadata. A caller may run the fixed
 `go test -tags generated_project -count=1 .` contract once, publish an
 immutable caller-owned receipt, and later request reuse explicitly. The
 second public command validates the receipt against the canonical source and
@@ -95,10 +98,38 @@ arrays with fewer or more than three members cannot silently normalize.
 This is the existing three-file experiment's input contract. It does not
 close inherited process environment, transitive dependencies, external
 effects or concurrent filesystem changes. Those remain separate work before
-general customer test selection can use this result. The source policy still
-uses semicolon markers inside `Compile`; replacing host decision branches
-with typed Gooo observations and choices is subsequent language work. New
-profile checks have not yet been observed in this draft's original CI.
+general customer test selection can use this result. The host reads file and
+receipt facts, then the existing pure Gooo evaluator calls `AssessReplay`.
+The source returns a decision, reason, proposed reuse and any unresolved next
+operation. Immediately before reuse, the host reads the three package inputs
+again and verifies the successful receipt. A permissive source result cannot
+supply a missing request or receipt. Concurrent changes after that read remain
+outside the experiment's observation boundary.
+
+The v3 report retains the typed observations, stable activity ID, raw Gooo
+decision-source digest, evaluated projection digest and returned record. The
+project source and semantic digests remain separate binding fields. The
+policy also binds the actual evaluator executable digest, which includes the
+embedded decision program; the selected compiler manifest names that source. A reader checks their
+internal consistency without executing the source. These records describe the
+observed decision; authenticating externally supplied facts requires their own
+origin. Historical reports keep their original versions.
+
+Seventeen independent literal expectations cover four original-execution
+outcomes and thirteen replay observation patterns. A source-only condition
+change and independent host-effect checks exercise the ownership boundary.
+Their acceptance belongs to the new source's original CI. This compiler
+experiment adds no mandatory workflow to a customer project; customer CI can
+check its pinned Gooo source and its own expected results.
+
+Each completed reuse report records `policy_evaluations: 1` for the selected
+Gooo decision activity and its local helper calls. These evaluations are
+additional work beyond the canonical project's generation/build/test counts;
+they use the existing interpreter without a model or native program launch.
+The baseline and reuse command wall intervals include that assessment after
+loading identities. Outer CI process measurements also include initialization
+and report publication. A timing comparison must retain those scopes; moving
+the decision into Gooo alone establishes no speed improvement.
 
 The v13 journey is baseline generation -> baseline build -> baseline test ->
 receipt -> explicit authorization -> replay validation -> reused test ->

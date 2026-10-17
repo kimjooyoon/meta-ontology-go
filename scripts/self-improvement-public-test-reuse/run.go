@@ -34,61 +34,62 @@ func runBaseline(input executionInput) error {
 	if err != nil {
 		return err
 	}
+	report := baselineReport(identity, build, test)
+	observed := publictestreuse.OriginalObservation{
+		BuildPassed: build.Success, TestPassed: test.Success, SemanticMatches: report.SemanticEqual,
+	}
+	if err := assessOriginalReport(identity.Policy, observed, &report); err != nil {
+		return err
+	}
+	report.WallMS = elapsedMS(started)
+	if report.Decision == publictestreuse.DecisionClosed {
+		if err := sealOriginalReceipt(input.OutputDir, identity, build, test, &report); err != nil {
+			return err
+		}
+	}
+	return writeReport(input.OutputDir, report, "Gooo classified the observed original execution; a successful bound result can produce its immutable receipt.")
+}
+
+func baselineReport(identity identity, build, test commandResult) publictestreuse.Report {
 	report := baseReport(identity, publictestreuse.OriginalOperation)
-	report.CaseID = publictestreuse.CaseBaselineExecution
 	report.BuildExecutions = 1
 	report.TestExecutions = 1
 	report.ReceiptMisses = 1
 	report.BuildMS = build.WallMS
 	report.TestMS = test.WallMS
-	report.WallMS = elapsedMS(started)
 	report.PeakRSSKib = maxInt64(build.PeakRSSKib, test.PeakRSSKib)
 	report.GeneratedBytesEqual = true
 	report.SemanticEqual = identity.Binding.CanonicalSemanticDigest == identity.Binding.GeneratedSemanticDigest
-	report.RepositoryWrites = 0
-	report.LocalTestExecutions = 0
-	if !build.Success {
-		report.Decision = publictestreuse.DecisionRefuted
-		report.Reason = "FAILED_ORIGINAL_BUILD"
-	} else if !test.Success {
-		report.Decision = publictestreuse.DecisionRefuted
-		report.Reason = "FAILED_ORIGINAL_TEST"
-	} else if !report.SemanticEqual {
-		report.Decision = publictestreuse.DecisionRefuted
-		report.Reason = "DIGEST_CONTRADICTION"
-	} else {
-		report.Decision = publictestreuse.DecisionClosed
-		report.Reason = publictestreuse.ReasonBaseline
+	return report
+}
+
+func sealOriginalReceipt(output string, identity identity, build, test commandResult, report *publictestreuse.Report) error {
+	if !build.Success || !test.Success || identity.Binding.CanonicalSemanticDigest != identity.Binding.GeneratedSemanticDigest {
+		return errors.New("Gooo policy cannot seal an unsuccessful original execution")
 	}
-	if expected, ok := identity.Policy.Decision(publictestreuse.CaseBaselineExecution); !ok || expected != publictestreuse.DecisionClosed {
-		return errors.New("canonical policy does not declare the baseline case CLOSED")
+	receipt := publictestreuse.Receipt{
+		Schema: publictestreuse.ReceiptSchema, Operation: publictestreuse.OriginalOperation,
+		Decision: publictestreuse.DecisionClosed, Reason: publictestreuse.ReceiptReason,
+		Binding: identity.Binding,
+		Original: publictestreuse.OriginalExecution{
+			Operation: publictestreuse.OriginalOperation, ResultDigest: test.ResultDigest,
+			Successful: true, ExitCode: test.ExitCode, BuildExecutions: 1, TestExecutions: 1,
+			BuildMS: build.WallMS, TestMS: test.WallMS, WallMS: report.WallMS, PeakRSSKib: report.PeakRSSKib,
+		},
 	}
-	if report.Decision == publictestreuse.DecisionClosed {
-		receipt := publictestreuse.Receipt{
-			Schema: publictestreuse.ReceiptSchema, Operation: publictestreuse.OriginalOperation,
-			Decision: publictestreuse.DecisionClosed, Reason: publictestreuse.ReceiptReason,
-			Binding: identity.Binding,
-			Original: publictestreuse.OriginalExecution{
-				Operation: publictestreuse.OriginalOperation, ResultDigest: test.ResultDigest,
-				Successful: true, ExitCode: test.ExitCode, BuildExecutions: 1, TestExecutions: 1,
-				BuildMS: build.WallMS, TestMS: test.WallMS, WallMS: report.WallMS, PeakRSSKib: report.PeakRSSKib,
-			},
-			RepositoryWrites: 0, LocalTestExecutions: 0,
-		}
-		receipt.Original.InvocationID = invocationDigest(receipt.Binding, receipt.Original)
-		receipt.ReceiptID, err = publictestreuse.ReceiptContentDigest(receipt)
-		if err != nil {
-			return err
-		}
-		receiptPath := filepath.Join(input.OutputDir, "reuse-receipt.json")
-		if err := publictestreuse.WriteReceipt(receiptPath, receipt); err != nil {
-			return err
-		}
-		report.ReceiptDigest = receipt.ReceiptID
-		report.OriginalReceiptID = receipt.ReceiptID
-		report.OriginalInvocationID = receipt.Original.InvocationID
+	receipt.Original.InvocationID = invocationDigest(receipt.Binding, receipt.Original)
+	var err error
+	receipt.ReceiptID, err = publictestreuse.ReceiptContentDigest(receipt)
+	if err != nil {
+		return err
 	}
-	return writeReport(input.OutputDir, report, "The baseline command executed the fixed test contract and, only on success, sealed an immutable caller-owned receipt.")
+	if err := publictestreuse.WriteReceipt(filepath.Join(output, "reuse-receipt.json"), receipt); err != nil {
+		return err
+	}
+	report.ReceiptDigest = receipt.ReceiptID
+	report.OriginalReceiptID = receipt.ReceiptID
+	report.OriginalInvocationID = receipt.Original.InvocationID
+	return nil
 }
 
 func runReuse(input executionInput) error {
@@ -100,65 +101,34 @@ func runReuse(input executionInput) error {
 		return err
 	}
 	started := time.Now()
-	report := baseReport(identity, publictestreuse.ReplayOperation)
-	report.CaseID = publictestreuse.CaseMissingAuthorization
-	report.WallMS = elapsedMS(started)
-	report.PeakRSSKib = currentPeakRSSKib()
-	if expected, ok := identity.Policy.Decision(publictestreuse.CaseAuthorizedReuse); !ok || expected != publictestreuse.DecisionClosed {
-		return errors.New("canonical policy does not declare the authorized reuse case CLOSED")
-	}
-	if !input.Authorize {
-		report.Decision = publictestreuse.DecisionUnknown
-		report.Reason = publictestreuse.ReasonMissingAuthorization
-		report.Unknown = publictestreuse.Unknown(publictestreuse.ReasonMissingAuthorization, publictestreuse.UnknownAuthorization, publictestreuse.UnknownNextAuthorization, "explicit_reuse_authorization")
-		return writeReport(input.OutputDir, report, "The receipt was not consulted because reuse was not explicitly authorized.")
-	}
-	receiptPath, state, err := resolveReceiptPath(input.Receipt)
+	observed, receipt, err := observeReuse(input, identity.Binding)
 	if err != nil {
 		return err
 	}
-	if state != "" {
-		report.CaseID = publictestreuse.CaseStaleEvidence
-		report.Decision = publictestreuse.DecisionUnknown
-		report.Reason = state
-		report.Unknown = publictestreuse.Unknown(state, publictestreuse.UnknownEvidence, publictestreuse.UnknownNextEvidence, "caller_owned_reuse_receipt")
-		report.ReceiptMisses = 1
-		return writeReport(input.OutputDir, report, "The authorized reuse request had no single bounded receipt to validate, so no test was skipped.")
-	}
-	receipt, err := publictestreuse.ReadReceipt(receiptPath)
+	report := baseReport(identity, publictestreuse.ReplayOperation)
+	assessment, err := assessReplayReport(identity.Policy, observed, &report)
 	if err != nil {
-		return writeInvalidReuseReceipt(input.OutputDir, report, err)
+		return err
 	}
-	if receipt.Binding.PolicySourceDigest != identity.Binding.PolicySourceDigest ||
-		receipt.Binding.PolicySemanticDigest != identity.Binding.PolicySemanticDigest ||
-		receipt.Binding.PolicyEvaluatorDigest != identity.Binding.PolicyEvaluatorDigest {
-		report.CaseID = publictestreuse.CasePolicyMismatch
-		report.Decision = publictestreuse.DecisionRefuted
-		report.Reason = publictestreuse.ReasonPolicy
+	if input.Authorize {
 		report.ReceiptMisses = 1
-		return writeReport(input.OutputDir, report, "The canonical .gooo policy or its lowered evaluator changed; the receipt cannot authorize reuse.")
 	}
-	if err := publictestreuse.VerifyReceipt(receipt, identity.Binding); err != nil {
-		report.CaseID = publictestreuse.CaseStaleEvidence
-		report.Decision = publictestreuse.DecisionUnknown
-		report.Reason = publictestreuse.ReasonStale
-		report.Unknown = publictestreuse.Unknown(publictestreuse.ReasonStale, publictestreuse.UnknownEvidence, publictestreuse.UnknownNextEvidence, "exact_receipt_binding")
-		report.ReceiptMisses = 1
-		return writeReport(input.OutputDir, report, "The receipt is valid but stale or incomparable with the current generated program and test contract; no test was skipped.")
+	if assessment.Reuse {
+		if err := authorizeObservedReuse(input, identity, receipt); err != nil {
+			return err
+		}
+		report.ReceiptDigest = receipt.ReceiptID
+		report.OriginalReceiptID = receipt.ReceiptID
+		report.OriginalInvocationID = receipt.Original.InvocationID
+		report.ReusedTestExecutions = 1
+		report.ReceiptHits = 1
+		report.ReceiptMisses = 0
+		report.GeneratedBytesEqual = true
+		report.SemanticEqual = true
 	}
-	report.CaseID = publictestreuse.CaseAuthorizedReuse
-	report.Decision = publictestreuse.DecisionClosed
-	report.Reason = publictestreuse.ReuseReason
-	report.ReceiptDigest = receipt.ReceiptID
-	report.OriginalReceiptID = receipt.ReceiptID
-	report.OriginalInvocationID = receipt.Original.InvocationID
-	report.ReusedTestExecutions = 1
-	report.ReceiptHits = 1
-	report.GeneratedBytesEqual = true
-	report.SemanticEqual = true
 	report.WallMS = elapsedMS(started)
 	report.PeakRSSKib = currentPeakRSSKib()
-	return writeReport(input.OutputDir, report, "The explicit authorization validated the immutable receipt and reused one prior successful test result without executing a duplicate test.")
+	return writeReport(input.OutputDir, report, "Gooo classified the retained observations; any proposed reuse also required the current package and exact successful receipt.")
 }
 
 func loadIdentity(input executionInput) (identity, error) {
@@ -232,22 +202,6 @@ func loadIdentityWithInputs(input executionInput,
 			TestContractDigest: cache.HashBytes(testContract).String(), PackageInputs: packageInputs,
 		},
 	}, nil
-}
-
-func writeInvalidReuseReceipt(outputDir string, report publictestreuse.Report, err error) error {
-	report.ReceiptMisses = 1
-	if errors.Is(err, publictestreuse.ErrUnobservedPackageInputs) {
-		report.CaseID = publictestreuse.CaseStaleEvidence
-		report.Decision = publictestreuse.DecisionUnknown
-		report.Reason = "EXECUTION_PACKAGE_INPUTS_UNOBSERVED"
-		report.Unknown = publictestreuse.Unknown(report.Reason, publictestreuse.UnknownEvidence,
-			publictestreuse.UnknownNextEvidence, "execution_package_inputs")
-		return writeReport(outputDir, report, "The historical receipt has no execution package input observations; current reuse remains unresolved.")
-	}
-	report.CaseID = publictestreuse.CaseTamperedReceipt
-	report.Decision = publictestreuse.DecisionRefuted
-	report.Reason = publictestreuse.ReasonTampered
-	return writeReport(outputDir, report, "The receipt failed immutable decoding or content validation; reuse was rejected fail-closed.")
 }
 
 func readRegular(filename string) ([]byte, error) {
