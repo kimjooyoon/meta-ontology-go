@@ -75,9 +75,12 @@ func retainTextBound1905(t *testing.T, name string, observation any) {
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
-	raw, err := json.Marshal(map[string]any{"source_head": os.Getenv("GOOO_CI_SOURCE_HEAD"),
+	metadata := map[string]any{"source_head": os.Getenv("GOOO_CI_SOURCE_HEAD"),
 		"run_id": os.Getenv("GITHUB_RUN_ID"), "attempt": os.Getenv("GITHUB_RUN_ATTEMPT"),
-		"job": os.Getenv("GITHUB_JOB"), "observation": observation})
+		"job": os.Getenv("GITHUB_JOB"), "observation": observation}
+	metadata["source_head_scope"] = "ADMITTED_WORK"
+	metadata["compiler_build_source_sha"] = commandSourceIdentity
+	raw, err := json.Marshal(metadata)
 	if err != nil {
 		t.Fatal(err)
 	}

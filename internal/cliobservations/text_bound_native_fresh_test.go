@@ -98,8 +98,8 @@ func assertTextBoundNative1905(t *testing.T, receipt packageExecutionReceipt, co
 		r.ModelCalls != 0 || len(r.Runs) != 2 || len(r.Traces) != cases {
 		t.Fatal("native typed comparison/replay did not complete", r)
 	}
-	if head := os.Getenv("GOOO_CI_SOURCE_HEAD"); head != "" && r.ProducerSourceSHA != head {
-		t.Fatal("native producer is not the original CI source", r.ProducerSourceSHA, head)
+	if !textBoundProducerMatches1906(r.ProducerSourceSHA, commandSourceIdentity, os.Getenv("GOOO_CI_SOURCE_HEAD")) {
+		t.Fatal("native producer differs from the observed CLI build or admitted work", r.ProducerSourceSHA, commandSourceIdentity)
 	}
 	for _, process := range r.Runs {
 		if !process.Started || !process.Completed || process.ExitCode == nil || *process.ExitCode != 0 || process.TimedOut || process.Canceled {

@@ -21,6 +21,7 @@ import (
 const exitOK = 0
 
 var commandBinary string
+var commandSourceIdentity string
 
 type packageExecutionReceipt struct {
 	Decision    string                           `json:"decision"`
@@ -61,6 +62,12 @@ func runObservations(m *testing.M, dir string) int {
 	build.Stderr = os.Stderr
 	if err := build.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "build observed CLI:", err)
+		return 1
+	}
+	var err error
+	commandSourceIdentity, err = cliProducerSource(commandBinary)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "read observed CLI build identity:", err)
 		return 1
 	}
 	if root := os.Getenv("GOOO_FRESH_CLI_OUTPUT"); root != "" {
