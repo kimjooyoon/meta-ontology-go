@@ -54,6 +54,14 @@ func formatEntity(output *strings.Builder, entity *EntityDecl, support EntityFie
 		case EntityFieldsDeferred:
 			return ErrLatentFieldsUnsupported
 		case EntityFieldsSupported:
+			for _, field := range entity.Fields {
+				if field.TextBound.IsSet() {
+					capabilities, err := support.Profile.Capabilities()
+					if err != nil || !capabilities.TextBound {
+						return fmt.Errorf("max_utf8_bytes requires the EntityFields V6 profile")
+					}
+				}
+			}
 			return formatEntityFields(output, entity.Fields)
 		default:
 			return ErrEntityFieldsUnknownState

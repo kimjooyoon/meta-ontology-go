@@ -1,5 +1,7 @@
 package packageruntime
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/textbound"
+
 // Interface describes declarations in every package of a validated workspace.
 // Activity bodies are never executed by Describe.
 type Interface struct {
@@ -33,12 +35,13 @@ type InterfaceDeclaration struct {
 }
 
 type InterfaceField struct {
-	Name        string   `json:"name"`
-	ID          string   `json:"id"`
-	Aliases     []string `json:"aliases,omitempty"`
-	TypeID      string   `json:"type_id"`
-	Presence    string   `json:"presence"`
-	Cardinality string   `json:"cardinality"`
+	Name        string         `json:"name"`
+	ID          string         `json:"id"`
+	Aliases     []string       `json:"aliases,omitempty"`
+	TypeID      string         `json:"type_id"`
+	Presence    string         `json:"presence"`
+	Cardinality string         `json:"cardinality"`
+	TextBound   textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 }
 
 func Describe(manifest Manifest) (Interface, error) {

@@ -242,7 +242,7 @@ func sameEntityShape(left, right *syntax.EntityDecl) bool {
 	for index := range left.Fields {
 		a, b := left.Fields[index], right.Fields[index]
 		if a.ID != b.ID || a.Name != b.Name || a.TypeRef.Spelling != b.TypeRef.Spelling ||
-			a.Presence != b.Presence || a.Cardinality != b.Cardinality {
+			a.Presence != b.Presence || a.Cardinality != b.Cardinality || a.TextBound != b.TextBound {
 			return false
 		}
 	}

@@ -3,6 +3,7 @@ package bidir
 import (
 	"errors"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/textbound"
 )
 
 var (
@@ -37,6 +38,7 @@ type Field struct {
 	Presence    FieldPresence
 	Cardinality FieldCardinality
 	Span        SourceSpan
+	TextBound   textbound.UTF8 `json:"max_utf8_bytes,omitempty"`
 
 	IDSpan          SourceSpan
 	NameSpan        SourceSpan

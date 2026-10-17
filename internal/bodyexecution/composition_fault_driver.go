@@ -23,7 +23,7 @@ func arithmeticCompositionDriver(prior Composition) (string, error) {
 		}
 	}
 	var source strings.Builder
-	source.WriteString("package main\nimport(\"encoding/json\";\"os\")\nfunc main(){\n")
+	source.WriteString(compositionNativePreamble(graph))
 	fmt.Fprintf(&source, "var in [][%d]json.RawMessage;if json.NewDecoder(os.Stdin).Decode(&in)!=nil||len(in)>128{os.Exit(2)}\n", roots)
 	fmt.Fprintf(&source, "out:=make([][%d]json.RawMessage,len(in));faults:=make([][%d]*%sFault,len(in));blocked:=make([][%d][]string,len(in))\n", graph.count, graph.count, prefix, graph.count)
 	fmt.Fprintf(&source, "for c,row:=range in{%sCase=c;%sCount=0\n", prefix, prefix)
@@ -55,7 +55,9 @@ func writeArithmeticDriverStep(source *strings.Builder, graph compositionGraph, 
 	output := graph.valueGoType(node.OutputType)
 	fmt.Fprintf(source, "var v%d %s;if len(blocked[c][%d])==0{\n", index, output, index)
 	fmt.Fprintf(source, "v%d,faults[c][%d]=%sInvoke(func()%s{return GoooComposedActivity%d(%s)})\n", index, index, prefix, output, index, strings.Join(arguments, ","))
-	fmt.Fprintf(source, "if faults[c][%d]==nil{var err error;out[c][%d],err=json.Marshal(v%d);if err!=nil{os.Exit(3)}}}\n", index, index, index)
+	fmt.Fprintf(source, "if faults[c][%d]==nil{", index)
+	writeNativeTextUTF8Checks(source, graph, node, fmt.Sprintf("v%d", index))
+	fmt.Fprintf(source, "var err error;out[c][%d],err=json.Marshal(v%d);if err!=nil{os.Exit(3)}}}\n", index, index)
 	return root
 }
 

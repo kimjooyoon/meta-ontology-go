@@ -64,7 +64,12 @@ func RecordDeclarations(records []RecordType, native bool) string {
 				fieldType = "*" + fieldType
 				jsonOptions = ",omitempty"
 			}
-			fmt.Fprintf(&out, "%s %s `json:%q`\n", name, fieldType, field.Name+jsonOptions)
+			tags := fmt.Sprintf("json:%q", field.Name+jsonOptions)
+			if field.TextBound.IsSet() {
+				maximum, _ := field.TextBound.Resolve(0)
+				tags += fmt.Sprintf(" gooo_max_utf8_bytes:%q", fmt.Sprint(maximum))
+			}
+			fmt.Fprintf(&out, "%s %s `%s`\n", name, fieldType, tags)
 		}
 		fmt.Fprintf(&out, "}\n//gooo:generated:end id=%q kind=\"entity\"\n", record.ID)
 	}

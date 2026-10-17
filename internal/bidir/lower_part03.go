@@ -55,6 +55,7 @@ func adaptSyntaxField(parent string, field syntax.FieldDecl) (Field, error) {
 		Origin:          FieldOriginSource,
 		Presence:        FieldPresence(field.Presence),
 		Cardinality:     FieldCardinality(field.Cardinality),
+		TextBound:       field.TextBound,
 		Span:            toSourceSpan(field.Span),
 		IDSpan:          toSourceSpan(field.IDSpan),
 		NameSpan:        toSourceSpan(field.NameSpan),

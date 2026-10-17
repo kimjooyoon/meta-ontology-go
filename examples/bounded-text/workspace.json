@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "app/bounded-text",
+    "activity": "Prefix"
+  },
+  "packages": [
+    {
+      "path": "app/bounded-text",
+      "sources": ["main.gooo"]
+    }
+  ]
+}

@@ -58,7 +58,7 @@ func compositionFunction(source, activity string, index int) (string, error) {
 
 func compositionDriver(graph compositionGraph) (string, error) {
 	var source strings.Builder
-	source.WriteString("package main\nimport(\"encoding/json\";\"os\")\nfunc main(){\n")
+	source.WriteString(compositionNativePreamble(graph))
 	roots := 0
 	for _, node := range graph.nodes[:graph.count] {
 		for _, input := range node.inputSlots() {
@@ -81,7 +81,9 @@ func compositionDriver(graph compositionGraph) (string, error) {
 			}
 			arguments = append(arguments, input)
 		}
-		fmt.Fprintf(&source, "v%d:=GoooComposedActivity%d(%s);out[c][%d],_=json.Marshal(v%d)\n", i, i, strings.Join(arguments, ","), i, i)
+		fmt.Fprintf(&source, "v%d:=GoooComposedActivity%d(%s);\n", i, i, strings.Join(arguments, ","))
+		writeNativeTextUTF8Checks(&source, graph, node, fmt.Sprintf("v%d", i))
+		fmt.Fprintf(&source, "out[c][%d],_=json.Marshal(v%d)\n", i, i)
 	}
 	source.WriteString("};if json.NewEncoder(os.Stdout).Encode(out)!=nil{os.Exit(3)}}\n")
 	raw, err := format.Source([]byte(source.String()))

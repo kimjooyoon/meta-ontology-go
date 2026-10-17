@@ -114,10 +114,18 @@ func TestTextInputPolicyGenerationOrigins(t *testing.T) {
 		t.Fatal("policy generation origin", err)
 	}
 	for file, key := range map[string]string{
-		"../meta/textinput/escapes.gooo":  "source_sha256",
-		"text_escape_policy_generated.go": "generated_sha256",
+		"../meta/textinput/escapes.gooo":          "source_sha256",
+		"../valuejson/escape_policy_generated.go": "generated_sha256",
 	} {
 		data, err := os.ReadFile(file)
+		if key == "generated_sha256" {
+			// Only the handwritten host package declaration moved. Compare the
+			// recovered original bytes against the unchanged historical receipt.
+			if !bytes.HasPrefix(data, []byte("package valuejson\n")) {
+				t.Fatal("unexpected relocated projection package", file)
+			}
+			data = bytes.Replace(data, []byte("package valuejson\n"), []byte("package bodyexecution\n"), 1)
+		}
 		digest := sha256.Sum256(data)
 		if err != nil || hex.EncodeToString(digest[:]) != origin[key] {
 			t.Fatal("policy source/projection identity differs", file, err)

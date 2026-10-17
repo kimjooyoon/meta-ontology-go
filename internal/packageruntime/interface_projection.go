@@ -32,6 +32,7 @@ func projectSourceInterface(source parsedPackageSource, ir semantic.IR) []Interf
 			item.Fields = append(item.Fields, InterfaceField{
 				Name: field.Name, ID: field.ID.String(), Aliases: append([]string(nil), field.Aliases...),
 				TypeID: field.TypeRef.ID.String(), Presence: string(field.Presence), Cardinality: string(field.Cardinality),
+				TextBound: field.TextBound,
 			})
 		}
 		result = append(result, item)
