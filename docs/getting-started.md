@@ -112,9 +112,10 @@ operation completed; the receipt records what was observed:
 | `decision: "FAIL_CLOSED"`, exit 1 | The operation failed. Read `error` and any retained execution details before changing the source or environment. |
 | Exit 2 | The command arguments were rejected. Usage is written to stderr; stdout need not contain a JSON receipt. |
 
-`finite_total` counts expected field comparisons across the supplied rows;
-`finite_passed` counts matching field values. Retain the number of input rows
-separately when reporting a result.
+`finite_total` counts entries in each row's `expected` object; `finite_passed`
+counts entries whose complete JSON values match. A whole-record expectation is
+one comparison even when the record contains several fields. Keep input-row
+counts and declared field-value counts separate when reporting a result.
 
 For the pinned walkthrough's `--cases` command, a shell CI step can use its
 existing JSON parser to require `PASS`, a positive `finite_total`, and equal

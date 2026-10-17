@@ -1,0 +1,425 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "OBSERVED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "MATCHED_DECLARED_METADATA",
+          "origin_status": "DECLARED_OBSERVED_PAIR",
+          "reason": "ONE_DECLARED_PAIR_DOES_NOT_ESTABLISH_IMPROVEMENT",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "command-child",
+          "interval": "",
+          "statistic": "",
+          "measurement_method": "",
+          "collector_revision": "",
+          "origin_ref": "",
+          "value_status": ""
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "classifier",
+          "interval": "",
+          "statistic": "",
+          "measurement_method": "",
+          "collector_revision": "",
+          "origin_ref": "",
+          "value_status": ""
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "DIFFERENT",
+          "origin_status": "UNKNOWN",
+          "reason": "MEASUREMENT_DOMAIN_DIFFERS",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "explicit-command-window",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "OBSERVED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "DIFFERENT",
+          "origin_status": "DECLARED_OBSERVED_PAIR",
+          "reason": "MEASUREMENT_DOMAIN_DIFFERS",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "sum-of-child-maxima",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "OBSERVED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "DIFFERENT",
+          "origin_status": "DECLARED_OBSERVED_PAIR",
+          "reason": "MEASUREMENT_DOMAIN_DIFFERS",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-other-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "OBSERVED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "DIFFERENT",
+          "origin_status": "DECLARED_OBSERVED_PAIR",
+          "reason": "MEASUREMENT_DOMAIN_DIFFERS",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "OBSERVED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "UNKNOWN",
+          "origin_status": "DECLARED_OBSERVED_PAIR",
+          "reason": "INCOMPLETE_MEASUREMENT_DOMAIN",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "OBSERVED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "MATCHED_DECLARED_METADATA",
+          "origin_status": "UNKNOWN",
+          "reason": "MISSING_PROVENANCE_OR_UNAVAILABLE_OBSERVATION",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "",
+          "value_status": "OBSERVED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "MATCHED_DECLARED_METADATA",
+          "origin_status": "UNKNOWN",
+          "reason": "MISSING_PROVENANCE_OR_UNAVAILABLE_OBSERVATION",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "ESTIMATED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "MATCHED_DECLARED_METADATA",
+          "origin_status": "UNKNOWN",
+          "reason": "MISSING_PROVENANCE_OR_UNAVAILABLE_OBSERVATION",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "SENTINEL"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "MATCHED_DECLARED_METADATA",
+          "origin_status": "SENTINEL_NOT_OBSERVED",
+          "reason": "FALLBACK_NUMBER_IS_NOT_A_MEASUREMENT",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v2",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "OBSERVED"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "MATCHED_DECLARED_METADATA",
+          "origin_status": "UNKNOWN_COLLECTOR_EQUIVALENCE",
+          "reason": "COLLECTOR_EQUIVALENCE_NOT_ESTABLISHED",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "",
+          "interval": "",
+          "statistic": "",
+          "measurement_method": "",
+          "collector_revision": "",
+          "origin_ref": "",
+          "value_status": ""
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "",
+          "interval": "",
+          "statistic": "",
+          "measurement_method": "",
+          "collector_revision": "",
+          "origin_ref": "",
+          "value_status": ""
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "UNKNOWN",
+          "origin_status": "UNKNOWN",
+          "reason": "INCOMPLETE_MEASUREMENT_DOMAIN",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-child",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": "SENTINEL"
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "DIFFERENT",
+          "origin_status": "SENTINEL_NOT_OBSERVED",
+          "reason": "MEASUREMENT_DOMAIN_DIFFERS",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "measurement/rss:ExplainRSSPair.input0": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/left",
+          "value_status": "OBSERVED"
+        },
+        "measurement/rss:ExplainRSSPair.input1": {
+          "subject": "synthetic-worker",
+          "interval": "process-lifetime",
+          "statistic": "high-water-mark",
+          "measurement_method": "synthetic-proc-reader",
+          "collector_revision": "synthetic-collector-v1",
+          "origin_ref": "synthetic://records/right",
+          "value_status": ""
+        }
+      },
+      "expected": {
+        "measurement/rss:ExplainRSSPair": {
+          "domain_relation": "MATCHED_DECLARED_METADATA",
+          "origin_status": "UNKNOWN",
+          "reason": "MISSING_PROVENANCE_OR_UNAVAILABLE_OBSERVATION",
+          "claim_limit": "NO_IMPROVEMENT_CLAIM"
+        }
+      }
+    }
+  ]
+}
