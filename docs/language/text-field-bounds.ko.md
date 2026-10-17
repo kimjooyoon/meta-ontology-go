@@ -55,6 +55,31 @@ JSON 이스케이프 해석은 기존 `internal/meta/textinput/escapes.gooo`의 
 명시한 조건이 있는 필드의 네이티브 값도 JSON 변환 전에 UTF-8을 검사합니다.
 바이트 슬라이스로 잘린 문자를 JSON 인코더가 대체한 뒤 수용하는 경로를 막습니다.
 
+## 기대값 없이 실행하기
+
+`package execute --inputs`는 입력과 실제 결과를 연결하는 관측 경로입니다.
+성공 영수증의 `decision`은 `OBSERVED`이고, `inputs_digest`가 입력 원문을
+가리킵니다. `cases_digest`와 전달 결과의 `expected`, `passed`는 생략합니다.
+기대값을 제공하지 않았으므로 `finite_total`, `finite_passed`는 모두 0이며,
+별도 평가와 입력이 겹치지 않는지에 대한 상태도 `UNKNOWN`으로 유지합니다.
+
+외부 검사는 이 실제 결과를 독립 기대값과 비교할 수 있습니다. 그 기대값을 실행기에
+전달한 것으로 기록하거나, 실행 영수증에 정답률 점수를 만들어 넣지는 않습니다.
+같은 필드 조건과 안정 ID를 사용하는 `--cases` 비교와 각각의 입력 출처를 보존합니다.
+
+작업공간 영수증의 `result.program.lowered_gooo_source`는 여러 원문을 합쳐 이름을
+내린 초기 Gooo 소스입니다. `result.execution_source_sha256`는 그 소스에 본문 채우기를
+적용한 뒤 실행 구성에 전달하는 바이트를 가리킵니다. 본문을 채웠다면 초기 소스와
+다를 수 있습니다. `inputs_digest`는 제공한 입력 파일을,
+`result.runtime.producer_source_sha`는 실행한 컴파일러의 빌드 기원을 가리킵니다.
+입력 파일·원문 선언·본문을 구성한 소스·컴파일러 빌드의 단계를 함께 읽습니다.
+
+`result.program.workspace_image.packages[].sources[].source_digest`는 해당 소스
+문자열을 Go `json.Marshal`로 직렬화한 값의 해시입니다. 따옴표와 이스케이프가
+포함되므로 원본 파일의 바이트 해시와 직접 비교하지 않습니다. 패키지 경로와
+파일명, 전체 필드 경로를 함께 사용합니다. [첫 실행 안내의 해시 대상 표](../getting-started.md#read-a-digest-with-its-full-field-path)에
+각 입력의 대상을 정리했습니다.
+
 ## 수용할 관측
 
 이번 기능의 구문 사례는 언어 레지스트리에 한 개를 추가합니다. 현재 선언 분모는
@@ -74,5 +99,9 @@ JSON 이스케이프 해석은 기존 `internal/meta/textinput/escapes.gooo`의 
 7. 원소 256개가 각각 필드 조건을 만족해도 전체 네이티브 출력 예산을 넘으면 거부.
 
 실행 원본은 기존 CI 작업의 `command-origins-*` 산출물 안
-`text-bound-native/`에 남깁니다. 검사 작성·구현 설명과 실제 CI 수용은 별도로
+`text-bound-native/`에 남깁니다. 원본 13필드의 기대값 없는 성공 경로는
+`text-bound-input-only/`에 별도로 남기며, 원래 작업공간·입력 파일의 바이트와
+필드 순서·안정 ID·타입·값을 확인하도록 작성합니다. 입력 1,024바이트와 zone
+1,007바이트를 유지하고, 두 네이티브 실행의 출력을 비교합니다. 이 검사는 기존
+언어 사례·준비도 분모와 별개입니다. 검사 작성·구현 설명과 실제 CI 수용은 별도로
 읽습니다. 원본 이슈의 주소 파서 전체 구현은 별도 생태계 작업으로 이어집니다.
