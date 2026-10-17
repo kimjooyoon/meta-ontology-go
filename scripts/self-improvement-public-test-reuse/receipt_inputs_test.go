@@ -10,6 +10,8 @@ import (
 func TestUnobservedLegacyReceiptProducesUnresolvedReport(t *testing.T) {
 	output := t.TempDir()
 	initial := publictestreuse.Report{Schema: publictestreuse.ReportSchema, Operation: publictestreuse.ReplayOperation}
+	initial.Binding.PackageInputs = publictestreuse.ExecutionPackageInputsFromBytes(
+		[]byte("module fixture\n"), []byte("package fixture\n"), []byte("package fixture\n// test\n"))
 	if err := writeInvalidReuseReceipt(output, initial, publictestreuse.ErrUnobservedPackageInputs); err != nil {
 		t.Fatal(err)
 	}
