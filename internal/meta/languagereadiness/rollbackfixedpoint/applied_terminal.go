@@ -16,8 +16,7 @@ func appliedTerminal(source Source) bool {
 	g, t := source.Guard, source.Transformation
 	return source.CollectionError == "" && validSHA(source.ExpectedHeadSHA) &&
 		g.HeadSHA == source.ExpectedHeadSHA && t.HeadSHA == source.ExpectedHeadSHA &&
-		recoverable(g) && g.Total == 12 && g.Satisfied >= 0 && g.Satisfied < g.Total &&
-		g.Satisfied+g.Unresolved == g.Total &&
+		recoverable(g) && guardPopulationClosed(g) &&
 		validDigest(g.FileSHA256) && validDigest(g.ReportDigest) &&
 		validDigest(t.FileSHA256) && validDigest(t.LedgerDigest) &&
 		t.Decision == "APPLIED" && t.Reason == "SANDBOX_EFFECTS_VERIFIED" &&
@@ -29,4 +28,11 @@ func appliedTerminal(source Source) bool {
 		len(t.UnknownCausalDigest) == 64 && validDigest(t.UnknownCausalDigest) &&
 		t.SourceWorkspaceUnchanged && source.RepositoryWrites == 0 && g.RepositoryWrites == 0 &&
 		!g.RepositoryMutationAuthorized && !t.PromotionAuthorized
+}
+
+func guardPopulationClosed(g GuardEvidence) bool {
+	return g.Total == 12 && g.Satisfied >= 0 && g.Satisfied <= g.Total &&
+		g.NotSatisfied >= 0 && g.NotSatisfied <= g.Total &&
+		g.Unresolved >= 0 && g.Unresolved <= g.Total &&
+		g.Satisfied+g.NotSatisfied+g.Unresolved == g.Total
 }

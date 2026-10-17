@@ -10,10 +10,10 @@ This repository contains its Go compiler. Source files use the `.gooo` extension
 model. Agents and CI consumers should read the [JSON result and exit-code guide](docs/getting-started.md#use-results-from-an-agent-or-ci).
 Development-source examples below may need a compiler newer than that walkthrough.
 
-[![Go / Gooo physical lines: 561,120 / 5,389](https://img.shields.io/badge/Go%20%2F%20Gooo%20lines-561%2C120%20%2F%205%2C389-546e7a)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
-[![Gooo share of Go and Gooo physical lines: 0.95%](https://img.shields.io/badge/Gooo%20share-0.95%25-8e44ad)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
+[![Go / Gooo physical lines: 565,085 / 5,564](https://img.shields.io/badge/Go%20%2F%20Gooo%20lines-565%2C085%20%2F%205%2C564-546e7a)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
+[![Gooo share of Go and Gooo physical lines: 0.98%](https://img.shields.io/badge/Gooo%20share-0.98%25-8e44ad)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
 
-Source snapshot: [`969eb8c`](https://github.com/kimjooyoon/meta-ontology-go/commit/969eb8c07fa3984d5287d049e2ffec1b2ce6a077).
+Source snapshot: [`eaa3abd`](https://github.com/kimjooyoon/meta-ontology-go/commit/eaa3abdf432538abf850c3de0e5772383fa6d80b).
 Counts include comments, blank lines, tests and generated Go. Gooo share is
 `Gooo lines / (Go lines + Gooo lines)`; the linked record gives the CI origin and scope.
 

@@ -306,25 +306,30 @@ Go 투영·실행 경계에서 이를 보존한다. 이 첫 구현에서 필요�
 
 README의 두 배지는 기존 `scripts/line-metrics` CI 집계에서 프로젝트 루트의
 `go_lines`, `gooo_lines`를 읽은 스냅샷이다. 기준은 검증된 `main`
-[`969eb8c07fa3984d5287d049e2ffec1b2ce6a077`](https://github.com/kimjooyoon/meta-ontology-go/commit/969eb8c07fa3984d5287d049e2ffec1b2ce6a077)이다.
+[`eaa3abdf432538abf850c3de0e5772383fa6d80b`](https://github.com/kimjooyoon/meta-ontology-go/commit/eaa3abdf432538abf850c3de0e5772383fa6d80b)이다.
 
 | 집계 | 파일 | 물리적 행 |
 | --- | ---: | ---: |
-| Go (`.go`) | 8,413 | 561,120 |
-| Gooo (`.gooo`) | 151 | 5,389 |
-| 두 언어 합계 | 8,564 | 566,509 |
+| Go (`.go`) | 8,475 | 565,085 |
+| Gooo (`.gooo`) | 154 | 5,564 |
+| 두 언어 합계 | 8,629 | 570,649 |
 
-Gooo 비중은 `5,389 / 566,509 × 100 = 0.951264…%`를 소수 둘째 자리로
-표시한 **0.95%**다. 주석·빈 행·테스트·생성 Go를 포함하고, `.git`과 `vendor`는
+Gooo 비중은 `5,564 / 570,649 × 100 = 0.975030…%`를 소수 둘째 자리로
+표시한 **0.98%**다. 주석·빈 행·테스트·생성 Go를 포함하고, `.git`과 `vendor`는
 기존 수집기 규칙으로 제외한다. 인라인 `computes` 본문은 소속 `.gooo` 파일의
 행에 포함된다. 원문의 의미 소유와 수작업 확장 비용은 앞 절의 기준으로 따로 읽는다.
 
-원본은 [CI run 38973916699, attempt 1](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38973916699)의
-[producer artifact 12077773447](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38973916699/artifacts/12077773447)에
+원본은 [CI run 39038222964, attempt 1](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/39038222964)의
+[producer artifact 12102234836](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/39038222964/artifacts/12102234836)에
 담긴 `source-metrics.json`이다. ZIP SHA256은
-`dfe1cd6a9b6039f186e6589cd76558c7d01bbcfc835db45fc6b51e4995db4534`,
-멤버 SHA256은 `65032691815de1c20af34f77f19202d4a1ed32cd6a34783b88fae76316419442`다.
+`5e745aad45881f1aa5bfcfd5dcaebe6c9719d1148c50c2116c860da54f24f2c4`,
+멤버 SHA256은 `1974c2390b5b22589f3e07f199172835c41dfaf1f08fb3d5d1c6a83ebe3ead9c`다.
 기존 출처 묶음이 보존하는 소스 SHA와 집계의 `commit_sha`가 같다.
+
+앞선 `969eb8c` 스냅샷은 Go 561,120행, Gooo 5,389행, 비중 0.95%였다.
+[당시 원본 산출물](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/38973916699/artifacts/12077773447)과
+그 시점의 Git 문서를 보존한다. 두 스냅샷의 비중 변화에는 기능·검사·생성물의 증가가
+함께 들어 있다. 같은 요구를 구현하는 비용의 변화는 별도 비교가 필요하다.
 
 배지에는 집계한 커밋을 함께 표시한다. 다음 검증된 집계로 교체할 때도 같은 단위와
 분모를 사용한다. 기존 CI 산출물을 재사용하며 별도 수집기·필수 검사·게시 권한을
