@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
 )
 
@@ -130,9 +131,11 @@ func writeReuseVerification(outputPath, humanPath string, records verificationRe
 	baseline, replay := records.reports[0], records.reports[1]
 	closed, unknown, refuted := 0, 0, 0
 	cases := make([]verifiedCase, 0, len(publictestreuse.CanonicalCaseIDs()))
-	for _, report := range records.reports {
-		expected, ok := policy.Decision(report.CaseID)
-		if !ok || expected != report.Decision {
+	// These literal outcomes are an independent six-case fixture oracle.
+	expectedDecisions := [6]string{"CLOSED", "CLOSED", "UNKNOWN", "UNKNOWN", "REFUTED", "REFUTED"}
+	for index, report := range records.reports {
+		expected := expectedDecisions[index]
+		if expected != report.Decision {
 			return fmt.Errorf("policy decision for %s = %s/%s", report.CaseID, report.Decision, expected)
 		}
 		caseReport := verifiedCase{ID: report.CaseID, ExpectedDecision: expected, ObservedDecision: report.Decision, Reason: report.Reason, TestExecutions: report.TestExecutions, ReusedTestExecutions: report.ReusedTestExecutions, ReceiptHits: report.ReceiptHits, ReceiptMisses: report.ReceiptMisses, RepositoryWrites: report.RepositoryWrites, LocalTestExecutions: report.LocalTestExecutions}
@@ -153,7 +156,7 @@ func writeReuseVerification(outputPath, humanPath string, records verificationRe
 		Schema: "gooo/public-test-reuse-verification/v1", Decision: publictestreuse.DecisionClosed,
 		Reason:             "EXACT_AUTHORIZED_TEST_REUSE_WITH_FAIL_CLOSED_ALTERNATIVES",
 		PolicySourceDigest: policy.SourceDigest, PolicySemanticDigest: policy.SemanticDigest, PolicyEvaluatorDigest: policy.EvaluatorDigest,
-		Journey: policy.Journey, InputRegularFiles: 2, InputPhysicalLines: physicalLines(identity.ProgramBytes[:0]) + physicalLines(identity.TestBytes) + physicalLines(policySource),
+		Journey: policy.Journey, InputRegularFiles: 2, InputPhysicalLines: physicalLines(identity.TestBytes) + physicalLines(policySource),
 		InputGoFiles: 1, InputGoPhysicalLines: physicalLines(identity.TestBytes), GeneratedFiles: 2, GeneratedGoFiles: 1,
 		GeneratedProgramBytes: int64(len(identity.ProgramBytes)), GeneratedProgramLines: physicalLines(identity.ProgramBytes),
 		TestContractBytes: int64(len(identity.TestBytes)), TestContractLines: physicalLines(identity.TestBytes),
@@ -213,11 +216,17 @@ func readPublicReport(filename string) (publictestreuse.Report, error) {
 	if err != nil {
 		return publictestreuse.Report{}, err
 	}
+	if err := completeness.CheckJSON(data, 1<<20); err != nil {
+		return publictestreuse.Report{}, err
+	}
 	var report publictestreuse.Report
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&report); err != nil {
 		return publictestreuse.Report{}, fmt.Errorf("decode report %s: %w", filename, err)
+	}
+	if err := publictestreuse.VerifyAssessment(report); err != nil {
+		return publictestreuse.Report{}, err
 	}
 	return report, nil
 }

@@ -10,13 +10,14 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 const (
 	ReceiptSchema            = "gooo/public-test-reuse-receipt/v2"
-	ReportSchema             = "gooo/public-test-reuse-report/v2"
+	ReportSchema             = "gooo/public-test-reuse-report/v3"
 	OriginalOperation        = Operation + ".baseline"
 	ReplayOperation          = Operation + ".replay"
 	ReceiptReason            = ReasonBaseline
@@ -35,9 +36,12 @@ var compilerManifestPaths = []string{
 	"internal/generator/normalize_part01.go",
 	"internal/generator/types_part01.go",
 	"internal/meta/generation/semantic_retention.go",
+	"internal/meta/publictestreuse/assessment.go",
 	"internal/meta/publictestreuse/package_inputs.go",
 	"internal/meta/publictestreuse/policy.go",
+	"internal/meta/publictestreuse/policy.gooo",
 	"internal/meta/publictestreuse/receipt.go",
+	"scripts/self-improvement-public-test-reuse/assessment.go",
 	"scripts/self-improvement-public-test-reuse/main.go",
 	"scripts/self-improvement-public-test-reuse/model.go",
 	"scripts/self-improvement-public-test-reuse/package_inputs.go",
@@ -104,34 +108,40 @@ type UnknownState struct {
 	BlockedBy     []string `json:"blocked_by"`
 }
 
+// The assessment source and projection retain their sha256: identities. Binding
+// digests keep the existing lowercase hexadecimal receipt representation.
 type Report struct {
-	Schema                string        `json:"schema"`
-	Operation             string        `json:"operation"`
-	Decision              string        `json:"decision"`
-	Reason                string        `json:"reason"`
-	Unknown               *UnknownState `json:"unknown"`
-	CaseID                string        `json:"case_id"`
-	Binding               Binding       `json:"binding"`
-	ReceiptDigest         string        `json:"receipt_digest"`
-	OriginalReceiptID     string        `json:"original_receipt_id"`
-	OriginalInvocationID  string        `json:"original_invocation_id"`
-	BuildExecutions       int           `json:"build_executions"`
-	TestExecutions        int           `json:"test_executions"`
-	ReusedTestExecutions  int           `json:"reused_test_executions"`
-	ReceiptHits           int           `json:"receipt_hits"`
-	ReceiptMisses         int           `json:"receipt_misses"`
-	BuildMS               int64         `json:"build_ms"`
-	TestMS                int64         `json:"test_ms"`
-	WallMS                int64         `json:"wall_ms"`
-	PeakRSSKib            int64         `json:"peak_rss_kib"`
-	GeneratedProgramBytes int64         `json:"generated_program_bytes"`
-	GeneratedProgramLines int           `json:"generated_program_lines"`
-	TestContractBytes     int64         `json:"test_contract_bytes"`
-	TestContractLines     int           `json:"test_contract_lines"`
-	GeneratedBytesEqual   bool          `json:"generated_bytes_equal"`
-	SemanticEqual         bool          `json:"semantic_equal"`
-	RepositoryWrites      int           `json:"repository_writes"`
-	LocalTestExecutions   int           `json:"local_test_executions"`
+	PolicyDecisionSourceDigest string                  `json:"policy_decision_source_digest"`
+	PolicyInputs               json.RawMessage         `json:"policy_inputs"`
+	PolicyEvaluation           *bodycodegen.FixedValue `json:"policy_evaluation"`
+	PolicyEvaluations          int                     `json:"policy_evaluations"`
+	Schema                     string                  `json:"schema"`
+	Operation                  string                  `json:"operation"`
+	Decision                   string                  `json:"decision"`
+	Reason                     string                  `json:"reason"`
+	Unknown                    *UnknownState           `json:"unknown"`
+	CaseID                     string                  `json:"case_id"`
+	Binding                    Binding                 `json:"binding"`
+	ReceiptDigest              string                  `json:"receipt_digest"`
+	OriginalReceiptID          string                  `json:"original_receipt_id"`
+	OriginalInvocationID       string                  `json:"original_invocation_id"`
+	BuildExecutions            int                     `json:"build_executions"`
+	TestExecutions             int                     `json:"test_executions"`
+	ReusedTestExecutions       int                     `json:"reused_test_executions"`
+	ReceiptHits                int                     `json:"receipt_hits"`
+	ReceiptMisses              int                     `json:"receipt_misses"`
+	BuildMS                    int64                   `json:"build_ms"`
+	TestMS                     int64                   `json:"test_ms"`
+	WallMS                     int64                   `json:"wall_ms"`
+	PeakRSSKib                 int64                   `json:"peak_rss_kib"`
+	GeneratedProgramBytes      int64                   `json:"generated_program_bytes"`
+	GeneratedProgramLines      int                     `json:"generated_program_lines"`
+	TestContractBytes          int64                   `json:"test_contract_bytes"`
+	TestContractLines          int                     `json:"test_contract_lines"`
+	GeneratedBytesEqual        bool                    `json:"generated_bytes_equal"`
+	SemanticEqual              bool                    `json:"semantic_equal"`
+	RepositoryWrites           int                     `json:"repository_writes"`
+	LocalTestExecutions        int                     `json:"local_test_executions"`
 }
 
 func CompilerDigest(readFile func(string) ([]byte, error)) (string, error) {
