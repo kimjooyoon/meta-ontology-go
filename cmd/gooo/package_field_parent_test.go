@@ -127,7 +127,7 @@ func TestFieldParentGoooControls(t *testing.T) {
 		filepath.Join(root, "examples/field-parent-origins/controls.json"),
 		filepath.Join(root, "examples/field-parent-origins.workspace.json")})
 	r := receipt.Result.Runtime
-	if receipt.Decision != "PASS" || r.FiniteTotal != 19 || r.FinitePassed != 19 || r.ModelCalls != 0 || !r.RuntimeReplayed {
+	if receipt.Decision != "PASS" || r.FiniteTotal != 21 || r.FinitePassed != 21 || r.ModelCalls != 0 || !r.RuntimeReplayed {
 		t.Fatal("authored full-output control population", r.FiniteTotal, r.FinitePassed, r.ModelCalls)
 	}
 }

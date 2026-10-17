@@ -96,6 +96,13 @@ if parent == -1 { result.status = "NO_RECORDED_PARENT"; return result }
 if input.frames[child] < 0 || input.frames[parent] < 0 ||
    input.record_ids[child] == "" || input.field_ids[child] == "" ||
    input.type_ids[child] != input.type_ids[parent] { return result }
+let child_kind = input.kinds[child]
+let parent_kind = input.kinds[parent]
+let child_field = child_kind == "parameter" || child_kind == "record_assignment" ||
+    child_kind == "record_constructor" || child_kind == "field_assignment"
+let parent_field = parent_kind == "parameter" || parent_kind == "record_assignment" ||
+    parent_kind == "record_constructor" || parent_kind == "field_assignment"
+if !child_field || !parent_field { return result }
 if input.type_ids[child] != "urn:gooo:type:integer" &&
    input.type_ids[child] != "urn:gooo:type:boolean" &&
    input.type_ids[child] != "urn:gooo:type:string" { return result }
