@@ -1,0 +1,387 @@
+{
+  "cases": [
+    {
+      "id": "original_success",
+      "inputs": {
+        "AssessOriginal": {
+          "build_passed": true,
+          "test_passed": true,
+          "semantic_matches": true
+        }
+      },
+      "expected": {
+        "AssessOriginal": {
+          "case_id": "BASELINE_TEST_EXECUTION",
+          "decision": "CLOSED",
+          "reason": "SUCCESSFUL_ORIGINAL_TEST_EXECUTION",
+          "step": "",
+          "next_operation": "",
+          "blocked_by": "",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "original_build_failure",
+      "inputs": {
+        "AssessOriginal": {
+          "build_passed": false,
+          "test_passed": true,
+          "semantic_matches": true
+        }
+      },
+      "expected": {
+        "AssessOriginal": {
+          "case_id": "BASELINE_TEST_EXECUTION",
+          "decision": "REFUTED",
+          "reason": "FAILED_ORIGINAL_BUILD",
+          "step": "",
+          "next_operation": "",
+          "blocked_by": "",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "original_test_failure",
+      "inputs": {
+        "AssessOriginal": {
+          "build_passed": true,
+          "test_passed": false,
+          "semantic_matches": true
+        }
+      },
+      "expected": {
+        "AssessOriginal": {
+          "case_id": "BASELINE_TEST_EXECUTION",
+          "decision": "REFUTED",
+          "reason": "FAILED_ORIGINAL_TEST",
+          "step": "",
+          "next_operation": "",
+          "blocked_by": "",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "original_semantic_mismatch",
+      "inputs": {
+        "AssessOriginal": {
+          "build_passed": true,
+          "test_passed": true,
+          "semantic_matches": false
+        }
+      },
+      "expected": {
+        "AssessOriginal": {
+          "case_id": "BASELINE_TEST_EXECUTION",
+          "decision": "REFUTED",
+          "reason": "DIGEST_CONTRADICTION",
+          "step": "",
+          "next_operation": "",
+          "blocked_by": "",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_exact_profile",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "VALID",
+          "policy_state": "MATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "AUTHORIZED_IMMUTABLE_RECEIPT_REUSE",
+          "decision": "CLOSED",
+          "reason": "AUTHORIZED_IMMUTABLE_RECEIPT_REUSE",
+          "step": "",
+          "next_operation": "",
+          "blocked_by": "",
+          "reuse": true
+        }
+      }
+    },
+    {
+      "id": "replay_without_request",
+      "inputs": {
+        "AssessReplay": {
+          "requested": false,
+          "receipt_state": "VALID",
+          "policy_state": "MATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "MISSING_EXPLICIT_AUTHORIZATION",
+          "decision": "UNKNOWN",
+          "reason": "MISSING_EXPLICIT_REUSE_AUTHORIZATION",
+          "step": "AUTHORIZE_REUSE",
+          "next_operation": "PROVIDE_EXPLICIT_REUSE_AUTHORIZATION",
+          "blocked_by": "explicit_reuse_authorization",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_invalid_receipt",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "INVALID",
+          "policy_state": "MATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "TAMPERED_REUSE_RECEIPT",
+          "decision": "REFUTED",
+          "reason": "MALFORMED_OR_TAMPERED_REUSE_RECEIPT",
+          "step": "",
+          "next_operation": "",
+          "blocked_by": "",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_legacy_inputs",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "LEGACY_INPUTS_UNOBSERVED",
+          "policy_state": "MATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "STALE_OR_UNBOUNDED_REUSE_EVIDENCE",
+          "decision": "UNKNOWN",
+          "reason": "EXECUTION_PACKAGE_INPUTS_UNOBSERVED",
+          "step": "LOAD_REUSE_RECEIPT",
+          "next_operation": "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT",
+          "blocked_by": "execution_package_inputs",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_missing_receipt",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "MISSING_REUSE_RECEIPT",
+          "policy_state": "MATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "STALE_OR_UNBOUNDED_REUSE_EVIDENCE",
+          "decision": "UNKNOWN",
+          "reason": "MISSING_REUSE_RECEIPT",
+          "step": "LOAD_REUSE_RECEIPT",
+          "next_operation": "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT",
+          "blocked_by": "caller_owned_reuse_receipt",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_ambiguous_receipt",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "AMBIGUOUS_REUSE_RECEIPT",
+          "policy_state": "MATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "STALE_OR_UNBOUNDED_REUSE_EVIDENCE",
+          "decision": "UNKNOWN",
+          "reason": "AMBIGUOUS_REUSE_RECEIPT",
+          "step": "LOAD_REUSE_RECEIPT",
+          "next_operation": "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT",
+          "blocked_by": "caller_owned_reuse_receipt",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_unrecognized_observation",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "FUTURE_STATUS",
+          "policy_state": "MATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "STALE_OR_UNBOUNDED_REUSE_EVIDENCE",
+          "decision": "UNKNOWN",
+          "reason": "RECEIPT_OBSERVATION_UNRECOGNIZED",
+          "step": "LOAD_REUSE_RECEIPT",
+          "next_operation": "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT",
+          "blocked_by": "caller_owned_reuse_receipt",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_policy_mismatch",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "VALID",
+          "policy_state": "MISMATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "POLICY_MISMATCH",
+          "decision": "REFUTED",
+          "reason": "REUSE_POLICY_MISMATCH",
+          "step": "",
+          "next_operation": "",
+          "blocked_by": "",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_policy_unobserved",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "VALID",
+          "policy_state": "UNOBSERVED",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "STALE_OR_UNBOUNDED_REUSE_EVIDENCE",
+          "decision": "UNKNOWN",
+          "reason": "POLICY_BINDING_UNOBSERVED",
+          "step": "LOAD_REUSE_RECEIPT",
+          "next_operation": "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT",
+          "blocked_by": "policy_binding",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_unobserved_profile",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "VALID",
+          "policy_state": "MATCH",
+          "binding_state": "MATCH",
+          "input_profile": "unknown"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "STALE_OR_UNBOUNDED_REUSE_EVIDENCE",
+          "decision": "UNKNOWN",
+          "reason": "EXECUTION_PACKAGE_INPUTS_UNOBSERVED",
+          "step": "LOAD_REUSE_RECEIPT",
+          "next_operation": "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT",
+          "blocked_by": "execution_package_inputs",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_binding_mismatch",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "VALID",
+          "policy_state": "MATCH",
+          "binding_state": "MISMATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "STALE_OR_UNBOUNDED_REUSE_EVIDENCE",
+          "decision": "UNKNOWN",
+          "reason": "STALE_REUSE_EVIDENCE",
+          "step": "LOAD_REUSE_RECEIPT",
+          "next_operation": "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT",
+          "blocked_by": "exact_receipt_binding",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_binding_unobserved",
+      "inputs": {
+        "AssessReplay": {
+          "requested": true,
+          "receipt_state": "VALID",
+          "policy_state": "MATCH",
+          "binding_state": "UNOBSERVED",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "STALE_OR_UNBOUNDED_REUSE_EVIDENCE",
+          "decision": "UNKNOWN",
+          "reason": "STALE_REUSE_EVIDENCE",
+          "step": "LOAD_REUSE_RECEIPT",
+          "next_operation": "PUBLISH_ONE_EXACT_SUCCESSFUL_TEST_RECEIPT",
+          "blocked_by": "exact_receipt_binding",
+          "reuse": false
+        }
+      }
+    },
+    {
+      "id": "replay_no_request_precedes_invalid",
+      "inputs": {
+        "AssessReplay": {
+          "requested": false,
+          "receipt_state": "INVALID",
+          "policy_state": "MISMATCH",
+          "binding_state": "MATCH",
+          "input_profile": "gooo/generated-test-package-inputs/v1"
+        }
+      },
+      "expected": {
+        "AssessReplay": {
+          "case_id": "MISSING_EXPLICIT_AUTHORIZATION",
+          "decision": "UNKNOWN",
+          "reason": "MISSING_EXPLICIT_REUSE_AUTHORIZATION",
+          "step": "AUTHORIZE_REUSE",
+          "next_operation": "PROVIDE_EXPLICIT_REUSE_AUTHORIZATION",
+          "blocked_by": "explicit_reuse_authorization",
+          "reuse": false
+        }
+      }
+    }
+  ]
+}
