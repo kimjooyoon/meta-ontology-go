@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "measurement/rss",
+    "activity": "ExplainRSSPair"
+  },
+  "packages": [
+    {
+      "path": "measurement/rss",
+      "name": "rss_metadata",
+      "imports": [],
+      "sources": [
+        "main.gooo"
+      ]
+    }
+  ]
+}

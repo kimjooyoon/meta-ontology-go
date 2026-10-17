@@ -1,10 +1,6 @@
 package toolchainformatfix
 
-import (
-	"reflect"
-
-	cliruntime "github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
-)
+import cliruntime "github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 
 func executeCase(executor cliruntime.Executor, definition Definition) CaseResult {
 	arguments, ok := argumentsFor(definition.Operation)
@@ -28,7 +24,7 @@ func executeCase(executor cliruntime.Executor, definition Definition) CaseResult
 	result.OutputMatched = firstOK && replayOK
 	result.StructuredOutput = firstStructured
 	result.StructuredPlan = firstPlan
-	result.ReplayMatched = reflect.DeepEqual(first, replay)
+	result.ReplayMatched = cliruntime.DeterministicReplayEqual(first, replay)
 	result.RepositoryWrites = first.RepositoryWrites + replay.RepositoryWrites
 	result.Status, result.Reason = "SATISFIED", "FORMAT_FIX_CASE_SATISFIED"
 	if !result.ExitMatched || !result.OutputMatched || !result.ReplayMatched ||

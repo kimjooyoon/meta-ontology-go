@@ -1,0 +1,58 @@
+// A separate explanation of declared RSS metadata. No numeric values or effects.
+// Metric/unit are fixed by this entry contract to peak resident memory in KiB.
+// Supplied metadata and origin references are declarations. References are not fetched.
+// No numeric values, statistical inference, effects or reuse/skip permission.
+package rss_metadata
+namespace gooo_rss_metadata
+entity MeasurementMetadata id "gooo://measurement/rss-metadata/v1" fields {
+ field subject id "gooo://measurement/rss-metadata/subject" type string required one
+ field interval id "gooo://measurement/rss-metadata/interval" type string required one
+ field statistic id "gooo://measurement/rss-metadata/statistic" type string required one
+ field measurement_method id "gooo://measurement/rss-metadata/measurement-method" type string required one
+ field collector_revision id "gooo://measurement/rss-metadata/collector-revision" type string required one
+ field origin_ref id "gooo://measurement/rss-metadata/origin-ref" type string required one
+ field value_status id "gooo://measurement/rss-metadata/value-status" type string required one
+}
+entity MetadataExplanation id "gooo://measurement/rss-explanation/v1" fields {
+ field domain_relation id "gooo://measurement/rss-explanation/domain-relation" type string required one
+ field origin_status id "gooo://measurement/rss-explanation/origin-status" type string required one
+ field reason id "gooo://measurement/rss-explanation/reason" type string required one
+ field claim_limit id "gooo://measurement/rss-explanation/claim-limit" type string required one
+}
+
+activity ExplainRSSPair(MeasurementMetadata, MeasurementMetadata) -> MetadataExplanation id "gooo://measurement/explain-rss-pair/v1" computes `
+let subjectsPresent = input0.subject != "" && input1.subject != ""
+let intervalsPresent = input0.interval != "" && input1.interval != ""
+let statisticsPresent = input0.statistic != "" && input1.statistic != ""
+let methodsPresent = input0.measurement_method != "" && input1.measurement_method != ""
+let subjectDifferent = subjectsPresent && input0.subject != input1.subject
+let intervalDifferent = intervalsPresent && input0.interval != input1.interval
+let statisticDifferent = statisticsPresent && input0.statistic != input1.statistic
+let methodDifferent = methodsPresent && input0.measurement_method != input1.measurement_method
+let completeDomain = subjectsPresent && intervalsPresent && statisticsPresent && methodsPresent
+let domain = "UNKNOWN"
+if completeDomain { domain = "MATCHED_DECLARED_METADATA" }
+if subjectDifferent || intervalDifferent || statisticDifferent || methodDifferent { domain = "DIFFERENT" }
+let origin = "UNKNOWN"
+let reason = "MISSING_PROVENANCE_OR_UNAVAILABLE_OBSERVATION"
+let collectorsPresent = input0.collector_revision != "" && input1.collector_revision != ""
+let referencesPresent = input0.origin_ref != "" && input1.origin_ref != ""
+let provenancePresent = collectorsPresent && referencesPresent
+let valuesObserved = input0.value_status == "OBSERVED" && input1.value_status == "OBSERVED"
+if provenancePresent && valuesObserved {
+ if input0.collector_revision == input1.collector_revision {
+  origin = "DECLARED_OBSERVED_PAIR"
+  reason = "ONE_DECLARED_PAIR_DOES_NOT_ESTABLISH_IMPROVEMENT"
+ } else {
+  origin = "UNKNOWN_COLLECTOR_EQUIVALENCE"
+  reason = "COLLECTOR_EQUIVALENCE_NOT_ESTABLISHED"
+ }
+}
+if input0.value_status == "SENTINEL" || input1.value_status == "SENTINEL" {
+ origin = "SENTINEL_NOT_OBSERVED"
+ reason = "FALLBACK_NUMBER_IS_NOT_A_MEASUREMENT"
+}
+if domain == "UNKNOWN" { reason = "INCOMPLETE_MEASUREMENT_DOMAIN" }
+if domain == "DIFFERENT" { reason = "MEASUREMENT_DOMAIN_DIFFERS" }
+return MetadataExplanation{domain_relation: domain, origin_status: origin, reason: reason, claim_limit: "NO_IMPROVEMENT_CLAIM"}
+`
