@@ -34,7 +34,13 @@ func TestPackageExecuteRetainsFailedNativeSetup(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 	code = run([]string{"package", "replay", "--json", "--receipt", path, "--cases", cases, manifest}, &stdout, &stderr)
-	if code != exitFailure || !strings.Contains(stdout.String(), "saved execution envelope") {
+	var rejected packageExecutionReceipt
+	if err := json.Unmarshal(stdout.Bytes(), &rejected); err != nil {
+		t.Fatal(err)
+	}
+	if code != exitFailure || !strings.Contains(stdout.String(), "saved execution envelope") ||
+		rejected.Failure == nil || rejected.Failure.Code != "REPLAY_ENVELOPE_INVALID" ||
+		rejected.Failure.Detail != rejected.Error || rejected.InputsDigest != "" || rejected.CasesDigest != "" {
 		t.Fatalf("failed execution became replayable: code=%d stdout=%s", code, stdout.String())
 	}
 }

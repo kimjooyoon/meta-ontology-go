@@ -7,18 +7,20 @@ import (
 // Graph stores normalized semantic nodes and two explicitly separate fact
 // sets. The zero value is ready for use.
 type Graph struct {
-	nodes      map[ID]Node
-	names      map[NameRef]ID
-	facts      map[FactKey]Fact
-	candidates map[FactKey]Fact
+	nodes       map[ID]Node
+	names       map[NameRef]ID
+	fieldOwners map[ID]ID
+	facts       map[FactKey]Fact
+	candidates  map[FactKey]Fact
 }
 
 func NewGraph() Graph {
 	return Graph{
-		nodes:      make(map[ID]Node),
-		names:      make(map[NameRef]ID),
-		facts:      make(map[FactKey]Fact),
-		candidates: make(map[FactKey]Fact),
+		nodes:       make(map[ID]Node),
+		names:       make(map[NameRef]ID),
+		fieldOwners: make(map[ID]ID),
+		facts:       make(map[FactKey]Fact),
+		candidates:  make(map[FactKey]Fact),
 	}
 }
 func (g *Graph) ensure() {
@@ -27,6 +29,9 @@ func (g *Graph) ensure() {
 	}
 	if g.names == nil {
 		g.names = make(map[NameRef]ID)
+	}
+	if g.fieldOwners == nil {
+		g.fieldOwners = make(map[ID]ID)
 	}
 	if g.facts == nil {
 		g.facts = make(map[FactKey]Fact)
@@ -55,6 +60,9 @@ func (g *Graph) AddNode(node Node) error {
 	}
 	g.ensure()
 	if exists {
+		for _, field := range old.Fields {
+			delete(g.fieldOwners, field.ID)
+		}
 		for _, ref := range nodeNameRefs(old) {
 			if owner, occupied := g.names[ref]; occupied && owner == normalized.ID {
 				delete(g.names, ref)
@@ -62,6 +70,9 @@ func (g *Graph) AddNode(node Node) error {
 		}
 	}
 	g.nodes[normalized.ID] = normalized
+	for _, field := range normalized.Fields {
+		g.fieldOwners[field.ID] = normalized.ID
+	}
 	for _, ref := range nodeNameRefs(normalized) {
 		g.names[ref] = normalized.ID
 	}

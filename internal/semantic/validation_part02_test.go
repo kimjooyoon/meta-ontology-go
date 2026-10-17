@@ -68,4 +68,28 @@ func TestGraphValidationRejectsStaleIdentityIndexes(t *testing.T) {
 	if err := graph.Validate(); err == nil || !strings.Contains(err.Error(), "node-key") {
 		t.Fatalf("non-canonical node key error = %v, want deterministic key diagnostic", err)
 	}
+	for _, code := range []string{"field-index-missing", "field-index-owner", "field-index-stale"} {
+		t.Run(code, func(t *testing.T) {
+			current := NewGraph()
+			field := testStringField(node.ID, "name")
+			if err := current.AddNode(testEntityWithFields(t, node.ID, field)); err != nil {
+				t.Fatal(err)
+			}
+			canonical, hash := current.Canonical(), current.StableHash()
+			switch code {
+			case "field-index-missing":
+				delete(current.fieldOwners, field.ID)
+			case "field-index-owner":
+				current.fieldOwners[field.ID] = MustIdentity("billing://entity/other")
+			case "field-index-stale":
+				current.fieldOwners[MustIdentity("billing://field/stale")] = node.ID
+			}
+			if err := current.Validate(); err == nil || !strings.Contains(err.Error(), code) {
+				t.Fatalf("corrupt derived index error = %v, want %s", err, code)
+			}
+			if current.Canonical() != canonical || current.StableHash() != hash {
+				t.Fatal("derived index changed authoritative source identity")
+			}
+		})
+	}
 }

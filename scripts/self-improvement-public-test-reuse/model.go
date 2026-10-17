@@ -24,6 +24,7 @@ type identity struct {
 	Binding       publictestreuse.Binding
 	ProgramBytes  []byte
 	ManifestBytes []byte
+	PolicyBytes   []byte
 	TestBytes     []byte
 }
 

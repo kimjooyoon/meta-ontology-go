@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	ReceiptSchema            = "gooo/public-test-reuse-receipt/v1"
-	ReportSchema             = "gooo/public-test-reuse-report/v1"
+	ReceiptSchema            = "gooo/public-test-reuse-receipt/v2"
+	ReportSchema             = "gooo/public-test-reuse-report/v2"
 	OriginalOperation        = Operation + ".baseline"
 	ReplayOperation          = Operation + ".replay"
 	ReceiptReason            = ReasonBaseline
@@ -35,13 +35,19 @@ var compilerManifestPaths = []string{
 	"internal/generator/normalize_part01.go",
 	"internal/generator/types_part01.go",
 	"internal/meta/generation/semantic_retention.go",
+	"internal/meta/publictestreuse/package_inputs.go",
 	"internal/meta/publictestreuse/policy.go",
 	"internal/meta/publictestreuse/receipt.go",
 	"scripts/self-improvement-public-test-reuse/main.go",
 	"scripts/self-improvement-public-test-reuse/model.go",
+	"scripts/self-improvement-public-test-reuse/package_inputs.go",
 	"scripts/self-improvement-public-test-reuse/run.go",
 	"scripts/self-improvement-public-test-reuse/verify.go",
 }
+
+// ErrUnobservedPackageInputs identifies an older receipt with no package input
+// profile. It cannot authorize current reuse, and remains a historical record.
+var ErrUnobservedPackageInputs = errors.New("legacy receipt has no execution package input observations")
 
 type Binding struct {
 	PolicySourceDigest      string `json:"policy_source_digest"`
@@ -59,6 +65,8 @@ type Binding struct {
 	TestCommand             string `json:"test_command"`
 	TestCommandDigest       string `json:"test_command_digest"`
 	TestContractDigest      string `json:"test_contract_digest"`
+
+	PackageInputs ExecutionPackageInputs `json:"execution_package_inputs"`
 }
 
 type OriginalExecution struct {
@@ -156,6 +164,13 @@ func ValidateReceipt(receipt Receipt) error {
 		receipt.Reason != ReceiptReason || !cache.Digest(receipt.ReceiptID).Known() || receipt.RepositoryWrites != 0 || receipt.LocalTestExecutions != 0 {
 		return errors.New("public test reuse receipt identity is invalid")
 	}
+	if err := receipt.Binding.PackageInputs.Validate(); err != nil {
+		return err
+	}
+	if receipt.Binding.PackageInputs.Members[0].Digest != receipt.Binding.TestContractDigest ||
+		receipt.Binding.PackageInputs.Members[2].Digest != receipt.Binding.GeneratedOutputDigest {
+		return errors.New("public test reuse package inputs contradict selected file digests")
+	}
 	for _, value := range []string{
 		receipt.Binding.PolicySourceDigest, receipt.Binding.PolicySemanticDigest, receipt.Binding.PolicyEvaluatorDigest,
 		receipt.Binding.CanonicalSourceDigest, receipt.Binding.CanonicalSemanticDigest, receipt.Binding.GeneratedOutputDigest,
@@ -217,6 +232,9 @@ func DecodeReceipt(data []byte) (Receipt, error) {
 		return Receipt{}, errors.New("public test reuse receipt contains multiple JSON values")
 	} else if err != io.EOF {
 		return Receipt{}, fmt.Errorf("decode public test reuse receipt trailer: %w", err)
+	}
+	if receipt.Schema == "gooo/public-test-reuse-receipt/v1" {
+		return Receipt{}, ErrUnobservedPackageInputs
 	}
 	if err := ValidateReceipt(receipt); err != nil {
 		return Receipt{}, err

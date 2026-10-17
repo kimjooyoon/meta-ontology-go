@@ -70,6 +70,7 @@ func validateNodes(g Graph, issues *ValidationErrors) {
 		}
 	}
 	validateNameIndex(g, nameOwners, issues)
+	validateFieldOwnerIndex(g, identityOwners, issues)
 }
 
 type graphIdentityOwner struct {
