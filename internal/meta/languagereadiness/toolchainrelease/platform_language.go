@@ -50,6 +50,9 @@ func smokeLanguageExamples(binary, work string, input BuildInput) error {
 	if err := smokePackageSource(binary, input); err != nil {
 		return err
 	}
+	if err := smokeNamedInputs(binary, input); err != nil {
+		return err
+	}
 	if err := smokePlanInputs(binary, work, input); err != nil {
 		return err
 	}
