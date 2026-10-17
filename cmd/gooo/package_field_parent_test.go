@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
@@ -156,8 +155,9 @@ func TestFieldParentGoooSavedQuery(t *testing.T) {
 	if err := json.Unmarshal(r.Traces[0].Deliveries[0].Actual, &result); err != nil || result.Status != "RECORDED_DIRECT_PARENT" || result.Child != 14 || result.Parent != 17 || len(result.Lines) != 4 {
 		t.Fatal("literal saved field-copy expectation", result, err)
 	}
-	expected := "<urn:gooo:field-parent:v1:saved:" + workspaceDigest(raw) + ":case:0:field:write:14>"
-	if !strings.HasPrefix(result.Lines[2], expected+" <urn:gooo:field-parent:v1:retainedParent> ") || !strings.Contains(result.Lines[2], ":field:write:17>") {
+	base := "<urn:gooo:field-parent:v1:saved:" + workspaceDigest(raw) + ":case:0:field:write:"
+	expected := base + "14> <urn:gooo:field-parent:v1:retainedParent> " + base + "17> ."
+	if result.Lines[2] != expected {
 		t.Fatal("raw file/case/field/write identity", result.Lines[2])
 	}
 }

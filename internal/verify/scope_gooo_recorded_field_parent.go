@@ -10,7 +10,11 @@ func init() {
 		"examples/field-parent-origins/README.md",
 		"examples/field-parent-origins/controls.json",
 		"examples/field-parent-origins/parent.gooo",
+		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/bodyexecution/native_field_parent_columns.go",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+		"internal/meta/languagereadiness/languagesyntax/model.go",
+		"internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
 		"internal/verify/scope_gooo_recorded_field_parent.go",
 	}
 }
