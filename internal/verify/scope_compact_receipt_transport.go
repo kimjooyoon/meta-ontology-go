@@ -14,7 +14,9 @@ func init() {
 		"cmd/gooo/package_replay.go",
 		"cmd/gooo/usage_package.go",
 		"cmd/gooo/version_build.go",
+		"docs/language/language-product-priorities.ko.md",
 		"docs/language/recorded-origin-queries.ko.md",
+		"docs/releases/0.6.36-dev.md",
 		"internal/verify/scope_compact_receipt_transport.go",
 	}
 }
