@@ -1111,12 +1111,11 @@ jobs:
         uses: actions/github-script@v9.0.0
         with:
           script: |
-            const {listWorkflowArtifacts, listWorkflowJobs, observeArtifactProducer, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
+            const fs = require('fs');
+            const {listWorkflowArtifacts, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
             const rows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
-            const jobs = await listWorkflowJobs(page => github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
             const attempt = Number(process.env.GITHUB_RUN_ATTEMPT);
-            const head = context.payload.pull_request?.head?.sha || context.sha;
-            const producer = observeArtifactProducer(jobs, 'CI evidence', context.runId, attempt, head);
+            const producer = JSON.parse(fs.readFileSync('ci-artifact-lineage.json', 'utf8')).producer;
             const report = selectArtifactLineage(rows, 'ci-execution-tools', context.runId, attempt, producer);
             if (report.decision !== 'EXACT' || !report.exact_consumption_authorized) {
               throw new Error(`${report.decision}: ${report.reason}`);
