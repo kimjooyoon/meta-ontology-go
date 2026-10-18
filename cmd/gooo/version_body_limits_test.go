@@ -23,9 +23,9 @@ func TestVersionBuildReportsCompiledPureBodyLimits(t *testing.T) {
 			t.Fatal(err)
 		}
 		want := map[string]int{
-			"record_types": 16, "fields_per_record": 32, "elements_per_collection": 256,
-			"activity_calls_per_invocation": 4096, "iterations_per_counted_loop": 1024,
-			"syntactic_collection_iteration_product": 65536,
+			"max_record_types": 16, "max_fields_per_record": 32, "max_elements_per_collection": 256,
+			"max_activity_calls_per_invocation": 4096, "max_iterations_per_counted_loop": 1024,
+			"max_syntactic_collection_iteration_product": 65536,
 		}
 		if report.Schema != "gooo/build-identity/v1" || !reflect.DeepEqual(report.Limits, want) {
 			t.Fatal("compiled limit population differs", report)

@@ -51,11 +51,14 @@ while the accepted record layouts keep their existing bounds.
 
 Agents can read `gooo version --build --json` before constructing a source file.
 Its `pure_body_limits` object comes from the running compiler's validation
-constants, alongside the existing build identity. `record_types` and
-`fields_per_record` describe record shape; collection, call and loop limits have
-their own fields. A missing object in an older executable means the limits were
-not reported. These independent bounds do not establish that a program typechecks
-or predict its running time. Source-declared Text byte limits remain in the source.
+constants, alongside the existing build identity. Every field is an upper bound.
+`max_record_types` counts record declarations with fields in the source model
+checked for one body-generation request, including unused declarations in that
+model. `max_fields_per_record` counts declared fields; collection, call and loop
+limits have their own fields. A missing object in an older executable means the
+limits were not reported. These independent bounds do not establish that a
+program typechecks or predict its running time. Source-declared Text byte limits
+and transport limits keep their own contracts.
 
 `input.title` reads a field. A local copy such as `let copy = input` can be
 replaced with a new complete record. Parameters stay read-only; assignments
