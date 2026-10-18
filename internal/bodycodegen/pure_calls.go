@@ -116,7 +116,7 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 		callee := site.name
 		multiplicity := site.maximum
 		if callee == "map_values" && r.ids[callee] == "" {
-			binding, bindErr := r.collectionMapper(site.expression)
+			binding, bindErr := r.collectionMapper(site.expression, name)
 			if bindErr != nil {
 				return 0, bindErr
 			}

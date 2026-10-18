@@ -134,3 +134,40 @@ func TestCollectionMapRejectsUnsupportedMappers(t *testing.T) {
 		}
 	}
 }
+
+func TestCollectionMapNamesShadowedMapperAtSource(t *testing.T) {
+	for _, namedInput := range []bool{false, true} {
+		source := collectionMapFixture
+		if namedInput {
+			source = strings.Replace(source, "Project(Paths)", "Project(Quote Paths)", 1)
+			source = strings.Replace(source, "map_values(input.values, Quote)", "map_values(Quote.values, Quote)", 1)
+		} else {
+			source = strings.Replace(source, "return Paths{values:", "let Quote = input; return Paths{values:", 1)
+		}
+		generated, err := Generate("shadow.gooo", []byte(source), "Project")
+		if err == nil || !strings.Contains(err.Error(), `map_values mapper "Quote" is shadowed`) || generated.Source != "" {
+			t.Fatal("mapper shadowing lost its source name", namedInput, err)
+		}
+		if namedInput && !strings.Contains(err.Error(), `activity "Project" (urn:mapping:project)`) {
+			t.Fatal("named-input collision lost its owning source activity", err)
+		}
+	}
+}
+
+func TestCollectionMapDoesNotReplaceShadowedPrimitive(t *testing.T) {
+	for _, namedInput := range []bool{false, true} {
+		source := strings.Replace(collectionMapFixture, "map_values(input.values, Quote)", "map_values(map_values.values, Quote)", 1)
+		if namedInput {
+			source = strings.Replace(source, "Project(Paths)", "Project(map_values Paths)", 1)
+		} else {
+			source = strings.Replace(source, "return Paths{values:", "let map_values = input; return Paths{values:", 1)
+		}
+		generated, err := Generate("shadow.gooo", []byte(source), "Project")
+		if err == nil || !strings.Contains(err.Error(), `map_values call "map_values" is shadowed`) || generated.Source != "" {
+			t.Fatal("a source value was replaced by the primitive", namedInput, err)
+		}
+		if !strings.Contains(err.Error(), `activity "Project" (urn:mapping:project)`) {
+			t.Fatal("primitive collision lost its owning source activity", err)
+		}
+	}
+}
