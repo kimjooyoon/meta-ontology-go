@@ -11,10 +11,11 @@ subject name or inferred from prose.
 
 ## Exact first operation
 
-The input source already exists in the caller snapshot. The request declares a
+The input source already exists in the caller snapshot. A draft request declares a
 VALID LANGUAGE_CAPABILITY case, its source path, entity-fields or implicit-port
-support, proof choice, current denominator version, input/source digests and Go
-runtime version and execution_identity. The identity includes SHA-256 digests of
+support, proof choice and current denominator version. Inspection adds the
+input/source digests, Go runtime version and execution_identity to the pinned
+request. The identity includes SHA-256 digests of
 the running generator, the selected Go driver and its compiler, plus Go version,
 OS and architecture. The source must satisfy the existing five syntax/BX obligations.
 A missing input is UNKNOWN/DIRECT_MISSING; changed content or runtime identity is
@@ -74,12 +75,17 @@ runtime improvement is inferred from the source edit count.
 Use the implemented experimental entry point:
 
 ~~~sh
-go run ./cmd/syntax-registration-candidate -root PROJECT -request request.json -inspect
-go run ./cmd/syntax-registration-candidate -root PROJECT -request request.json -output NEW_EXTERNAL_DIRECTORY
+go run ./cmd/syntax-registration-candidate -root PROJECT -request draft-request.json -inspect > inspection.json
+jq '.pinned_request' inspection.json > pinned-request.json
+go run ./cmd/syntax-registration-candidate -root PROJECT -request pinned-request.json -output NEW_EXTERNAL_DIRECTORY
 ~~~
 
 The first command reports observed snapshot/source digests, Go runtime version
-and execution_identity. Pin all of them explicitly in the request before generation.
+and execution_identity, and includes `pinned_request` with those values filled
+into the original case and version. This avoids copying six identity fields by
+hand. The inspection is still `UNASSESSED`: generation reobserves the source,
+snapshot and executable identities and checks the case before proposing files.
+If any input changes between commands, the pinned request becomes stale.
 The Go driver is observed with GOTOOLCHAIN=local and GOWORK=off, as in native
 evaluation. Observation invokes only go env and reads executable bytes; it does
 not build, test, install, repair or grant authority. No absolute tool path is
@@ -88,7 +94,9 @@ the complete member files, candidate.json and execution.json outside the input p
 Existing output directories and parents resolving inside the input are rejected.
 It does not apply the candidate to the project.
 
-Request example, with observed values filled by the caller:
+Draft request example; select the latest existing denominator version in the
+input snapshot (v99 at this revision). `--inspect` fills the observation fields
+before generation:
 
 ~~~json
 {
@@ -102,18 +110,7 @@ Request example, with observed values filled by the caller:
     "scope": "LANGUAGE_CAPABILITY",
     "entity_fields": true
   },
-  "base_version": 30,
-  "snapshot_digest": "sha256:<observed-snapshot>",
-  "source_digest": "sha256:<observed-source>",
-  "toolchain": "go1.27.2",
-  "execution_identity": {
-    "go_version": "go1.27.2",
-    "goos": "linux",
-    "goarch": "amd64",
-    "executable_sha256": "sha256:<observed-generator>",
-    "go_command_sha256": "sha256:<observed-go-driver>",
-    "compiler_sha256": "sha256:<observed-compiler>"
-  }
+  "base_version": 99
 }
 ~~~
 
