@@ -25,7 +25,7 @@ type inspectionResponse struct {
 func main() {
 	root := flag.String("root", ".", "read-only input project")
 	requestPath := flag.String("request", "", "explicit typed registration request JSON")
-	intentPath := flag.String("intent", "", "compact Gooo-owned case intent JSON; use with --inspect")
+	intentPath := flag.String("intent", "", "compact Gooo-owned case intent JSON")
 	output := flag.String("output", "", "new caller-owned directory outside the project")
 	inspect := flag.Bool("inspect", false, "observe input digests without generating a candidate")
 	inventory := flag.Bool("inventory", false, "read source membership without generating or replaying cases")
@@ -53,8 +53,8 @@ func main() {
 }
 
 func run(root, requestPath, intentPath, output string, inspect bool, started time.Time) error {
-	if (requestPath == "") == (intentPath == "") || (intentPath != "" && !inspect) {
-		return fmt.Errorf("provide one --request or --intent; --intent requires --inspect")
+	if (requestPath == "") == (intentPath == "") {
+		return fmt.Errorf("provide one --request or --intent")
 	}
 	var request syntaxregistration.Request
 	if intentPath != "" {
@@ -81,7 +81,7 @@ func run(root, requestPath, intentPath, output string, inspect bool, started tim
 		}
 	}
 	repository := os.DirFS(root)
-	if inspect {
+	if inspect || intentPath != "" {
 		if intentPath == "" {
 			if err := syntaxregistration.VerifyCaseComposition(context.Background(), request); err != nil {
 				return err
@@ -95,7 +95,11 @@ func run(root, requestPath, intentPath, output string, inspect bool, started tim
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(os.Stdout).Encode(newInspectionResponse(request, snapshot, source, runtime.Version(), identity))
+		response := newInspectionResponse(request, snapshot, source, runtime.Version(), identity)
+		if inspect {
+			return json.NewEncoder(os.Stdout).Encode(response)
+		}
+		request = response.PinnedRequest
 	}
 	plan, err := syntaxregistration.Compile(repository, request)
 	if err != nil {
