@@ -2,6 +2,7 @@ package syntaxregistration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -77,6 +78,9 @@ func registrationSourcePath(path string) bool {
 }
 
 func Compile(repository fs.FS, request Request) (Plan, error) {
+	if err := VerifyCaseComposition(context.Background(), request); err != nil {
+		return Plan{}, err
+	}
 	inputs, err := readInputs(repository, request)
 	if err != nil {
 		return Plan{}, err
@@ -94,6 +98,10 @@ func Compile(repository fs.FS, request Request) (Plan, error) {
 	binding, err := bindContract()
 	if err != nil {
 		return Plan{}, err
+	}
+	if request.CaseIntent != nil {
+		intent := *request.CaseIntent
+		request.CaseIntent = &intent
 	}
 	return Plan{request: request, inputs: inputs, digest: digestValue(inputs), binding: binding}, nil
 }

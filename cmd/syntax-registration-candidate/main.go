@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -24,12 +25,13 @@ type inspectionResponse struct {
 func main() {
 	root := flag.String("root", ".", "read-only input project")
 	requestPath := flag.String("request", "", "explicit typed registration request JSON")
+	intentPath := flag.String("intent", "", "compact Gooo-owned case intent JSON; use with --inspect")
 	output := flag.String("output", "", "new caller-owned directory outside the project")
 	inspect := flag.Bool("inspect", false, "observe input digests without generating a candidate")
 	inventory := flag.Bool("inventory", false, "read source membership without generating or replaying cases")
 	flag.Parse()
 	if *inventory {
-		if *requestPath != "" || *output != "" || *inspect {
+		if *requestPath != "" || *intentPath != "" || *output != "" || *inspect {
 			fmt.Fprintln(os.Stderr, "--inventory uses only --root")
 			os.Exit(1)
 		}
@@ -40,7 +42,7 @@ func main() {
 		return
 	}
 	started := time.Now()
-	if err := run(*root, *requestPath, *output, *inspect, started); err != nil {
+	if err := run(*root, *requestPath, *intentPath, *output, *inspect, started); err != nil {
 		if failure, ok := errors.AsType[*syntaxregistration.Failure](err); ok {
 			raw, _ := json.Marshal(failure)
 			fmt.Fprintln(os.Stderr, string(raw))
@@ -50,17 +52,41 @@ func main() {
 	}
 }
 
-func run(root, requestPath, output string, inspect bool, started time.Time) error {
-	raw, err := os.ReadFile(requestPath)
-	if err != nil {
-		return err
+func run(root, requestPath, intentPath, output string, inspect bool, started time.Time) error {
+	if (requestPath == "") == (intentPath == "") || (intentPath != "" && !inspect) {
+		return fmt.Errorf("provide one --request or --intent; --intent requires --inspect")
 	}
-	request, err := syntaxregistration.DecodeRequest(raw)
-	if err != nil {
-		return err
+	var request syntaxregistration.Request
+	if intentPath != "" {
+		raw, err := os.ReadFile(intentPath)
+		if err != nil {
+			return err
+		}
+		intent, err := syntaxregistration.DecodeCaseIntent(raw)
+		if err != nil {
+			return err
+		}
+		request, _, err = syntaxregistration.ComposeDraft(context.Background(), intent)
+		if err != nil {
+			return err
+		}
+	} else {
+		raw, err := os.ReadFile(requestPath)
+		if err != nil {
+			return err
+		}
+		request, err = syntaxregistration.DecodeRequest(raw)
+		if err != nil {
+			return err
+		}
 	}
 	repository := os.DirFS(root)
 	if inspect {
+		if intentPath == "" {
+			if err := syntaxregistration.VerifyCaseComposition(context.Background(), request); err != nil {
+				return err
+			}
+		}
 		snapshot, source, err := syntaxregistration.InspectInputs(repository, request)
 		if err != nil {
 			return err

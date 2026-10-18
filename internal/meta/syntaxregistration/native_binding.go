@@ -1,6 +1,7 @@
 package syntaxregistration
 
 import (
+	"context"
 	"io/fs"
 	"reflect"
 
@@ -32,6 +33,9 @@ func RequestDigest(request Request) string { return digestValue(request) }
 // ObservePresence reports an exact declaration match. It never infers a case
 // from names, a score or prose, and does not accept contradictory registration.
 func ObservePresence(repository fs.FS, request Request) (bool, error) {
+	if err := VerifyCaseComposition(context.Background(), request); err != nil {
+		return false, err
+	}
 	snapshot, source, err := InspectInputs(repository, request)
 	if err != nil {
 		return false, err
