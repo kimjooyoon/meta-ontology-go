@@ -51,21 +51,6 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 	if err != nil {
 		return nil, err
 	}
-	// The new local map projection has dynamic element sites. Until their
-	// source bindings are retained, the literal-only observer cannot consume
-	// its internal range and indexed writes as ordinary source expressions.
-	mapProjection := false
-	ast.Inspect(file, func(node ast.Node) bool {
-		if call, ok := node.(*ast.CallExpr); ok {
-			if _, _, mapped := bodycodegen.CollectionMapProjection(call); mapped {
-				mapProjection = true
-			}
-		}
-		return !mapProjection
-	})
-	if mapProjection {
-		return nil, fmt.Errorf("collection map native execution requires dynamic construction source bindings")
-	}
 	info := &types.Info{Types: map[ast.Expr]types.TypeAndValue{}}
 	if _, err := new(types.Config).Check("gooo.observed.constructions", fset, []*ast.File{file}, info); err != nil {
 		return nil, err
@@ -76,34 +61,50 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 	}
 	bindings, sha := arithmeticFunctionIDs(prior), digest([]byte(prior.Source))
 	var sites []CompositionConstructionSite
+	var bindingError error
 	for _, declaration := range file.Decls {
 		f, ok := declaration.(*ast.FuncDecl)
 		if !ok {
 			continue
 		}
 		ids, ordinal := bindings[f.Name.Name], 0
-		ast.Inspect(f.Body, func(n ast.Node) bool {
+		bodycodegen.InspectBodyProjection(f.Body, func(n ast.Node) bool {
 			literal := constructionLiteral(n)
-			if literal == nil {
+			var expression ast.Expr
+			var elements []ast.Expr
+			kind, mapperID := "", ""
+			if literal != nil {
+				expression, elements = literal, literal.Elts
+			} else if call, ok := n.(*ast.CallExpr); ok {
+				_, mapper, mapped := bodycodegen.CollectionMapProjection(call)
+				if !mapped {
+					return true
+				}
+				expression, elements, kind, mapperID = call, []ast.Expr{mapper}, "map_values", bindings[mapper.Name][1]
+			} else {
 				return true
 			}
 			current := ordinal
 			ordinal++
-			sequence, ok := info.TypeOf(literal).Underlying().(*types.Slice)
+			sequence, ok := info.TypeOf(expression).Underlying().(*types.Slice)
 			if !ok {
 				return true
 			}
-			start, end := fset.Position(literal.Pos()).Offset, fset.Position(literal.End()).Offset
-			site := CompositionConstructionSite{RootActivityID: ids[0], ActivityID: ids[1], NativeOrdinal: current, ElementType: sequence.Elem().String(), Expression: prior.Source[start:end], ProjectionSHA256: sha, Start: start, End: end, Elements: []CompositionConstructionElementSite{}}
+			start, end := fset.Position(expression.Pos()).Offset, fset.Position(expression.End()).Offset
+			site := CompositionConstructionSite{RootActivityID: ids[0], ActivityID: ids[1], NativeOrdinal: current, ElementType: sequence.Elem().String(), Expression: prior.Source[start:end], ProjectionSHA256: sha, Start: start, End: end, Elements: []CompositionConstructionElementSite{}, Kind: kind, MapperActivityID: mapperID}
 			origin := origins[conditionOriginKey{ids[0], ids[1], current}]
+			if origin.Kind != kind || kind == "map_values" && origin.MapperActivityID != mapperID {
+				bindingError = fmt.Errorf("construction source kind or mapper identity differs from native projection")
+				return false
+			}
 			site.Source = origin.Literal
 			if site.Source == nil {
 				site.Source = bodycodegen.UnmappedReadSource(prior.SelectedSourceSHA256, "NO_RETAINED_ORIGIN")
 			}
-			for i, e := range literal.Elts {
+			for i, e := range elements {
 				a, b := fset.Position(e.Pos()).Offset, fset.Position(e.End()).Offset
 				part := CompositionConstructionElementSite{Expression: prior.Source[a:b], Start: a, End: b, Source: bodycodegen.UnmappedReadSource(prior.SelectedSourceSHA256, "NO_RETAINED_ORIGIN")}
-				if len(origin.Elements) == len(literal.Elts) {
+				if len(origin.Elements) == len(elements) {
 					part.Source = origin.Elements[i]
 				}
 				site.Elements = append(site.Elements, part)
@@ -113,11 +114,14 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 			return true
 		})
 	}
+	if bindingError != nil {
+		return nil, bindingError
+	}
 	if len(sites) > 4096 {
 		return nil, fmt.Errorf("collection constructions exceed 4096 sites")
 	}
 	for _, s := range sites {
-		if s.ActivityID == "" || s.RootActivityID == "" || len(s.Elements) > 256 || (s.ElementType != "int64" && s.ElementType != "string" && s.ElementType != "bool") {
+		if (s.Kind == "map_values" && (s.MapperActivityID == "" || len(s.Elements) != 1 || s.Source.Status != "MAPPED")) || s.ActivityID == "" || s.RootActivityID == "" || len(s.Elements) > 256 || (s.ElementType != "int64" && s.ElementType != "string" && s.ElementType != "bool") {
 			return nil, fmt.Errorf("collection construction lacks supported identity, type or element bound")
 		}
 	}

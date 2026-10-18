@@ -7,8 +7,9 @@ func validateRecordedConstruction(runtime CompositionRuntime, trace CompositionT
 		return fmt.Errorf("recorded construction site or read window differs")
 	}
 	site := runtime.ConstructionSites[created.SiteIndex]
-	*reserved += len(site.Elements)
-	if *reserved > constructionElementLimit || len(created.Elements) > len(site.Elements) || created.Completed && len(created.Elements) != len(site.Elements) || !created.Completed && len(created.Elements) == 0 {
+	count, valid := constructionSize(site, created.ElementCount)
+	*reserved += count
+	if !valid || *reserved > constructionElementLimit || len(created.Elements) > count || created.Completed && len(created.Elements) != count || !created.Completed && len(created.Elements) == 0 {
 		return fmt.Errorf("recorded construction element population differs")
 	}
 	_, delivery := recordedOriginDelivery(trace, site.RootActivityID)

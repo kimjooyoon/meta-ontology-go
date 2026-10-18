@@ -1,8 +1,10 @@
 package bodycodegen
 
 type BodyConstructionSource struct {
-	Literal  *BodyExpressionSource   `json:"literal"`
-	Elements []*BodyExpressionSource `json:"elements"`
+	Literal          *BodyExpressionSource   `json:"literal"`
+	Elements         []*BodyExpressionSource `json:"elements"`
+	Kind             string                  `json:"kind,omitempty"`
+	MapperActivityID string                  `json:"mapper_activity_id,omitempty"`
 }
 
 func BindBodyConstructionSources(source []byte, origins []BodyConstructionOrigin) ([]BodyConstructionSource, error) {
@@ -13,6 +15,7 @@ func BindBodyConstructionSources(source []byte, origins []BodyConstructionOrigin
 	sha := digest(source)
 	result := make([]BodyConstructionSource, len(origins))
 	for i, o := range origins {
+		result[i].Kind, result[i].MapperActivityID = o.Kind, o.MapperActivityID
 		a := activities[o.ActivityID]
 		result[i].Literal = bindBodyExpressionSource(source, sha, a, o.BodySHA256, o.BodyElementOrigin)
 		result[i].Elements = make([]*BodyExpressionSource, len(o.Elements))

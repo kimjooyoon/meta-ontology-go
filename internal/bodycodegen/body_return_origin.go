@@ -18,7 +18,7 @@ type BodyReturnOrigin struct {
 }
 
 func WalkReturnSyntax(body *ast.BlockStmt, visit func(*ast.ReturnStmt)) {
-	ast.Inspect(body, func(node ast.Node) bool {
+	InspectBodyProjection(body, func(node ast.Node) bool {
 		if _, nested := node.(*ast.FuncLit); nested {
 			return false
 		}

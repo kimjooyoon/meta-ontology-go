@@ -18,7 +18,7 @@ type bodyProjection struct {
 	calls             []pureCallFunction
 	conditions        map[ast.Expr]BodyConditionOrigin
 	reads             map[ast.Node]BodyReadOrigin
-	constructions     map[*ast.CompositeLit]BodyConstructionOrigin
+	constructions     map[ast.Node]BodyConstructionOrigin
 	locals            map[ast.Node]BodyLocalOrigin
 	localUses         map[*ast.Ident]BodyElementOrigin
 	fields            map[ast.Node]BodyFieldOrigin

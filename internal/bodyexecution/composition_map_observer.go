@@ -1,8 +1,14 @@
 package bodyexecution
 
-// The collection-map projection will opt into this kernel after source typing,
-// call-budget accounting and dynamic construction-site binding are implemented.
-// Keeping it separate preserves existing native projection bytes in the meantime.
+import "strings"
+
+// Only dynamic constructors add a count field. Literal-only projections retain
+// their original observer source and receipt hashes.
+func withCollectionMapObserver(observer string) string {
+	field := "\nElementCount *int `json:\"element_count,omitempty\"`\n"
+	return strings.Replace(observer, "type GoooReadConstruction struct {", "type GoooReadConstruction struct {"+field, 1) + collectionMapReadObserver
+}
+
 const collectionMapReadObserver = `
 func GoooReadMap[In,Out any](site,readSite int,input []In,mapper func(In) Out) []Out {
  if len(input)>256 {panic("collection map exceeds 256 elements")}
@@ -14,10 +20,11 @@ func GoooReadMap[In,Out any](site,readSite int,input []In,mapper func(In) Out) [
  }
  slot:=len(GoooReadConstructions)
  instance:=slot-GoooReadConstructionStart
+ count:=len(input)
  GoooReadReserved+=len(input)
  GoooReadConstructions=append(GoooReadConstructions,GoooReadConstruction{
   Case:GoooReadCase,Site:site,ReadStart:len(GoooReadEvents)-GoooReadCaseStart,
-  Elements:make([]GoooReadElement,0,len(input)),
+  Elements:make([]GoooReadElement,0,len(input)),ElementCount:&count,
  })
  defer func(){GoooReadConstructions[slot].ReadEnd=len(GoooReadEvents)-GoooReadCaseStart}()
  for i:=range input {

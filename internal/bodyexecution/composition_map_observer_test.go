@@ -14,8 +14,7 @@ import (
 // result. The source-level map expression remains a separate unfinished boundary.
 func TestCollectionMapObservationKernel(t *testing.T) {
 	dir := t.TempDir()
-	source := "package main\nimport (\"encoding/json\";\"os\")\n" + constructionReadObserver +
-		collectionMapReadObserver + collectionMapObserverHarness
+	source := "package main\nimport (\"encoding/json\";\"os\")\n" + withCollectionMapObserver(constructionReadObserver) + collectionMapObserverHarness
 	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte(source), 0600); err != nil {
 		t.Fatal(err)
 	}
