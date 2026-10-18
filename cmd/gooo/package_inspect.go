@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,7 +12,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageInspectUsage = "usage: gooo package inspect [--json] <workspace.json>"
+const packageInspectUsage = "usage: gooo package inspect [--json | --inputs-template] <workspace.json>"
 
 type workspaceInspectionReceipt struct {
 	Schema            string                            `json:"schema"`
@@ -28,7 +29,21 @@ type workspaceInspectionReceipt struct {
 
 func runPackageInspect(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
-	if len(args) != 1 || strings.TrimSpace(args[0]) == "" || strings.HasPrefix(args[0], "-") {
+	inputTemplate := false
+	clean := make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg == "--inputs-template" {
+			if inputTemplate {
+				return reportUsage(jsonMode, stdout, stderr, "package inspect", packageInspectUsage)
+			}
+			inputTemplate = true
+			continue
+		}
+		clean = append(clean, arg)
+	}
+	args = clean
+	if (jsonMode && inputTemplate) || len(args) != 1 || strings.TrimSpace(args[0]) == "" ||
+		strings.HasPrefix(args[0], "-") {
 		return reportUsage(jsonMode, stdout, stderr, "package inspect", packageInspectUsage)
 	}
 	receipt := workspaceInspectionReceipt{Schema: "gooo/workspace-source-inspection/v1", Decision: "FAIL_CLOSED",
@@ -36,6 +51,20 @@ func runPackageInspect(args []string, reader SourceReader, stdout, stderr io.Wri
 		Manifest: filepath.ToSlash(args[0]),
 		Scope:    "source package graph and prepared entry call closure; no body construction, predicate evaluation, model prediction or native execution"}
 	program, manifestDigest, err := inspectWorkspaceSource(reader, args[0])
+	if inputTemplate {
+		if err == nil {
+			var raw []byte
+			raw, err = workspaceexecution.InputTemplate(context.Background(), program)
+			if err == nil {
+				_, err = fmt.Fprintln(stdout, string(raw))
+			}
+		}
+		if err != nil {
+			fmt.Fprintf(stderr, "gooo package inspect: %v\n", err)
+			return exitFailure
+		}
+		return exitOK
+	}
 	receipt.ManifestDigest = manifestDigest
 	if err == nil {
 		receipt.Decision, receipt.Program = "PREPARED", &program
