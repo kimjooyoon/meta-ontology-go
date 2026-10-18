@@ -68,8 +68,7 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 
 func markPackageExecutionError(receipt *packageExecutionReceipt, err error) {
 	receipt.Decision, receipt.Error = "FAIL_CLOSED", err.Error()
-	var diagnostic *bodyexecution.InputDiagnostic
-	if errors.As(err, &diagnostic) {
+	if diagnostic, ok := errors.AsType[*bodyexecution.InputDiagnostic](err); ok {
 		copy := *diagnostic
 		receipt.InputDiagnostic = &copy
 	}
