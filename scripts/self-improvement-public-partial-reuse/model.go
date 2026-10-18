@@ -1,6 +1,9 @@
 package main
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
+)
 
 type runInput struct {
 	Source              string
@@ -13,6 +16,7 @@ type runInput struct {
 }
 
 type executionResult struct {
+	ToolInputs   toolchaincli.GeneratedTestGoInputs
 	Success      bool
 	ExitCode     int
 	ResultDigest string
@@ -20,17 +24,30 @@ type executionResult struct {
 	PeakRSSKib   int64
 }
 
+type receiptOrigin struct {
+	Partition    string `json:"partition"`
+	ReceiptID    string `json:"receipt_id"`
+	SourceDigest string `json:"source_digest"`
+}
+
 type caseArtifacts struct {
-	Report            publicpartialreuse.CaseReport
-	Source            string
-	GeneratedGo       string
-	GeneratedManifest string
-	Baseline          string
-	Selective         string
-	Receipts          map[string]string
+	SourceDigest       string
+	SemanticDigest     string
+	TestContractDigest string
+	ReusedOrigins      []receiptOrigin
+	Report             publicpartialreuse.CaseReport
+	Source             string
+	GeneratedGo        string
+	GeneratedManifest  string
+	Baseline           string
+	Selective          string
+	Receipts           map[string]string
 }
 
 type report struct {
+	PriorSourceDigest    string                          `json:"prior_source_digest"`
+	CurrentSourceDigest  string                          `json:"current_source_digest"`
+	ReusedOrigins        []receiptOrigin                 `json:"reused_receipt_origins"`
 	Schema               string                          `json:"schema"`
 	Decision             string                          `json:"decision"`
 	Reason               string                          `json:"reason"`

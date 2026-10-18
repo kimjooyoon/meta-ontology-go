@@ -21,8 +21,8 @@ func TestGoooPartialAssessmentAuthoredCases(t *testing.T) {
 		Input    Observation `json:"input"`
 		Expected Assessment  `json:"expected"`
 	}
-	if err := json.Unmarshal(raw, &cases); err != nil || len(cases) != 20 {
-		t.Fatal("expected twenty independent authored assessments", err)
+	if err := json.Unmarshal(raw, &cases); err != nil || len(cases) != 24 {
+		t.Fatal("expected twenty-four independent authored assessments", err)
 	}
 	policy := receiptEvaluationFixture(t).Policy
 	for _, item := range cases {

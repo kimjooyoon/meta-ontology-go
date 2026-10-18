@@ -1,6 +1,9 @@
 package main
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
+)
 
 const (
 	testCommand  = "go test -tags generated_project -count=1 ."
@@ -26,6 +29,7 @@ type identity struct {
 	ManifestBytes []byte
 	PolicyBytes   []byte
 	TestBytes     []byte
+	GoCommand     toolchaincli.GeneratedTestGoCommand
 }
 
 type commandResult struct {
@@ -56,15 +60,16 @@ type verificationInput struct {
 }
 
 type metricSnapshot struct {
-	BuildExecutions      int   `json:"build_executions"`
-	TestExecutions       int   `json:"test_executions"`
-	ReusedTestExecutions int   `json:"reused_test_executions"`
-	ReceiptHits          int   `json:"receipt_hits"`
-	ReceiptMisses        int   `json:"receipt_misses"`
-	BuildMS              int64 `json:"build_ms"`
-	TestMS               int64 `json:"test_ms"`
-	WallMS               int64 `json:"wall_ms"`
-	PeakRSSKib           int64 `json:"peak_rss_kib"`
+	BuildExecutions      int    `json:"build_executions"`
+	TestExecutions       int    `json:"test_executions"`
+	ReusedTestExecutions int    `json:"reused_test_executions"`
+	ReceiptHits          int    `json:"receipt_hits"`
+	ReceiptMisses        int    `json:"receipt_misses"`
+	BuildMS              int64  `json:"build_ms"`
+	TestMS               int64  `json:"test_ms"`
+	WallMS               int64  `json:"wall_ms"`
+	PeakRSSKib           int64  `json:"peak_rss_kib"`
+	PeakRSSSubject       string `json:"peak_rss_subject"`
 }
 
 type comparisonSnapshot struct {

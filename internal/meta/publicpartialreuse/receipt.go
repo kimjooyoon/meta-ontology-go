@@ -9,15 +9,15 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 const (
-	ReceiptSchema    = "gooo/public-partial-test-reuse-receipt/v1"
+	ReceiptSchema    = "gooo/public-partial-test-reuse-receipt/v3"
 	ReceiptOperation = Operation + ".baseline"
 	ReceiptReason    = "SUCCESSFUL_PARTITION_TEST_EXECUTION"
 	ReplayOperation  = Operation + ".selective"
@@ -28,7 +28,12 @@ const (
 	RefutedReason    = "FAIL_CLOSED_PARTIAL_REUSE_CONTRADICTION"
 )
 
+// ErrUnobservedToolInputs keeps older records from authorizing current reuse.
+var ErrUnobservedToolInputs = errors.New("historical partition receipt has no selected Go observations")
+
 // ErrInvalidReceipt identifies invalid content, not unavailable input.
+var ErrUnobservedPartitionInputs = errors.New("historical partition receipt has no independent package input scope")
+
 var ErrInvalidReceipt = errors.New("partial reuse receipt content is invalid")
 
 var compilerManifestPaths = []string{
@@ -44,34 +49,51 @@ var compilerManifestPaths = []string{
 	"internal/meta/publicpartialreuse/evaluator.go",
 	"internal/meta/publicpartialreuse/policy.go",
 	"internal/meta/publicpartialreuse/receipt.go",
+	"internal/meta/publicpartialreuse/package_origin.go",
+	"internal/toolchaincli/model.go",
+	"internal/toolchaincli/go_inputs.go",
+	"internal/toolchaincli/package_inputs.go",
+	"internal/toolchaincli/go_command.go",
+	"internal/toolchaincli/resource_darwin.go",
+	"internal/toolchaincli/resource_linux.go",
+	"internal/toolchaincli/resource_other.go",
 	"scripts/self-improvement-public-partial-reuse/main.go",
 	"scripts/self-improvement-public-partial-reuse/model.go",
+	"scripts/self-improvement-public-partial-reuse/origins.go",
 	"scripts/self-improvement-public-partial-reuse/run.go",
 	"scripts/self-improvement-public-partial-reuse/verify.go",
 }
 
 type Binding struct {
-	PolicySourceDigest              string `json:"policy_source_digest"`
-	PolicySemanticDigest            string `json:"policy_semantic_digest"`
-	PolicyEvaluatorDigest           string `json:"policy_evaluator_digest"`
-	CanonicalSourceDigest           string `json:"canonical_source_digest"`
-	CanonicalSemanticSubgraphDigest string `json:"canonical_semantic_subgraph_digest"`
-	GeneratedArtifactDigest         string `json:"generated_artifact_digest"`
-	GeneratedSemanticDigest         string `json:"generated_semantic_digest"`
-	GeneratedManifestDigest         string `json:"generated_manifest_digest"`
-	CompilerDigest                  string `json:"compiler_digest"`
-	ReleasedToolDigest              string `json:"released_tool_digest"`
-	ToolchainDigest                 string `json:"toolchain_digest"`
-	ToolchainVersion                string `json:"toolchain_version"`
-	TestCommand                     string `json:"test_command"`
-	TestCommandDigest               string `json:"test_command_digest"`
-	TestContractDigest              string `json:"test_contract_digest"`
-	DependencyGraphDigest           string `json:"dependency_graph_digest"`
-	OrchestrationReportDigest       string `json:"orchestration_report_digest"`
-	OrchestrationOperation          string `json:"orchestration_operation"`
+	PartitionProfile                string                             `json:"partition_input_profile"`
+	SharedProgramDigest             string                             `json:"shared_program_digest"`
+	ModuleDigest                    string                             `json:"module_digest"`
+	ToolInputs                      toolchaincli.GeneratedTestGoInputs `json:"execution_tool_inputs"`
+	PolicySourceDigest              string                             `json:"policy_source_digest"`
+	PolicySemanticDigest            string                             `json:"policy_semantic_digest"`
+	PolicyEvaluatorDigest           string                             `json:"policy_evaluator_digest"`
+	CanonicalSourceDigest           string                             `json:"canonical_source_digest"`
+	CanonicalSemanticSubgraphDigest string                             `json:"canonical_semantic_subgraph_digest"`
+	GeneratedArtifactDigest         string                             `json:"generated_artifact_digest"`
+	GeneratedSemanticDigest         string                             `json:"generated_semantic_digest"`
+	GeneratedManifestDigest         string                             `json:"generated_manifest_digest"`
+	CompilerDigest                  string                             `json:"compiler_digest"`
+	ReleasedToolDigest              string                             `json:"released_tool_digest"`
+	ToolchainDigest                 string                             `json:"toolchain_digest"`
+	ToolchainVersion                string                             `json:"toolchain_version"`
+	TestCommand                     string                             `json:"test_command"`
+	TestCommandDigest               string                             `json:"test_command_digest"`
+	TestContractDigest              string                             `json:"test_contract_digest"`
+	DependencyGraphDigest           string                             `json:"dependency_graph_digest"`
+	OrchestrationReportDigest       string                             `json:"orchestration_report_digest"`
+	OrchestrationOperation          string                             `json:"orchestration_operation"`
 }
 
 type OriginalExecution struct {
+	SemanticDigest  string `json:"generation_semantic_digest"`
+	SourceDigest    string `json:"generation_source_digest"`
+	ProgramDigest   string `json:"generation_program_digest"`
+	ManifestDigest  string `json:"generation_manifest_digest"`
 	InvocationID    string `json:"invocation_id"`
 	Operation       string `json:"operation"`
 	ResultDigest    string `json:"result_digest"`
@@ -122,8 +144,6 @@ func CompilerDigest(root string) (string, error) {
 func ReleasedToolDigest(compiler string) string {
 	return cache.HashBytes([]byte("gooo-public-partial-reuse-released-tool/v1\x00" + compiler)).String()
 }
-
-func ToolchainDigest() string { return generation.SemanticRetentionToolchainDigest() }
 
 func TestCommand(partition Partition) string {
 	return "go " + strings.Join(TestCommandArgs(partition), " ")
@@ -221,7 +241,10 @@ func TestCommandDigest(command, contract string) string {
 	return cache.HashBytes([]byte(command + "\x00" + contract)).String()
 }
 
-func BuildBinding(policy Policy, partition Partition, program, manifest, testContract []byte, compiler, orchestrationDigest, orchestrationOperation string) (Binding, error) {
+func BuildBinding(policy Policy, partition Partition, program, manifest, testContract, module []byte, compiler, orchestrationDigest, orchestrationOperation string, tool toolchaincli.GeneratedTestGoInputs) (Binding, error) {
+	if err := tool.Validate(); err != nil {
+		return Binding{}, err
+	}
 	sourceDigest, err := partitionSourceDigest(policy, partition)
 	if err != nil {
 		return Binding{}, err
@@ -234,20 +257,27 @@ func BuildBinding(policy Policy, partition Partition, program, manifest, testCon
 	if err != nil {
 		return Binding{}, err
 	}
-	wholeManifestDigest, err := manifestDigest(manifest)
+	if len(module) == 0 {
+		return Binding{}, errors.New("execution module input is missing")
+	}
+	if err := validateGenerationOrigin(policy, program, manifest); err != nil {
+		return Binding{}, err
+	}
+	sharedDigest, err := sharedProgramDigest(policy, program)
 	if err != nil {
 		return Binding{}, err
 	}
 	contractDigest := cache.HashBytes(testContract).String()
 	command := TestCommand(partition)
 	return Binding{
+		PartitionProfile: PartitionInputProfile, SharedProgramDigest: sharedDigest, ModuleDigest: cache.HashBytes(module).String(),
 		PolicySourceDigest:    cache.HashBytes([]byte(policy.SkeletonDigest())).String(),
 		PolicySemanticDigest:  cache.HashBytes([]byte(policy.SkeletonDigest() + "\x00semantic")).String(),
 		PolicyEvaluatorDigest: policy.EvaluatorDigest,
 		CanonicalSourceDigest: sourceDigest, CanonicalSemanticSubgraphDigest: semanticDigest,
 		GeneratedArtifactDigest: generatedDigest, GeneratedSemanticDigest: semanticDigest,
-		GeneratedManifestDigest: hashJSON(struct{ Whole, Partition string }{wholeManifestDigest, semanticDigest}),
-		CompilerDigest:          compiler, ReleasedToolDigest: ReleasedToolDigest(compiler), ToolchainDigest: ToolchainDigest(), ToolchainVersion: runtime.Version(),
+		GeneratedManifestDigest: hashJSON(struct{ Profile, Source, Semantic, Generated, Shared string }{PartitionInputProfile, sourceDigest, semanticDigest, generatedDigest, sharedDigest}),
+		CompilerDigest:          compiler, ReleasedToolDigest: ReleasedToolDigest(compiler), ToolchainDigest: tool.Digest(), ToolchainVersion: tool.Version, ToolInputs: tool,
 		TestCommand: command, TestCommandDigest: TestCommandDigest(command, contractDigest), TestContractDigest: contractDigest,
 		DependencyGraphDigest: policy.DependencyGraphDigest(), OrchestrationReportDigest: orchestrationDigest, OrchestrationOperation: orchestrationOperation,
 	}, nil
@@ -263,6 +293,20 @@ func ReceiptContentDigest(receipt Receipt) (string, error) {
 }
 
 func ValidateReceipt(receipt Receipt) error {
+	if receipt.Schema == "gooo/public-partial-test-reuse-receipt/v1" {
+		return ErrUnobservedToolInputs
+	}
+	if receipt.Schema == "gooo/public-partial-test-reuse-receipt/v2" {
+		return ErrUnobservedPartitionInputs
+	}
+	if receipt.Binding.PartitionProfile != PartitionInputProfile {
+		return errors.New("partition input profile is missing")
+	}
+	if receipt.Binding.ToolInputs.Validate() != nil ||
+		receipt.Binding.ToolchainDigest != receipt.Binding.ToolInputs.Digest() ||
+		receipt.Binding.ToolchainVersion != receipt.Binding.ToolInputs.Version {
+		return errors.New("partial reuse selected command binding is invalid")
+	}
 	if receipt.Schema != ReceiptSchema || receipt.Partition == "" || receipt.Decision != DecisionClosed || receipt.Reason != ReceiptReason ||
 		receipt.Original.Operation != ReceiptOperation || !receipt.Original.Successful || receipt.Original.ExitCode != 0 ||
 		receipt.Original.BuildExecutions != 1 || receipt.Original.TestExecutions != 1 || receipt.Original.BuildMS <= 0 || receipt.Original.TestMS <= 0 ||
@@ -271,6 +315,7 @@ func ValidateReceipt(receipt Receipt) error {
 		return errors.New("partial reuse receipt execution identity is invalid")
 	}
 	for _, value := range []string{
+		receipt.Binding.SharedProgramDigest, receipt.Binding.ModuleDigest, receipt.Original.SourceDigest, receipt.Original.SemanticDigest, receipt.Original.ProgramDigest, receipt.Original.ManifestDigest,
 		receipt.ReceiptID, receipt.Binding.PolicySourceDigest, receipt.Binding.PolicySemanticDigest, receipt.Binding.PolicyEvaluatorDigest,
 		receipt.Binding.CanonicalSourceDigest, receipt.Binding.CanonicalSemanticSubgraphDigest, receipt.Binding.GeneratedArtifactDigest,
 		receipt.Binding.GeneratedSemanticDigest, receipt.Binding.GeneratedManifestDigest, receipt.Binding.CompilerDigest, receipt.Binding.ReleasedToolDigest,
@@ -294,6 +339,9 @@ func ValidateReceipt(receipt Receipt) error {
 
 func VerifyReceipt(receipt Receipt, expected Binding, partition string) error {
 	if err := ValidateReceipt(receipt); err != nil {
+		if errors.Is(err, ErrUnobservedToolInputs) || errors.Is(err, ErrUnobservedPartitionInputs) {
+			return err
+		}
 		return fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	if receipt.Partition != partition || receipt.Binding != expected {
@@ -338,9 +386,21 @@ func ReadReceipt(filename string) (Receipt, error) {
 	if err != nil || !info.Mode().IsRegular() {
 		return Receipt{}, errors.New("partial reuse receipt is unavailable or not regular")
 	}
-	data, err := os.ReadFile(filename)
+	file, err := os.Open(filename)
 	if err != nil {
 		return Receipt{}, err
+	}
+	defer file.Close()
+	data, err := io.ReadAll(io.LimitReader(file, (1<<20)+1))
+	if err != nil {
+		return Receipt{}, err
+	}
+	return DecodeReceipt(data)
+}
+
+func DecodeReceipt(data []byte) (Receipt, error) {
+	if err := completeness.CheckJSON(data, 1<<20); err != nil {
+		return Receipt{}, fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	var receipt Receipt
 	decoder := json.NewDecoder(bytes.NewReader(data))
@@ -353,6 +413,9 @@ func ReadReceipt(filename string) (Receipt, error) {
 		return Receipt{}, fmt.Errorf("%w: trailing JSON", ErrInvalidReceipt)
 	}
 	if err := ValidateReceipt(receipt); err != nil {
+		if errors.Is(err, ErrUnobservedToolInputs) || errors.Is(err, ErrUnobservedPartitionInputs) {
+			return Receipt{}, err
+		}
 		return Receipt{}, fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	return receipt, nil

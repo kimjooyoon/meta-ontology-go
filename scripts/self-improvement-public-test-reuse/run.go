@@ -15,6 +15,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 func runBaseline(input executionInput) error {
@@ -26,11 +27,11 @@ func runBaseline(input executionInput) error {
 		return err
 	}
 	started := time.Now()
-	build, err := runTimed(input.PackageDir, "build", []string{"build", "."}, input.OutputDir)
+	build, err := runTimed(identity.GoCommand, input.PackageDir, "build", []string{"build", "."})
 	if err != nil {
 		return err
 	}
-	test, err := runTimed(input.PackageDir, "test", []string{"test", "-tags", "generated_project", "-count=1", "."}, input.OutputDir)
+	test, err := runTimed(identity.GoCommand, input.PackageDir, "test", []string{"test", "-tags", "generated_project", "-count=1", "."})
 	if err != nil {
 		return err
 	}
@@ -58,6 +59,7 @@ func baselineReport(identity identity, build, test commandResult) publictestreus
 	report.BuildMS = build.WallMS
 	report.TestMS = test.WallMS
 	report.PeakRSSKib = maxInt64(build.PeakRSSKib, test.PeakRSSKib)
+	report.PeakRSSSubject = publictestreuse.PeakRSSGoCommands
 	report.GeneratedBytesEqual = true
 	report.SemanticEqual = identity.Binding.CanonicalSemanticDigest == identity.Binding.GeneratedSemanticDigest
 	return report
@@ -66,6 +68,9 @@ func baselineReport(identity identity, build, test commandResult) publictestreus
 func sealOriginalReceipt(output string, identity identity, build, test commandResult, report *publictestreuse.Report) error {
 	if !build.Success || !test.Success || identity.Binding.CanonicalSemanticDigest != identity.Binding.GeneratedSemanticDigest {
 		return errors.New("Gooo policy cannot seal an unsuccessful original execution")
+	}
+	if err := identity.GoCommand.VerifyBytes(); err != nil {
+		return err
 	}
 	receipt := publictestreuse.Receipt{
 		Schema: publictestreuse.ReceiptSchema, Operation: publictestreuse.OriginalOperation,
@@ -127,7 +132,11 @@ func runReuse(input executionInput) error {
 		report.SemanticEqual = true
 	}
 	report.WallMS = elapsedMS(started)
-	report.PeakRSSKib = currentPeakRSSKib()
+	report.PeakRSSSubject = publictestreuse.PeakRSSObserver
+	report.PeakRSSKib, err = toolchaincli.CurrentPeakRSSKiB()
+	if err != nil {
+		return fmt.Errorf("observe reuse process peak RSS: %w", err)
+	}
 	return writeReport(input.OutputDir, report, "Gooo classified the retained observations; any proposed reuse also required the current package and exact successful receipt.")
 }
 
@@ -193,21 +202,22 @@ func loadIdentityWithInputs(input executionInput,
 	if err != nil {
 		return identity{}, err
 	}
-	toolchainVersion := publictestreuse.CurrentToolchainVersion()
-	if toolchainVersion != "go1.27.2" {
-		return identity{}, fmt.Errorf("public test reuse requires Go 1.27.2, got %s", toolchainVersion)
+	command, err := toolchaincli.CaptureGeneratedTestGo()
+	if err != nil {
+		return identity{}, fmt.Errorf("observe selected Go command: %w", err)
 	}
 	commandDigest := publictestreuse.TestCommandDigest(testCommand, cache.HashBytes(testContract).String())
+	toolInputs := publictestreuse.ExecutionToolInputs(command.Inputs)
 	return identity{
 		Policy: policy, PolicyBytes: policySource, ProgramBytes: program,
-		ManifestBytes: manifest, TestBytes: testContract,
+		ManifestBytes: manifest, TestBytes: testContract, GoCommand: command,
 		Binding: publictestreuse.Binding{
 			PolicySourceDigest: policy.SourceDigest, PolicySemanticDigest: policy.SemanticDigest, PolicyEvaluatorDigest: policy.EvaluatorDigest,
 			CanonicalSourceDigest: cache.HashBytes(source).String(), CanonicalSemanticDigest: policy.SemanticDigest,
 			GeneratedOutputDigest: cache.HashBytes(program).String(), GeneratedSemanticDigest: generatedSemantic,
 			GeneratedManifestDigest: cache.HashBytes(manifest).String(), CompilerDigest: compilerDigest,
-			ReleasedToolDigest: publictestreuse.ReleasedToolDigest(compilerDigest), ToolchainDigest: publictestreuse.ToolchainDigest(),
-			ToolchainVersion: toolchainVersion, TestCommand: testCommand, TestCommandDigest: commandDigest,
+			ReleasedToolDigest: publictestreuse.ReleasedToolDigest(compilerDigest), ToolchainDigest: toolInputs.Digest(),
+			ToolchainVersion: toolInputs.Version, ToolInputs: toolInputs, TestCommand: testCommand, TestCommandDigest: commandDigest,
 			TestContractDigest: cache.HashBytes(testContract).String(), PackageInputs: packageInputs,
 		},
 	}, nil
@@ -257,17 +267,21 @@ func manifestSemanticDigest(data []byte) (string, error) {
 	return digest, nil
 }
 
-func runTimed(packageDir, label string, args []string, outputDir string) (commandResult, error) {
-	timeFile := filepath.Join(outputDir, label+".time")
+func runTimed(tool toolchaincli.GeneratedTestGoCommand, packageDir, label string, args []string) (commandResult, error) {
+	if err := tool.VerifyBytes(); err != nil {
+		return commandResult{}, err
+	}
 	started := time.Now()
-	commandArgs := append([]string{"-f", "%M", "-o", timeFile, "go"}, args...)
-	command := exec.Command("/usr/bin/time", commandArgs...)
+	command := exec.Command(tool.Inputs.Path, args...)
 	command.Dir = packageDir
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=local", "GOFLAGS=-mod=readonly", "GOWORK=off")
+	command.Env = append([]string(nil), tool.Env...)
 	var stdout, stderr bytes.Buffer
 	command.Stdout = &stdout
 	command.Stderr = &stderr
 	err := command.Run()
+	if err != nil && command.ProcessState == nil {
+		return commandResult{}, fmt.Errorf("start generated command %s: %w", label, err)
+	}
 	exitCode := 0
 	if err != nil {
 		exitCode = 1
@@ -275,24 +289,12 @@ func runTimed(packageDir, label string, args []string, outputDir string) (comman
 			exitCode = exitError.ExitCode()
 		}
 	}
-	peak, readErr := readRSSFile(timeFile)
+	peak, readErr := toolchaincli.PeakRSSKiB(command.ProcessState)
 	if readErr != nil {
 		return commandResult{}, fmt.Errorf("read %s peak RSS: %w", label, readErr)
 	}
 	resultDigest := cache.HashBytes([]byte(strings.Join(append([]string{"go", label}, args...), "\x00") + "\x00" + stdout.String() + "\x00" + stderr.String() + "\x00" + strconv.Itoa(exitCode))).String()
 	return commandResult{Success: err == nil, ExitCode: exitCode, ResultDigest: resultDigest, WallMS: elapsedMS(started), PeakRSSKib: peak}, nil
-}
-
-func readRSSFile(filename string) (int64, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return 0, err
-	}
-	value, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64)
-	if err != nil || value <= 0 {
-		return 0, errors.New("peak RSS is not a positive integer")
-	}
-	return value, nil
 }
 
 func resolveReceiptPath(path string) (string, string, error) {
@@ -354,7 +356,7 @@ func writeReport(outputDir string, report publictestreuse.Report, note string) e
 	if err := writeNew(filepath.Join(outputDir, "reuse-report.json"), data, 0o444); err != nil {
 		return err
 	}
-	human := fmt.Sprintf("# Public generated-test reuse\n\nDecision: `%s`\nReason: `%s`\nCase: `%s`\n\nTest executions: `%d`\nReused test executions: `%d`\nReceipt hits/misses: `%d/%d`\nBuild executions: `%d`\nBuild/test ms: `%d/%d`\nWall ms / peak RSS KiB: `%d/%d`\nGenerated program bytes / lines: `%d/%d`\nTest contract bytes / lines: `%d/%d`\nRepository writes / local test executions: `%d/%d`\nReceipt: `%s`\nOriginal invocation: `%s`\n\n%s\n", report.Decision, report.Reason, report.CaseID, report.TestExecutions, report.ReusedTestExecutions, report.ReceiptHits, report.ReceiptMisses, report.BuildExecutions, report.BuildMS, report.TestMS, report.WallMS, report.PeakRSSKib, report.GeneratedProgramBytes, report.GeneratedProgramLines, report.TestContractBytes, report.TestContractLines, report.RepositoryWrites, report.LocalTestExecutions, report.ReceiptDigest, report.OriginalInvocationID, note)
+	human := fmt.Sprintf("# Public generated-test reuse\n\nDecision: `%s`\nReason: `%s`\nCase: `%s`\n\nTest executions: `%d`\nReused test executions: `%d`\nReceipt hits/misses: `%d/%d`\nBuild executions: `%d`\nBuild/test ms: `%d/%d`\nWall ms / peak RSS KiB: `%d/%d`\nPeak RSS subject: `%s`\nGenerated program bytes / lines: `%d/%d`\nTest contract bytes / lines: `%d/%d`\nRepository writes / local test executions: `%d/%d`\nReceipt: `%s`\nOriginal invocation: `%s`\n\n%s\n", report.Decision, report.Reason, report.CaseID, report.TestExecutions, report.ReusedTestExecutions, report.ReceiptHits, report.ReceiptMisses, report.BuildExecutions, report.BuildMS, report.TestMS, report.WallMS, report.PeakRSSKib, report.PeakRSSSubject, report.GeneratedProgramBytes, report.GeneratedProgramLines, report.TestContractBytes, report.TestContractLines, report.RepositoryWrites, report.LocalTestExecutions, report.ReceiptDigest, report.OriginalInvocationID, note)
 	return writeNew(filepath.Join(outputDir, "reuse-report.md"), []byte(human), 0o444)
 }
 
@@ -401,26 +403,6 @@ func elapsedMS(started time.Time) int64 {
 		return 1
 	}
 	return int64(value)
-}
-
-func currentPeakRSSKib() int64 {
-	data, err := os.ReadFile("/proc/self/status")
-	if err != nil {
-		return 1
-	}
-	for line := range strings.SplitSeq(string(data), "\n") {
-		if !strings.HasPrefix(line, "VmHWM:") {
-			continue
-		}
-		fields := strings.Fields(line)
-		if len(fields) >= 2 {
-			value, err := strconv.ParseInt(fields[1], 10, 64)
-			if err == nil && value > 0 {
-				return value
-			}
-		}
-	}
-	return 1
 }
 
 func physicalLines(data []byte) int {

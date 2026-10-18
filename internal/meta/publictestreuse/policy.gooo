@@ -44,6 +44,9 @@ if input.receipt_state == "INVALID" {
 if input.receipt_state == "LEGACY_INPUTS_UNOBSERVED" {
     return Unresolved("EXECUTION_PACKAGE_INPUTS_UNOBSERVED", "execution_package_inputs")
 }
+if input.receipt_state == "LEGACY_TOOL_UNOBSERVED" {
+    return Unresolved("EXECUTION_TOOL_INPUTS_UNOBSERVED", "execution_tool_inputs")
+}
 if input.receipt_state == "MISSING_REUSE_RECEIPT" || input.receipt_state == "AMBIGUOUS_REUSE_RECEIPT" {
     return Unresolved(input.receipt_state, "caller_owned_reuse_receipt")
 }

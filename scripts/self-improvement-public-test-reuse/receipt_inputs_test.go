@@ -4,45 +4,26 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
 )
 
 func TestUnobservedLegacyReceiptProducesUnresolvedReport(t *testing.T) {
-	output := t.TempDir()
-	initial := publictestreuse.Report{Schema: publictestreuse.ReportSchema, Operation: publictestreuse.ReplayOperation}
-	initial.Binding.PackageInputs = publictestreuse.ExecutionPackageInputsFromBytes(
-		[]byte("module fixture\n"), []byte("package fixture\n"), []byte("package fixture\n// test\n"))
-	policy := readGoooPolicyFixture(t)
-	initial.Binding.PolicySourceDigest = policy.SourceDigest
-	initial.Binding.PolicyEvaluatorDigest = policy.EvaluatorDigest
-	observed := publictestreuse.ReuseObservation{Requested: true, ReceiptState: "LEGACY_INPUTS_UNOBSERVED",
-		InputProfile: initial.Binding.PackageInputs.Profile}
-	if _, err := assessReplayReport(policy, observed, &initial); err != nil {
-		t.Fatal(err)
+	for _, row := range []struct{ schema, reason, blocked string }{
+		{"gooo/public-test-reuse-receipt/v1", "EXECUTION_PACKAGE_INPUTS_UNOBSERVED", "execution_package_inputs"},
+		{"gooo/public-test-reuse-receipt/v2", "EXECUTION_TOOL_INPUTS_UNOBSERVED", "execution_tool_inputs"},
+	} {
+		t.Run(row.blocked, func(t *testing.T) { testLegacyReceiptReport(t, row.schema, row.reason, row.blocked) })
 	}
-	initial.ReceiptMisses = 1
-	if err := writeReport(output, initial, "Historical input observations remain unresolved."); err != nil {
-		t.Fatal(err)
-	}
-	report, err := readPublicReport(filepath.Join(output, "reuse-report.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if report.Decision != publictestreuse.DecisionUnknown || report.Reason != "EXECUTION_PACKAGE_INPUTS_UNOBSERVED" ||
-		report.CaseID != publictestreuse.CaseStaleEvidence || report.ReceiptMisses != 1 ||
-		report.TestExecutions != 0 || report.ReusedTestExecutions != 0 || report.BuildExecutions != 0 || report.ReceiptHits != 0 {
-		t.Fatal("missing observations authorized execution or reuse")
-	}
-	if report.Unknown == nil || report.Unknown.NextOperation != publictestreuse.UnknownNextEvidence ||
-		len(report.Unknown.BlockedBy) != 1 || report.Unknown.BlockedBy[0] != "execution_package_inputs" {
-		t.Fatal("unresolved report lost its next operation or missing input domain")
-	}
-	raw, err := os.ReadFile(filepath.Join(output, "reuse-report.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
+}
+
+func testLegacyReceiptReport(t *testing.T, schema, reason, blocked string) {
+	t.Helper()
+	output, report := legacyReceiptReport(t, schema)
+	checkLegacyReceiptDecision(t, report, reason, blocked)
+	raw := legacyReceiptReportBytes(t, output, report)
 	for name, data := range map[string][]byte{
 		"trailing":  append(append([]byte(nil), raw...), []byte("\n{}")...),
 		"duplicate": bytes.Replace(raw, []byte("{"), []byte(`{"schema":"duplicate",`), 1),
@@ -57,6 +38,71 @@ func TestUnobservedLegacyReceiptProducesUnresolvedReport(t *testing.T) {
 			}
 		})
 	}
+}
+
+func legacyReceiptReport(t *testing.T, schema string) (string, publictestreuse.Report) {
+	t.Helper()
+	output := t.TempDir()
+	initial := publictestreuse.Report{Schema: publictestreuse.ReportSchema, Operation: publictestreuse.ReplayOperation}
+	initial.Binding.PackageInputs = publictestreuse.ExecutionPackageInputsFromBytes(
+		[]byte("module fixture\n"), []byte("package fixture\n"), []byte("package fixture\n// test\n"))
+	policy := readGoooPolicyFixture(t)
+	initial.Binding.PolicySourceDigest = policy.SourceDigest
+	initial.Binding.PolicyEvaluatorDigest = policy.EvaluatorDigest
+	legacy := filepath.Join(t.TempDir(), "legacy.json")
+	if err := os.WriteFile(legacy, []byte(`{"schema":"`+schema+`"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	observed, receipt, err := observeReuse(executionInput{Authorize: true, Receipt: legacy}, initial.Binding)
+	if err != nil || receipt != nil {
+		t.Fatal("historical receipt became current execution inputs", err)
+	}
+	if _, err := assessReplayReport(policy, observed, &initial); err != nil {
+		t.Fatal(err)
+	}
+	initial.ReceiptMisses = 1
+	initial.PeakRSSSubject = publictestreuse.PeakRSSObserver
+	if err := writeReport(output, initial, "Historical input observations remain unresolved."); err != nil {
+		t.Fatal(err)
+	}
+	report, err := readPublicReport(filepath.Join(output, "reuse-report.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return output, report
+}
+
+func checkLegacyReceiptDecision(t *testing.T, report publictestreuse.Report, reason, blocked string) {
+	t.Helper()
+	if report.Decision != publictestreuse.DecisionUnknown || report.Reason != reason ||
+		report.CaseID != publictestreuse.CaseStaleEvidence || report.ReceiptMisses != 1 ||
+		report.TestExecutions != 0 || report.ReusedTestExecutions != 0 || report.BuildExecutions != 0 || report.ReceiptHits != 0 {
+		t.Fatal("missing observations authorized execution or reuse")
+	}
+	if report.Unknown == nil || report.Unknown.NextOperation != publictestreuse.UnknownNextEvidence ||
+		len(report.Unknown.BlockedBy) != 1 || report.Unknown.BlockedBy[0] != blocked {
+		t.Fatal("unresolved report lost its next operation or missing input domain")
+	}
+	if report.PeakRSSSubject != publictestreuse.PeakRSSObserver || snapshot(report).PeakRSSSubject != report.PeakRSSSubject {
+		t.Fatal("reuse summary lost the observed process")
+	}
+}
+
+func legacyReceiptReportBytes(t *testing.T, output string, report publictestreuse.Report) []byte {
+	t.Helper()
+	human, err := os.ReadFile(filepath.Join(output, "reuse-report.md"))
+	if err != nil || !strings.Contains(string(human), report.PeakRSSSubject) {
+		t.Fatal("readable report lost the memory subject", err)
+	}
+	report.PeakRSSSubject = "DISPLAY_HINT_ONLY"
+	if err := publictestreuse.VerifyAssessment(report); err != nil {
+		t.Fatal("display metadata changed the Gooo decision", err)
+	}
+	raw, err := os.ReadFile(filepath.Join(output, "reuse-report.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return raw
 }
 
 func readGoooPolicyFixture(t *testing.T) publictestreuse.Policy {

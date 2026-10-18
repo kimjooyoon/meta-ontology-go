@@ -3,10 +3,11 @@ package publictestreuse
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 )
 
-func TestPolicyRequiresObservedPackageContract(t *testing.T) {
+func TestPolicyRequiresObservedPackageAndToolContract(t *testing.T) {
 	filename := "../../../examples/self-improvement-discovery/project.gooo"
 	source, err := os.ReadFile(filename)
 	if err != nil {
@@ -16,16 +17,27 @@ func TestPolicyRequiresObservedPackageContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if policy.Schema != PolicySchema || len(policy.Bindings) != 12 || policy.Bindings[10] != "execution-package-inputs" {
-		t.Fatal("current policy omitted observed execution package inputs")
+	if policy.Schema != PolicySchema || len(policy.Bindings) != 13 ||
+		policy.Bindings[10] != "execution-package-inputs" || policy.Bindings[11] != "execution-tool-inputs" {
+		t.Fatal("current policy omitted observed execution package or tool inputs")
 	}
-	for _, marker := range []string{"test-reuse-contract=v1", "test-reuse-contract=v2", "test-reuse-contract="} {
-		changed := bytes.Replace(source, []byte("test-reuse-contract=v3"), []byte(marker), 1)
+	for _, marker := range []string{"test-reuse-contract=v1", "test-reuse-contract=v2", "test-reuse-contract=v3", "test-reuse-contract="} {
+		changed := bytes.Replace(source, []byte("test-reuse-contract=v4"), []byte(marker), 1)
 		if bytes.Equal(source, changed) {
 			t.Fatal("fixture contract marker was not found")
 		}
+		_, err := Load(filename, changed)
+		if err == nil || !strings.Contains(err.Error(), "requires v4, observed") {
+			t.Fatal("historical contract lost the required and observed version", err)
+		}
+	}
+	for _, binding := range []string{"execution-package-inputs", "execution-tool-inputs"} {
+		changed := bytes.Replace(source, []byte(binding+","), nil, 1)
+		if bytes.Equal(source, changed) {
+			t.Fatal("fixture binding was not found", binding)
+		}
 		if _, err := Load(filename, changed); err == nil {
-			t.Fatal("unversioned or historical policy was accepted for current reuse")
+			t.Fatal("source with an omitted execution binding was accepted", binding)
 		}
 	}
 }
