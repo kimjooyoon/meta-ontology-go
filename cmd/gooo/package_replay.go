@@ -41,7 +41,7 @@ func runPackageSaved(args []string, reader SourceReader, stdout, stderr io.Write
 	defer stop()
 	receipt, err := executePackageSaved(ctx, reader, manifestPath, flags, resume)
 	if err != nil {
-		receipt.Decision, receipt.Error = "FAIL_CLOSED", err.Error()
+		markPackageExecutionError(&receipt, err)
 	}
 	operation := "replay"
 	if resume {
