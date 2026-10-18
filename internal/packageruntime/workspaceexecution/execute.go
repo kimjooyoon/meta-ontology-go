@@ -116,10 +116,14 @@ func translateCases(program Program, suite bodyexecution.CompositionCases) (body
 	translated := bodyexecution.CompositionCases{Schema: suite.Schema, Cases: make([]bodyexecution.CompositionCase, len(suite.Cases)), Display: display}
 	for index, test := range suite.Cases {
 		row := bodyexecution.CompositionCase{Inputs: make(map[string]json.RawMessage, len(test.Inputs)), Expected: make(map[string]json.RawMessage, len(test.Expected))}
+		badInputKey, badInputDetail := "", ""
 		for key, value := range test.Inputs {
 			ref, suffix, err := resolveCaseActivity(key, byKey)
 			if err != nil {
-				return bodyexecution.CompositionCases{}, fmt.Errorf("case %d input: %w", index, err)
+				if badInputDetail == "" || key < badInputKey {
+					badInputKey, badInputDetail = key, err.Error()
+				}
+				continue
 			}
 			translatedKey := ref.LoweredName
 			if suffix != "" {
@@ -130,15 +134,31 @@ func translateCases(program Program, suite bodyexecution.CompositionCases) (body
 				Key: key, Activity: ref.LoweredName,
 			}
 		}
+		if badInputDetail != "" {
+			return bodyexecution.CompositionCases{}, &bodyexecution.InputDiagnostic{
+				Stage: "INPUT_RESOLUTION", Code: "UNKNOWN_ACTIVITY_KEY", CaseIndex: index,
+				Key: badInputKey, Message: fmt.Sprintf("case %d input: %s", index, badInputDetail)}
+		}
+		badExpectedKey, badExpectedDetail, badExpectedCode := "", "", ""
 		for key, value := range test.Expected {
 			ref, suffix, err := resolveCaseActivity(key, byKey)
 			if err != nil || suffix != "" {
+				code := "UNKNOWN_EXPECTED_ACTIVITY"
 				if err == nil {
 					err = fmt.Errorf("expected outputs name activities without ports")
+					code = "EXPECTED_PORT_NOT_ALLOWED"
 				}
-				return bodyexecution.CompositionCases{}, fmt.Errorf("case %d expected: %w", index, err)
+				if badExpectedDetail == "" || key < badExpectedKey {
+					badExpectedKey, badExpectedDetail, badExpectedCode = key, err.Error(), code
+				}
+				continue
 			}
 			row.Expected[ref.LoweredName] = append(json.RawMessage(nil), value...)
+		}
+		if badExpectedDetail != "" {
+			return bodyexecution.CompositionCases{}, &bodyexecution.InputDiagnostic{
+				Stage: "INPUT_RESOLUTION", Code: badExpectedCode, CaseIndex: index,
+				Key: badExpectedKey, Message: fmt.Sprintf("case %d expected: %s", index, badExpectedDetail)}
 		}
 		translated.Cases[index] = row
 	}
