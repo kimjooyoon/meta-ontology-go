@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"example/workplan:Prepare": ""}, "expected": {"example/workplan:Prepare": {"state": "NO_WORK", "tasks": []}}},
+    {"inputs": {"example/workplan:Prepare": "read-origins"}, "expected": {"example/workplan:Prepare": {"state": "READY", "tasks": ["read-origins"]}}}
+  ]
+}

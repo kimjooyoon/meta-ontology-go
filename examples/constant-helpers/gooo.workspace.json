@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/workplan", "activity": "Prepare"},
+  "packages": [{"path": "example/workplan", "name": "workplan", "imports": [], "sources": ["main.gooo"]}]
+}
