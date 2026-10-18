@@ -40,6 +40,9 @@ func computationPackageReference(raw []byte, profile packageProfile) ([]packageP
 	return suite.Cases, nil
 }
 func computationPackageValue(raw []byte, profile packageProfile) ([]byte, error) {
+	if profile.Name == "collection-map" {
+		return collectionMapReference(raw)
+	}
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &fields); err != nil || len(fields) != 2 ||
 		len(fields["text"]) == 0 || len(fields["needle"]) == 0 || string(fields["text"]) == "null" ||

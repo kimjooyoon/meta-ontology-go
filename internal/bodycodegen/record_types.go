@@ -13,6 +13,7 @@ import (
 
 // RecordFieldLimit bounds both interpreted value slots and native record inputs.
 const RecordFieldLimit = 32
+const recordTypeLimit = 16
 
 // RecordType retains source names, stable identities and the typed value layout.
 type RecordType struct {
@@ -49,8 +50,8 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 		if len(node.Fields) > RecordFieldLimit {
 			return nil, fmt.Errorf("record %q (%s) declares %d fields; body profile supports 1..%d", node.Name, node.ID, len(node.Fields), RecordFieldLimit)
 		}
-		if len(result) >= 16 {
-			return nil, fmt.Errorf("record %q (%s) is record %d; body profile supports at most 16", node.Name, node.ID, len(result)+1)
+		if len(result) >= recordTypeLimit {
+			return nil, fmt.Errorf("record %q (%s) is record %d; body profile supports at most %d", node.Name, node.ID, len(result)+1, recordTypeLimit)
 		}
 		record := RecordType{Name: node.Name, ID: string(node.ID), GoName: recordGoName("Record", string(node.ID))}
 		for _, field := range node.Fields {
