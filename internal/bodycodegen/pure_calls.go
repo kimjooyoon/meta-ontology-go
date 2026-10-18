@@ -134,10 +134,11 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 		}
 		r.edges = append(r.edges, PureCallEdge{CallerID: r.ids[name], CalleeID: r.ids[callee], Ordinal: ordinal})
 		height = max(height, 1+r.heights[callee])
-		budget += multiplicity * (1 + cost)
-		if budget > pureCallLimit {
-			return 0, fmt.Errorf("pure activity closure exceeds %d calls per invocation", pureCallLimit)
+		next := budget + multiplicity*(1+cost)
+		if next > pureCallLimit {
+			return 0, r.budgetError(name, callee, ordinal, budget, multiplicity, cost)
 		}
+		budget = next
 	}
 	r.budgets[name] = budget
 	r.heights[name] = height

@@ -364,6 +364,7 @@ func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source [
 			searchReceipt = searchError.Receipt
 			completeness = bodycodegen.SearchFailureCompletenessReceipt(activity, source, cause.Error(), searchReceipt)
 		}
+		callBudget, _ := errors.AsType[*bodycodegen.PureCallBudgetError](cause)
 		payload := struct {
 			Schema              string                             `json:"schema"`
 			Decision            string                             `json:"decision"`
@@ -376,12 +377,14 @@ func reportBodyCodegenFailure(jsonMode bool, filename, activity string, source [
 			BodySearch          *bodycodegen.IRBodySearchReceipt   `json:"body_search,omitempty"`
 			BodyPaths           *bodycodegen.BodyPathReceipt       `json:"body_paths,omitempty"`
 			RecordAssembly      *bodycodegen.RecordAssemblyReceipt `json:"record_assembly,omitempty"`
+			CallBudget          *bodycodegen.PureCallBudgetError   `json:"call_budget,omitempty"`
 		}{
 			Schema: "gooo/body-codegen-report/v3", Decision: "FAIL_CLOSED",
 			PlanSHA256:        stringScopeValue(completeness.Scope, "plan_sha256"),
 			CompilerSourceSHA: stringScopeValue(completeness.Scope, "compiler_source_sha"),
 			RepositoryWrites:  0, Error: cause.Error(), CompletenessReceipt: completeness,
 			BodySearch: searchReceipt, BodyPaths: pathReceipt, RecordAssembly: recordReceipt,
+			CallBudget: callBudget,
 		}
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)
