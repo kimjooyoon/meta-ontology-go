@@ -1,0 +1,14 @@
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [
+    {
+      "meta/scopefragments:Project": {
+        "branch": "agent/add-example",
+        "paths": [
+          "docs/usage.md",
+          "examples/sample/main.gooo"
+        ]
+      }
+    }
+  ]
+}

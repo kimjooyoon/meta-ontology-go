@@ -7,8 +7,9 @@ import (
 )
 
 type pureCallSite struct {
-	name    string
-	maximum int
+	name       string
+	maximum    int
+	expression *ast.CallExpr
 }
 
 func directPureCallSites(body string) ([]pureCallSite, error) {
@@ -55,7 +56,7 @@ func collectPureCallSites(root ast.Node, maximum int, sites *[]pureCallSite) err
 			return false
 		case *ast.CallExpr:
 			if err = validatePureCallExpression(value); err == nil {
-				*sites = append(*sites, pureCallSite{name: value.Fun.(*ast.Ident).Name, maximum: maximum})
+				*sites = append(*sites, pureCallSite{name: value.Fun.(*ast.Ident).Name, maximum: maximum, expression: value})
 			}
 		}
 		return err == nil

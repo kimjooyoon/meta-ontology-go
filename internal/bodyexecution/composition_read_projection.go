@@ -2,6 +2,7 @@ package bodyexecution
 
 import (
 	"fmt"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -19,6 +20,7 @@ type readProjectionNode struct {
 	localWrite  int
 	fault       int
 	variables   []int
+	mapReadSite int
 }
 type readProjection struct {
 	source, prefix string
@@ -76,7 +78,13 @@ func observedReadProjectionWithLocals(source, prefix string, prior Composition, 
 		}
 	}
 	localRanges := p.collectLocalReadNodes(file, bindings, local, lookup, constructs, sites, constructionSites)
-	if len(p.nodes) != len(sites)+len(constructionSites)+len(locals)-localRanges+len(uses)+len(local.scopes) {
+	maps := 0
+	for _, site := range constructionSites {
+		if site.Kind == "map_values" {
+			maps++
+		}
+	}
+	if len(p.nodes) != len(sites)+len(constructionSites)-maps+len(locals)-localRanges+len(uses)+len(local.scopes) {
 		return "", fmt.Errorf("collection read projection differs from retained sites")
 	}
 	if err := p.bindLocalFaults(faults); err != nil {
@@ -109,6 +117,10 @@ func (p readProjection) renderExcept(start, end int, exclude ast.Node) string {
 			continue
 		}
 		switch node := item.node.(type) {
+		case *ast.CallExpr:
+			input, mapper, _ := bodycodegen.CollectionMapProjection(node)
+			base := p.render(p.offset(input.Pos()), p.offset(input.End()))
+			out.WriteString(p.prefix + "Map(" + id + "," + strconv.Itoa(item.mapReadSite) + "," + base + "," + mapper.Name + ")")
 		case *ast.CompositeLit:
 			out.WriteString(p.prefix + "Make[" + item.elementType + "](" + id)
 			for _, element := range node.Elts {

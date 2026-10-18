@@ -55,7 +55,7 @@ func (p *compositionFieldProjection) bindLocals(fn *ast.FuncDecl, ids [2]string,
 	inventory := p.inventory
 	var mismatch error
 	ordinal := 0
-	ast.Inspect(fn.Body, func(n ast.Node) bool {
+	bodycodegen.InspectBodyProjection(fn.Body, func(n ast.Node) bool {
 		name, _, _, _ := bodycodegen.LocalWriteExpression(n)
 		if name == nil || ignorePrefix != "" && strings.HasPrefix(name.Name, ignorePrefix) {
 			return true

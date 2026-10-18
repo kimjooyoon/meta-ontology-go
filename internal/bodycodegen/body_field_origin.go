@@ -35,7 +35,7 @@ type FieldSyntax struct {
 // unused-value markers do not acquire field-read ordinals.
 func WalkFieldSyntax(body *ast.BlockStmt, visit func(FieldSyntax)) {
 	writes := map[*ast.SelectorExpr]bool{}
-	ast.Inspect(body, func(n ast.Node) bool {
+	InspectBodyProjection(body, func(n ast.Node) bool {
 		switch v := n.(type) {
 		case *ast.AssignStmt:
 			if len(v.Lhs) == 1 && len(v.Rhs) == 1 {

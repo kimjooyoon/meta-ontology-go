@@ -43,6 +43,12 @@ represented as `*string`, `*bool` and `*int64` with `omitempty` JSON tags.
 Scalar activity parameters and results continue to use Integer, Boolean and
 Text.
 
+Body-profile refusals identify the record by source name and stable ID. A record
+with 33 fields reports its actual count and the 32-field limit; the seventeenth
+record reports its position and the 16-record limit. Invalid body identifiers
+have a separate diagnostic. These messages help a caller locate the declaration
+while the accepted record layouts keep their existing bounds.
+
 `input.title` reads a field. A local copy such as `let copy = input` can be
 replaced with a new complete record. Parameters stay read-only; assignments
 target an existing whole local. Equality compares all record fields. Calls,

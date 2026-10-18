@@ -17,7 +17,19 @@ func (p *readProjection) collectLocalReadNodes(file *ast.File, bindings map[stri
 		if variables := local.scopes[f.Body]; len(variables) > 0 {
 			p.nodes = append(p.nodes, readProjectionNode{node: f.Body, start: p.offset(f.Body.Pos()), end: p.offset(f.Body.End()), localKind: "scope", variables: variables})
 		}
-		ast.Inspect(f.Body, func(node ast.Node) bool {
+		bodycodegen.InspectBodyProjection(f.Body, func(node ast.Node) bool {
+			if call, ok := node.(*ast.CallExpr); ok {
+				if _, _, mapped := bodycodegen.CollectionMapProjection(call); mapped {
+					c, cf := constructs[conditionOriginKey{ids[0], ids[1], constructionOrdinal}]
+					r, rf := lookup[conditionOriginKey{ids[0], ids[1], ordinal}]
+					constructionOrdinal++
+					ordinal++
+					if cf && rf && constructionSites[c].Kind == "map_values" && sites[r].Kind == "map_value" {
+						p.nodes = append(p.nodes, readProjectionNode{node: call, site: c, mapReadSite: r, start: p.offset(call.Pos()), end: p.offset(call.End())})
+					}
+					return true
+				}
+			}
 			if index, found := local.writes[node]; found {
 				if _, iteration := node.(*ast.RangeStmt); !iteration {
 					_, value, _, _ := bodycodegen.LocalWriteExpression(node)

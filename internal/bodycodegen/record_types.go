@@ -43,8 +43,14 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 		if ScalarEntityKind(node.Name, string(node.ID)) != "" {
 			return nil, fmt.Errorf("scalar entity %q cannot also declare record fields", node.Name)
 		}
-		if !recordIdentifier(node.Name) || len(node.Fields) > RecordFieldLimit || len(result) >= 16 {
-			return nil, fmt.Errorf("record bodies require 1..16 records, 1..%d fields and identifier names", RecordFieldLimit)
+		if !recordIdentifier(node.Name) {
+			return nil, fmt.Errorf("record %q (%s) requires an identifier in body syntax", node.Name, node.ID)
+		}
+		if len(node.Fields) > RecordFieldLimit {
+			return nil, fmt.Errorf("record %q (%s) declares %d fields; body profile supports 1..%d", node.Name, node.ID, len(node.Fields), RecordFieldLimit)
+		}
+		if len(result) >= 16 {
+			return nil, fmt.Errorf("record %q (%s) is record %d; body profile supports at most 16", node.Name, node.ID, len(result)+1)
 		}
 		record := RecordType{Name: node.Name, ID: string(node.ID), GoName: recordGoName("Record", string(node.ID))}
 		for _, field := range node.Fields {

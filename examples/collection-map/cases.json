@@ -1,0 +1,13 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"example/labels:Classify": {"values": ["billing", "../billing", "한글", "billing", ""]}},
+      "expected": {"example/labels:Classify": {"values": [true, false, false, true, false]}}
+    },
+    {
+      "inputs": {"example/labels:Classify": {"values": []}},
+      "expected": {"example/labels:Classify": {"values": []}}
+    }
+  ]
+}
