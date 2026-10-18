@@ -56,7 +56,7 @@ func TestScopeFragmentsSource(t *testing.T) {
 		t.Fatal(err)
 	}
 	maximum := scopeFragmentRequest{Branch: "agent/" + strings.Repeat("b", 250)}
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		maximum.Paths = append(maximum.Paths, strings.Repeat("a", 252)+fmt.Sprintf("/%03d", i))
 	}
 	controls := []struct {
