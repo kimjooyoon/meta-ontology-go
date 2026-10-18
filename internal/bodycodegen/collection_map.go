@@ -65,18 +65,18 @@ func (r *pureCallResolver) mapNameInSource(name *ast.Ident, role, caller string,
 
 // A typed local function keeps the primitive within its owning source activity.
 // Its collection argument evaluates the original collection exactly once. The output
-// backing array has 256 scalar slots; the result caps capacity to its length.
+// backing array uses the validated collection limit; the result caps capacity to its length.
 // Passing the mapper outside this scope avoids capturing source activity names.
 func lowerCollectionMap(call *ast.CallExpr, binding collectionMapperBinding) error {
 	text := fmt.Sprintf(`func(goooMapInput []%s, goooMapApply func(%s) %s) []%s {
- var goooMapResult [256]%s
+ var goooMapResult [%d]%s
  var goooMapLength int
  for goooMapIndex := range goooMapInput {
   goooMapResult[goooMapIndex] = goooMapApply(goooMapInput[goooMapIndex])
   goooMapLength = goooMapIndex + 1
  }
  return goooMapResult[:goooMapLength:goooMapLength]
-}(goooMapArgument, goooMapMapper)`, binding.Input, binding.Input, binding.Output, binding.Output, binding.Output)
+}(goooMapArgument, goooMapMapper)`, binding.Input, binding.Input, binding.Output, binding.Output, RepeatedFieldLimit, binding.Output)
 	expression, err := parser.ParseExpr(text)
 	if err != nil {
 		return err

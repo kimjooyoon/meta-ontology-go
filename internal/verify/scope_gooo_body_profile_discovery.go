@@ -14,6 +14,8 @@ func init() {
 		"docs/external/gooo-release-publication-v3.md",
 		"docs/native-record-values.md",
 		"docs/releases/0.6.36-dev.md",
+		"internal/bodycodegen/collection_map.go",
+		"internal/bodycodegen/collection_map_projection.go",
 		"internal/bodycodegen/profile_limits.go",
 		"internal/bodycodegen/pure_call_definition_limit_test.go",
 		"internal/bodycodegen/pure_calls.go",

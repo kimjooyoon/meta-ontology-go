@@ -3,6 +3,7 @@ package bodycodegen
 import (
 	"go/ast"
 	"go/token"
+	"strconv"
 )
 
 func mapName(expression ast.Expr, name string) bool {
@@ -53,7 +54,7 @@ func CollectionMapProjection(call *ast.CallExpr) (ast.Expr, *ast.Ident, bool) {
 		return nil, nil, false
 	}
 	limit, ok := array.Len.(*ast.BasicLit)
-	if !ok || limit.Kind != token.INT || limit.Value != "256" {
+	if !ok || limit.Kind != token.INT || limit.Value != strconv.Itoa(RepeatedFieldLimit) {
 		return nil, nil, false
 	}
 	length, ok := mapDeclaration(f.Body.List[1], "goooMapLength")
