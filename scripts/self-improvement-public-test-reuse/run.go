@@ -131,7 +131,10 @@ func runReuse(input executionInput) error {
 		report.SemanticEqual = true
 	}
 	report.WallMS = elapsedMS(started)
-	report.PeakRSSKib = currentPeakRSSKib()
+	report.PeakRSSKib, err = toolchaincli.CurrentPeakRSSKiB()
+	if err != nil {
+		return fmt.Errorf("observe reuse process peak RSS: %w", err)
+	}
 	return writeReport(input.OutputDir, report, "Gooo classified the retained observations; any proposed reuse also required the current package and exact successful receipt.")
 }
 
@@ -394,26 +397,6 @@ func elapsedMS(started time.Time) int64 {
 		return 1
 	}
 	return int64(value)
-}
-
-func currentPeakRSSKib() int64 {
-	data, err := os.ReadFile("/proc/self/status")
-	if err != nil {
-		return 1
-	}
-	for line := range strings.SplitSeq(string(data), "\n") {
-		if !strings.HasPrefix(line, "VmHWM:") {
-			continue
-		}
-		fields := strings.Fields(line)
-		if len(fields) >= 2 {
-			value, err := strconv.ParseInt(fields[1], 10, 64)
-			if err == nil && value > 0 {
-				return value
-			}
-		}
-	}
-	return 1
 }
 
 func physicalLines(data []byte) int {

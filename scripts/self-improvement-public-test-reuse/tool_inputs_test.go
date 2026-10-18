@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 func testGoCommand(t *testing.T) goCommand {
@@ -101,5 +103,8 @@ func TestTimedGoCommandReadsNativeProcessResources(t *testing.T) {
 	result, err := runTimed(tool, t.TempDir(), "version", []string{"version"})
 	if err != nil || !result.Success || result.ExitCode != 0 || result.PeakRSSKib <= 0 || result.WallMS <= 0 || result.ResultDigest == "" {
 		t.Fatal("selected child lost its actual process observations", err, result)
+	}
+	if current, err := toolchaincli.CurrentPeakRSSKiB(); err != nil || current <= 1 {
+		t.Fatal("current process observation is unavailable or fabricated", err, current)
 	}
 }
