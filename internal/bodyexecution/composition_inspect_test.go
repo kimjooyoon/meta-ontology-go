@@ -91,6 +91,7 @@ entity Work id "sample://work" fields {
  field used id "sample://work/used" type integer required one
  field note id "sample://work/note" type string optional one
  field active id "sample://work/active" type boolean required one
+ field tags id "sample://work/tags" type string required many
 }
 activity Main(Work, 정수) -> 정수 computes "return input0.used + input1"
 `)
@@ -112,9 +113,21 @@ activity Main(Work, 정수) -> 정수 computes "return input0.used + input1"
 	if err = json.Unmarshal(doc.Inputs[0]["Main.input0"], &record); err != nil {
 		t.Fatal(err)
 	}
-	if len(record) != 2 || string(record["active"]) != "false" || string(record["used"]) != "0" ||
+	if len(record) != 3 || string(record["active"]) != "false" || string(record["used"]) != "0" ||
+		string(record["tags"]) != "[]" ||
 		string(doc.Inputs[0]["Main.input1"]) != "0" {
 		t.Fatal("optional field was invented or alias lost", string(raw))
+	}
+	suite, err := DecodeCompositionInputs(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	graph, err := prepareCompositionGraphForEntry(context.Background(), "sample.gooo", source, "Main")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := graph.inputRows(suite); err != nil {
+		t.Fatal("template does not satisfy required repeated field", err)
 	}
 }
 

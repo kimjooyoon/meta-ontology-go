@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,7 +12,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageInspectUsage = "usage: gooo package inspect [--json] <workspace.json>"
+const packageInspectUsage = "usage: gooo package inspect [--json | --inputs-template] <workspace.json>"
 
 type workspaceInspectionReceipt struct {
 	Schema            string                            `json:"schema"`
@@ -27,15 +28,29 @@ type workspaceInspectionReceipt struct {
 }
 
 func runPackageInspect(args []string, reader SourceReader, stdout, stderr io.Writer) int {
-	args, jsonMode := parseJSONFlag(args)
-	if len(args) != 1 || strings.TrimSpace(args[0]) == "" || strings.HasPrefix(args[0], "-") {
+	path, jsonMode, inputTemplate, ok := parsePackageInspectArgs(args)
+	if !ok {
 		return reportUsage(jsonMode, stdout, stderr, "package inspect", packageInspectUsage)
 	}
 	receipt := workspaceInspectionReceipt{Schema: "gooo/workspace-source-inspection/v1", Decision: "FAIL_CLOSED",
 		Capacity: bodyexecution.CompositionTransportCapacity(),
-		Manifest: filepath.ToSlash(args[0]),
+		Manifest: filepath.ToSlash(path),
 		Scope:    "source package graph and prepared entry call closure; no body construction, predicate evaluation, model prediction or native execution"}
-	program, manifestDigest, err := inspectWorkspaceSource(reader, args[0])
+	program, manifestDigest, err := inspectWorkspaceSource(reader, path)
+	if inputTemplate {
+		if err == nil {
+			var raw []byte
+			raw, err = workspaceexecution.InputTemplate(context.Background(), program)
+			if err == nil {
+				_, err = fmt.Fprintln(stdout, string(raw))
+			}
+		}
+		if err != nil {
+			fmt.Fprintf(stderr, "gooo package inspect: %v\n", err)
+			return exitFailure
+		}
+		return exitOK
+	}
 	receipt.ManifestDigest = manifestDigest
 	if err == nil {
 		receipt.Decision, receipt.Program = "PREPARED", &program
@@ -63,6 +78,26 @@ func runPackageInspect(args []string, reader SourceReader, stdout, stderr io.Wri
 		return exitFailure
 	}
 	return exitOK
+}
+
+func parsePackageInspectArgs(args []string) (path string, jsonMode, inputTemplate, ok bool) {
+	args, jsonMode = parseJSONFlag(args)
+	clean := make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg == "--inputs-template" {
+			if inputTemplate {
+				return "", jsonMode, inputTemplate, false
+			}
+			inputTemplate = true
+			continue
+		}
+		clean = append(clean, arg)
+	}
+	if (jsonMode && inputTemplate) || len(clean) != 1 || strings.TrimSpace(clean[0]) == "" ||
+		strings.HasPrefix(clean[0], "-") {
+		return "", jsonMode, inputTemplate, false
+	}
+	return clean[0], jsonMode, inputTemplate, true
 }
 
 func inspectWorkspaceSource(reader SourceReader, path string) (workspaceexecution.Program, string, error) {

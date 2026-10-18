@@ -12,6 +12,27 @@ the same manifest and source loader as package execution, then prepares the sour
 carrier without building or running a native program. The result is `PREPARED`
 when the package graph and entry closure resolve. Source files remain unchanged.
 
+## Prepare editable inputs
+
+In development source containing this change, an agent can ask the same prepared
+graph for one input row:
+
+```sh
+gooo package inspect --inputs-template examples/workspace-call-identity/workspace.json > inputs.json
+```
+
+For this example, the generated row contains `"example/app:Main": 0`.
+The output uses `gooo/body-composition-inputs/v1` and original package/activity
+keys, such as `example/app:Main`. For an activity with multiple unbound inputs,
+each key ends in its declared port (`.input0`, `.input1`, and so on). Existing
+bindings remove producer-fed ports from the row. Values are type-shaped zeros to
+edit before passing the file to `gooo package execute --inputs inputs.json`.
+Required repeated record fields start as empty arrays; optional fields are
+omitted.
+The command does not run a body, select a candidate, predict with a model, or
+claim that the values are useful cases or expected outputs. A source graph with
+no unbound caller ports has no input row to produce and returns an error.
+
 ## Identity follows the declaration
 
 `program.pure_calls.activities` links each original package activity to its name
