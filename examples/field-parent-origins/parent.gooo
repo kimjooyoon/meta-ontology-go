@@ -1,0 +1,130 @@
+package fieldparent
+namespace fieldparent
+import lineage "origin/fieldlineage"
+import rdf "origin/recordeduse"
+entity Text id "urn:gooo:type:string"
+entity Columns id "urn:gooo:field-parent:v1:columns" fields {
+    field source_sha256 id "urn:gooo:field-parent:v1:source" type string required one
+    field journal_sha256 id "urn:gooo:field-parent:v1:journal" type string required one
+    field case_index id "urn:gooo:field-parent:v1:case" type integer required one
+    field selected_use id "urn:gooo:field-parent:v1:use" type integer required one
+    field root_assignment id "urn:gooo:field-parent:v1:root" type integer required one
+    field root_clock id "urn:gooo:field-parent:v1:clock" type integer required one
+    field write_count id "urn:gooo:field-parent:v1:write-count" type integer required one
+    field use_count id "urn:gooo:field-parent:v1:use-count" type integer required one
+    field recording_complete id "urn:gooo:field-parent:v1:complete" type boolean required one
+    field bits id "urn:gooo:field-parent:v1:bits" type integer required many
+    field completion_order id "urn:gooo:field-parent:v1:order" type integer required many
+    field completions id "urn:gooo:field-parent:v1:completions" type integer required many
+    field parents id "urn:gooo:field-parent:v1:parents" type integer required many
+    field use_starts id "urn:gooo:field-parent:v1:starts" type integer required many
+    field use_ends id "urn:gooo:field-parent:v1:ends" type integer required many
+    field write_completed id "urn:gooo:field-parent:v1:done" type boolean required many
+    field write_drops id "urn:gooo:field-parent:v1:drops" type integer required many
+    field modes id "urn:gooo:field-parent:v1:modes" type string required many
+    field kinds id "urn:gooo:field-parent:v1:kinds" type string required many
+    field input_kinds id "urn:gooo:field-parent:v1:input-kinds" type string required many
+    field activities id "urn:gooo:field-parent:v1:activities" type string required many
+    field ports id "urn:gooo:field-parent:v1:ports" type string required many
+    field record_ids id "urn:gooo:field-parent:v1:records" type string required many
+    field field_ids id "urn:gooo:field-parent:v1:fields" type string required many
+    field use_assignments id "urn:gooo:field-parent:v1:assignments" type integer required many
+    field use_clocks id "urn:gooo:field-parent:v1:use-clocks" type integer required many
+    field receipt_sha256 id "urn:gooo:field-parent:v1:receipt" type string required one
+    field frames id "urn:gooo:field-parent:v1:frames" type integer required many
+    field type_ids id "urn:gooo:field-parent:v1:types" type string required many
+}
+entity Parent id "urn:gooo:field-parent:v1:result" fields {
+    field status id "urn:gooo:field-parent:v1:status" type string required one
+    field receipt_sha256 id "urn:gooo:field-parent:v1:result-receipt" type string required one
+    field case_index id "urn:gooo:field-parent:v1:result-case" type integer required one
+    field child id "urn:gooo:field-parent:v1:child" type integer required one
+    field parent id "urn:gooo:field-parent:v1:parent" type integer required one
+    field recording_complete id "urn:gooo:field-parent:v1:result-complete" type boolean required one
+    field lines id "urn:gooo:field-parent:v1:lines" type string required many
+}
+# Gooo selects the direct retained parent. The caller supplies saved-file identity.
+activity Inspect(Columns)->Parent id "urn:gooo:field-parent:v1:inspect" computes `
+let result = Parent{status:"INVALID_INPUT",receipt_sha256:input.receipt_sha256,
+    case_index:input.case_index,child:-1,parent:-1,
+    recording_complete:input.recording_complete,lines:[]string{}}
+if !rdf.IsSHA256(input.receipt_sha256) || !rdf.IsSHA256(input.source_sha256) ||
+   !rdf.IsSHA256(input.journal_sha256) {
+    result.status = "UNRESOLVED_EXPORT_IDENTITY"
+    return result
+}
+if input.case_index < 0 || len(input.frames) != len(input.bits) ||
+   len(input.type_ids) != len(input.bits) { return result }
+let original = lineage.Columns{
+    source_sha256:input.source_sha256,
+    journal_sha256:input.journal_sha256,
+    case_index:input.case_index,
+    selected_use:input.selected_use,
+    root_assignment:input.root_assignment,
+    root_clock:input.root_clock,
+    write_count:input.write_count,
+    use_count:input.use_count,
+    recording_complete:input.recording_complete,
+    bits:input.bits,
+    completion_order:input.completion_order,
+    completions:input.completions,
+    parents:input.parents,
+    use_starts:input.use_starts,
+    use_ends:input.use_ends,
+    write_completed:input.write_completed,
+    write_drops:input.write_drops,
+    modes:input.modes,
+    kinds:input.kinds,
+    input_kinds:input.input_kinds,
+    activities:input.activities,
+    ports:input.ports,
+    record_ids:input.record_ids,
+    field_ids:input.field_ids,
+    use_assignments:input.use_assignments,
+    use_clocks:input.use_clocks,
+}
+let validation = lineage.Trace(original)
+if validation.status == "INVALID_INPUT" { return result }
+if validation.status == "UNRESOLVED_READ" {
+    result.status = "UNRESOLVED_READ"
+    return result
+}
+let child = input.root_assignment
+let parent = input.parents[child]
+if parent == -2 { result.status = "UNRESOLVED_PARENT"; return result }
+if parent == -1 { result.status = "NO_RECORDED_PARENT"; return result }
+if input.frames[child] < 0 || input.frames[parent] < 0 ||
+   input.record_ids[child] == "" || input.field_ids[child] == "" ||
+   input.type_ids[child] != input.type_ids[parent] { return result }
+let child_kind = input.kinds[child]
+let parent_kind = input.kinds[parent]
+let child_field = child_kind == "parameter" || child_kind == "record_assignment" ||
+    child_kind == "record_constructor" || child_kind == "field_assignment"
+let parent_field = parent_kind == "parameter" || parent_kind == "record_assignment" ||
+    parent_kind == "record_constructor" || parent_kind == "field_assignment"
+if !child_field || !parent_field { return result }
+if input.type_ids[child] != "urn:gooo:type:integer" &&
+   input.type_ids[child] != "urn:gooo:type:boolean" &&
+   input.type_ids[child] != "urn:gooo:type:string" { return result }
+let mode = input.modes[child]
+if mode != "field_copy" && mode != "record_return" && mode != "call_parameter_or_input" {
+    result.status = "UNRESOLVED_PARENT_MODE"
+    return result
+}
+if len(input.field_ids[child]) > 128 { result.status = "EXPORT_TEXT_BOUND"; return result }
+let base = "urn:gooo:field-parent:v1:saved:" + input.receipt_sha256 +
+    ":case:" + rdf.Decimal(input.case_index) + ":field:write:"
+let child_iri = "<" + base + rdf.Decimal(child) + ">"
+let parent_iri = "<" + base + rdf.Decimal(parent) + ">"
+let entity = " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> ."
+result.child = child
+result.parent = parent
+result.status = "RECORDED_DIRECT_PARENT"
+result.lines = []string{
+    child_iri + entity,
+    parent_iri + entity,
+    child_iri + " <urn:gooo:field-parent:v1:retainedParent> " + parent_iri + " .",
+    child_iri + " <urn:gooo:field-parent:v1:fieldId> " + rdf.RDFLiteral(input.field_ids[child]) + " .",
+}
+return result
+`
