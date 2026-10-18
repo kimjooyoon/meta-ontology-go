@@ -9,7 +9,11 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const pureCallLimit = 4096
+const (
+	pureCallLimit      = 4096
+	pureActivityLimit  = 32
+	pureCallDepthLimit = 16
+)
 
 func bodyPrimitiveName(name string) bool {
 	return name == "len" || name == "int64" || name == "map_values"
@@ -97,13 +101,13 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 		return 0, fmt.Errorf("recursive pure activity call at %q", name)
 	}
 	if budget, ok := r.budgets[name]; ok {
-		if depth+r.heights[name] > 16 {
-			return 0, fmt.Errorf("pure activity closure exceeds 16 call levels")
+		if depth+r.heights[name] > pureCallDepthLimit {
+			return 0, fmt.Errorf("pure activity closure exceeds %d call levels", pureCallDepthLimit)
 		}
 		return budget, nil
 	}
-	if depth > 16 || len(r.budgets)+len(r.visiting) >= 32 {
-		return 0, fmt.Errorf("pure activity closure exceeds 32 activities or 16 call levels")
+	if depth > pureCallDepthLimit || len(r.budgets)+len(r.visiting) >= pureActivityLimit {
+		return 0, fmt.Errorf("pure activity closure exceeds %d activities or %d call levels", pureActivityLimit, pureCallDepthLimit)
 	}
 	r.visiting[name] = true
 	defer delete(r.visiting, name)
@@ -116,7 +120,7 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 		callee := site.name
 		multiplicity := site.maximum
 		if callee == "map_values" && r.ids[callee] == "" {
-			binding, bindErr := r.collectionMapper(site.expression)
+			binding, bindErr := r.collectionMapper(site.expression, name)
 			if bindErr != nil {
 				return 0, bindErr
 			}

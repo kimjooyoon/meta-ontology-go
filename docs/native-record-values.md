@@ -56,7 +56,10 @@ constants, alongside the existing build identity. Every field is an upper bound.
 checked for one body-generation request, including unused declarations in that
 model. `max_fields_per_record` counts declared fields; collection, call and loop
 limits have their own fields. A missing object in an older executable means the
-limits were not reported. These independent bounds do not establish that a
+limits were not reported. `max_activities_per_call_closure` includes the entry
+and its reachable activity definitions; `max_activity_call_depth` counts nested
+call edges with the entry at depth zero. An absent individual field is also
+unknown. These independent bounds do not establish that a
 program typechecks or predict its running time. Source-declared Text byte limits
 and transport limits keep their own contracts.
 

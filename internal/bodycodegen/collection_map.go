@@ -10,14 +10,28 @@ type collectionMapperBinding struct {
 	Name, Input, Output string
 }
 
-func (r *pureCallResolver) collectionMapper(call *ast.CallExpr) (collectionMapperBinding, error) {
+func (r *pureCallResolver) collectionMapper(call *ast.CallExpr, caller string) (collectionMapperBinding, error) {
 	var binding collectionMapperBinding
 	if call == nil || len(call.Args) != 2 {
 		return binding, fmt.Errorf("map_values requires a collection and a named unary scalar activity")
 	}
 	mapper, ok := call.Args[1].(*ast.Ident)
-	if !ok || mapper.Obj != nil || r.ids[mapper.Name] == "" {
+	if !ok || r.ids[mapper.Name] == "" {
 		return binding, fmt.Errorf("map_values mapper must name a source-declared activity")
+	}
+	owner, err := sourceBodyActivity(r.file, caller)
+	if err != nil {
+		return binding, err
+	}
+	inputs, err := sourceBodyParameters(owner, r.records, r.file)
+	if err != nil {
+		return binding, err
+	}
+	if err := r.mapNameInSource(call.Fun.(*ast.Ident), "call", caller, inputs); err != nil {
+		return binding, err
+	}
+	if err := r.mapNameInSource(mapper, "mapper", caller, inputs); err != nil {
+		return binding, err
 	}
 	activity, err := sourceBodyActivity(r.file, mapper.Name)
 	if err != nil || activity.Assembly != nil {
@@ -32,8 +46,25 @@ func (r *pureCallResolver) collectionMapper(call *ast.CallExpr) (collectionMappe
 	return collectionMapperBinding{mapper.Name, parameters[0].Type, output}, nil
 }
 
+func (r *pureCallResolver) mapNameInSource(name *ast.Ident, role, caller string, inputs []InputParameter) error {
+	scope := ""
+	if name.Obj != nil {
+		scope = "local declaration"
+	} else {
+		for _, input := range inputs {
+			if input.Name == name.Name {
+				scope = "input"
+			}
+		}
+	}
+	if scope != "" {
+		return fmt.Errorf("map_values %s %q is shadowed by %s in activity %q (%s)", role, name.Name, scope, caller, r.ids[caller])
+	}
+	return nil
+}
+
 // A typed local function keeps the primitive within its owning source activity.
-// Its one argument evaluates the original collection exactly once. The output
+// Its collection argument evaluates the original collection exactly once. The output
 // backing array has 256 scalar slots; the result caps capacity to its length.
 // Passing the mapper outside this scope avoids capturing source activity names.
 func lowerCollectionMap(call *ast.CallExpr, binding collectionMapperBinding) error {

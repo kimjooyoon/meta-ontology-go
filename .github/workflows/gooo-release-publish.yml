@@ -510,7 +510,7 @@ jobs:
           ## Compose work and retain its origins
 
           - Apply a named Gooo activity to each scalar collection item with \`map_values\`. The [collection-map example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/collection-map/README.md) keeps input order, duplicates and each attempted element's source origins. Its profile is bounded to 256 items and the existing activity-call budget.
-          - Read the compiler's six pure-body maxima from \`gooo version --build --json\` before preparing a program. The [0.6.36 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.36-dev.md) explains their scope and how to handle older binaries.
+          - Read the compiler's eight pure-body maxima from \`gooo version --build --json\` before preparing a program. The [0.6.36 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.36-dev.md) explains their scope and how to handle older binaries.
           - Generate JSON, Go and Markdown registration fragments from one Gooo input with the [scope-fragments program](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/scope-fragments/README.md). The caller applies the proposed text.
           - Keep the original source, mapper identity and retained element reads when querying saved execution. Observation bounds stay separate from value computation.
 

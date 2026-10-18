@@ -25,6 +25,7 @@ func TestVersionBuildReportsCompiledPureBodyLimits(t *testing.T) {
 		want := map[string]int{
 			"max_record_types": 16, "max_fields_per_record": 32, "max_elements_per_collection": 256,
 			"max_activity_calls_per_invocation": 4096, "max_iterations_per_counted_loop": 1024,
+			"max_activities_per_call_closure": 32, "max_activity_call_depth": 16,
 			"max_syntactic_collection_iteration_product": 65536,
 		}
 		if report.Schema != "gooo/build-identity/v1" || !reflect.DeepEqual(report.Limits, want) {

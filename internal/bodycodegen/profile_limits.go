@@ -8,6 +8,8 @@ type ProfileLimits struct {
 	FieldsPerRecord                     int `json:"max_fields_per_record"`
 	ElementsPerCollection               int `json:"max_elements_per_collection"`
 	ActivityCallsPerInvocation          int `json:"max_activity_calls_per_invocation"`
+	ActivitiesPerCallClosure            int `json:"max_activities_per_call_closure"`
+	ActivityCallDepth                   int `json:"max_activity_call_depth"`
 	IterationsPerCountedLoop            int `json:"max_iterations_per_counted_loop"`
 	SyntacticCollectionIterationProduct int `json:"max_syntactic_collection_iteration_product"`
 }
@@ -18,6 +20,7 @@ func CurrentProfileLimits() ProfileLimits {
 	return ProfileLimits{
 		RecordTypes: recordTypeLimit, FieldsPerRecord: RecordFieldLimit,
 		ElementsPerCollection: RepeatedFieldLimit, ActivityCallsPerInvocation: pureCallLimit,
+		ActivitiesPerCallClosure: pureActivityLimit, ActivityCallDepth: pureCallDepthLimit,
 		IterationsPerCountedLoop:            countedLoopLimit,
 		SyntacticCollectionIterationProduct: CollectionIterationProductLimit,
 	}
