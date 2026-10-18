@@ -43,6 +43,14 @@ source-filled elements, interrupted construction and Gooo consumers of these fac
 See [native read origins](../observations/native-read-origins/README.md) for
 separate output and origin coverage counts, Gooo consumers and saved failures.
 
+`filter_values(input.values, Keep)` selects a bounded scalar collection using
+a fixed Gooo `computes` activity that returns Boolean. It preserves order and
+duplicates, records every input read, and links each retained output to its
+input position. The generated filter branch is implementation detail, so
+condition observations still refer to source-authored conditions. The
+[runnable example](../../examples/collection-filter/README.md) includes a
+deterministic package execution and saved source origins.
+
 ### Text length and slicing
 
 Ordinary bodies and declared record candidates support `len(text)`,

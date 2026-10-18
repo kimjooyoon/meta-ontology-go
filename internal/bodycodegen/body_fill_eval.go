@@ -191,6 +191,9 @@ func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, err
 		if input, mapper, ok := CollectionMapProjection(value); ok {
 			return e.evaluateCollectionMap(value, input, mapper)
 		}
+		if input, predicate, ok := CollectionFilterProjection(value); ok {
+			return e.evaluateCollectionFilter(value, input, predicate)
+		}
 		if result, handled, err := e.evaluateBodyPrimitive(value); handled {
 			return result, err
 		}

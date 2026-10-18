@@ -19,6 +19,7 @@ type GoooReadElement struct {
  ReadEnd int ` + "`" + `json:"read_end"` + "`" + `
  ReadsDropped int ` + "`" + `json:"reads_dropped"` + "`" + `
  Completed bool ` + "`" + `json:"completed"` + "`" + `
+ InputIndex *int ` + "`" + `json:"input_index,omitempty"` + "`" + `
 }
 type GoooReadConstruction struct {
  Case int ` + "`" + `json:"case_index"` + "`" + `

@@ -16,7 +16,7 @@ const (
 )
 
 func bodyPrimitiveName(name string) bool {
-	return name == "len" || name == "int64" || name == "map_values"
+	return name == "len" || name == "int64" || name == "map_values" || name == "filter_values"
 }
 
 // IsBodyPrimitiveName identifies the pure body's primitive spellings. A source
@@ -119,8 +119,14 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 	for ordinal, site := range sites {
 		callee := site.name
 		multiplicity := site.maximum
-		if callee == "map_values" && r.ids[callee] == "" {
-			binding, bindErr := r.collectionMapper(site.expression, name)
+		if (callee == "map_values" || callee == "filter_values") && r.ids[callee] == "" {
+			var binding collectionMapperBinding
+			var bindErr error
+			if callee == "map_values" {
+				binding, bindErr = r.collectionMapper(site.expression, name)
+			} else {
+				binding, bindErr = r.collectionPredicate(site.expression, name)
+			}
 			if bindErr != nil {
 				return 0, bindErr
 			}

@@ -135,7 +135,7 @@ func activityConstructionCalls(activity *syntax.ActivityDecl) ([]string, error) 
 			if call, ok := node.(*ast.CallExpr); ok {
 				if ident, ok := call.Fun.(*ast.Ident); ok && ident.Obj == nil {
 					set[ident.Name] = true
-					if ident.Name == "map_values" && len(call.Args) == 2 {
+					if (ident.Name == "map_values" || ident.Name == "filter_values") && len(call.Args) == 2 {
 						if mapper, ok := call.Args[1].(*ast.Ident); ok && mapper.Obj == nil {
 							set[mapper.Name] = true
 						}

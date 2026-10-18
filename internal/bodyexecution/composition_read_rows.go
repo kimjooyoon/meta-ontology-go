@@ -75,7 +75,7 @@ func (graph compositionGraph) nativeReadFile(raw []byte, suite CompositionCases,
 		construction = constructions[0]
 	}
 	if file.Schema == "gooo/native-read-observation/v2" {
-		if err := graph.constructionRows(file.Constructions, file.Reads, file.ConstructionDropped, file.Dropped, construction, summary); err != nil {
+		if err := graph.constructionRows(file.Constructions, file.Reads, sites, file.ConstructionDropped, file.Dropped, construction, summary); err != nil {
 			return fail(err)
 		}
 		summary.Schema = "gooo/native-read-summary/v2"

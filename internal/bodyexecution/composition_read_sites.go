@@ -20,6 +20,9 @@ func compositionReadNode(n ast.Node) (expression, base ast.Expr, kind string) {
 		if input, _, mapped := bodycodegen.CollectionMapProjection(n); mapped {
 			return input, input, "map_value"
 		}
+		if input, _, filtered := bodycodegen.CollectionFilterProjection(n); filtered {
+			return input, input, "filter_value"
+		}
 	}
 	return nil, nil, ""
 }

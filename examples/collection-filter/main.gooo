@@ -1,0 +1,16 @@
+package labels
+namespace collection_filter
+
+entity Text id "urn:gooo:type:string"
+entity Boolean id "urn:gooo:type:boolean"
+entity Labels id "urn:collection-filter:labels" fields {
+    field values id "urn:collection-filter:labels:values" type string required many
+}
+
+activity KeepNonempty(Text) -> Boolean id "urn:collection-filter:keep-nonempty" computes `
+    return len(input) > 0
+`
+
+activity Select(Labels) -> Labels id "urn:collection-filter:select" computes `
+    return Labels{values: filter_values(input.values, KeepNonempty)}
+`
