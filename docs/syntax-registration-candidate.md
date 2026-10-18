@@ -46,6 +46,29 @@ The operation emits PROPOSAL_ONLY / UNASSESSED, never apply or promotion
 permission. Missing, duplicated, altered or historical-path candidate members
 fail candidate validation. Replay equality alone is not semantic acceptance.
 
+### Append-only history projection
+
+The Gooo `GenerateDenominatorAdmission` and `GenerateDenominatorSelection`
+activities declare `syntax.history.append:v1` and
+`syntax.selection.append:v1`. Their native projections read every existing
+version-to-syntax-target and capability-to-denominator case before proposing a
+new one. An exact historical version is unchanged; a contradictory target or
+an insertion into an older version gap is rejected. For the bounded helper
+form, the history projection edits only the terminal helper. When it reaches
+24 version cases, it links one new helper and leaves all earlier cases in
+place. Each of the two active-denominator selectors similarly appends to its
+last 16-case chunk. A full chunk gains one new chunk and a new wrapper call;
+earlier selection cases remain byte-identical. Legacy inline switches get one
+normalization into bounded helpers first.
+
+This limits history-source churn; it does not reduce the nine required artifact
+roles or waive corpus, denominator, and conformance checks. In the synthetic
+five-owner history fixture, a one-version append changes one Go source unit;
+the old full normalization changed all five. The current repository keeps its
+history helpers in one physical file, so this is a smaller edit within that
+file rather than a reduction in the nine-file registration proposal. No CI
+runtime improvement is inferred from the source edit count.
+
 ## Caller path
 
 Use the implemented experimental entry point:

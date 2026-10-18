@@ -56,8 +56,8 @@ func extendSelection(source *goSource, name, result, kind, empty string, capabil
 			return fmt.Errorf("denominator selection %s repeats capability", name)
 		}
 		seen[entry.capability] = true
-		if entry.capability == capability+1 {
-			return fmt.Errorf("denominator selection %s already contains new capability", name)
+		if entry.capability > capability {
+			return fmt.Errorf("denominator selection %s is not append-only", name)
 		}
 		if entry.capability == capability {
 			baseline++
@@ -67,11 +67,30 @@ func extendSelection(source *goSource, name, result, kind, empty string, capabil
 		return fmt.Errorf("denominator selection %s lacks one exact baseline", name)
 	}
 	entries = append(entries, selectionEntry{capability + 1, result})
+	if len(helpers) != 0 {
+		last := helpers[len(helpers)-1]
+		selection := last.Body.List[0].(*ast.SwitchStmt)
+		rows := 0
+		for _, statement := range selection.Body.List {
+			rows += len(statement.(*ast.CaseClause).List)
+		}
+		if rows > selectionChunkSize {
+			return fmt.Errorf("denominator selection %s exceeds bounded chunk capacity", name)
+		}
+		if rows < selectionChunkSize {
+			source.insert(selection.Body.Rbrace, fmt.Sprintf("case %d: return %s\n", capability+1, result))
+			return nil
+		}
+		wrapper, _ := renderSelection(name, kind, empty, entries)
+		source.replace(root, wrapper)
+		source.appendAt(last, fmt.Sprintf("\nfunc %sChunk%d(total int) %s {\nswitch total {\ncase %d: return %s\n}\nreturn %s\n}\n",
+			name, len(helpers), kind, capability+1, result, empty))
+		return nil
+	}
+	// A legacy selector gets a bounded projection once. Subsequent versions
+	// append to the terminal chunk and preserve earlier case source.
 	wrapper, chunks := renderSelection(name, kind, empty, entries)
 	source.replace(root, wrapper)
-	for _, helper := range helpers {
-		source.replace(helper, "")
-	}
 	source.appendAt(root, chunks)
 	return nil
 }

@@ -62,7 +62,7 @@ func TestHistoryCapacityGrowthPreservesEveryDeclaredTarget(t *testing.T) {
 				continue
 			}
 			if lines := strings.Count(next.text(function), "\n") + 1; lines > 60 {
-				t.Fatalf("unbounded history declaration %s: %d", function.Name, lines)
+				t.Fatalf("unbounded history declaration %s at step %d: %d", function.Name, step, lines)
 			}
 		}
 		if !strings.Contains(string(raw), "expected[5].Target = 20") {

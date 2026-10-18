@@ -67,3 +67,26 @@ func writeHistoryOrigins(source *goSource, history historyOrigins) {
 	}
 	source.appendAt(history.root, output.String())
 }
+
+// appendHistoryOrigin changes only the terminal helper. Previously pinned
+// versions keep their source bytes and physical owners across registrations.
+func appendHistoryOrigin(source *goSource, history historyOrigins, version, target int) error {
+	last := history.helpers[len(history.helpers)-1]
+	selection := last.Body.List[0].(*ast.SwitchStmt)
+	rows := 0
+	for _, statement := range selection.Body.List {
+		rows += len(statement.(*ast.CaseClause).List)
+	}
+	if rows > historyChunkRows {
+		return fmt.Errorf("historical syntax helper exceeds its bounded capacity")
+	}
+	if rows < historyChunkRows {
+		source.insert(selection.Body.Rbrace, fmt.Sprintf("case %d: return %d, true\n", version, target))
+		return nil
+	}
+	index := len(history.helpers)
+	source.replace(last.Body.List[1], fmt.Sprintf("return %s%d(version)", historyChunkPrefix, index))
+	source.appendAt(last, fmt.Sprintf("\nfunc %s%d(version int) (int, bool) {\nswitch version {\ncase %d: return %d, true\n}\nreturn 0, false\n}\n",
+		historyChunkPrefix, index, version, target))
+	return nil
+}
