@@ -103,13 +103,15 @@ shape (the generated file contains two more rows):
 }
 ```
 
-Read each key as `<package path>:<activity>.<input port>`. The default
-diagnostic starter uses module `diagnostic` even when its directory is named
+For activities with multiple inputs, read each key as
+`<package path>:<activity>.<input port>`. The diagnostic starter uses module
+`diagnostic` even when its directory is named
 `my-diagnostic`; `gooo.workspace.json` supplies the package path and
 `diagnostics.gooo` declares the activity's positional inputs. If you pass
-`--module` to `gooo init`, use that module in the keys. A single record input
-can use a whole `<package path>:<activity>` key, as shown in the
-[scope-fragments input](../examples/scope-fragments/inputs.json).
+`--module` to `gooo init`, use that module in the keys. An activity with one
+input uses the whole `<package path>:<activity>` key, whether its value is a
+scalar or a record. The [scope-fragments input](../examples/scope-fragments/inputs.json)
+shows a record value.
 
 ## Change something useful
 
