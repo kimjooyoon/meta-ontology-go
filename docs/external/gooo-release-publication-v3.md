@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.35-dev
-version  = 0.6.35-dev
+tag      = v0.6.36-dev
+version  = 0.6.36-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -188,6 +188,14 @@ results, and 3/3 native outputs against the independent evaluation file. Two
 evaluation inputs overlap construction and one remains unknown. Missing inference
 counts fail the profile. Saved replay preserves the complete original history;
 a failed command retains its raw output and stops the profile.
+
+For 0.6.36, the existing computation-package runner includes the collection-map
+workspace. Each native platform executes and replays two authored input rows:
+five ordered Boolean decisions (including a duplicate and Unicode input) and an
+empty array. A regular-expression oracle independently checks the source's
+byte-loop rule. Source, manifest, cases, original values, selected program and
+saved receipt remain checked by the shared package profile reader. This adds two
+raw receipts per platform; it leaves the structural release corpus unchanged.
 
 The selected readiness run must have all of these properties:
 

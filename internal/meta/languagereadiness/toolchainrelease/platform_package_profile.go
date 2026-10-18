@@ -9,6 +9,7 @@ import (
 var computationProfiles = []packageProfile{
 	{"string-operations", "examples/bounded-string-operations", "app/stringops", "Main", "gooo://stringops/app/main", 20},
 	{"single-condition-byte", "examples/single-condition-byte-search", "gooo/examples/bytefill", "IndexByte", "gooo://bytefill/index-byte", 10},
+	{"collection-map", "examples/collection-map", "example/labels", "Classify", "urn:collection-map:classify", 2},
 }
 
 func smokeComputationPackages(binary string, input BuildInput) error {
