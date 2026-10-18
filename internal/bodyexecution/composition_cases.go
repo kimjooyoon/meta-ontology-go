@@ -13,8 +13,9 @@ type CompositionCase struct {
 }
 
 type CompositionCases struct {
-	Schema string            `json:"schema"`
-	Cases  []CompositionCase `json:"cases"`
+	Schema  string                  `json:"schema"`
+	Cases   []CompositionCase       `json:"cases"`
+	Display *CompositionCaseDisplay `json:"-"`
 }
 
 func DecodeCompositionCases(raw []byte) (CompositionCases, error) {
@@ -53,9 +54,17 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 	if err := checkCompositionInputSize(raw, "normalized suite"); err != nil {
 		return nil, err
 	}
+	if suite.Display != nil {
+		declared, available := graph.displayInputNames(suite.Display)
+		for c, test := range suite.Cases {
+			if err := suite.Display.checkSubmittedInputs(test.Inputs, declared, available); err != nil {
+				return nil, fmt.Errorf("case %d: %w", c, err)
+			}
+		}
+	}
 	rows := make([][]json.RawMessage, len(suite.Cases))
 	for c, test := range suite.Cases {
-		row, err := graph.inputRow(test, suite.Schema != CompositionInputsSchema)
+		row, err := graph.inputRow(test, suite.Schema != CompositionInputsSchema, suite.Display)
 		if err != nil {
 			return nil, fmt.Errorf("case %d: %w", c, err)
 		}
@@ -64,29 +73,31 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 	return rows, nil
 }
 
-func (graph compositionGraph) inputRow(test CompositionCase, requireExpectation bool) ([]json.RawMessage, error) {
+func (graph compositionGraph) inputRow(test CompositionCase, requireExpectation bool,
+	display *CompositionCaseDisplay) ([]json.RawMessage, error) {
 	var storage [compositionLimit * compositionLimit]json.RawMessage
 	roots, expected := 0, 0
 	for _, node := range graph.nodes[:graph.count] {
 		for _, input := range node.inputSlots() {
 			key := node.inputKey(input.Port)
+			shown := display.inputKey(node, input.Port)
 			value, hasInput := test.Inputs[key]
 			if input.From < 0 {
 				if !hasInput {
-					return nil, fmt.Errorf("root input %q requires an explicit value", key)
+					return nil, fmt.Errorf("root input %q requires an explicit value", shown)
 				}
 				canonical, err := graph.canonicalValue(value, input.Type)
 				if err != nil {
-					return nil, fmt.Errorf("input %q: %w", key, err)
+					return nil, fmt.Errorf("input %q: %w", shown, err)
 				}
 				storage[roots], roots = canonical, roots+1
 			} else if hasInput {
-				return nil, fmt.Errorf("bound input %q must receive its producer's result", key)
+				return nil, fmt.Errorf("bound input %q must receive its producer's result", shown)
 			}
 		}
 		if value, present := test.Expected[node.Name]; present {
 			if _, err := graph.canonicalValue(value, node.OutputType); err != nil {
-				return nil, fmt.Errorf("expected %q: %w", node.Name, err)
+				return nil, fmt.Errorf("expected %q: %w", display.activityKey(node.Name), err)
 			}
 			expected++
 		}

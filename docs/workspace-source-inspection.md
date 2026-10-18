@@ -33,6 +33,22 @@ The command does not run a body, select a candidate, predict with a model, or
 claim that the values are useful cases or expected outputs. A source graph with
 no unbound caller ports has no input row to produce and returns an error.
 
+Workspace execution reports input mistakes using these authored package keys.
+For example, a single-input `example/app:Main` does not accept
+`example/app:Main.input0`; the diagnostic names the submitted key and the
+declared caller key. Missing values, bound ports and invalid values also name
+the authored key. This is a display hint derived from the prepared source;
+lowered graph keys still decide validation and the hint is absent from saved
+input JSON.
+
+The number of rows and serialized JSON bytes are separate limits. In this
+development source, `gooo package inspect --json <workspace.json>` reports
+`transport_capacity.rows` as 128 and `transport_capacity.input_json_bytes` as
+1,048,576. A caller preparing many rows should count the actual UTF-8 JSON
+bytes, including package keys, and split work before either limit is exceeded.
+Older executable versions can have different limits; use the capacity of the
+executable that will consume the input.
+
 ## Identity follows the declaration
 
 `program.pure_calls.activities` links each original package activity to its name
