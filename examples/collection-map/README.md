@@ -51,6 +51,9 @@ attempted prefix and blocks dependent execution through the existing fault path.
   A full observation buffer reports partial origin coverage; value computation continues.
 - Text field byte limits and per-case execution limits continue to apply.
 
-Record-valued items, captured anonymous functions, filtering and parallel
+Record-valued items, captured anonymous functions and parallel
 evaluation are future work. This fixture exercises the experimental execution
 entry point. The general syntax-readiness denominator is unchanged by this example.
+
+For a source-owned rule that keeps or discards items, see
+[collection filtering](../collection-filter/README.md).

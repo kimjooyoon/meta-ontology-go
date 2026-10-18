@@ -13,19 +13,20 @@ type CompositionConstructionElementSite struct {
 }
 
 type CompositionConstructionSite struct {
-	ExpressionID     string                               `json:"expression_id"`
-	RootActivityID   string                               `json:"root_activity_id"`
-	ActivityID       string                               `json:"activity_id"`
-	NativeOrdinal    int                                  `json:"native_ordinal"`
-	ElementType      string                               `json:"element_type"`
-	Expression       string                               `json:"expression"`
-	ProjectionSHA256 string                               `json:"projection_sha256"`
-	Start            int                                  `json:"start_byte"`
-	End              int                                  `json:"end_byte"`
-	Source           *bodycodegen.BodyExpressionSource    `json:"source"`
-	Elements         []CompositionConstructionElementSite `json:"elements"`
-	Kind             string                               `json:"kind,omitempty"`
-	MapperActivityID string                               `json:"mapper_activity_id,omitempty"`
+	ExpressionID        string                               `json:"expression_id"`
+	RootActivityID      string                               `json:"root_activity_id"`
+	ActivityID          string                               `json:"activity_id"`
+	NativeOrdinal       int                                  `json:"native_ordinal"`
+	ElementType         string                               `json:"element_type"`
+	Expression          string                               `json:"expression"`
+	ProjectionSHA256    string                               `json:"projection_sha256"`
+	Start               int                                  `json:"start_byte"`
+	End                 int                                  `json:"end_byte"`
+	Source              *bodycodegen.BodyExpressionSource    `json:"source"`
+	Elements            []CompositionConstructionElementSite `json:"elements"`
+	Kind                string                               `json:"kind,omitempty"`
+	MapperActivityID    string                               `json:"mapper_activity_id,omitempty"`
+	PredicateActivityID string                               `json:"predicate_activity_id,omitempty"`
 }
 
 type CompositionConstructedOrigin struct {
@@ -40,6 +41,7 @@ type CompositionConstructionElement struct {
 	ReadEnd      int  `json:"read_end"`
 	ReadsDropped int  `json:"reads_dropped"`
 	Completed    bool `json:"completed"`
+	InputIndex   *int `json:"input_index,omitempty"`
 }
 
 type CompositionConstruction struct {
@@ -52,7 +54,7 @@ type CompositionConstruction struct {
 }
 
 func constructionElementSite(site CompositionConstructionSite, index int) (CompositionConstructionElementSite, bool) {
-	if site.Kind == "map_values" && index >= 0 && index < 256 && len(site.Elements) == 1 {
+	if (site.Kind == "map_values" || site.Kind == "filter_values") && index >= 0 && index < 256 && len(site.Elements) == 1 {
 		return site.Elements[0], true
 	}
 	if site.Kind == "" && index >= 0 && index < len(site.Elements) {
@@ -66,6 +68,9 @@ func constructionSize(site CompositionConstructionSite, count *int) (int, bool) 
 		return len(site.Elements), count == nil && len(site.Elements) <= 256
 	}
 	if site.Kind == "map_values" && count != nil && *count >= 0 && *count <= 256 && len(site.Elements) == 1 && site.MapperActivityID != "" {
+		return *count, true
+	}
+	if site.Kind == "filter_values" && count != nil && *count >= 0 && *count <= 256 && len(site.Elements) == 1 && site.PredicateActivityID != "" {
 		return *count, true
 	}
 	return 0, false

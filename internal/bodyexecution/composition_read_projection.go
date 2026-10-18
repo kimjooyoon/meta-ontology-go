@@ -78,14 +78,14 @@ func observedReadProjectionWithLocals(source, prefix string, prior Composition, 
 		}
 	}
 	localRanges := p.collectLocalReadNodes(file, bindings, local, lookup, constructs, sites, constructionSites)
-	maps := 0
+	transforms := 0
 	for _, site := range constructionSites {
-		if site.Kind == "map_values" {
-			maps++
+		if site.Kind == "map_values" || site.Kind == "filter_values" {
+			transforms++
 		}
 	}
-	if len(p.nodes) != len(sites)+len(constructionSites)-maps+len(locals)-localRanges+len(uses)+len(local.scopes) {
-		return "", fmt.Errorf("collection read projection differs from retained sites")
+	if len(p.nodes) != len(sites)+len(constructionSites)-transforms+len(locals)-localRanges+len(uses)+len(local.scopes) {
+		return "", fmt.Errorf("collection read projection differs from retained sites: nodes=%d reads=%d constructions=%d transforms=%d locals=%d ranges=%d uses=%d scopes=%d", len(p.nodes), len(sites), len(constructionSites), transforms, len(locals), localRanges, len(uses), len(local.scopes))
 	}
 	if err := p.bindLocalFaults(faults); err != nil {
 		return "", err
@@ -118,9 +118,16 @@ func (p readProjection) renderExcept(start, end int, exclude ast.Node) string {
 		}
 		switch node := item.node.(type) {
 		case *ast.CallExpr:
-			input, mapper, _ := bodycodegen.CollectionMapProjection(node)
+			input, mapper, mapped := bodycodegen.CollectionMapProjection(node)
+			if !mapped {
+				input, mapper, _ = bodycodegen.CollectionFilterProjection(node)
+			}
 			base := p.render(p.offset(input.Pos()), p.offset(input.End()))
-			out.WriteString(p.prefix + "Map(" + id + "," + strconv.Itoa(item.mapReadSite) + "," + base + "," + mapper.Name + ")")
+			operation := "Map"
+			if !mapped {
+				operation = "Filter"
+			}
+			out.WriteString(p.prefix + operation + "(" + id + "," + strconv.Itoa(item.mapReadSite) + "," + base + "," + mapper.Name + ")")
 		case *ast.CompositeLit:
 			out.WriteString(p.prefix + "Make[" + item.elementType + "](" + id)
 			for _, element := range node.Elts {

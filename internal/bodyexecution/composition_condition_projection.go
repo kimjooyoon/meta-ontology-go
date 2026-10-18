@@ -9,6 +9,8 @@ import (
 	"go/token"
 	"strconv"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 func compositionConditionSites(prior Composition) ([]CompositionConditionSite, error) {
@@ -30,7 +32,7 @@ func compositionConditionSites(prior Composition) ([]CompositionConditionSite, e
 		}
 		ids := bindings[function.Name.Name]
 		ordinal := 0
-		ast.Inspect(function.Body, func(node ast.Node) bool {
+		bodycodegen.InspectBodyProjection(function.Body, func(node ast.Node) bool {
 			condition, ok := node.(*ast.IfStmt)
 			if !ok {
 				return true
@@ -77,7 +79,7 @@ func observedConditionProjection(source, observer string, sites []CompositionCon
 		return "", err
 	}
 	index := 0
-	ast.Inspect(file, func(node ast.Node) bool {
+	bodycodegen.InspectBodyProjection(file, func(node ast.Node) bool {
 		condition, ok := node.(*ast.IfStmt)
 		if !ok {
 			return true

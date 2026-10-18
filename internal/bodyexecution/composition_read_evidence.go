@@ -73,11 +73,16 @@ func observedCompositionLocalEvidence(prior Composition) (o compositionObservedS
 			return o, err
 		}
 	}
+	hasMap, hasFilter := false, false
 	for _, site := range o.constructions {
-		if site.Kind == "map_values" {
-			observer = withCollectionMapObserver(observer)
-			break
-		}
+		hasMap = hasMap || site.Kind == "map_values"
+		hasFilter = hasFilter || site.Kind == "filter_values"
+	}
+	if hasMap {
+		observer = withCollectionMapObserver(observer)
+	}
+	if hasFilter {
+		observer = withCollectionFilterObserver(observer)
 	}
 	o.driver, err = observedReadDriverWithObserver(o.driver, prefix, prior, observer)
 	return o, err

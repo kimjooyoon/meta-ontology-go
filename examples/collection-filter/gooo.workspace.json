@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/filtered-labels", "activity": "Select"},
+  "packages": [{"path": "example/filtered-labels", "name": "labels", "imports": [], "sources": ["main.gooo"]}]
+}
