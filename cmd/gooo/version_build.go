@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/buildidentity"
 )
 
@@ -39,6 +40,8 @@ type versionBuildInfo struct {
 	VCSModified       string                `json:"vcs_modified"`
 	SDK               versionSDKInfo        `json:"decision_runtime"`
 	NativeGoRequired  string                `json:"native_go_required"`
+
+	PureBodyLimits bodycodegen.ProfileLimits `json:"pure_body_limits"`
 }
 
 func versionBuildMetadata(info *debug.BuildInfo, runtimeVersion string) versionBuildInfo {
@@ -46,7 +49,8 @@ func versionBuildMetadata(info *debug.BuildInfo, runtimeVersion string) versionB
 		Status: versionStatus, GoVersion: runtimeVersion, ModuleVersion: "unobserved",
 		CompilerSourceSHA: "UNBOUND_LOCAL_SOURCE", SourceStatus: "UNOBSERVED_VCS",
 		VCSRevision: "unobserved", VCSModified: "unobserved", NativeGoRequired: "go1.27.2",
-		SDK: versionSDKInfo{ModulePath: decisionRuntimeModule, Version: "unobserved"}}
+		SDK:            versionSDKInfo{ModulePath: decisionRuntimeModule, Version: "unobserved"},
+		PureBodyLimits: bodycodegen.CurrentProfileLimits()}
 	if info == nil {
 		return result
 	}

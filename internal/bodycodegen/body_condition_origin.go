@@ -42,7 +42,7 @@ func (p bodyProjection) captureConditionOrigins(activityID, body string) map[ast
 		text, id := bodies[f.Name.Name], ids[f.Name.Name]
 		base := p.fset.Position(f.Body.Lbrace).Offset + 2
 		ordinal := 0
-		ast.Inspect(f.Body, func(node ast.Node) bool {
+		InspectBodyProjection(f.Body, func(node ast.Node) bool {
 			stmt, ok := node.(*ast.IfStmt)
 			if !ok {
 				return true
@@ -66,7 +66,7 @@ func (p bodyProjection) emittedConditionOrigins() []BodyConditionOrigin {
 			continue
 		}
 		ordinal := 0
-		ast.Inspect(f.Body, func(node ast.Node) bool {
+		InspectBodyProjection(f.Body, func(node ast.Node) bool {
 			stmt, ok := node.(*ast.IfStmt)
 			if !ok {
 				return true

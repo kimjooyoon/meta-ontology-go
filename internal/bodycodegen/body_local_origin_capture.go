@@ -24,7 +24,7 @@ func (p bodyProjection) captureLocalOrigins(activityID, body string) map[ast.Nod
 			continue
 		}
 		capture := localOriginCapture{projection: p, text: bodies[function.Name.Name], activityID: ids[function.Name.Name], base: p.fset.Position(function.Body.Lbrace).Offset + 2, variables: map[*ast.Object]int{}, declarations: map[*ast.Object]BodyElementOrigin{}, origins: origins}
-		ast.Inspect(function.Body, func(node ast.Node) bool { capture.add(node); return true })
+		InspectBodyProjection(function.Body, func(node ast.Node) bool { capture.add(node); return true })
 	}
 	return origins
 }
@@ -72,7 +72,7 @@ func (p bodyProjection) emittedLocalOrigins() []BodyLocalOrigin {
 			continue
 		}
 		ordinal := 0
-		ast.Inspect(function.Body, func(node ast.Node) bool {
+		InspectBodyProjection(function.Body, func(node ast.Node) bool {
 			write := localWrite(node)
 			// Lowering creates identifiers without ast.Object links. Count their
 			// emitted slots too: parsing the projection restores those links.

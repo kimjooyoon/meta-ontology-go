@@ -43,6 +43,26 @@ represented as `*string`, `*bool` and `*int64` with `omitempty` JSON tags.
 Scalar activity parameters and results continue to use Integer, Boolean and
 Text.
 
+Body-profile refusals identify the record by source name and stable ID. A record
+with 33 fields reports its actual count and the 32-field limit; the seventeenth
+record reports its position and the 16-record limit. Invalid body identifiers
+have a separate diagnostic. These messages help a caller locate the declaration
+while the accepted record layouts keep their existing bounds.
+
+Agents can read `gooo version --build --json` before constructing a source file.
+Its `pure_body_limits` object comes from the running compiler's validation
+constants, alongside the existing build identity. Every field is an upper bound.
+`max_record_types` counts record declarations with fields in the source model
+checked for one body-generation request, including unused declarations in that
+model. `max_fields_per_record` counts declared fields; collection, call and loop
+limits have their own fields. A missing object in an older executable means the
+limits were not reported. `max_activities_per_call_closure` includes the entry
+and its reachable activity definitions; `max_activity_call_depth` counts nested
+call edges with the entry at depth zero. An absent individual field is also
+unknown. These independent bounds do not establish that a
+program typechecks or predict its running time. Source-declared Text byte limits
+and transport limits keep their own contracts.
+
 `input.title` reads a field. A local copy such as `let copy = input` can be
 replaced with a new complete record. Parameters stay read-only; assignments
 target an existing whole local. Equality compares all record fields. Calls,

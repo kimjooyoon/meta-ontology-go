@@ -27,7 +27,7 @@ func CompositionConstructionFacts(runtime CompositionRuntime) []CompositionConst
 			}
 			site := runtime.ConstructionSites[created.SiteIndex]
 			for i, element := range created.Elements {
-				if i >= len(site.Elements) {
+				if _, valid := constructionElementSite(site, i); !valid {
 					continue
 				}
 				f := compositionConstructionFact(trace.CaseIndex, instance, i, element, site)
@@ -58,8 +58,9 @@ func CompositionConstructedReadFacts(runtime CompositionRuntime) []CompositionCo
 }
 
 func compositionConstructionFact(caseIndex, instance, i int, element CompositionConstructionElement, site CompositionConstructionSite) CompositionConstructionFact {
-	f := CompositionConstructionFact{CaseIndex: caseIndex, InstanceIndex: instance, ElementIndex: i, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Completed: element.Completed, ReadStart: element.ReadStart, ReadEnd: element.ReadEnd, ReadsDropped: element.ReadsDropped, Expression: site.Elements[i].Expression, Mapping: "UNMAPPED"}
-	if source := site.Elements[i].Source; source != nil && source.Status == "MAPPED" {
+	part, _ := constructionElementSite(site, i)
+	f := CompositionConstructionFact{CaseIndex: caseIndex, InstanceIndex: instance, ElementIndex: i, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Completed: element.Completed, ReadStart: element.ReadStart, ReadEnd: element.ReadEnd, ReadsDropped: element.ReadsDropped, Expression: part.Expression, Mapping: "UNMAPPED"}
+	if source := part.Source; source != nil && source.Status == "MAPPED" {
 		f.Mapping = source.Status
 		f.SourceSHA256 = source.SourceSHA256
 		f.SourceStart = source.Start

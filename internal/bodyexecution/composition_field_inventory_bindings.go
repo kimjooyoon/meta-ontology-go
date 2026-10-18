@@ -28,7 +28,7 @@ func (r *compositionFieldInventory) addParameters(fn *ast.FuncDecl, ids [2]strin
 
 func (r *compositionFieldInventory) addLocals(fn *ast.FuncDecl, ids [2]string, info *types.Info, records map[string]bodycodegen.RecordType, objects map[types.Object]int, origins map[conditionOriginKey]compositionLocalOrigin) int {
 	ordinal := 0
-	ast.Inspect(fn.Body, func(n ast.Node) bool {
+	bodycodegen.InspectBodyProjection(fn.Body, func(n ast.Node) bool {
 		name, _, _, _ := bodycodegen.LocalWriteExpression(n)
 		if name == nil {
 			return true

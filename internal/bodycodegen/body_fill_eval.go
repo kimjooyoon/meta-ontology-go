@@ -188,6 +188,9 @@ func (e *integerBodyEvaluator) evaluateExpression(expression ast.Expr) (any, err
 	}
 	switch value := expression.(type) {
 	case *ast.CallExpr:
+		if input, mapper, ok := CollectionMapProjection(value); ok {
+			return e.evaluateCollectionMap(value, input, mapper)
+		}
 		if result, handled, err := e.evaluateBodyPrimitive(value); handled {
 			return result, err
 		}

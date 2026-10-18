@@ -44,15 +44,23 @@ function currentProof() {
       size_bytes: 1, expired: false, digest: `sha256:${'d'.repeat(64)}`}],
     rejections: ['scope_not_passed']};
 }
-async function observe(jobs, proof, proofRows) {
+async function observe(jobs, proof, proofRows, scopeOrigin) {
   const outputs = new Map();
-  const fileAPI = {existsSync: () => proof !== undefined,
+  const fileAPI = {existsSync: name => name === '/mock/ci-domain-tool/origin.json' ? scopeOrigin !== undefined : proof !== undefined,
+    copyFileSync: (from, to) => {
+      assert.equal(from, '/mock/ci-domain-tool/origin.json');
+      outputs.set(to, scopeOrigin);
+    },
     readFileSync: () => typeof proof === 'string' ? proof : JSON.stringify(proof),
     writeFileSync: (name, value) => outputs.set(name, value)};
   const artifacts = proofRows || (proof === undefined ? [] : [{id: 202, name: 'ci-proof-9-2',
     size_in_bytes: 1, expired: false, digest: `sha256:${'e'.repeat(64)}`}]);
-  const github = {rest: {actions: {
-    listJobsForWorkflowRun: async () => ({data: {jobs}}),
+  const github = {request: async (route, params) => {
+    assert.equal(route, 'GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/jobs');
+    assert.equal(params.run_id, run);
+    assert.equal(params.attempt_number, attempt);
+    return {data: {jobs}};
+  }, rest: {actions: {
     listWorkflowRunArtifacts: async () => ({data: {artifacts}}),
   }}};
   const allowed = new Set(['./scripts/ci-proof/dispatch', './scripts/ci-proof/refs', './scripts/ci-proof/artifacts']);
@@ -60,7 +68,7 @@ async function observe(jobs, proof, proofRows) {
     if (name === 'fs') return fileAPI;
     assert.ok(allowed.has(name), `unexpected module ${name}`);
     return localRequire(name);
-  }, {env: {CI_RUN_ATTEMPT: String(attempt), CI_WORKFLOW_SHA: workflowSHA}});
+  }, {env: {CI_RUN_ATTEMPT: String(attempt), CI_WORKFLOW_SHA: workflowSHA, RUNNER_TEMP: '/mock'}});
   return {outputs, input: outputs.get('ci-failure-input.json') ? JSON.parse(outputs.get('ci-failure-input.json')) : null};
 }
 
@@ -178,4 +186,29 @@ test('failure-summary admission retains every non-successful dependency', () => 
       assert.equal(evaluate(needs, {event_name: 'push', ref: 'refs/heads/agent/current-source'}, () => false), false);
     }
   }
+});
+
+test('failure capture stays eligible after earlier failure and preserves API steps', async () => {
+  const jobs = [failedJob(11, 'CI proof bundle', 'Bind shared clock, tool and command origins')];
+  const {input, outputs} = await observe(jobs);
+  assert.deepEqual(JSON.parse(outputs.get('ci-failure-jobs.json')), jobs);
+  assert.equal(input.terminal_failures[0].id, 11);
+  assert.equal(input.artifact_status, 'missing');
+  const admission = step.split('        uses:')[0];
+  assert.match(admission, /if: \$\{\{ always\(\) \}\}/);
+  const preservation = source.split('      - name: Preserve failure observations after deadline rejection\n')[1];
+  assert.ok(preservation, 'the original API rows have a diagnostic artifact consumer');
+  const header = preservation.split('      - name:')[0];
+  assert.match(header, /always\(\).*hashFiles\('ci-failure-jobs\.json'\)/);
+  assert.match(header, /name: ci-failure-observations-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
+  assert.match(header, /ci-failure-scope-origin\.json/);
+  assert.ok(!header.includes('runner.temp'), 'diagnostic upload has one flat relative root');
+});
+
+test('original tool scope bytes are retained without becoming proof or closure', async () => {
+  const original = '  {"clock_scope":"admitted_source_work","started_at":"2026-10-17T22:54:35Z"}\n';
+  const {input, outputs} = await observe([failedJob(11, 'CI proof bundle')], undefined, undefined, original);
+  assert.equal(outputs.get('ci-failure-scope-origin.json'), original);
+  assert.equal(input.artifact_status, 'missing');
+  assert.ok(!outputs.has('ci-closure-input.json'));
 });

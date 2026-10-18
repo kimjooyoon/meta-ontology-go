@@ -9,7 +9,7 @@ import (
 func bindLocalFunctionWrites(function *ast.FuncDecl, ids [2]string, lookup map[conditionOriginKey]int, result *localProjectionBindings) map[*ast.Object]int {
 	ordinal := 0
 	objects := map[*ast.Object]int{}
-	ast.Inspect(function.Body, func(node ast.Node) bool {
+	bodycodegen.InspectBodyProjection(function.Body, func(node ast.Node) bool {
 		name, _, _, _ := bodycodegen.LocalWriteExpression(node)
 		if name == nil {
 			return true

@@ -9,9 +9,15 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const pureCallLimit = 4096
+const (
+	pureCallLimit      = 4096
+	pureActivityLimit  = 32
+	pureCallDepthLimit = 16
+)
 
-func bodyPrimitiveName(name string) bool { return name == "len" || name == "int64" }
+func bodyPrimitiveName(name string) bool {
+	return name == "len" || name == "int64" || name == "map_values"
+}
 
 // IsBodyPrimitiveName identifies the pure body's primitive spellings. A source
 // activity or local value with the same name still takes precedence in scope.
@@ -95,13 +101,13 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 		return 0, fmt.Errorf("recursive pure activity call at %q", name)
 	}
 	if budget, ok := r.budgets[name]; ok {
-		if depth+r.heights[name] > 16 {
-			return 0, fmt.Errorf("pure activity closure exceeds 16 call levels")
+		if depth+r.heights[name] > pureCallDepthLimit {
+			return 0, fmt.Errorf("pure activity closure exceeds %d call levels", pureCallDepthLimit)
 		}
 		return budget, nil
 	}
-	if depth > 16 || len(r.budgets)+len(r.visiting) >= 32 {
-		return 0, fmt.Errorf("pure activity closure exceeds 32 activities or 16 call levels")
+	if depth > pureCallDepthLimit || len(r.budgets)+len(r.visiting) >= pureActivityLimit {
+		return 0, fmt.Errorf("pure activity closure exceeds %d activities or %d call levels", pureActivityLimit, pureCallDepthLimit)
 	}
 	r.visiting[name] = true
 	defer delete(r.visiting, name)
@@ -112,6 +118,15 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 	budget, height := 0, 0
 	for ordinal, site := range sites {
 		callee := site.name
+		multiplicity := site.maximum
+		if callee == "map_values" && r.ids[callee] == "" {
+			binding, bindErr := r.collectionMapper(site.expression, name)
+			if bindErr != nil {
+				return 0, bindErr
+			}
+			callee = binding.Name
+			multiplicity = pureCallMultiplicity(multiplicity, RepeatedFieldLimit)
+		}
 		// Source-declared activities retain their identity even when their name
 		// shadows a Go primitive. Primitives themselves add no activity edge.
 		if bodyPrimitiveName(callee) && r.ids[callee] == "" {
@@ -123,10 +138,11 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 		}
 		r.edges = append(r.edges, PureCallEdge{CallerID: r.ids[name], CalleeID: r.ids[callee], Ordinal: ordinal})
 		height = max(height, 1+r.heights[callee])
-		budget += site.maximum * (1 + cost)
-		if budget > pureCallLimit {
-			return 0, fmt.Errorf("pure activity closure exceeds %d calls per invocation", pureCallLimit)
+		next := budget + multiplicity*(1+cost)
+		if next > pureCallLimit {
+			return 0, r.budgetError(name, callee, ordinal, budget, multiplicity, cost)
 		}
+		budget = next
 	}
 	r.budgets[name] = budget
 	r.heights[name] = height
