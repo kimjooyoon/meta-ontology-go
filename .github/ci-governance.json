@@ -33,6 +33,16 @@
   ],
   "ownership": [
     {
+      "branch": "agent/input-row-agent-onboarding-20261018",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/templates/diagnostic/README.md",
+        "docs/getting-started.md",
+        "internal/verify/scope_agent_input_row_onboarding.go"
+      ]
+    },
+    {
       "branch": "agent/compact-receipt-transport-20261018",
       "paths": [
         ".github/agent-scope-table.md",

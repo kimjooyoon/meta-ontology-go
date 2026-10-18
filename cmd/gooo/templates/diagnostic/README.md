@@ -23,6 +23,11 @@ The replay prints three values, including:
 
 Edit `inputs.json` to use your own counts and detail. The four Diagnose inputs
 are matched outputs, total outputs, rejected candidates and explanatory text.
+Each `inputs` array object is one row. A key such as
+`{{module}}/diagnostics:Diagnose.input3` names the package path from
+`gooo.workspace.json`, the `Diagnose` activity in `diagnostics.gooo`, and its
+fourth positional input. The output directory name does not set the module path;
+`gooo init --module` does.
 Input-only replay reports the values it observes. To check expected outputs,
 use `--cases cases.json` in place of `--inputs inputs.json`. This supplied suite
 has four input rows and eight activity-output expectations, separate from the
