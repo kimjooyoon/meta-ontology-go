@@ -70,10 +70,14 @@ func (display *CompositionCaseDisplay) checkSubmittedInputs(inputs map[string]js
 	}
 	choices := available[origin.Activity]
 	if len(choices) == 1 {
-		return fmt.Errorf("input %q is not a caller port; use %q", shown, choices[0])
+		return &InputDiagnostic{Stage: "INPUT_VALIDATION", Code: "UNKNOWN_CALLER_PORT", Key: shown,
+			DeclaredKey: choices[0], Message: fmt.Sprintf("input %q is not a caller port; use %q", shown, choices[0])}
 	}
 	if len(choices) > 1 {
-		return fmt.Errorf("input %q is not a caller port; available ports: %q", shown, choices)
+		return &InputDiagnostic{Stage: "INPUT_VALIDATION", Code: "UNKNOWN_CALLER_PORT", Key: shown,
+			AvailableKeys: append([]string(nil), choices...),
+			Message:       fmt.Sprintf("input %q is not a caller port; available ports: %q", shown, choices)}
 	}
-	return fmt.Errorf("input %q is not a caller port", shown)
+	return &InputDiagnostic{Stage: "INPUT_VALIDATION", Code: "UNKNOWN_CALLER_PORT", Key: shown,
+		Message: fmt.Sprintf("input %q is not a caller port", shown)}
 }

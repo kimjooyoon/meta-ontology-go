@@ -23,8 +23,15 @@ func TestPackageExecuteInputDiagnosticUsesAuthoredKey(t *testing.T) {
 		t.Fatal(code, out.String(), diagnostic.String())
 	}
 	var receipt struct {
-		Decision string `json:"decision"`
-		Error    string `json:"error"`
+		Decision        string `json:"decision"`
+		Error           string `json:"error"`
+		InputDiagnostic struct {
+			Stage       string `json:"stage"`
+			Code        string `json:"code"`
+			CaseIndex   int    `json:"case_index"`
+			Key         string `json:"key"`
+			DeclaredKey string `json:"declared_key"`
+		} `json:"input_diagnostic"`
 	}
 	if err := json.Unmarshal(out.Bytes(), &receipt); err != nil {
 		t.Fatal(err, out.String())
@@ -32,7 +39,12 @@ func TestPackageExecuteInputDiagnosticUsesAuthoredKey(t *testing.T) {
 	if receipt.Decision != "FAIL_CLOSED" ||
 		!strings.Contains(receipt.Error, `input "example/app:Main.input0"`) ||
 		!strings.Contains(receipt.Error, `use "example/app:Main"`) ||
-		strings.Contains(receipt.Error, "GoooPackage") {
+		strings.Contains(receipt.Error, "GoooPackage") ||
+		receipt.InputDiagnostic.Stage != "INPUT_VALIDATION" ||
+		receipt.InputDiagnostic.Code != "UNKNOWN_CALLER_PORT" ||
+		receipt.InputDiagnostic.CaseIndex != 0 ||
+		receipt.InputDiagnostic.Key != "example/app:Main.input0" ||
+		receipt.InputDiagnostic.DeclaredKey != "example/app:Main" {
 		t.Fatal("input diagnostic lost its authored key", receipt)
 	}
 }
