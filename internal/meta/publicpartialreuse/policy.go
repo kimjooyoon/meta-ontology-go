@@ -1,6 +1,7 @@
 package publicpartialreuse
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"sort"
@@ -11,15 +12,16 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 const (
-	PolicySchema        = "gooo/public-partial-test-reuse-policy/v1"
-	EvaluatorSchema     = "gooo/public-partial-test-reuse-evaluator/v1"
+	PolicySchema        = "gooo/public-partial-test-reuse-policy/v2"
+	EvaluatorSchema     = "gooo/public-partial-test-reuse-evaluator/v2"
 	PolicyName          = "EXPLICIT_OPT_IN_PARTIAL_TEST_REUSE"
 	Operation           = "gooo.test.generated-public-partial-reuse"
 	PolicyActivity      = "CreateReceipt"
-	ContractVersion     = "v1"
+	ContractVersion     = "v3"
 	DecisionClosed      = "CLOSED"
 	DecisionUnknown     = "UNKNOWN"
 	DecisionRefuted     = "REFUTED"
@@ -29,6 +31,9 @@ const (
 	DependencyEdgeCount = 2
 	CaseCount           = 6
 )
+
+//go:embed policy.gooo
+var decisionSource []byte
 
 type Partition struct {
 	ID       string   `json:"id"`
@@ -58,28 +63,32 @@ type Case struct {
 }
 
 type Policy struct {
-	Schema              string      `json:"schema"`
-	EvaluatorSchema     string      `json:"evaluator_schema"`
-	SourceDigest        string      `json:"source_digest"`
-	SemanticDigest      string      `json:"semantic_digest"`
-	EvaluatorDigest     string      `json:"evaluator_digest"`
-	Package             string      `json:"package"`
-	Namespace           string      `json:"namespace"`
-	Activity            string      `json:"activity"`
-	Name                string      `json:"name"`
-	Contract            string      `json:"contract"`
-	Partitions          []Partition `json:"partitions"`
-	Components          []Component `json:"components"`
-	Edges               []Edge      `json:"edges"`
-	Cases               []Case      `json:"cases"`
-	TestUnitCount       int         `json:"test_unit_count"`
-	DependencyEdgeCount int         `json:"dependency_edge_count"`
-	GeneratedArtifacts  int         `json:"generated_artifacts"`
-	EvidenceArtifacts   int         `json:"evidence_artifacts"`
-	Journey             []string    `json:"journey"`
-	RuntimeRule         string      `json:"runtime_rule"`
-	RefutedDominates    bool        `json:"refuted_dominates_unknown"`
-	IR                  semantic.IR `json:"-"`
+	Schema               string      `json:"schema"`
+	EvaluatorSchema      string      `json:"evaluator_schema"`
+	SourceDigest         string      `json:"source_digest"`
+	SemanticDigest       string      `json:"semantic_digest"`
+	EvaluatorDigest      string      `json:"evaluator_digest"`
+	DecisionSourceDigest string      `json:"decision_source_digest"`
+	Package              string      `json:"package"`
+	Namespace            string      `json:"namespace"`
+	Activity             string      `json:"activity"`
+	Name                 string      `json:"name"`
+	Contract             string      `json:"contract"`
+	ToolProfile          string      `json:"execution_tool_profile"`
+	PartitionProfile     string      `json:"partition_input_profile"`
+	Partitions           []Partition `json:"partitions"`
+	Components           []Component `json:"components"`
+	Edges                []Edge      `json:"edges"`
+	Cases                []Case      `json:"cases"`
+	TestUnitCount        int         `json:"test_unit_count"`
+	DependencyEdgeCount  int         `json:"dependency_edge_count"`
+	GeneratedArtifacts   int         `json:"generated_artifacts"`
+	EvidenceArtifacts    int         `json:"evidence_artifacts"`
+	Journey              []string    `json:"journey"`
+	RuntimeRule          string      `json:"runtime_rule"`
+	RefutedDominates     bool        `json:"refuted_dominates_unknown"`
+	IR                   semantic.IR `json:"-"`
+	decisionSource       []byte
 }
 
 type markers map[string][]string
@@ -113,6 +122,12 @@ func Load(filename string, source []byte) (Policy, error) {
 		ids := current["partial-reuse-component"]
 		if len(ids) == 0 {
 			continue
+		}
+		if len(current["partial-reuse-schema"]) != 1 || first(current, "partial-reuse-schema") != ContractVersion ||
+			len(current["partial-reuse-tool-profile"]) != 1 || first(current, "partial-reuse-tool-profile") != toolchaincli.GeneratedTestGoProfile ||
+			len(current["partial-reuse-partition-profile"]) != 1 || first(current, "partial-reuse-partition-profile") != PartitionInputProfile {
+			return Policy{}, fmt.Errorf("partial reuse partition %q requires contract %s, independent partition inputs and execution tool profile %s",
+				node.Name, ContractVersion, toolchaincli.GeneratedTestGoProfile)
 		}
 		if len(ids) != 1 || len(current["partial-reuse-test"]) != 1 || len(current["partial-reuse-symbols"]) != 1 || len(current["partial-reuse-roots"]) != 1 {
 			return Policy{}, errors.New("partial reuse partition metadata is incomplete")
@@ -149,12 +164,13 @@ func Load(filename string, source []byte) (Policy, error) {
 	policy := Policy{
 		Schema: PolicySchema, EvaluatorSchema: EvaluatorSchema, SourceDigest: cache.HashBytes(source).String(),
 		SemanticDigest: ir.StableHash(), EvaluatorDigest: evaluatorDigest(), Package: ir.Package, Namespace: ir.Namespace.String(),
-		Activity: PolicyActivity, Name: first(all, "partial-reuse-policy"), Contract: first(all, "partial-reuse-schema"),
+		Activity: PolicyActivity, Name: first(all, "partial-reuse-policy"), Contract: first(all, "partial-reuse-schema"), ToolProfile: first(all, "partial-reuse-tool-profile"), PartitionProfile: first(all, "partial-reuse-partition-profile"),
 		Partitions: partitions, Components: components, Edges: edges, Cases: cases,
 		TestUnitCount: parseInt(first(all, "partial-reuse-test-unit-count")), DependencyEdgeCount: parseInt(first(all, "partial-reuse-dependency-edge-count")),
 		GeneratedArtifacts: parseInt(first(all, "partial-reuse-generated-artifact-count")), EvidenceArtifacts: parseInt(first(all, "partial-reuse-evidence-artifact-count")),
 		Journey: strings.Split(first(all, "partial-reuse-journey"), ">"), RuntimeRule: first(all, "partial-reuse-runtime-rule"),
 		RefutedDominates: first(all, "partial-reuse-refuted-dominates-unknown") == "true", IR: ir,
+		DecisionSourceDigest: cache.HashBytes(decisionSource).String(), decisionSource: append([]byte(nil), decisionSource...),
 	}
 	if err := policy.Validate(); err != nil {
 		return Policy{}, err
@@ -164,15 +180,16 @@ func Load(filename string, source []byte) (Policy, error) {
 
 func (policy Policy) Validate() error {
 	if policy.Schema != PolicySchema || policy.EvaluatorSchema != EvaluatorSchema || policy.Name != PolicyName ||
-		policy.Contract != ContractVersion || policy.Activity != PolicyActivity || policy.Package != "partialreuseexample" ||
+		policy.Contract != ContractVersion || policy.ToolProfile != toolchaincli.GeneratedTestGoProfile || policy.PartitionProfile != PartitionInputProfile || policy.Activity != PolicyActivity || policy.Package != "partialreuseexample" ||
 		policy.Namespace != "partial_reuse_example" || policy.TestUnitCount != TestUnitCount ||
 		policy.DependencyEdgeCount != DependencyEdgeCount || policy.GeneratedArtifacts != ArtifactCount ||
 		policy.EvidenceArtifacts != EvidenceCount || len(policy.Partitions) != TestUnitCount ||
 		len(policy.Components) != 1 || len(policy.Edges) != DependencyEdgeCount || len(policy.Cases) != CaseCount ||
 		len(policy.Journey) < 5 || policy.RuntimeRule == "" || !policy.RefutedDominates {
-		return errors.New("partial reuse policy identity or denominator is invalid")
+		return fmt.Errorf("partial reuse requires contract %s with execution tool profile %s and canonical denominators; observed contract %q, profile %q", ContractVersion, toolchaincli.GeneratedTestGoProfile, policy.Contract, policy.ToolProfile)
 	}
-	if policy.SourceDigest == "" || policy.SemanticDigest == "" || policy.EvaluatorDigest == "" {
+	if policy.SourceDigest == "" || policy.SemanticDigest == "" || policy.EvaluatorDigest == "" ||
+		!cache.Digest(policy.DecisionSourceDigest).Known() {
 		return errors.New("partial reuse policy digest identity is missing")
 	}
 	seen := map[string]bool{}
@@ -222,6 +239,8 @@ func (policy Policy) SkeletonDigest() string {
 		Evaluator        string      `json:"evaluator"`
 		Name             string      `json:"name"`
 		Contract         string      `json:"contract"`
+		ToolProfile      string      `json:"execution_tool_profile"`
+		PartitionProfile string      `json:"partition_input_profile"`
 		Components       []Component `json:"components"`
 		Edges            []Edge      `json:"edges"`
 		Cases            []Case      `json:"cases"`
@@ -229,7 +248,7 @@ func (policy Policy) SkeletonDigest() string {
 		RuntimeRule      string      `json:"runtime_rule"`
 		RefutedDominates bool        `json:"refuted_dominates_unknown"`
 	}
-	value := skeleton{PolicySchema, EvaluatorSchema, PolicyName, ContractVersion, append([]Component(nil), policy.Components...), append([]Edge(nil), policy.Edges...), append([]Case(nil), policy.Cases...), append([]string(nil), policy.Journey...), policy.RuntimeRule, policy.RefutedDominates}
+	value := skeleton{PolicySchema, EvaluatorSchema, PolicyName, ContractVersion, policy.ToolProfile, policy.PartitionProfile, append([]Component(nil), policy.Components...), append([]Edge(nil), policy.Edges...), append([]Case(nil), policy.Cases...), append([]string(nil), policy.Journey...), policy.RuntimeRule, policy.RefutedDominates}
 	return hashJSON(value)
 }
 
@@ -275,5 +294,5 @@ func parseInt(value string) int {
 }
 
 func evaluatorDigest() string {
-	return cache.HashBytes([]byte(EvaluatorSchema + "\x00impact-closure-precedence-v1")).String()
+	return cache.HashBytes(append([]byte(EvaluatorSchema+"\x00"), decisionSource...)).String()
 }

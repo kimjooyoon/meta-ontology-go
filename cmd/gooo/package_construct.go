@@ -162,13 +162,13 @@ func readSavedPackageConstruction(reader SourceReader, path, manifestDigest stri
 func readPackageConstructionReceipt(reader SourceReader, path string) ([]byte, error) {
 	switch reader.(type) {
 	case OSFileReader, *OSFileReader:
-		return readBodyExecutionFile(path, 32<<20)
+		return readPackageReceipt(path)
 	}
 	raw, err := reader.ReadFile(path)
-	if err == nil && len(raw) > 32<<20 {
-		return nil, inputLimitError(32 << 20)
+	if err != nil {
+		return nil, err
 	}
-	return raw, err
+	return decodePackageReceiptTransport(raw, packageReceiptMaxBytes)
 }
 
 func packageConstructionDecision(r workspaceexecution.ConstructionResult) string {

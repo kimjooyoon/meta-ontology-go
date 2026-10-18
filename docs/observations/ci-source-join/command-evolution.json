@@ -7,6 +7,12 @@
   "jobs": {
     "evidence": [
       {
+        "original_index": -1,
+        "before_sha256": "",
+        "after_sha256": "b46811bcabffa1a79f860b431e92372c970ad0bc96adce02801d0b9a5511f0ab",
+        "operation": "classify_exact_provenance_producer_before_setup"
+      },
+      {
         "original_index": 0,
         "before_sha256": "74520b64bbadcd0407812cd72046b8b86f98559bd5be541cf3415d41c49c7f9e",
         "after_sha256": "2ac5529e270e39d04d7965f1a383808dc9d972ae2f821936bf2953ff78c3dca4",

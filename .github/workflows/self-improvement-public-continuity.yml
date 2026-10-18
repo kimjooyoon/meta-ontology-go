@@ -482,7 +482,7 @@ jobs:
           jq -n \
             --argjson baseline "$(jq . "$work/baseline-result/reuse-report.json")" \
             --argjson replay "$(jq . "$work/replay-result/reuse-report.json")" \
-            '{schema:"gooo/public-test-reuse-runtime-measurement/v1",runtime_comparable:false,before:{build_ms:$baseline.build_ms,test_ms:$baseline.test_ms,wall_ms:$baseline.wall_ms,peak_rss_kib:$baseline.peak_rss_kib,test_executions:$baseline.test_executions,reused_test_executions:$baseline.reused_test_executions},after:{build_ms:$replay.build_ms,test_ms:$replay.test_ms,wall_ms:$replay.wall_ms,peak_rss_kib:$replay.peak_rss_kib,test_executions:$replay.test_executions,reused_test_executions:$replay.reused_test_executions},unknown_reason:"RUNTIME_MODES_NOT_EQUIVALENT"}' \
+            '{schema:"gooo/public-test-reuse-runtime-measurement/v1",runtime_comparable:false,before:{build_ms:$baseline.build_ms,test_ms:$baseline.test_ms,wall_ms:$baseline.wall_ms,peak_rss_kib:$baseline.peak_rss_kib,peak_rss_subject:$baseline.peak_rss_subject,test_executions:$baseline.test_executions,reused_test_executions:$baseline.reused_test_executions},after:{build_ms:$replay.build_ms,test_ms:$replay.test_ms,wall_ms:$replay.wall_ms,peak_rss_kib:$replay.peak_rss_kib,peak_rss_subject:$replay.peak_rss_subject,test_executions:$replay.test_executions,reused_test_executions:$replay.reused_test_executions},unknown_reason:"RUNTIME_MODES_NOT_EQUIVALENT"}' \
             > "$publish/test-reuse-runtime-measurements.json"
 
           artifact_names=(
@@ -676,10 +676,25 @@ jobs:
             .cases[1].unaffected_partitions == 1 and .cases[1].closure_edges == 0 and
             (.cases[2:4] | all(.decision == "UNKNOWN" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason != "" and .unknown.unknown_class != "" and .unknown.next_operation != "" and (.unknown.blocked_by | length) > 0)) and
             (.cases[4:6] | all(.decision == "REFUTED" and .unknown == null)) and
-            .generated_bytes_equal and .semantic_equal and .test_contract_equal and .receipt_binding_equal and
+            .schema == "gooo/public-partial-test-reuse-verification/v2" and
+            .generated_bytes_equal == false and .semantic_equal == .cases[1].comparisons.generated_semantic_equal and
+            .test_contract_equal and .receipt_binding_equal and
+            .prior_source_digest != .current_source_digest and
+            (.reused_receipt_origins | length) == 1 and
+            .reused_receipt_origins[0].partition == "inventory" and
+            .reused_receipt_origins[0].source_digest == .prior_source_digest and
             .runtime_comparable == false and .runtime_unknown == "RUNTIME_MODES_NOT_EQUIVALENT" and
             .repository_writes == 0 and .local_test_executions == 0
           ' "$root/evidence/partial-reuse-report.json"
+          cmp "$root/evidence/publish/no-change-inventory.receipt.json" "$root/evidence/publish/single-change-inventory.receipt.json"
+          jq -s -e '
+            .[0].reused_receipt_origins[0].receipt_id == .[1].receipt_id and
+            .[1].original.generation_source_digest == .[0].prior_source_digest and
+            .[2].original.generation_source_digest == .[0].current_source_digest and
+            .[1].original.generation_source_digest != .[2].original.generation_source_digest
+          ' "$root/evidence/partial-reuse-report.json" \
+            "$root/evidence/publish/single-change-inventory.receipt.json" \
+            "$root/evidence/publish/single-change-orders.receipt.json"
 
       - name: Reject labels-only and contradictory orchestration admission
         shell: bash

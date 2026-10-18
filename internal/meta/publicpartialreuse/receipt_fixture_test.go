@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 func receiptEvaluationFixture(t *testing.T) EvaluationInput {
@@ -32,6 +33,7 @@ func receiptEvaluationFixture(t *testing.T) EvaluationInput {
 	for _, partition := range policy.Partitions {
 		command := TestCommand(partition)
 		binding := Binding{
+			PartitionProfile: PartitionInputProfile, SharedProgramDigest: digest, ModuleDigest: digest,
 			PolicySourceDigest: policy.SourceDigest, PolicySemanticDigest: policy.SemanticDigest,
 			PolicyEvaluatorDigest: policy.EvaluatorDigest, CanonicalSourceDigest: digest,
 			CanonicalSemanticSubgraphDigest: digest, GeneratedArtifactDigest: digest,
@@ -42,10 +44,13 @@ func receiptEvaluationFixture(t *testing.T) EvaluationInput {
 			DependencyGraphDigest: policy.DependencyGraphDigest(), OrchestrationReportDigest: digest,
 			OrchestrationOperation: "gooo.self-improvement.public-orchestration",
 		}
+		binding.ToolInputs = toolchaincli.GeneratedTestGoInputs{Profile: toolchaincli.GeneratedTestGoProfile, Path: "/fixture/go", ExecutableDigest: digest, Version: "go1.27.2", Platform: "fixture/host", EnvironmentDigest: digest}
+		binding.ToolchainDigest = binding.ToolInputs.Digest()
 		receipt := Receipt{
 			Schema: ReceiptSchema, Partition: partition.ID, Decision: DecisionClosed,
 			Reason: ReceiptReason, Binding: binding,
 			Original: OriginalExecution{
+				SourceDigest: policy.SourceDigest, SemanticDigest: policy.SemanticDigest, ProgramDigest: digest, ManifestDigest: digest,
 				InvocationID: digest, Operation: ReceiptOperation, ResultDigest: digest,
 				Successful: true, BuildExecutions: 1, TestExecutions: 1,
 				BuildMS: 1, TestMS: 1, WallMS: 1, PeakRSSKib: 1,

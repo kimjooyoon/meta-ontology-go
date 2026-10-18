@@ -85,8 +85,8 @@ func directPureCalls(body string) ([]string, error) {
 }
 
 func validatePureCallExpression(call *ast.CallExpr) error {
-	if _, ok := call.Fun.(*ast.Ident); !ok || call.Ellipsis.IsValid() || len(call.Args) < 1 || len(call.Args) > 16 {
-		return fmt.Errorf("pure activity call requires a declared name and 1..16 positional arguments")
+	if _, ok := call.Fun.(*ast.Ident); !ok || call.Ellipsis.IsValid() || len(call.Args) > 16 {
+		return fmt.Errorf("pure activity call requires a declared name and 0..16 positional arguments")
 	}
 	for _, argument := range call.Args {
 		if err := validateExpression(argument); err != nil {
@@ -160,9 +160,12 @@ func (r *pureCallResolver) include(name string, depth int) (int, error) {
 	if err != nil || activity.Assembly != nil || r.ids[name] == "" {
 		return 0, fmt.Errorf("pure call %q requires a fixed computes activity in the same source", name)
 	}
-	parameters, err := sourceBodyParameters(activity, r.records, r.file)
-	if err != nil {
-		return 0, err
+	var parameters []InputParameter
+	if len(activity.Inputs) > 0 {
+		parameters, err = sourceBodyParameters(activity, r.records, r.file)
+		if err != nil {
+			return 0, err
+		}
 	}
 	output, ok := bodyEntityType(activity.Output, r.records, r.file)
 	if !ok {

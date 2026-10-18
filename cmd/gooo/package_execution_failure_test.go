@@ -10,13 +10,27 @@ import (
 )
 
 func TestPackageExecuteRetainsFailedNativeSetup(t *testing.T) {
+	for _, compression := range []string{"", "gzip"} {
+		t.Run("compression="+compression, func(t *testing.T) { testPackageExecuteFailedSetup(t, compression) })
+	}
+}
+
+func testPackageExecuteFailedSetup(t *testing.T, compression string) {
+	t.Helper()
 	root := filepath.Join("..", "..", "examples", "package-body-calls")
 	manifest, cases := filepath.Join(root, "source.workspace.json"), filepath.Join(root, "cases.json")
 	var stdout, stderr bytes.Buffer
-	code := run([]string{"package", "execute", "--json", "--cases", cases,
-		"--go", filepath.Join(t.TempDir(), "missing-go"), manifest}, &stdout, &stderr)
+	args := []string{"package", "execute", "--json", "--cases", cases, "--go", filepath.Join(t.TempDir(), "missing-go"), manifest}
+	if compression != "" {
+		args = append(args, "--receipt-compression", compression)
+	}
+	code := run(args, &stdout, &stderr)
+	raw, err := decodePackageReceiptTransport(stdout.Bytes(), packageReceiptMaxBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	var receipt packageExecutionReceipt
-	if err := json.Unmarshal(stdout.Bytes(), &receipt); err != nil {
+	if err := json.Unmarshal(raw, &receipt); err != nil {
 		t.Fatal(err)
 	}
 	if code != exitFailure || stderr.Len() != 0 || receipt.Decision != "FAIL_CLOSED" || receipt.Error == "" || receipt.Result == nil {

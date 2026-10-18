@@ -31,6 +31,55 @@ async function listWorkflowArtifacts(fetchPage, options = {}) {
   throw new Error('workflow artifact API pagination exceeded the fail-closed page limit');
 }
 
+async function listWorkflowJobs(fetchPage, options = {}) {
+  const pageSize = options.pageSize || DEFAULT_PAGE_SIZE;
+  const pageLimit = options.pageLimit || DEFAULT_PAGE_LIMIT;
+  const jobs = [];
+  for (let page = 1; page <= pageLimit; page += 1) {
+    let response;
+    try {
+      response = await fetchPage(page);
+    } catch (error) {
+      throw new Error(`workflow job API read failed: ${error.message}`);
+    }
+    const rows = response && response.data && response.data.jobs;
+    if (!Array.isArray(rows)) {
+      throw new Error('workflow job API response is missing a jobs array');
+    }
+    jobs.push(...rows);
+    if (rows.length < pageSize) return jobs;
+  }
+  throw new Error('workflow job API pagination exceeded the fail-closed page limit');
+}
+
+// A missing artifact cannot explain whether its producer ran. Bind the job
+// observation to this source, run and attempt before interpreting its outcome.
+function observeArtifactProducer(jobs, name, runId, attempt, headSha) {
+  if (!Array.isArray(jobs) || !name || !Number.isSafeInteger(runId) || runId <= 0 ||
+      !Number.isSafeInteger(attempt) || attempt <= 0 || !/^[0-9a-f]{40}$/.test(headSha || '')) {
+    throw new Error('artifact producer observation input is incomplete or invalid');
+  }
+  const matches = jobs.filter(job => job && job.name === name && job.run_id === runId && job.run_attempt === attempt);
+  const observed = matches.length === 1 ? matches[0] : null;
+  let state = matches.length > 1 ? 'AMBIGUOUS' : 'UNOBSERVED';
+  if (observed) {
+    if (!Number.isSafeInteger(observed.id) || observed.id <= 0 || observed.head_sha !== headSha) {
+      state = 'MISMATCHED';
+    } else if (observed.status !== 'completed') {
+      state = 'INCOMPLETE';
+    } else {
+      state = ({success: 'SUCCEEDED', skipped: 'UNSELECTED', cancelled: 'CANCELLED',
+        failure: 'FAILED', timed_out: 'FAILED', action_required: 'FAILED'})[observed.conclusion] || 'UNKNOWN';
+    }
+  }
+  return {
+    job_name: name, job_id: observed && Number.isSafeInteger(observed.id) ? observed.id : 0,
+    run_id: runId, run_attempt: attempt, head_sha: headSha, state,
+    status: observed ? observed.status : '', conclusion: observed ? observed.conclusion : '',
+    matching_jobs: matches.length,
+  };
+}
+
 function selectUniqueArtifact(artifacts, name) {
   const matches = artifacts.filter(artifact => artifact && artifact.name === name);
   if (matches.length > 1) {
@@ -72,9 +121,16 @@ function finalizeLineageReport(report) {
   return report;
 }
 
-function selectArtifactLineage(artifacts, stem, runId, currentAttempt) {
+function selectArtifactLineage(artifacts, stem, runId, currentAttempt, producer = null) {
   if (!Array.isArray(artifacts) || !/^[a-z0-9-]+$/.test(stem || '') || !Number.isSafeInteger(runId) || runId <= 0 || !Number.isSafeInteger(currentAttempt) || currentAttempt <= 0) {
     throw new Error('artifact lineage input is incomplete or invalid');
+  }
+  if (producer && (producer.run_id !== runId || producer.run_attempt !== currentAttempt ||
+      !/^[0-9a-f]{40}$/.test(producer.head_sha || '') ||
+      ((stem === 'ci-evidence' || stem === 'ci-execution-tools') && producer.job_name !== 'CI evidence') ||
+      (producer.state === 'SUCCEEDED' && (producer.status !== 'completed' || producer.conclusion !== 'success' ||
+        !Number.isSafeInteger(producer.job_id) || producer.job_id <= 0 || producer.matching_jobs !== 1)))) {
+    throw new Error('artifact producer origin does not match current run attempt');
   }
 
   const prefix = `${stem}-${runId}-`;
@@ -152,20 +208,33 @@ function selectArtifactLineage(artifacts, stem, runId, currentAttempt) {
     reason = 'ARTIFACT_LINEAGE_INVALID';
     resolution = 'none';
     nextOperation = 'repair-artifact-lineage';
+  } else if (producer && producer.state !== 'SUCCEEDED') {
+    const outcomes = {
+      FAILED: ['ARTIFACT_PRODUCER_FAILED', 'inspect-producer-failure'],
+      CANCELLED: ['ARTIFACT_PRODUCER_CANCELLED', 'inspect-producer-cancellation'],
+      UNSELECTED: ['ARTIFACT_PRODUCER_UNSELECTED', 'inspect-producer-selection'],
+      INCOMPLETE: ['ARTIFACT_PRODUCER_INCOMPLETE', 'wait-for-producer-terminal'],
+      UNOBSERVED: ['ARTIFACT_PRODUCER_UNOBSERVED', 'observe-producer-lifecycle'],
+      AMBIGUOUS: ['ARTIFACT_PRODUCER_AMBIGUOUS', 'repair-producer-lineage'],
+      MISMATCHED: ['ARTIFACT_PRODUCER_MISMATCHED', 'repair-producer-lineage'],
+    };
+    [reason, nextOperation] = outcomes[producer.state] || ['ARTIFACT_PRODUCER_UNKNOWN', 'observe-producer-lifecycle'];
+    decision = FAIL_CLOSED;
+    resolution = 'none';
   } else if (!selected) {
     decision = FAIL_CLOSED;
-    reason = 'ARTIFACT_LINEAGE_NOT_FOUND';
+    reason = producer ? 'ARTIFACT_PUBLICATION_MISSING' : 'ARTIFACT_LINEAGE_NOT_FOUND';
     resolution = 'none';
-    nextOperation = 'evaluate-rerun-concurrency-lane';
+    nextOperation = producer ? 'inspect-artifact-publication' : 'evaluate-rerun-concurrency-lane';
   } else if (selected.run_attempt !== currentAttempt) {
     decision = LOWER_RESOLUTION;
-    reason = 'CURRENT_ATTEMPT_ARTIFACT_UNAVAILABLE';
+    reason = producer ? 'CURRENT_ATTEMPT_PUBLICATION_MISSING' : 'CURRENT_ATTEMPT_ARTIFACT_UNAVAILABLE';
     resolution = 'run_lineage';
-    nextOperation = 'evaluate-rerun-concurrency-lane';
+    nextOperation = producer ? 'inspect-artifact-publication' : 'evaluate-rerun-concurrency-lane';
   }
 
-  return finalizeLineageReport({
-    schema: 'gooo/ci-artifact-lineage/v1',
+  const report = {
+    schema: producer ? 'gooo/ci-artifact-lineage/v2' : 'gooo/ci-artifact-lineage/v1',
     stem,
     run_id: runId,
     current_attempt: currentAttempt,
@@ -187,7 +256,9 @@ function selectArtifactLineage(artifacts, stem, runId, currentAttempt) {
       fallback_distance_attempts: decision === FAIL_CLOSED ? 0 : fallbackDistance,
       repository_writes: 0,
     },
-  });
+  };
+  if (producer) report.producer = producer;
+  return finalizeLineageReport(report);
 }
 
 function selectCurrentEvidenceArtifact(artifacts, runId, runAttempt) {
@@ -198,4 +269,5 @@ function selectCurrentEvidenceArtifact(artifacts, runId, runAttempt) {
   return report.selected;
 }
 
-module.exports = {listWorkflowArtifacts, selectArtifactLineage, selectCurrentEvidenceArtifact, selectUniqueArtifact};
+module.exports = {listWorkflowArtifacts, listWorkflowJobs, observeArtifactProducer,
+  selectArtifactLineage, selectCurrentEvidenceArtifact, selectUniqueArtifact};

@@ -46,7 +46,7 @@ func TestLegacyReceiptCannotAuthorizeReuse(t *testing.T) {
 	for _, data := range []string{
 		`{"schema":"gooo/public-test-reuse-receipt/v1","unexpected":true}`,
 		string(legacy) + ` {}`,
-		`{"schema":"gooo/public-test-reuse-receipt/v2"}`,
+		`{"schema":"gooo/public-test-reuse-receipt/v3"}`,
 	} {
 		if _, err := DecodeReceipt([]byte(data)); err == nil || errors.Is(err, ErrUnobservedPackageInputs) {
 			t.Fatalf("invalid current or malformed historical record = %v", err)
@@ -68,6 +68,10 @@ func packageInputReceiptFixture(t *testing.T) Receipt {
 		TestContractDigest: inputs.Members[0].Digest, PackageInputs: inputs,
 	}
 	binding.TestCommandDigest = TestCommandDigest(binding.TestCommand, binding.TestContractDigest)
+	binding.ToolInputs = ExecutionToolInputs{Profile: ExecutionToolProfile, Path: "/fixture/go",
+		ExecutableDigest: digest, Version: "go1.27.2", Platform: "fixture/host", EnvironmentDigest: digest}
+	binding.ToolchainVersion = binding.ToolInputs.Version
+	binding.ToolchainDigest = binding.ToolInputs.Digest()
 	receipt := Receipt{
 		Schema: ReceiptSchema, Operation: OriginalOperation, Decision: DecisionClosed,
 		Reason: ReceiptReason, Binding: binding,
