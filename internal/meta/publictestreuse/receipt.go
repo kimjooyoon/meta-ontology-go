@@ -18,6 +18,8 @@ import (
 const (
 	ReceiptSchema            = "gooo/public-test-reuse-receipt/v3"
 	ReportSchema             = "gooo/public-test-reuse-report/v4"
+	PeakRSSGoCommands        = "MAX_COMPLETED_GO_COMMAND_PROCESSES"
+	PeakRSSObserver          = "CURRENT_REUSE_OBSERVER_PROCESS"
 	OriginalOperation        = Operation + ".baseline"
 	ReplayOperation          = Operation + ".replay"
 	ReceiptReason            = ReasonBaseline
@@ -141,6 +143,7 @@ type Report struct {
 	TestMS                     int64                   `json:"test_ms"`
 	WallMS                     int64                   `json:"wall_ms"`
 	PeakRSSKib                 int64                   `json:"peak_rss_kib"`
+	PeakRSSSubject             string                  `json:"peak_rss_subject"`
 	GeneratedProgramBytes      int64                   `json:"generated_program_bytes"`
 	GeneratedProgramLines      int                     `json:"generated_program_lines"`
 	TestContractBytes          int64                   `json:"test_contract_bytes"`

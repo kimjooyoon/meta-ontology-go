@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
@@ -39,6 +40,7 @@ func testLegacyReceiptReport(t *testing.T, schema, reason, blocked string) {
 		t.Fatal(err)
 	}
 	initial.ReceiptMisses = 1
+	initial.PeakRSSSubject = publictestreuse.PeakRSSObserver
 	if err := writeReport(output, initial, "Historical input observations remain unresolved."); err != nil {
 		t.Fatal(err)
 	}
@@ -54,6 +56,17 @@ func testLegacyReceiptReport(t *testing.T, schema, reason, blocked string) {
 	if report.Unknown == nil || report.Unknown.NextOperation != publictestreuse.UnknownNextEvidence ||
 		len(report.Unknown.BlockedBy) != 1 || report.Unknown.BlockedBy[0] != blocked {
 		t.Fatal("unresolved report lost its next operation or missing input domain")
+	}
+	if report.PeakRSSSubject != publictestreuse.PeakRSSObserver || snapshot(report).PeakRSSSubject != report.PeakRSSSubject {
+		t.Fatal("reuse summary lost the observed process")
+	}
+	human, err := os.ReadFile(filepath.Join(output, "reuse-report.md"))
+	if err != nil || !strings.Contains(string(human), report.PeakRSSSubject) {
+		t.Fatal("readable report lost the memory subject", err)
+	}
+	report.PeakRSSSubject = "DISPLAY_HINT_ONLY"
+	if err := publictestreuse.VerifyAssessment(report); err != nil {
+		t.Fatal("display metadata changed the Gooo decision", err)
 	}
 	raw, err := os.ReadFile(filepath.Join(output, "reuse-report.json"))
 	if err != nil {

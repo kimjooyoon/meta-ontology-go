@@ -4,6 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/test-reuse-tool-origin-20261018"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		".github/workflows/self-improvement-public-continuity.yml",
 		"docs/language/language-product-priorities.ko.md",
 		"internal/meta/publictestreuse/policy.gooo",
 		"internal/meta/publictestreuse/receipt.go",
@@ -21,5 +22,6 @@ func init() {
 		"scripts/self-improvement-public-test-reuse/run.go",
 		"scripts/self-improvement-public-test-reuse/tool_inputs.go",
 		"scripts/self-improvement-public-test-reuse/tool_inputs_test.go",
+		"scripts/self-improvement-public-test-reuse/verify.go",
 	}
 }

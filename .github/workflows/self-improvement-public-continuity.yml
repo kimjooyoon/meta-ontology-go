@@ -482,7 +482,7 @@ jobs:
           jq -n \
             --argjson baseline "$(jq . "$work/baseline-result/reuse-report.json")" \
             --argjson replay "$(jq . "$work/replay-result/reuse-report.json")" \
-            '{schema:"gooo/public-test-reuse-runtime-measurement/v1",runtime_comparable:false,before:{build_ms:$baseline.build_ms,test_ms:$baseline.test_ms,wall_ms:$baseline.wall_ms,peak_rss_kib:$baseline.peak_rss_kib,test_executions:$baseline.test_executions,reused_test_executions:$baseline.reused_test_executions},after:{build_ms:$replay.build_ms,test_ms:$replay.test_ms,wall_ms:$replay.wall_ms,peak_rss_kib:$replay.peak_rss_kib,test_executions:$replay.test_executions,reused_test_executions:$replay.reused_test_executions},unknown_reason:"RUNTIME_MODES_NOT_EQUIVALENT"}' \
+            '{schema:"gooo/public-test-reuse-runtime-measurement/v1",runtime_comparable:false,before:{build_ms:$baseline.build_ms,test_ms:$baseline.test_ms,wall_ms:$baseline.wall_ms,peak_rss_kib:$baseline.peak_rss_kib,peak_rss_subject:$baseline.peak_rss_subject,test_executions:$baseline.test_executions,reused_test_executions:$baseline.reused_test_executions},after:{build_ms:$replay.build_ms,test_ms:$replay.test_ms,wall_ms:$replay.wall_ms,peak_rss_kib:$replay.peak_rss_kib,peak_rss_subject:$replay.peak_rss_subject,test_executions:$replay.test_executions,reused_test_executions:$replay.reused_test_executions},unknown_reason:"RUNTIME_MODES_NOT_EQUIVALENT"}' \
             > "$publish/test-reuse-runtime-measurements.json"
 
           artifact_names=(

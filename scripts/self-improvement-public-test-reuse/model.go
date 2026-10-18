@@ -57,15 +57,16 @@ type verificationInput struct {
 }
 
 type metricSnapshot struct {
-	BuildExecutions      int   `json:"build_executions"`
-	TestExecutions       int   `json:"test_executions"`
-	ReusedTestExecutions int   `json:"reused_test_executions"`
-	ReceiptHits          int   `json:"receipt_hits"`
-	ReceiptMisses        int   `json:"receipt_misses"`
-	BuildMS              int64 `json:"build_ms"`
-	TestMS               int64 `json:"test_ms"`
-	WallMS               int64 `json:"wall_ms"`
-	PeakRSSKib           int64 `json:"peak_rss_kib"`
+	BuildExecutions      int    `json:"build_executions"`
+	TestExecutions       int    `json:"test_executions"`
+	ReusedTestExecutions int    `json:"reused_test_executions"`
+	ReceiptHits          int    `json:"receipt_hits"`
+	ReceiptMisses        int    `json:"receipt_misses"`
+	BuildMS              int64  `json:"build_ms"`
+	TestMS               int64  `json:"test_ms"`
+	WallMS               int64  `json:"wall_ms"`
+	PeakRSSKib           int64  `json:"peak_rss_kib"`
+	PeakRSSSubject       string `json:"peak_rss_subject"`
 }
 
 type comparisonSnapshot struct {

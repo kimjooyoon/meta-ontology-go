@@ -59,6 +59,7 @@ func baselineReport(identity identity, build, test commandResult) publictestreus
 	report.BuildMS = build.WallMS
 	report.TestMS = test.WallMS
 	report.PeakRSSKib = maxInt64(build.PeakRSSKib, test.PeakRSSKib)
+	report.PeakRSSSubject = publictestreuse.PeakRSSGoCommands
 	report.GeneratedBytesEqual = true
 	report.SemanticEqual = identity.Binding.CanonicalSemanticDigest == identity.Binding.GeneratedSemanticDigest
 	return report
@@ -131,6 +132,7 @@ func runReuse(input executionInput) error {
 		report.SemanticEqual = true
 	}
 	report.WallMS = elapsedMS(started)
+	report.PeakRSSSubject = publictestreuse.PeakRSSObserver
 	report.PeakRSSKib, err = toolchaincli.CurrentPeakRSSKiB()
 	if err != nil {
 		return fmt.Errorf("observe reuse process peak RSS: %w", err)
@@ -350,7 +352,7 @@ func writeReport(outputDir string, report publictestreuse.Report, note string) e
 	if err := writeNew(filepath.Join(outputDir, "reuse-report.json"), data, 0o444); err != nil {
 		return err
 	}
-	human := fmt.Sprintf("# Public generated-test reuse\n\nDecision: `%s`\nReason: `%s`\nCase: `%s`\n\nTest executions: `%d`\nReused test executions: `%d`\nReceipt hits/misses: `%d/%d`\nBuild executions: `%d`\nBuild/test ms: `%d/%d`\nWall ms / peak RSS KiB: `%d/%d`\nGenerated program bytes / lines: `%d/%d`\nTest contract bytes / lines: `%d/%d`\nRepository writes / local test executions: `%d/%d`\nReceipt: `%s`\nOriginal invocation: `%s`\n\n%s\n", report.Decision, report.Reason, report.CaseID, report.TestExecutions, report.ReusedTestExecutions, report.ReceiptHits, report.ReceiptMisses, report.BuildExecutions, report.BuildMS, report.TestMS, report.WallMS, report.PeakRSSKib, report.GeneratedProgramBytes, report.GeneratedProgramLines, report.TestContractBytes, report.TestContractLines, report.RepositoryWrites, report.LocalTestExecutions, report.ReceiptDigest, report.OriginalInvocationID, note)
+	human := fmt.Sprintf("# Public generated-test reuse\n\nDecision: `%s`\nReason: `%s`\nCase: `%s`\n\nTest executions: `%d`\nReused test executions: `%d`\nReceipt hits/misses: `%d/%d`\nBuild executions: `%d`\nBuild/test ms: `%d/%d`\nWall ms / peak RSS KiB: `%d/%d`\nPeak RSS subject: `%s`\nGenerated program bytes / lines: `%d/%d`\nTest contract bytes / lines: `%d/%d`\nRepository writes / local test executions: `%d/%d`\nReceipt: `%s`\nOriginal invocation: `%s`\n\n%s\n", report.Decision, report.Reason, report.CaseID, report.TestExecutions, report.ReusedTestExecutions, report.ReceiptHits, report.ReceiptMisses, report.BuildExecutions, report.BuildMS, report.TestMS, report.WallMS, report.PeakRSSKib, report.PeakRSSSubject, report.GeneratedProgramBytes, report.GeneratedProgramLines, report.TestContractBytes, report.TestContractLines, report.RepositoryWrites, report.LocalTestExecutions, report.ReceiptDigest, report.OriginalInvocationID, note)
 	return writeNew(filepath.Join(outputDir, "reuse-report.md"), []byte(human), 0o444)
 }
 
