@@ -19,12 +19,15 @@ func (p *readProjection) collectLocalReadNodes(file *ast.File, bindings map[stri
 		}
 		bodycodegen.InspectBodyProjection(f.Body, func(node ast.Node) bool {
 			if call, ok := node.(*ast.CallExpr); ok {
-				if _, _, mapped := bodycodegen.CollectionMapProjection(call); mapped {
+				_, _, mapped := bodycodegen.CollectionMapProjection(call)
+				_, _, filtered := bodycodegen.CollectionFilterProjection(call)
+				if mapped || filtered {
 					c, cf := constructs[conditionOriginKey{ids[0], ids[1], constructionOrdinal}]
 					r, rf := lookup[conditionOriginKey{ids[0], ids[1], ordinal}]
 					constructionOrdinal++
 					ordinal++
-					if cf && rf && constructionSites[c].Kind == "map_values" && sites[r].Kind == "map_value" {
+					if cf && rf && (mapped && constructionSites[c].Kind == "map_values" && sites[r].Kind == "map_value" ||
+						filtered && constructionSites[c].Kind == "filter_values" && sites[r].Kind == "filter_value") {
 						p.nodes = append(p.nodes, readProjectionNode{node: call, site: c, mapReadSite: r, start: p.offset(call.Pos()), end: p.offset(call.End())})
 					}
 					return true

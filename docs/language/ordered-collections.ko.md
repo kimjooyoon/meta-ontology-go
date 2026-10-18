@@ -49,6 +49,16 @@ activity Sum(Basket) -> Integer id "urn:totals:sum" computes `
 중첩 길이의 곱은 65,536까지이며, 활동 호출의 작업량 제한은 별도로 적용한다.
 [필드와 지역 변수의 기원](native-field-lineage.ko.md)에서 이 범위를 설명한다.
 원소 대입, 목록 증가, 중첩 목록은 현재 지원 범위에 포함되지 않는다.
+
+`filter_values(input.values, Keep)`는 Gooo에서 선언한 `Keep` 활동을 각 원소에
+한 번 적용해 남길 값을 고른다. `Keep`은 Integer·Text·Boolean 중 한 값을 받아
+Boolean을 반환하는 고정 `computes` 활동이어야 한다. 모델이 없어도 입력 순서대로
+결정론적으로 실행하며, 중복 값은 각각의 위치를 유지한다. 실행 기록에는 모든 입력
+읽기와 남긴 출력의 원래 입력 위치가 따로 남는다. 버린 값에는 출력 생성 기록이 없다.
+[실행 예제](../../examples/collection-filter/README.md)에서 세 가지 경우와
+출처 기록을 볼 수 있다. 생성된 필터 내부의 조건문은 Gooo 소스의 조건문으로
+계산하지 않는다.
+
 목록 선언이 있는 소스는 V5를 사용하고, 기존 단일 값 소스는 기존 프로필을 유지한다.
 
 ## 조건식의 후보를 Gooo에 두기

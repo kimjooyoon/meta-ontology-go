@@ -16,6 +16,11 @@ func InspectBodyProjection(root ast.Node, visit func(ast.Node) bool) {
 				visit(nil)
 				return false
 			}
+			if input, _, filtered := CollectionFilterProjection(call); filtered {
+				InspectBodyProjection(input, visit)
+				visit(nil)
+				return false
+			}
 		}
 		return true
 	})

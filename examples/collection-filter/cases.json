@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"example/filtered-labels:Select": {"values": ["", "alpha", "한글", "alpha", ""]}},
+      "expected": {"example/filtered-labels:Select": {"values": ["alpha", "한글", "alpha"]}}
+    },
+    {
+      "inputs": {"example/filtered-labels:Select": {"values": ["", ""]}},
+      "expected": {"example/filtered-labels:Select": {"values": []}}
+    },
+    {
+      "inputs": {"example/filtered-labels:Select": {"values": []}},
+      "expected": {"example/filtered-labels:Select": {"values": []}}
+    }
+  ]
+}

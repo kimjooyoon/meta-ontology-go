@@ -72,15 +72,17 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 			literal := constructionLiteral(n)
 			var expression ast.Expr
 			var elements []ast.Expr
-			kind, mapperID := "", ""
+			kind, mapperID, predicateID := "", "", ""
 			if literal != nil {
 				expression, elements = literal, literal.Elts
 			} else if call, ok := n.(*ast.CallExpr); ok {
-				_, mapper, mapped := bodycodegen.CollectionMapProjection(call)
-				if !mapped {
+				if _, mapper, mapped := bodycodegen.CollectionMapProjection(call); mapped {
+					expression, elements, kind, mapperID = call, []ast.Expr{mapper}, "map_values", bindings[mapper.Name][1]
+				} else if _, predicate, filtered := bodycodegen.CollectionFilterProjection(call); filtered {
+					expression, elements, kind, predicateID = call, []ast.Expr{predicate}, "filter_values", bindings[predicate.Name][1]
+				} else {
 					return true
 				}
-				expression, elements, kind, mapperID = call, []ast.Expr{mapper}, "map_values", bindings[mapper.Name][1]
 			} else {
 				return true
 			}
@@ -91,9 +93,9 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 				return true
 			}
 			start, end := fset.Position(expression.Pos()).Offset, fset.Position(expression.End()).Offset
-			site := CompositionConstructionSite{RootActivityID: ids[0], ActivityID: ids[1], NativeOrdinal: current, ElementType: sequence.Elem().String(), Expression: prior.Source[start:end], ProjectionSHA256: sha, Start: start, End: end, Elements: []CompositionConstructionElementSite{}, Kind: kind, MapperActivityID: mapperID}
+			site := CompositionConstructionSite{RootActivityID: ids[0], ActivityID: ids[1], NativeOrdinal: current, ElementType: sequence.Elem().String(), Expression: prior.Source[start:end], ProjectionSHA256: sha, Start: start, End: end, Elements: []CompositionConstructionElementSite{}, Kind: kind, MapperActivityID: mapperID, PredicateActivityID: predicateID}
 			origin := origins[conditionOriginKey{ids[0], ids[1], current}]
-			if origin.Kind != kind || kind == "map_values" && origin.MapperActivityID != mapperID {
+			if origin.Kind != kind || kind == "map_values" && origin.MapperActivityID != mapperID || kind == "filter_values" && origin.PredicateActivityID != predicateID {
 				bindingError = fmt.Errorf("construction source kind or mapper identity differs from native projection")
 				return false
 			}
@@ -121,7 +123,9 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 		return nil, fmt.Errorf("collection constructions exceed 4096 sites")
 	}
 	for _, s := range sites {
-		if (s.Kind == "map_values" && (s.MapperActivityID == "" || len(s.Elements) != 1 || s.Source.Status != "MAPPED")) || s.ActivityID == "" || s.RootActivityID == "" || len(s.Elements) > 256 || (s.ElementType != "int64" && s.ElementType != "string" && s.ElementType != "bool") {
+		if ((s.Kind == "map_values" && (s.MapperActivityID == "" || s.PredicateActivityID != "" || len(s.Elements) != 1 || s.Source.Status != "MAPPED")) ||
+			(s.Kind == "filter_values" && (s.PredicateActivityID == "" || s.MapperActivityID != "" || len(s.Elements) != 1 || s.Source.Status != "MAPPED"))) ||
+			s.ActivityID == "" || s.RootActivityID == "" || len(s.Elements) > 256 || (s.ElementType != "int64" && s.ElementType != "string" && s.ElementType != "bool") {
 			return nil, fmt.Errorf("collection construction lacks supported identity, type or element bound")
 		}
 	}
