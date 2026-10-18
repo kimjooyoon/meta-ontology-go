@@ -21,5 +21,7 @@ func init() {
 		"internal/meta/languagereadiness/toolchainrelease/platform_package_profile.go",
 		"internal/meta/languagereadiness/toolchainrelease/platform_package_profile_reference.go",
 		"internal/verify/scope_gooo_body_profile_discovery.go",
+		"scripts/ci-effort-observation/operation_guard_test.go",
+		"scripts/ci-effort-observation/validate.go",
 	}
 }

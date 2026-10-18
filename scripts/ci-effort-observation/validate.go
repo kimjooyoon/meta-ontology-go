@@ -326,11 +326,36 @@ func validateOperations(operations []OperationObservation, specs []OperationSpec
 		if err != nil || !operation.CommandBound || operation.WorkflowSourcePath != workflowPath || operation.WorkflowSourceDigest != digestBytes(workflow) || operation.CommandContextDigest != contextDigest {
 			return fmt.Errorf("operation command context is unbound")
 		}
-		if spec.GuardStepName != "" && (!operation.GuardBound || operation.GuardStepStatus != "completed" || operation.GuardStepConclusion != "success") {
+		if !validOperationGuard(operation) {
 			return fmt.Errorf("operation guard binding is incomplete")
 		}
 	}
 	return nil
+}
+
+// Rejected observations retain the reason execution could not be credited.
+// Only executed/skipped operations and failures after a successful guard bind it.
+func validOperationGuard(operation OperationObservation) bool {
+	success := operation.GuardBound && operation.GuardStepStatus == "completed" && operation.GuardStepConclusion == "success"
+	absent := !operation.GuardBound && operation.GuardStepStatus == "" && operation.GuardStepConclusion == ""
+	if operation.GuardStepName == "" {
+		return absent
+	}
+	if operation.State != "REJECTED" {
+		return success && operation.RejectionReason == ""
+	}
+	if operation.WallMS != 0 || operation.Skipped || operation.BelowSourceResolution || operation.Unknown != nil {
+		return false
+	}
+	switch operation.RejectionReason {
+	case "DUPLICATE_JOB_OBSERVATION", "DUPLICATE_STEP_OBSERVATION", "DUPLICATE_GUARD_STEP_OBSERVATION":
+		return absent
+	case "GUARD_STEP_NOT_SUCCESSFUL":
+		return !operation.GuardBound && operation.GuardStepStatus != "" &&
+			(operation.GuardStepStatus != "completed" || operation.GuardStepConclusion != "success")
+	default:
+		return success
+	}
 }
 
 func sameStrings(left, right []string) bool {
