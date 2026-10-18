@@ -77,6 +77,15 @@ runtime improvement is inferred from the source edit count.
 Use the implemented experimental entry point:
 
 ~~~sh
+go run ./cmd/syntax-registration-candidate -root PROJECT -intent case-intent.json -output NEW_EXTERNAL_DIRECTORY
+~~~
+
+The direct form composes the case in Gooo, observes and pins the source and
+execution identity, then compiles, rechecks and exports the proposal in one
+process. No intermediate request file is needed. For inspection before
+generation, the same intent supports the two-step form:
+
+~~~sh
 go run ./cmd/syntax-registration-candidate -root PROJECT -intent case-intent.json -inspect > inspection.json
 jq '.pinned_request' inspection.json > pinned-request.json
 go run ./cmd/syntax-registration-candidate -root PROJECT -request pinned-request.json -output NEW_EXTERNAL_DIRECTORY
@@ -99,7 +108,8 @@ Compact case intent example:
 `pinned_request` retains the exact case intent and Gooo contract digest.
 Compilation re-evaluates the same activity and refuses changed case values,
 version, promotion flag or source identity. The host independently checks case
-shape and source replay; composition does not admit the candidate.
+shape and source replay; composition does not admit the candidate. Both forms
+export only `PROPOSAL_ONLY` / `UNASSESSED` artifacts outside the input project.
 
 Selectors are `ordinary`, `text-fields`, `implicit-ports`,
 `ordered-collections`, or an exact
