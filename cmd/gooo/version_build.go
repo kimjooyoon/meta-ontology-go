@@ -41,7 +41,8 @@ type versionBuildInfo struct {
 	SDK               versionSDKInfo        `json:"decision_runtime"`
 	NativeGoRequired  string                `json:"native_go_required"`
 
-	PureBodyLimits bodycodegen.ProfileLimits `json:"pure_body_limits"`
+	PureBodyLimits          bodycodegen.ProfileLimits      `json:"pure_body_limits"`
+	PackageReceiptTransport packageReceiptTransportProfile `json:"package_receipt_transport"`
 }
 
 func versionBuildMetadata(info *debug.BuildInfo, runtimeVersion string) versionBuildInfo {
@@ -50,7 +51,7 @@ func versionBuildMetadata(info *debug.BuildInfo, runtimeVersion string) versionB
 		CompilerSourceSHA: "UNBOUND_LOCAL_SOURCE", SourceStatus: "UNOBSERVED_VCS",
 		VCSRevision: "unobserved", VCSModified: "unobserved", NativeGoRequired: "go1.27.2",
 		SDK:            versionSDKInfo{ModulePath: decisionRuntimeModule, Version: "unobserved"},
-		PureBodyLimits: bodycodegen.CurrentProfileLimits()}
+		PureBodyLimits: bodycodegen.CurrentProfileLimits(), PackageReceiptTransport: currentPackageReceiptTransport()}
 	if info == nil {
 		return result
 	}

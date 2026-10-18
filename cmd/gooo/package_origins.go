@@ -60,7 +60,7 @@ func runPackageOrigins(args []string, stdout, stderr io.Writer) int {
 		return exitUsage
 	}
 	deadline := time.Now().Add(commandDeadline)
-	raw, err := readBodyExecutionFile(path, 32<<20)
+	raw, err := readPackageReceipt(path)
 	if err != nil {
 		fmt.Fprintln(stderr, "gooo package origins:", err)
 		return exitFailure
