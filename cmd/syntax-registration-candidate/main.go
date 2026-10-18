@@ -12,6 +12,15 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
 )
 
+type inspectionResponse struct {
+	SnapshotDigest    string                               `json:"snapshot_digest"`
+	SourceDigest      string                               `json:"source_digest"`
+	Toolchain         string                               `json:"toolchain"`
+	ExecutionIdentity syntaxregistration.ExecutionIdentity `json:"execution_identity"`
+	SemanticAdmission string                               `json:"semantic_admission"`
+	PinnedRequest     syntaxregistration.Request           `json:"pinned_request"`
+}
+
 func main() {
 	root := flag.String("root", ".", "read-only input project")
 	requestPath := flag.String("request", "", "explicit typed registration request JSON")
@@ -60,9 +69,7 @@ func run(root, requestPath, output string, inspect bool, started time.Time) erro
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(os.Stdout).Encode(map[string]any{
-			"snapshot_digest": snapshot, "source_digest": source, "toolchain": runtime.Version(),
-			"execution_identity": identity, "semantic_admission": "UNASSESSED"})
+		return json.NewEncoder(os.Stdout).Encode(newInspectionResponse(request, snapshot, source, runtime.Version(), identity))
 	}
 	plan, err := syntaxregistration.Compile(repository, request)
 	if err != nil {
@@ -76,4 +83,13 @@ func run(root, requestPath, output string, inspect bool, started time.Time) erro
 		return err
 	}
 	return exportCandidate(root, output, candidate, time.Since(started).Milliseconds())
+}
+
+func newInspectionResponse(request syntaxregistration.Request, snapshot, source, toolchain string, identity syntaxregistration.ExecutionIdentity) inspectionResponse {
+	request.SnapshotDigest = snapshot
+	request.SourceDigest = source
+	request.Toolchain = toolchain
+	request.ExecutionIdentity = identity
+	return inspectionResponse{SnapshotDigest: snapshot, SourceDigest: source, Toolchain: toolchain,
+		ExecutionIdentity: identity, SemanticAdmission: "UNASSESSED", PinnedRequest: request}
 }
