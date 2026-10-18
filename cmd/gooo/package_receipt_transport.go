@@ -14,6 +14,18 @@ const (
 	packageReceiptGzipMaxBytes = 2 << 20
 )
 
+type packageReceiptTransportProfile struct {
+	Compression        string `json:"compression"`
+	RequiresJSON       bool   `json:"requires_json"`
+	MaxCompressedBytes int    `json:"max_compressed_bytes"`
+	MaxJSONBytes       int    `json:"max_json_bytes"`
+	ReceiptIdentity    string `json:"receipt_identity"`
+}
+
+func currentPackageReceiptTransport() packageReceiptTransportProfile {
+	return packageReceiptTransportProfile{"gzip", true, packageReceiptGzipMaxBytes, packageReceiptMaxBytes, "original_json_bytes"}
+}
+
 func validatePackageReceiptCompression(compression string, jsonMode bool) error {
 	if compression != "" && (compression != "gzip" || !jsonMode) {
 		return fmt.Errorf("--receipt-compression requires --json and the value gzip")

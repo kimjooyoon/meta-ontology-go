@@ -108,6 +108,51 @@ func TestPackageReceiptCompressionRequiresExplicitJSON(t *testing.T) {
 	}
 }
 
+func TestPackageReceiptTransportIsDiscoverableWithoutExecution(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := runVersion([]string{"--build", "--json"}, &stdout, &stderr); code != exitOK {
+		t.Fatal(code, stderr.String())
+	}
+	var report struct {
+		Transport packageReceiptTransportProfile `json:"package_receipt_transport"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	want := packageReceiptTransportProfile{"gzip", true, 2097152, 33554432, "original_json_bytes"}
+	if report.Transport != want || report.Transport != currentPackageReceiptTransport() {
+		t.Fatal("transport discovery differs from enforced limits", report)
+	}
+	if versionBuildMetadata(nil, "unobserved").CompilerSourceSHA != "UNBOUND_LOCAL_SOURCE" {
+		t.Fatal("transport profile manufactured build identity")
+	}
+}
+
+func TestPackageCompressedReplayKeepsTransportFailureFirst(t *testing.T) {
+	root := filepath.Join("..", "..", "examples", "constant-helpers")
+	var output, stderr, compressed bytes.Buffer
+	if err := writePackageReceiptJSON(&compressed, map[string]string{"status": "PARTIAL"}, "gzip"); err != nil {
+		t.Fatal(err)
+	}
+	raw := compressed.Bytes()
+	raw[len(raw)-5] ^= 1
+	path := filepath.Join(t.TempDir(), "broken.json.gz")
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	code := run([]string{"package", "replay", "--json", "--receipt", path,
+		"--cases", filepath.Join(root, "cases.json"), "--go", filepath.Join(t.TempDir(), "must-not-run"),
+		filepath.Join(root, "gooo.workspace.json")}, &output, &stderr)
+	var receipt packageExecutionReceipt
+	if err := json.Unmarshal(output.Bytes(), &receipt); err != nil {
+		t.Fatal(err)
+	}
+	if code != exitFailure || receipt.Decision != "FAIL_CLOSED" || receipt.Result != nil ||
+		receipt.ReplayedFrom != "" || receipt.CasesDigest != "" || !bytes.Contains([]byte(receipt.Error), []byte("decode compressed package receipt")) {
+		t.Fatal("transport failure lost priority or admitted execution", code, receipt)
+	}
+}
+
 func TestPackageCompressedReceiptExecutesAndReplays(t *testing.T) {
 	t.Setenv("GOOO_LAYA_URL", "")
 	t.Setenv("GOOO_LAYA_API_KEY", "")

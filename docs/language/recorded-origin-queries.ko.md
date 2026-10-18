@@ -30,6 +30,9 @@ gooo package origins --receipt execution.json.gz --json
 `--receipt-compression gzip`은 `--json`과 함께 사용한다. 읽기는 확장자가 아닌 gzip
 헤더로 구분한다. `--origin-receipt`, `--construction-receipt`도 같은 읽기를 지원한다.
 소비 에이전트는 압축 출력임을 명시적으로 선택하고 종료 코드를 먼저 확인해야 한다.
+`gooo version --build --json`의 `package_receipt_transport`에는 지원 압축 형식,
+JSON 모드 요구사항, 두 바이트 한도와 정체성 기준이 들어 있다. 이 필드가 없는 이전
+컴파일러에 압축 옵션을 추정해서 전달하지 않는다.
 
 - gzip 전송 한도는 **2MiB**, 복원한 JSON 한도는 **32MiB**다. 두 한도를 별도로 검사한다.
 - 출력과 입력을 읽는 중에도 누적 크기를 제한한다. gzip은 한 멤버만 받고 체크섬,
