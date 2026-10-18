@@ -42,7 +42,7 @@ func InspectInputs(repository fs.FS, request Request) (string, string, error) {
 }
 
 func readInputs(repository fs.FS, request Request) (map[string][]byte, error) {
-	if request.BaseVersion < 22 || request.BaseVersion > 10000 || !registrationSourcePath(request.Case.Path) {
+	if request.BaseVersion < firstDenominatorVersion || request.BaseVersion > 10000 || !registrationSourcePath(request.Case.Path) {
 		return nil, failure("REFUTED", "validate-request", "REGISTRATION_INPUT_INVALID", "", "correct-explicit-input")
 	}
 	paths, err := sourceInputPaths(repository)
