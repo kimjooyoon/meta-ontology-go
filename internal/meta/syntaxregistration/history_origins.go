@@ -21,9 +21,22 @@ func pinPreviousSyntaxTarget(source *goSource, version, capability int) error {
 	if err != nil {
 		return err
 	}
-	if target, exists := history.targets[version]; exists && target != capability {
-		return fmt.Errorf("historical syntax target differs from its pinned source corpus")
+	if target, exists := history.targets[version]; exists {
+		if target != capability {
+			return fmt.Errorf("historical syntax target differs from its pinned source corpus")
+		}
+		return nil
 	}
+	for prior := range history.targets {
+		if prior >= version {
+			return fmt.Errorf("historical syntax target must append after the latest version")
+		}
+	}
+	if len(history.helpers) != 0 {
+		return appendHistoryOrigin(source, history, version, capability)
+	}
+	// A legacy inline switch needs one bounded normalization before it can
+	// accept append-only changes without rewriting every historical case.
 	history.targets[version] = capability
 	writeHistoryOrigins(source, history)
 	return nil
