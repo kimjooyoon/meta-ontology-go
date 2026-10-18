@@ -91,3 +91,20 @@ func TestCollectionMapRetainsCallBound(t *testing.T) {
 		}
 	}
 }
+
+func TestCollectionMapRejectsUnsupportedMappers(t *testing.T) {
+	for _, expression := range []string{
+		"map_values(input.values)", "map_values(input.values,Quote,Quote)",
+		"map_values(input.values,Missing)", "map_values(input.values,input)",
+		"map_values(input.values,Quote(input.values[0]))", "map_values(input.values,Project)",
+		"map_values(input.values[0],Quote)", "map_values([]int64{1},Quote)",
+	} {
+		source := strings.Replace(collectionMapFixture, "map_values(input.values, Quote)", expression, 1)
+		if source == collectionMapFixture {
+			t.Fatal("refusal fixture did not change")
+		}
+		if _, err := Generate("invalid-map.gooo", []byte(source), "Project"); err == nil {
+			t.Fatal("unsupported map accepted", expression)
+		}
+	}
+}
