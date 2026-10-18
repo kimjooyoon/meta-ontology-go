@@ -22,7 +22,7 @@ func TestCompilerDigestRetainsNativeResourceReaderOrigins(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"model.go", "resource_darwin.go", "resource_linux.go", "resource_other.go"} {
+	for _, name := range []string{"model.go", "go_inputs.go", "go_command.go", "resource_darwin.go", "resource_linux.go", "resource_other.go"} {
 		relative := "internal/toolchaincli/" + name
 		if !slices.Contains(compilerManifestPaths, relative) {
 			t.Fatal("native resource origin is missing", relative)

@@ -1,6 +1,9 @@
 package main
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
+)
 
 const (
 	testCommand  = "go test -tags generated_project -count=1 ."
@@ -26,7 +29,7 @@ type identity struct {
 	ManifestBytes []byte
 	PolicyBytes   []byte
 	TestBytes     []byte
-	GoCommand     goCommand
+	GoCommand     toolchaincli.GeneratedTestGoCommand
 }
 
 type commandResult struct {

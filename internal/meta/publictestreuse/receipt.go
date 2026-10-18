@@ -44,6 +44,8 @@ var compilerManifestPaths = []string{
 	"internal/meta/publictestreuse/policy.gooo",
 	"internal/meta/publictestreuse/receipt.go",
 	"internal/meta/publictestreuse/tool_inputs.go",
+	"internal/toolchaincli/go_inputs.go",
+	"internal/toolchaincli/go_command.go",
 	"internal/toolchaincli/model.go",
 	"internal/toolchaincli/resource_darwin.go",
 	"internal/toolchaincli/resource_linux.go",
@@ -53,7 +55,6 @@ var compilerManifestPaths = []string{
 	"scripts/self-improvement-public-test-reuse/model.go",
 	"scripts/self-improvement-public-test-reuse/package_inputs.go",
 	"scripts/self-improvement-public-test-reuse/run.go",
-	"scripts/self-improvement-public-test-reuse/tool_inputs.go",
 	"scripts/self-improvement-public-test-reuse/verify.go",
 }
 

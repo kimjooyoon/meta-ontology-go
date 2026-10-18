@@ -69,7 +69,7 @@ func sealOriginalReceipt(output string, identity identity, build, test commandRe
 	if !build.Success || !test.Success || identity.Binding.CanonicalSemanticDigest != identity.Binding.GeneratedSemanticDigest {
 		return errors.New("Gooo policy cannot seal an unsuccessful original execution")
 	}
-	if err := identity.GoCommand.verifyBytes(); err != nil {
+	if err := identity.GoCommand.VerifyBytes(); err != nil {
 		return err
 	}
 	receipt := publictestreuse.Receipt{
@@ -202,11 +202,12 @@ func loadIdentityWithInputs(input executionInput,
 	if err != nil {
 		return identity{}, err
 	}
-	command, err := captureGoCommand()
+	command, err := toolchaincli.CaptureGeneratedTestGo()
 	if err != nil {
 		return identity{}, fmt.Errorf("observe selected Go command: %w", err)
 	}
 	commandDigest := publictestreuse.TestCommandDigest(testCommand, cache.HashBytes(testContract).String())
+	toolInputs := publictestreuse.ExecutionToolInputs(command.Inputs)
 	return identity{
 		Policy: policy, PolicyBytes: policySource, ProgramBytes: program,
 		ManifestBytes: manifest, TestBytes: testContract, GoCommand: command,
@@ -215,8 +216,8 @@ func loadIdentityWithInputs(input executionInput,
 			CanonicalSourceDigest: cache.HashBytes(source).String(), CanonicalSemanticDigest: policy.SemanticDigest,
 			GeneratedOutputDigest: cache.HashBytes(program).String(), GeneratedSemanticDigest: generatedSemantic,
 			GeneratedManifestDigest: cache.HashBytes(manifest).String(), CompilerDigest: compilerDigest,
-			ReleasedToolDigest: publictestreuse.ReleasedToolDigest(compilerDigest), ToolchainDigest: command.Inputs.Digest(),
-			ToolchainVersion: command.Inputs.Version, ToolInputs: command.Inputs, TestCommand: testCommand, TestCommandDigest: commandDigest,
+			ReleasedToolDigest: publictestreuse.ReleasedToolDigest(compilerDigest), ToolchainDigest: toolInputs.Digest(),
+			ToolchainVersion: toolInputs.Version, ToolInputs: toolInputs, TestCommand: testCommand, TestCommandDigest: commandDigest,
 			TestContractDigest: cache.HashBytes(testContract).String(), PackageInputs: packageInputs,
 		},
 	}, nil
@@ -266,8 +267,8 @@ func manifestSemanticDigest(data []byte) (string, error) {
 	return digest, nil
 }
 
-func runTimed(tool goCommand, packageDir, label string, args []string) (commandResult, error) {
-	if err := tool.verifyBytes(); err != nil {
+func runTimed(tool toolchaincli.GeneratedTestGoCommand, packageDir, label string, args []string) (commandResult, error) {
+	if err := tool.VerifyBytes(); err != nil {
 		return commandResult{}, err
 	}
 	started := time.Now()
@@ -278,6 +279,9 @@ func runTimed(tool goCommand, packageDir, label string, args []string) (commandR
 	command.Stdout = &stdout
 	command.Stderr = &stderr
 	err := command.Run()
+	if err != nil && command.ProcessState == nil {
+		return commandResult{}, fmt.Errorf("start generated command %s: %w", label, err)
+	}
 	exitCode := 0
 	if err != nil {
 		exitCode = 1

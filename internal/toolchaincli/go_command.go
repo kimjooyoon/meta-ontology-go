@@ -1,4 +1,4 @@
-package main
+package toolchaincli
 
 import (
 	"crypto/sha256"
@@ -16,45 +16,44 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
 )
 
-type goCommand struct {
-	Inputs publictestreuse.ExecutionToolInputs
+type GeneratedTestGoCommand struct {
+	Inputs GeneratedTestGoInputs
 	Env    []string
 }
 
 // Observe the selected executable without starting a child. A wrapper's bytes
 // cannot establish which tool it will invoke, so this profile requires cmd/go.
-func captureGoCommand() (goCommand, error) {
+func CaptureGeneratedTestGo() (GeneratedTestGoCommand, error) {
 	path, err := exec.LookPath("go")
 	if err != nil {
-		return goCommand{}, err
+		return GeneratedTestGoCommand{}, err
 	}
-	return observeGoCommand(path, os.Environ())
+	return ObserveGeneratedTestGo(path, os.Environ())
 }
 
-func observeGoCommand(path string, inherited []string) (goCommand, error) {
+func ObserveGeneratedTestGo(path string, inherited []string) (GeneratedTestGoCommand, error) {
 	path, err := filepath.Abs(path)
 	if err != nil {
-		return goCommand{}, err
+		return GeneratedTestGoCommand{}, err
 	}
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		return goCommand{}, err
+		return GeneratedTestGoCommand{}, err
 	}
-	digest, version, err := nativeGoCommandBytes(path)
+	digest, version, err := nativeGeneratedTestGoBytes(path)
 	if err != nil {
-		return goCommand{}, err
+		return GeneratedTestGoCommand{}, err
 	}
-	env := goCommandEnvironment(inherited, filepath.Dir(filepath.Dir(path)))
-	inputs := publictestreuse.ExecutionToolInputs{Profile: publictestreuse.ExecutionToolProfile,
+	env := generatedTestGoEnvironment(inherited, filepath.Dir(filepath.Dir(path)))
+	inputs := GeneratedTestGoInputs{Profile: GeneratedTestGoProfile,
 		Path: path, ExecutableDigest: digest, Version: version, Platform: runtime.GOOS + "/" + runtime.GOARCH,
 		EnvironmentDigest: cache.HashBytes([]byte(strings.Join(env, "\x00"))).String()}
-	return goCommand{Inputs: inputs, Env: env}, inputs.Validate()
+	return GeneratedTestGoCommand{Inputs: inputs, Env: env}, inputs.Validate()
 }
 
-func nativeGoCommandBytes(path string) (string, string, error) {
+func nativeGeneratedTestGoBytes(path string) (string, string, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return "", "", err
@@ -83,7 +82,7 @@ func nativeGoCommandBytes(path string) (string, string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), info.GoVersion, nil
 }
 
-func goCommandEnvironment(inherited []string, root string) []string {
+func generatedTestGoEnvironment(inherited []string, root string) []string {
 	values := map[string]string{}
 	for _, entry := range inherited {
 		name, value, present := strings.Cut(entry, "=")
@@ -107,8 +106,8 @@ func goCommandEnvironment(inherited []string, root string) []string {
 	return env
 }
 
-func (command goCommand) verifyBytes() error {
-	current, err := observeGoCommand(command.Inputs.Path, command.Env)
+func (command GeneratedTestGoCommand) VerifyBytes() error {
+	current, err := ObserveGeneratedTestGo(command.Inputs.Path, command.Env)
 	if err != nil {
 		return err
 	}

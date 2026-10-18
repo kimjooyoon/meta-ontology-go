@@ -8,6 +8,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 func assessOriginalReport(policy publictestreuse.Policy, input publictestreuse.OriginalObservation, report *publictestreuse.Report) error {
@@ -101,11 +102,11 @@ func authorizeObservedReuse(input executionInput, identity identity, receipt *pu
 	if observed != identity.Binding.PackageInputs {
 		return errors.New("execution package changed after its policy observation")
 	}
-	command, err := captureGoCommand()
+	command, err := toolchaincli.CaptureGeneratedTestGo()
 	if err != nil {
 		return err
 	}
-	if command.Inputs != identity.Binding.ToolInputs {
+	if publictestreuse.ExecutionToolInputs(command.Inputs) != identity.Binding.ToolInputs {
 		return errors.New("selected Go command changed after its policy observation")
 	}
 	return publictestreuse.VerifyReceipt(*receipt, identity.Binding)

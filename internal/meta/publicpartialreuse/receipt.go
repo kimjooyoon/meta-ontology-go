@@ -45,6 +45,8 @@ var compilerManifestPaths = []string{
 	"internal/meta/publicpartialreuse/policy.go",
 	"internal/meta/publicpartialreuse/receipt.go",
 	"internal/toolchaincli/model.go",
+	"internal/toolchaincli/go_inputs.go",
+	"internal/toolchaincli/go_command.go",
 	"internal/toolchaincli/resource_darwin.go",
 	"internal/toolchaincli/resource_linux.go",
 	"internal/toolchaincli/resource_other.go",

@@ -2,34 +2,19 @@ package publictestreuse
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
-const ExecutionToolProfile = "gooo/generated-test-native-go-command/v1"
+const ExecutionToolProfile = toolchaincli.GeneratedTestGoProfile
 
-// ExecutionToolInputs describes the selected cmd/go and its frozen child
-// environment. It does not establish transitive SDK, module or effect closure.
-type ExecutionToolInputs struct {
-	Profile           string `json:"profile"`
-	Path              string `json:"path"`
-	ExecutableDigest  string `json:"executable_digest"`
-	Version           string `json:"version"`
-	Platform          string `json:"platform"`
-	EnvironmentDigest string `json:"environment_digest"`
-}
-
-var ErrUnobservedToolInputs = errors.New("historical receipt has no selected Go command observations")
+// ExecutionToolInputs keeps the receipt's named type as well as its JSON shape.
+// Canonical digests include the qualified type name; an alias would change it.
+type ExecutionToolInputs toolchaincli.GeneratedTestGoInputs
 
 func (inputs ExecutionToolInputs) Validate() error {
-	if inputs.Profile != ExecutionToolProfile || inputs.Path == "" || len(inputs.Path) > 4096 ||
-		strings.ContainsRune(inputs.Path, 0) || inputs.Version != "go1.27.2" ||
-		inputs.Platform == "" || len(inputs.Platform) > 64 ||
-		!cache.Digest(inputs.ExecutableDigest).Known() || !cache.Digest(inputs.EnvironmentDigest).Known() {
-		return errors.New("selected Go command observations are incomplete")
-	}
-	return nil
+	return toolchaincli.GeneratedTestGoInputs(inputs).Validate()
 }
 
 func (inputs ExecutionToolInputs) Digest() string {
@@ -39,3 +24,5 @@ func (inputs ExecutionToolInputs) Digest() string {
 	}
 	return digest.String()
 }
+
+var ErrUnobservedToolInputs = errors.New("historical receipt has no selected Go command observations")

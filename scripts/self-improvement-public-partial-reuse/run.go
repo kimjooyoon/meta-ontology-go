@@ -444,13 +444,17 @@ func executeTests(directory string, partition publicpartialreuse.Partition) (pub
 }
 
 func runTimed(directory, label string, args []string, expectedTests []string) (executionResult, []string, error) {
+	tool, err := toolchaincli.CaptureGeneratedTestGo()
+	if err != nil {
+		return executionResult{}, nil, fmt.Errorf("observe generated command %s: %w", label, err)
+	}
 	started := time.Now()
-	command := exec.Command("go", args...)
+	command := exec.Command(tool.Inputs.Path, args...)
 	command.Dir = directory
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=local", "GOFLAGS=-mod=readonly", "GOWORK=off")
+	command.Env = tool.Env
 	var stdout, stderr bytes.Buffer
 	command.Stdout, command.Stderr = &stdout, &stderr
-	err := command.Run()
+	err = command.Run()
 	wallMS := maxInt64(1, int64(time.Since(started)/time.Millisecond))
 	exitCode := 0
 	if err != nil {
@@ -466,6 +470,9 @@ func runTimed(directory, label string, args []string, expectedTests []string) (e
 	if resourceErr != nil {
 		return executionResult{}, nil, fmt.Errorf("generated command resource observation: %w", resourceErr)
 	}
+	if err := tool.VerifyBytes(); err != nil {
+		return executionResult{}, nil, err
+	}
 	var passed []string
 	if len(expectedTests) > 0 {
 		passed, err = publicpartialreuse.ObserveTestOutput(stdout.Bytes(), expectedTests)
@@ -473,21 +480,23 @@ func runTimed(directory, label string, args []string, expectedTests []string) (e
 			return executionResult{}, nil, err
 		}
 	}
-	resultDigest := cache.HashBytes([]byte(strings.Join(append([]string{"go", label}, args...), "\x00") + "\x00" + stdout.String() + "\x00" + stderr.String() + "\x00" + strconv.Itoa(exitCode))).String()
+	resultDigest := cache.HashBytes([]byte(strings.Join(append([]string{tool.Inputs.Digest(), label}, args...), "\x00") + "\x00" + stdout.String() + "\x00" + stderr.String() + "\x00" + strconv.Itoa(exitCode))).String()
 	if len(passed) > 0 {
 		witness, err := json.Marshal(struct {
-			Command      []string `json:"command"`
-			PassedTests  []string `json:"passed_tests"`
-			Stdout       string   `json:"stdout"`
-			Stderr       string   `json:"stderr"`
-			ResultDigest string   `json:"result_digest"`
-		}{append([]string{"go"}, args...), passed, stdout.String(), stderr.String(), resultDigest})
+			ToolInputs   toolchaincli.GeneratedTestGoInputs `json:"execution_tool_inputs"`
+			Command      []string                           `json:"command"`
+			PassedTests  []string                           `json:"passed_tests"`
+			Stdout       string                             `json:"stdout"`
+			Stderr       string                             `json:"stderr"`
+			ResultDigest string                             `json:"result_digest"`
+		}{tool.Inputs, append([]string{tool.Inputs.Path}, args...), passed, stdout.String(), stderr.String(), resultDigest})
 		if err != nil {
 			return executionResult{}, nil, err
 		}
 		fmt.Printf("PARTIAL_REUSE_TEST_EXECUTION=%s\n", witness)
 	}
-	return executionResult{Success: err == nil, ExitCode: exitCode, ResultDigest: resultDigest, WallMS: wallMS, PeakRSSKib: peak}, passed, nil
+	return executionResult{ToolInputs: tool.Inputs, Success: err == nil, ExitCode: exitCode,
+		ResultDigest: resultDigest, WallMS: wallMS, PeakRSSKib: peak}, passed, nil
 }
 
 func decisionCounts(cases []publicpartialreuse.CaseReport) (int, int, int) {

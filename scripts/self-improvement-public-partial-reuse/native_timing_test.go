@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -25,6 +27,7 @@ func TestPartialReuseNativeCommandResourceObservation(t *testing.T) {
 	partition := publicpartialreuse.Partition{TestName: "TestOrdersPartition"}
 	metrics, result, err := executeTests(directory, partition)
 	if err != nil || !result.Success || result.ExitCode != 0 || !cache.Digest(result.ResultDigest).Known() ||
+		result.ToolInputs.Validate() != nil || !filepath.IsAbs(result.ToolInputs.Path) ||
 		metrics.BuildExecutions != 1 || metrics.TestExecutions != 1 || metrics.TestUnitsExecuted != 1 ||
 		metrics.WallMS <= 0 || metrics.PeakRSSKib <= 0 {
 		t.Fatal("native build/test observations are incomplete", metrics, result, err)
@@ -32,6 +35,25 @@ func TestPartialReuseNativeCommandResourceObservation(t *testing.T) {
 	args := publicpartialreuse.TestCommandArgs(publicpartialreuse.Partition{TestName: "TestMissing"})
 	if _, _, err := runTimed(directory, "unmatched", args, []string{"TestMissing"}); err == nil {
 		t.Fatal("successful process with no matching test became a completed test")
+	}
+}
+
+func TestPartialReuseRejectsWrapperWithoutExecutingIt(t *testing.T) {
+	directory := t.TempDir()
+	name := "go"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	marker := filepath.Join(directory, "started")
+	if err := os.WriteFile(filepath.Join(directory, name), []byte("#!/bin/sh\ntouch '"+marker+"'\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", directory)
+	if _, _, err := runTimed(directory, "wrapper", []string{"version"}, nil); err == nil {
+		t.Fatal("wrapper was treated as a native Go command")
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatal("observing the selected tool executed its wrapper", err)
 	}
 }
 

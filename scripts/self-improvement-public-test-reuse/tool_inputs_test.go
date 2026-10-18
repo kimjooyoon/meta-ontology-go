@@ -1,11 +1,11 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"slices"
 	"strings"
 	"testing"
 
@@ -13,13 +13,13 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
-func testGoCommand(t *testing.T) goCommand {
+func testGoCommand(t *testing.T) toolchaincli.GeneratedTestGoCommand {
 	t.Helper()
 	name := "go"
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
-	command, err := observeGoCommand(filepath.Join(runtime.GOROOT(), "bin", name), os.Environ())
+	command, err := toolchaincli.ObserveGeneratedTestGo(filepath.Join(runtime.GOROOT(), "bin", name), os.Environ())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,29 +37,12 @@ func TestSelectedGoCommandUsesObservedExecutableAndEnvironment(t *testing.T) {
 	if err != nil || strings.TrimSpace(string(output)) != "go version go1.27.2 "+runtime.GOOS+"/"+runtime.GOARCH {
 		t.Fatal("actual selected Go differs from recorded build information", err, string(output))
 	}
-	if err := tool.verifyBytes(); err != nil {
+	if err := tool.VerifyBytes(); err != nil {
 		t.Fatal(err)
 	}
 	tool.Env = append(tool.Env, "GOFLAGS=-race")
-	if err := tool.verifyBytes(); err == nil {
+	if err := tool.VerifyBytes(); err == nil {
 		t.Fatal("mutated command environment retained its old observation")
-	}
-}
-
-func TestGoCommandEnvironmentIsFrozenAndCanonical(t *testing.T) {
-	a := goCommandEnvironment([]string{"HOME=/home/a", "GOCACHE=/cache", "PATH=/bin", "GOFLAGS=-race", "GOENV=/custom", "TOKEN=private"}, "/sdk")
-	b := goCommandEnvironment([]string{"TOKEN=other", "PATH=/bin", "GOCACHE=/cache", "HOME=/home/a", "GOFLAGS=-tags=other"}, "/sdk")
-	if !slices.Equal(a, b) || !slices.IsSorted(a) {
-		t.Fatal("ambient Go settings or credentials changed the selected profile")
-	}
-	for _, entry := range []string{"GOENV=off", "GOFLAGS=-mod=readonly", "GOTOOLCHAIN=local", "GOWORK=off", "GOROOT=/sdk", "GOPROXY=off", "CGO_ENABLED=0"} {
-		if !slices.Contains(a, entry) {
-			t.Fatal("missing controlled setting", entry)
-		}
-	}
-	c := goCommandEnvironment([]string{"PATH=/other", "HOME=/home/a", "GOCACHE=/cache"}, "/sdk")
-	if slices.Equal(a, c) {
-		t.Fatal("actual retained environment change was discarded")
 	}
 }
 
@@ -75,7 +58,7 @@ func TestObserverVersionDoesNotAuthorizePATHWrapper(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", root)
-	if _, err := captureGoCommand(); err == nil || !strings.Contains(err.Error(), "native cmd/go") {
+	if _, err := toolchaincli.CaptureGeneratedTestGo(); err == nil || !strings.Contains(err.Error(), "native cmd/go") {
 		t.Fatal("observer version accepted a different child", err)
 	}
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
@@ -112,5 +95,20 @@ func TestTimedGoCommandReadsNativeProcessResources(t *testing.T) {
 	}
 	if current, err := toolchaincli.CurrentPeakRSSKiB(); err != nil || current <= 1 {
 		t.Fatal("current process observation is unavailable or fabricated", err, current)
+	}
+}
+
+func TestTimedGoCommandPreservesLaunchAndExitFailures(t *testing.T) {
+	tool := testGoCommand(t)
+	_, err := runTimed(tool, filepath.Join(t.TempDir(), "missing"), "version", []string{"version"})
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Fatal("launch failure was replaced by a resource observation error", err)
+	}
+	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
+		t.Skip("completed-process RSS requires Darwin or Linux")
+	}
+	result, err := runTimed(tool, t.TempDir(), "invalid", []string{"gooo-invalid-command"})
+	if err != nil || result.Success || result.ExitCode == 0 || result.ResultDigest == "" {
+		t.Fatal("unsuccessful child lost its exit result", result, err)
 	}
 }

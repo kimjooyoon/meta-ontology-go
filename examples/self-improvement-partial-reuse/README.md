@@ -45,8 +45,8 @@ refuted assessment exposes no selected work. Mask length and counts must agree;
 changing only the Gooo rule can request both declared tests. The original full
 baseline remains the producer of the example's receipts.
 
-Binding the actual child Go tool, SDK/module closure and reobserving inputs
-immediately before effects remain further integration work. The assessment
+Binding the child Go tool into reusable partition receipts, SDK/module closure
+and reobserving all inputs before effects remain further integration work. The assessment
 alone does not establish arbitrary dependency closure or authorize customer CI
 to skip tests. It uses the existing interpreter with no model call.
 
@@ -57,6 +57,14 @@ converted to KiB. It does not describe the compiler observer or a simultaneous
 sum of processes. The driver uses no GNU `time` options or timing sidecar files;
 unavailable resource observations remain errors. This change adds portability,
 not a cross-platform performance comparison.
+
+Command execution now uses the same bounded native Go observer as the whole-test
+reuse driver. It resolves the executable, checks its embedded Go 1.27.2 identity,
+freezes the child environment and invokes the observed absolute path. The test
+execution witness retains `execution_tool_inputs`, and its result digest includes
+that observation's digest. The shared reader rechecks the command after execution.
+This observes the command that ran; comparing that identity before reusing a
+partition receipt remains a separate integration step.
 
 The v15 acceptance denominator is fixed at six cases: two `CLOSED`, two
 `UNKNOWN`, and two `REFUTED`. The original v15 source was registered as one

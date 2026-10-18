@@ -1,6 +1,9 @@
 package main
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
+)
 
 type runInput struct {
 	Source              string
@@ -13,6 +16,7 @@ type runInput struct {
 }
 
 type executionResult struct {
+	ToolInputs   toolchaincli.GeneratedTestGoInputs
 	Success      bool
 	ExitCode     int
 	ResultDigest string
