@@ -870,6 +870,17 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Classify provenance producer before download
+        env:
+          GOOO_POLICY_RESULT: ${{ needs.policy.result }}
+        run: |
+          case "$GOOO_POLICY_RESULT" in
+            success) ;;
+            failure) echo 'ARTIFACT_PRODUCER_FAILED: CI policy; next=inspect-ci-policy' >&2; exit 1 ;;
+            cancelled) echo 'ARTIFACT_PRODUCER_CANCELLED: CI policy; next=inspect-ci-policy' >&2; exit 1 ;;
+            skipped) echo 'ARTIFACT_PRODUCER_UNSELECTED: CI policy; next=inspect-ci-policy-selection' >&2; exit 1 ;;
+            *) echo 'ARTIFACT_PRODUCER_UNOBSERVED: CI policy; next=observe-ci-policy' >&2; exit 1 ;;
+          esac
       - name: Download exact artifact provenance
         uses: actions/download-artifact@v8
         with:
