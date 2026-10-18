@@ -25,6 +25,9 @@ func observe(input EvaluationInput) (Observation, int, int) {
 
 func receiptState(input EvaluationInput, partition string) string {
 	if err := input.ReceiptErrors[partition]; err != nil {
+		if errors.Is(err, ErrUnobservedToolInputs) {
+			return "TOOL_UNOBSERVED"
+		}
 		if errors.Is(err, ErrInvalidReceipt) {
 			return "INVALID"
 		}
@@ -35,6 +38,9 @@ func receiptState(input EvaluationInput, partition string) string {
 		return "MISSING"
 	}
 	if err := VerifyReceipt(receipt, input.Bindings[partition], partition); err != nil {
+		if errors.Is(err, ErrUnobservedToolInputs) {
+			return "TOOL_UNOBSERVED"
+		}
 		if errors.Is(err, ErrInvalidReceipt) {
 			return "INVALID"
 		}

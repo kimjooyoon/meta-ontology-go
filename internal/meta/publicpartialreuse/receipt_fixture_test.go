@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 func receiptEvaluationFixture(t *testing.T) EvaluationInput {
@@ -42,6 +43,8 @@ func receiptEvaluationFixture(t *testing.T) EvaluationInput {
 			DependencyGraphDigest: policy.DependencyGraphDigest(), OrchestrationReportDigest: digest,
 			OrchestrationOperation: "gooo.self-improvement.public-orchestration",
 		}
+		binding.ToolInputs = toolchaincli.GeneratedTestGoInputs{Profile: toolchaincli.GeneratedTestGoProfile, Path: "/fixture/go", ExecutableDigest: digest, Version: "go1.27.2", Platform: "fixture/host", EnvironmentDigest: digest}
+		binding.ToolchainDigest = binding.ToolInputs.Digest()
 		receipt := Receipt{
 			Schema: ReceiptSchema, Partition: partition.ID, Decision: DecisionClosed,
 			Reason: ReceiptReason, Binding: binding,

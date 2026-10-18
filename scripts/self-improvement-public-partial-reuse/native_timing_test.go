@@ -25,7 +25,11 @@ func TestPartialReuseNativeCommandResourceObservation(t *testing.T) {
 		t.Fatal(err)
 	}
 	partition := publicpartialreuse.Partition{TestName: "TestOrdersPartition"}
-	metrics, result, err := executeTests(directory, partition)
+	tool, err := toolchaincli.CaptureGeneratedTestGo()
+	if err != nil {
+		t.Fatal(err)
+	}
+	metrics, result, err := executeTests(tool, directory, partition)
 	if err != nil || !result.Success || result.ExitCode != 0 || !cache.Digest(result.ResultDigest).Known() ||
 		result.ToolInputs.Validate() != nil || !filepath.IsAbs(result.ToolInputs.Path) ||
 		metrics.BuildExecutions != 1 || metrics.TestExecutions != 1 || metrics.TestUnitsExecuted != 1 ||
@@ -33,7 +37,7 @@ func TestPartialReuseNativeCommandResourceObservation(t *testing.T) {
 		t.Fatal("native build/test observations are incomplete", metrics, result, err)
 	}
 	args := publicpartialreuse.TestCommandArgs(publicpartialreuse.Partition{TestName: "TestMissing"})
-	if _, _, err := runTimed(directory, "unmatched", args, []string{"TestMissing"}); err == nil {
+	if _, _, err := runTimed(tool, directory, "unmatched", args, []string{"TestMissing"}); err == nil {
 		t.Fatal("successful process with no matching test became a completed test")
 	}
 }
@@ -49,7 +53,7 @@ func TestPartialReuseRejectsWrapperWithoutExecutingIt(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", directory)
-	if _, _, err := runTimed(directory, "wrapper", []string{"version"}, nil); err == nil {
+	if _, err := toolchaincli.CaptureGeneratedTestGo(); err == nil {
 		t.Fatal("wrapper was treated as a native Go command")
 	}
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
@@ -58,13 +62,17 @@ func TestPartialReuseRejectsWrapperWithoutExecutingIt(t *testing.T) {
 }
 
 func TestPartialReuseNativeCommandPreservesLaunchAndExitFailures(t *testing.T) {
-	_, _, err := runTimed(t.TempDir(), "invalid", []string{"gooo-invalid-command"}, nil)
+	tool, err := toolchaincli.CaptureGeneratedTestGo()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = runTimed(tool, t.TempDir(), "invalid", []string{"gooo-invalid-command"}, nil)
 	var exitError *exec.ExitError
 	if !errors.As(err, &exitError) || !strings.Contains(err.Error(), "gooo-invalid-command") {
 		t.Fatal("native exit error was replaced by a resource error", err)
 	}
 	t.Setenv("PATH", t.TempDir())
-	if _, _, err := runTimed(t.TempDir(), "missing", []string{"version"}, nil); !errors.Is(err, exec.ErrNotFound) {
+	if _, err := toolchaincli.CaptureGeneratedTestGo(); !errors.Is(err, exec.ErrNotFound) {
 		t.Fatal("launch failure was replaced by a resource error", err)
 	}
 	if _, err := toolchaincli.PeakRSSKiB(nil); err == nil {

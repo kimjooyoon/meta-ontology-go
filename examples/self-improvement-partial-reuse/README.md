@@ -34,7 +34,7 @@ observations against the current source and compares the reported outcome.
 Missing files and invalid content have separate observations. A broken Gooo
 program returns an evaluation error; it cannot become a successful outcome.
 
-The authored assessment suite has 20 rows and compares all ten output fields.
+The authored assessment suite has 22 rows and compares all ten output fields.
 It includes contradictory observations, first-cause ordering, invalid unused
 receipts and malformed partition lists. This population is separate from the
 six end-to-end cases below. The ordinary example has exactly two partitions.
@@ -45,10 +45,10 @@ refuted assessment exposes no selected work. Mask length and counts must agree;
 changing only the Gooo rule can request both declared tests. The original full
 baseline remains the producer of the example's receipts.
 
-Binding the child Go tool into reusable partition receipts, SDK/module closure
-and reobserving all inputs before effects remain further integration work. The assessment
-alone does not establish arbitrary dependency closure or authorize customer CI
-to skip tests. It uses the existing interpreter with no model call.
+SDK/module closure and reobserving every package input before effects remain
+further integration work. The assessment alone does not establish arbitrary
+dependency closure or authorize customer CI to skip tests. It uses the existing
+interpreter with no model call.
 
 The host driver measures completed Go commands through the shared operating
 system resource reader on Darwin and Linux. `peak_rss_kib` is the largest
@@ -63,8 +63,16 @@ reuse driver. It resolves the executable, checks its embedded Go 1.27.2 identity
 freezes the child environment and invokes the observed absolute path. The test
 execution witness retains `execution_tool_inputs`, and its result digest includes
 that observation's digest. The shared reader rechecks the command after execution.
-This observes the command that ran; comparing that identity before reusing a
-partition receipt remains a separate integration step.
+The source contract is now `v2` and names this execution tool profile. Receipt
+`v2` binds the command observations. Before selective work, the host observes
+the selected command again and presents the current bindings to Gooo. A changed
+path, executable, environment or platform makes the old receipt stale. A legacy
+`v1` receipt becomes `TOOL_UNOBSERVED`; Gooo returns `UNKNOWN` with the missing
+command and environment origins. Contradictory records still take precedence.
+The selected absolute command and frozen environment are shared by build and
+test, rechecked before and after execution, and observed again before sealing
+the reuse result. This records observed boundaries; it does not claim an atomic
+filesystem snapshot or complete SDK input closure.
 
 The v15 acceptance denominator is fixed at six cases: two `CLOSED`, two
 `UNKNOWN`, and two `REFUTED`. The original v15 source was registered as one

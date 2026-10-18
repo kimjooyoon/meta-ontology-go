@@ -269,17 +269,21 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 	if err := preparePackage(baselinePackage, program, testContract); err != nil {
 		return caseArtifacts{}, err
 	}
+	tool, err := toolchaincli.CaptureGeneratedTestGo()
+	if err != nil {
+		return caseArtifacts{}, err
+	}
 	before := publicpartialreuse.Metrics{TestUnitsTotal: policy.TestUnitCount}
 	bindings := map[string]publicpartialreuse.Binding{}
 	receipts := map[string]publicpartialreuse.Receipt{}
 	receiptPaths := map[string]string{}
 	for _, partition := range policy.Partitions {
-		observed, testResult, err := executeTests(baselinePackage, partition)
+		observed, testResult, err := executeTests(tool, baselinePackage, partition)
 		if err != nil {
 			return caseArtifacts{}, err
 		}
 		addExecutionMetrics(&before, observed)
-		binding, err := publicpartialreuse.BuildBinding(policy, partition, program, manifest, testContract, compiler, cache.HashBytes(mustRead(input.OrchestrationReport)).String(), upstream.Operation)
+		binding, err := publicpartialreuse.BuildBinding(policy, partition, program, manifest, testContract, compiler, cache.HashBytes(mustRead(input.OrchestrationReport)).String(), upstream.Operation, testResult.ToolInputs)
 		if err != nil {
 			return caseArtifacts{}, err
 		}
@@ -297,6 +301,15 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 		}
 		bindings[partition.ID], receipts[partition.ID], receiptPaths[partition.ID] = binding, receipt, path
 	}
+	tool, err = toolchaincli.CaptureGeneratedTestGo()
+	if err != nil {
+		return caseArtifacts{}, err
+	}
+	for id, binding := range bindings {
+		binding.ToolInputs = tool.Inputs
+		binding.ToolchainDigest, binding.ToolchainVersion = tool.Inputs.Digest(), tool.Inputs.Version
+		bindings[id] = binding
+	}
 	selection, err := publicpartialreuse.Select(context.Background(), publicpartialreuse.EvaluationInput{
 		Policy: policy, Case: item, Bindings: bindings, Receipts: receipts,
 	})
@@ -313,12 +326,19 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 			return caseArtifacts{}, err
 		}
 		for _, partition := range selection.Partitions {
-			observed, _, err := executeTests(selectivePackage, partition)
+			observed, _, err := executeTests(tool, selectivePackage, partition)
 			if err != nil {
 				return caseArtifacts{}, err
 			}
 			addExecutionMetrics(&after, observed)
 		}
+	}
+	current, err := toolchaincli.CaptureGeneratedTestGo()
+	if err != nil {
+		return caseArtifacts{}, err
+	}
+	if current.Inputs != tool.Inputs {
+		return caseArtifacts{}, errors.New("selected Go command changed before reuse result sealing")
 	}
 	caseReport, err := publicpartialreuse.Evaluate(publicpartialreuse.EvaluationInput{Policy: policy, Case: item, Bindings: bindings, Receipts: receipts, Execution: after, Comparisons: publicpartialreuse.Comparisons{GeneratedBytesEqual: true, GeneratedSemanticEqual: true, TestContractEqual: true, ReceiptBindingEqual: true}})
 	if err != nil {
@@ -428,12 +448,12 @@ func preparePackage(directory string, program, testContract []byte) error {
 	return writeNew(filepath.Join(directory, "go.mod"), []byte("module partial-reuse-example\n\ngo 1.27.2\n"), 0o644)
 }
 
-func executeTests(directory string, partition publicpartialreuse.Partition) (publicpartialreuse.Metrics, executionResult, error) {
-	build, _, err := runTimed(directory, "build", []string{"build", "."}, nil)
+func executeTests(tool toolchaincli.GeneratedTestGoCommand, directory string, partition publicpartialreuse.Partition) (publicpartialreuse.Metrics, executionResult, error) {
+	build, _, err := runTimed(tool, directory, "build", []string{"build", "."}, nil)
 	if err != nil {
 		return publicpartialreuse.Metrics{}, executionResult{}, err
 	}
-	test, passed, err := runTimed(directory, "test", publicpartialreuse.TestCommandArgs(partition), []string{partition.TestName})
+	test, passed, err := runTimed(tool, directory, "test", publicpartialreuse.TestCommandArgs(partition), []string{partition.TestName})
 	if err != nil {
 		return publicpartialreuse.Metrics{}, executionResult{}, err
 	}
@@ -443,9 +463,8 @@ func executeTests(directory string, partition publicpartialreuse.Partition) (pub
 	return publicpartialreuse.Metrics{TestUnitsTotal: publicpartialreuse.TestUnitCount, TestUnitsExecuted: len(passed), BuildExecutions: 1, TestExecutions: len(passed), BuildMS: build.WallMS, TestMS: test.WallMS, WallMS: build.WallMS + test.WallMS, PeakRSSKib: maxInt64(build.PeakRSSKib, test.PeakRSSKib)}, test, nil
 }
 
-func runTimed(directory, label string, args []string, expectedTests []string) (executionResult, []string, error) {
-	tool, err := toolchaincli.CaptureGeneratedTestGo()
-	if err != nil {
+func runTimed(tool toolchaincli.GeneratedTestGoCommand, directory, label string, args []string, expectedTests []string) (executionResult, []string, error) {
+	if err := tool.VerifyBytes(); err != nil {
 		return executionResult{}, nil, fmt.Errorf("observe generated command %s: %w", label, err)
 	}
 	started := time.Now()
@@ -454,7 +473,7 @@ func runTimed(directory, label string, args []string, expectedTests []string) (e
 	command.Env = tool.Env
 	var stdout, stderr bytes.Buffer
 	command.Stdout, command.Stderr = &stdout, &stderr
-	err = command.Run()
+	err := command.Run()
 	wallMS := maxInt64(1, int64(time.Since(started)/time.Millisecond))
 	exitCode := 0
 	if err != nil {
