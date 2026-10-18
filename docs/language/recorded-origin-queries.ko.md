@@ -13,6 +13,35 @@ gooo help package origins
 `--activity`에는 조립 기록의 activity ID를 넣는다. 후보 ID가 여러 activity에 같게 쓰인
 경우 두 조건을 함께 지정하면 범위를 좁힐 수 있다. 기본 출력은 32행, `--limit`은 1~128행이다.
 
+## 큰 실행 기록을 그대로 전달하기
+
+개발 소스의 `package execute`, `replay`, `resume`에는 선택적인 gzip 전송이 있다.
+같은 JSON 인코더의 출력을 압축하므로 결과, 원본 위치, 관측 누락 수와 `PARTIAL` 상태가
+모두 남는다. 기본 `--json` 출력은 기존 JSON이다.
+
+```sh
+gooo package execute --json --receipt-compression gzip \
+  --cases cases.json gooo.workspace.json > execution.json.gz
+gooo package replay --json --receipt-compression gzip \
+  --receipt execution.json.gz --cases cases.json gooo.workspace.json > replay.json.gz
+gooo package origins --receipt execution.json.gz --json
+```
+
+`--receipt-compression gzip`은 `--json`과 함께 사용한다. 읽기는 확장자가 아닌 gzip
+헤더로 구분한다. `--origin-receipt`, `--construction-receipt`도 같은 읽기를 지원한다.
+소비 에이전트는 압축 출력임을 명시적으로 선택하고 종료 코드를 먼저 확인해야 한다.
+
+- gzip 전송 한도는 **2MiB**, 복원한 JSON 한도는 **32MiB**다. 두 한도를 별도로 검사한다.
+- 출력과 입력을 읽는 중에도 누적 크기를 제한한다. gzip은 한 멤버만 받고 체크섬,
+  끝맺음, 뒤에 붙은 바이트를 확인한 후 기존 JSON·스키마·실행 정체성 검사를 한다.
+- 한도를 넘거나 쓰기가 실패하면 명령이 실패한다. 남아 있는 부분 출력은 완성된 기록이 아니다.
+- `replayed_from_sha256`과 출처 조회의 `receipt_sha256`은 **복원한 원래 JSON 바이트**를
+  가리킨다. 전송 파일의 해시가 필요하면 별도로 보관한다.
+
+이 기능은 실행을 더 많이 관측하거나 이미 누락된 이벤트를 복구하지 않는다. JSON 객체와
+실행 기록은 여전히 메모리에 올라가므로 32MiB는 전체 프로세스 메모리 상한이 아니다.
+큰 반복 기록을 저장·전달하는 비용을 줄이는 기능이며, 관측 예산과 기록 구조 개선은 별도다.
+
 ## 경로를 읽는 방법
 
 예를 들어 `let eligible = input > 53`이라는 대입과 `if eligible`이라는 조건이 있으면,

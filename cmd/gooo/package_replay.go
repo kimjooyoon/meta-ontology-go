@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,8 +16,8 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageReplayUsage = "usage: gooo package replay [--json] --receipt <execution.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
-const packageResumeUsage = "usage: gooo package resume [--json] --receipt <execution.json> --assembly-policy-workspace <policy.workspace.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
+const packageReplayUsage = "usage: gooo package replay [--json [--receipt-compression gzip]] --receipt <execution.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
+const packageResumeUsage = "usage: gooo package resume [--json [--receipt-compression gzip]] --receipt <execution.json> --assembly-policy-workspace <policy.workspace.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
 
 func runPackageReplay(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	return runPackageSaved(args, reader, stdout, stderr, false)
@@ -27,6 +26,9 @@ func runPackageReplay(args []string, reader SourceReader, stdout, stderr io.Writ
 func runPackageSaved(args []string, reader SourceReader, stdout, stderr io.Writer, resume bool) int {
 	args, jsonMode := parseJSONFlag(args)
 	flags, manifestPath, err := parsePackageSavedArgs(args, resume)
+	if err == nil {
+		err = validatePackageReceiptCompression(flags["--receipt-compression"], jsonMode)
+	}
 	if err != nil {
 		usage := packageReplayUsage
 		if resume {
@@ -42,9 +44,7 @@ func runPackageSaved(args []string, reader SourceReader, stdout, stderr io.Write
 		receipt.Decision, receipt.Error = "FAIL_CLOSED", err.Error()
 	}
 	if jsonMode {
-		encoder := json.NewEncoder(stdout)
-		encoder.SetEscapeHTML(false)
-		if writeErr := encoder.Encode(receipt); writeErr != nil {
+		if writeErr := writePackageReceiptJSON(stdout, receipt, flags["--receipt-compression"]); writeErr != nil {
 			fmt.Fprintln(stderr, writeErr)
 			return exitFailure
 		}
@@ -77,7 +77,7 @@ func parsePackageReplayArgs(args []string) (map[string]string, string, error) {
 }
 
 func parsePackageSavedArgs(args []string, resume bool) (map[string]string, string, error) {
-	flags := map[string]string{"--receipt": "", "--cases": "", "--inputs": "", "--go": ""}
+	flags := map[string]string{"--receipt-compression": "", "--receipt": "", "--cases": "", "--inputs": "", "--go": ""}
 	if resume {
 		flags["--assembly-policy-workspace"] = ""
 	}
@@ -119,7 +119,7 @@ func executePackageSaved(ctx context.Context, reader SourceReader, manifestPath 
 	if err != nil {
 		return receipt, err
 	}
-	raw, err := readBodyExecutionFile(flags["--receipt"], 32<<20)
+	raw, err := readPackageReceipt(flags["--receipt"])
 	if err != nil {
 		return receipt, err
 	}
