@@ -15,6 +15,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 func runBaseline(input executionInput) error {
@@ -26,11 +27,11 @@ func runBaseline(input executionInput) error {
 		return err
 	}
 	started := time.Now()
-	build, err := runTimed(input.PackageDir, "build", []string{"build", "."}, input.OutputDir)
+	build, err := runTimed(identity.GoCommand, input.PackageDir, "build", []string{"build", "."})
 	if err != nil {
 		return err
 	}
-	test, err := runTimed(input.PackageDir, "test", []string{"test", "-tags", "generated_project", "-count=1", "."}, input.OutputDir)
+	test, err := runTimed(identity.GoCommand, input.PackageDir, "test", []string{"test", "-tags", "generated_project", "-count=1", "."})
 	if err != nil {
 		return err
 	}
@@ -66,6 +67,9 @@ func baselineReport(identity identity, build, test commandResult) publictestreus
 func sealOriginalReceipt(output string, identity identity, build, test commandResult, report *publictestreuse.Report) error {
 	if !build.Success || !test.Success || identity.Binding.CanonicalSemanticDigest != identity.Binding.GeneratedSemanticDigest {
 		return errors.New("Gooo policy cannot seal an unsuccessful original execution")
+	}
+	if err := identity.GoCommand.verifyBytes(); err != nil {
+		return err
 	}
 	receipt := publictestreuse.Receipt{
 		Schema: publictestreuse.ReceiptSchema, Operation: publictestreuse.OriginalOperation,
@@ -193,21 +197,21 @@ func loadIdentityWithInputs(input executionInput,
 	if err != nil {
 		return identity{}, err
 	}
-	toolchainVersion := publictestreuse.CurrentToolchainVersion()
-	if toolchainVersion != "go1.27.2" {
-		return identity{}, fmt.Errorf("public test reuse requires Go 1.27.2, got %s", toolchainVersion)
+	command, err := captureGoCommand()
+	if err != nil {
+		return identity{}, fmt.Errorf("observe selected Go command: %w", err)
 	}
 	commandDigest := publictestreuse.TestCommandDigest(testCommand, cache.HashBytes(testContract).String())
 	return identity{
 		Policy: policy, PolicyBytes: policySource, ProgramBytes: program,
-		ManifestBytes: manifest, TestBytes: testContract,
+		ManifestBytes: manifest, TestBytes: testContract, GoCommand: command,
 		Binding: publictestreuse.Binding{
 			PolicySourceDigest: policy.SourceDigest, PolicySemanticDigest: policy.SemanticDigest, PolicyEvaluatorDigest: policy.EvaluatorDigest,
 			CanonicalSourceDigest: cache.HashBytes(source).String(), CanonicalSemanticDigest: policy.SemanticDigest,
 			GeneratedOutputDigest: cache.HashBytes(program).String(), GeneratedSemanticDigest: generatedSemantic,
 			GeneratedManifestDigest: cache.HashBytes(manifest).String(), CompilerDigest: compilerDigest,
-			ReleasedToolDigest: publictestreuse.ReleasedToolDigest(compilerDigest), ToolchainDigest: publictestreuse.ToolchainDigest(),
-			ToolchainVersion: toolchainVersion, TestCommand: testCommand, TestCommandDigest: commandDigest,
+			ReleasedToolDigest: publictestreuse.ReleasedToolDigest(compilerDigest), ToolchainDigest: command.Inputs.Digest(),
+			ToolchainVersion: command.Inputs.Version, ToolInputs: command.Inputs, TestCommand: testCommand, TestCommandDigest: commandDigest,
 			TestContractDigest: cache.HashBytes(testContract).String(), PackageInputs: packageInputs,
 		},
 	}, nil
@@ -257,13 +261,14 @@ func manifestSemanticDigest(data []byte) (string, error) {
 	return digest, nil
 }
 
-func runTimed(packageDir, label string, args []string, outputDir string) (commandResult, error) {
-	timeFile := filepath.Join(outputDir, label+".time")
+func runTimed(tool goCommand, packageDir, label string, args []string) (commandResult, error) {
+	if err := tool.verifyBytes(); err != nil {
+		return commandResult{}, err
+	}
 	started := time.Now()
-	commandArgs := append([]string{"-f", "%M", "-o", timeFile, "go"}, args...)
-	command := exec.Command("/usr/bin/time", commandArgs...)
+	command := exec.Command(tool.Inputs.Path, args...)
 	command.Dir = packageDir
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=local", "GOFLAGS=-mod=readonly", "GOWORK=off")
+	command.Env = append([]string(nil), tool.Env...)
 	var stdout, stderr bytes.Buffer
 	command.Stdout = &stdout
 	command.Stderr = &stderr
@@ -275,24 +280,12 @@ func runTimed(packageDir, label string, args []string, outputDir string) (comman
 			exitCode = exitError.ExitCode()
 		}
 	}
-	peak, readErr := readRSSFile(timeFile)
+	peak, readErr := toolchaincli.PeakRSSKiB(command.ProcessState)
 	if readErr != nil {
 		return commandResult{}, fmt.Errorf("read %s peak RSS: %w", label, readErr)
 	}
 	resultDigest := cache.HashBytes([]byte(strings.Join(append([]string{"go", label}, args...), "\x00") + "\x00" + stdout.String() + "\x00" + stderr.String() + "\x00" + strconv.Itoa(exitCode))).String()
 	return commandResult{Success: err == nil, ExitCode: exitCode, ResultDigest: resultDigest, WallMS: elapsedMS(started), PeakRSSKib: peak}, nil
-}
-
-func readRSSFile(filename string) (int64, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return 0, err
-	}
-	value, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64)
-	if err != nil || value <= 0 {
-		return 0, errors.New("peak RSS is not a positive integer")
-	}
-	return value, nil
 }
 
 func resolveReceiptPath(path string) (string, string, error) {

@@ -10,6 +10,16 @@ import (
 )
 
 func TestUnobservedLegacyReceiptProducesUnresolvedReport(t *testing.T) {
+	for _, row := range []struct{ schema, reason, blocked string }{
+		{"gooo/public-test-reuse-receipt/v1", "EXECUTION_PACKAGE_INPUTS_UNOBSERVED", "execution_package_inputs"},
+		{"gooo/public-test-reuse-receipt/v2", "EXECUTION_TOOL_INPUTS_UNOBSERVED", "execution_tool_inputs"},
+	} {
+		t.Run(row.blocked, func(t *testing.T) { testLegacyReceiptReport(t, row.schema, row.reason, row.blocked) })
+	}
+}
+
+func testLegacyReceiptReport(t *testing.T, schema, reason, blocked string) {
+	t.Helper()
 	output := t.TempDir()
 	initial := publictestreuse.Report{Schema: publictestreuse.ReportSchema, Operation: publictestreuse.ReplayOperation}
 	initial.Binding.PackageInputs = publictestreuse.ExecutionPackageInputsFromBytes(
@@ -17,8 +27,14 @@ func TestUnobservedLegacyReceiptProducesUnresolvedReport(t *testing.T) {
 	policy := readGoooPolicyFixture(t)
 	initial.Binding.PolicySourceDigest = policy.SourceDigest
 	initial.Binding.PolicyEvaluatorDigest = policy.EvaluatorDigest
-	observed := publictestreuse.ReuseObservation{Requested: true, ReceiptState: "LEGACY_INPUTS_UNOBSERVED",
-		InputProfile: initial.Binding.PackageInputs.Profile}
+	legacy := filepath.Join(t.TempDir(), "legacy.json")
+	if err := os.WriteFile(legacy, []byte(`{"schema":"`+schema+`"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	observed, receipt, err := observeReuse(executionInput{Authorize: true, Receipt: legacy}, initial.Binding)
+	if err != nil || receipt != nil {
+		t.Fatal("historical receipt became current execution inputs", err)
+	}
 	if _, err := assessReplayReport(policy, observed, &initial); err != nil {
 		t.Fatal(err)
 	}
@@ -30,13 +46,13 @@ func TestUnobservedLegacyReceiptProducesUnresolvedReport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Decision != publictestreuse.DecisionUnknown || report.Reason != "EXECUTION_PACKAGE_INPUTS_UNOBSERVED" ||
+	if report.Decision != publictestreuse.DecisionUnknown || report.Reason != reason ||
 		report.CaseID != publictestreuse.CaseStaleEvidence || report.ReceiptMisses != 1 ||
 		report.TestExecutions != 0 || report.ReusedTestExecutions != 0 || report.BuildExecutions != 0 || report.ReceiptHits != 0 {
 		t.Fatal("missing observations authorized execution or reuse")
 	}
 	if report.Unknown == nil || report.Unknown.NextOperation != publictestreuse.UnknownNextEvidence ||
-		len(report.Unknown.BlockedBy) != 1 || report.Unknown.BlockedBy[0] != "execution_package_inputs" {
+		len(report.Unknown.BlockedBy) != 1 || report.Unknown.BlockedBy[0] != blocked {
 		t.Fatal("unresolved report lost its next operation or missing input domain")
 	}
 	raw, err := os.ReadFile(filepath.Join(output, "reuse-report.json"))

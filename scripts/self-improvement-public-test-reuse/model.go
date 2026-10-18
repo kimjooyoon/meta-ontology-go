@@ -26,6 +26,7 @@ type identity struct {
 	ManifestBytes []byte
 	PolicyBytes   []byte
 	TestBytes     []byte
+	GoCommand     goCommand
 }
 
 type commandResult struct {
