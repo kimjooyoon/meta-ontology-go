@@ -6,6 +6,7 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/ci.yml",
 		"docs/ci-work-domain.ko.md",
+		"docs/observations/ci-source-join/command-evolution.json",
 		"internal/verify/scope_artifact_producer_lifecycle.go",
 		"scripts/ci-proof/artifacts.js",
 	}
