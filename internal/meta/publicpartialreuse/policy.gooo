@@ -27,7 +27,7 @@ entity Assessment id "gooo://partial-reuse/assessment/v1" fields {
 
 # The host observes graph membership and receipt content. This source chooses
 # the outcome. The current public example has exactly two ordered partitions.
-# A proposal is not permission to skip a test; the host reobserves its inputs.
+# The host must bind execution inputs before generalizing this example to CI.
 activity Assess(Observation) -> Assessment id "gooo://partial-reuse/assess/v1" computes `
 let result = Assessment{decision: "CLOSED", reason: "AUTHORIZED_UNAFFECTED_PARTITION_RECEIPT_REUSE",
  stage: "", step: "", unknown_class: "", next_operation: "", blocked_by: []string{},
