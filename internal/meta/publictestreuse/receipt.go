@@ -7,17 +7,19 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 const (
-	ReceiptSchema            = "gooo/public-test-reuse-receipt/v2"
-	ReportSchema             = "gooo/public-test-reuse-report/v3"
+	ReceiptSchema            = "gooo/public-test-reuse-receipt/v3"
+	ReportSchema             = "gooo/public-test-reuse-report/v4"
+	PeakRSSGoCommands        = "MAX_COMPLETED_GO_COMMAND_PROCESSES"
+	PeakRSSObserver          = "CURRENT_REUSE_OBSERVER_PROCESS"
 	OriginalOperation        = Operation + ".baseline"
 	ReplayOperation          = Operation + ".replay"
 	ReceiptReason            = ReasonBaseline
@@ -41,6 +43,14 @@ var compilerManifestPaths = []string{
 	"internal/meta/publictestreuse/policy.go",
 	"internal/meta/publictestreuse/policy.gooo",
 	"internal/meta/publictestreuse/receipt.go",
+	"internal/meta/publictestreuse/tool_inputs.go",
+	"internal/toolchaincli/go_inputs.go",
+	"internal/toolchaincli/package_inputs.go",
+	"internal/toolchaincli/go_command.go",
+	"internal/toolchaincli/model.go",
+	"internal/toolchaincli/resource_darwin.go",
+	"internal/toolchaincli/resource_linux.go",
+	"internal/toolchaincli/resource_other.go",
 	"scripts/self-improvement-public-test-reuse/assessment.go",
 	"scripts/self-improvement-public-test-reuse/main.go",
 	"scripts/self-improvement-public-test-reuse/model.go",
@@ -71,6 +81,7 @@ type Binding struct {
 	TestContractDigest      string `json:"test_contract_digest"`
 
 	PackageInputs ExecutionPackageInputs `json:"execution_package_inputs"`
+	ToolInputs    ExecutionToolInputs    `json:"execution_tool_inputs"`
 }
 
 type OriginalExecution struct {
@@ -134,6 +145,7 @@ type Report struct {
 	TestMS                     int64                   `json:"test_ms"`
 	WallMS                     int64                   `json:"wall_ms"`
 	PeakRSSKib                 int64                   `json:"peak_rss_kib"`
+	PeakRSSSubject             string                  `json:"peak_rss_subject"`
 	GeneratedProgramBytes      int64                   `json:"generated_program_bytes"`
 	GeneratedProgramLines      int                     `json:"generated_program_lines"`
 	TestContractBytes          int64                   `json:"test_contract_bytes"`
@@ -151,10 +163,6 @@ func CompilerDigest(readFile func(string) ([]byte, error)) (string, error) {
 func ReleasedToolDigest(compilerDigest string) string {
 	return cache.HashBytes([]byte("gooo-public-test-reuse-released-tool/v1\x00" + compilerDigest)).String()
 }
-
-func ToolchainDigest() string { return generation.SemanticRetentionToolchainDigest() }
-
-func CurrentToolchainVersion() string { return runtime.Version() }
 
 func TestCommandDigest(command, contractDigest string) string {
 	return cache.HashBytes([]byte(command + "\x00" + contractDigest)).String()
@@ -176,6 +184,13 @@ func ValidateReceipt(receipt Receipt) error {
 	}
 	if err := receipt.Binding.PackageInputs.Validate(); err != nil {
 		return err
+	}
+	if err := receipt.Binding.ToolInputs.Validate(); err != nil {
+		return err
+	}
+	if receipt.Binding.ToolchainDigest != receipt.Binding.ToolInputs.Digest() ||
+		receipt.Binding.ToolchainVersion != receipt.Binding.ToolInputs.Version {
+		return errors.New("selected Go command contradicts its toolchain binding")
 	}
 	if receipt.Binding.PackageInputs.Members[0].Digest != receipt.Binding.TestContractDigest ||
 		receipt.Binding.PackageInputs.Members[2].Digest != receipt.Binding.GeneratedOutputDigest {
@@ -232,6 +247,9 @@ func MarshalReceipt(receipt Receipt) ([]byte, error) {
 
 func DecodeReceipt(data []byte) (Receipt, error) {
 	var receipt Receipt
+	if err := completeness.CheckJSON(data, 1<<20); err != nil {
+		return receipt, err
+	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&receipt); err != nil {
@@ -245,6 +263,9 @@ func DecodeReceipt(data []byte) (Receipt, error) {
 	}
 	if receipt.Schema == "gooo/public-test-reuse-receipt/v1" {
 		return Receipt{}, ErrUnobservedPackageInputs
+	}
+	if receipt.Schema == "gooo/public-test-reuse-receipt/v2" {
+		return Receipt{}, ErrUnobservedToolInputs
 	}
 	if err := ValidateReceipt(receipt); err != nil {
 		return Receipt{}, err

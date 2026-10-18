@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 const ExecutionPackageProfile = "gooo/generated-test-package-inputs/v1"
@@ -53,7 +54,7 @@ func (inputs *ExecutionPackageInputs) UnmarshalJSON(data []byte) error {
 
 // ExecutionPackageNames returns the fixed profile in relative-path order.
 func ExecutionPackageNames() [3]string {
-	return [3]string{"generated_project_test.go", "go.mod", "semantic.gooo.go"}
+	return toolchaincli.GeneratedTestPackageNames()
 }
 
 func executionPackageRoles() [3]string {

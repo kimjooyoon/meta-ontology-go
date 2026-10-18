@@ -8,6 +8,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publictestreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 func assessOriginalReport(policy publictestreuse.Policy, input publictestreuse.OriginalObservation, report *publictestreuse.Report) error {
@@ -69,6 +70,9 @@ func observeReuse(input executionInput, expected publictestreuse.Binding) (publi
 		if errors.Is(err, publictestreuse.ErrUnobservedPackageInputs) {
 			observed.ReceiptState = "LEGACY_INPUTS_UNOBSERVED"
 		}
+		if errors.Is(err, publictestreuse.ErrUnobservedToolInputs) {
+			observed.ReceiptState = "LEGACY_TOOL_UNOBSERVED"
+		}
 		return observed, nil, nil
 	}
 	observed.ReceiptState = "VALID"
@@ -97,6 +101,13 @@ func authorizeObservedReuse(input executionInput, identity identity, receipt *pu
 	}
 	if observed != identity.Binding.PackageInputs {
 		return errors.New("execution package changed after its policy observation")
+	}
+	command, err := toolchaincli.CaptureGeneratedTestGo()
+	if err != nil {
+		return err
+	}
+	if publictestreuse.ExecutionToolInputs(command.Inputs) != identity.Binding.ToolInputs {
+		return errors.New("selected Go command changed after its policy observation")
 	}
 	return publictestreuse.VerifyReceipt(*receipt, identity.Binding)
 }

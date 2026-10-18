@@ -9,7 +9,6 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"sort"
-	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
@@ -191,33 +190,6 @@ func declarationName(declaration ast.Decl) string {
 		}
 	}
 	return ""
-}
-
-func manifestDigest(data []byte) (string, error) {
-	var semanticDigest string
-	for line := range strings.SplitSeq(string(data), "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		var value struct {
-			SemanticDigest string `json:"semantic_digest"`
-		}
-		if err := json.Unmarshal([]byte(line), &value); err != nil {
-			return "", fmt.Errorf("decode generated manifest: %w", err)
-		}
-		if value.SemanticDigest == "" {
-			return "", errorsNew("generated manifest semantic digest is missing")
-		}
-		if semanticDigest != "" && semanticDigest != value.SemanticDigest {
-			return "", errorsNew("generated manifest has contradictory semantic digests")
-		}
-		semanticDigest = value.SemanticDigest
-	}
-	if !cache.Digest(semanticDigest).Known() {
-		return "", errorsNew("generated manifest semantic digest is unknown")
-	}
-	return semanticDigest, nil
 }
 
 func errorsNew(message string) error { return fmt.Errorf("%s", message) }

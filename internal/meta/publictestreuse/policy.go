@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	PolicySchema        = "gooo/public-test-reuse-policy/v3"
+	PolicySchema        = "gooo/public-test-reuse-policy/v4"
 	PolicyActivity      = "Compile"
-	PolicyContract      = "v3"
+	PolicyContract      = "v4"
 	PolicyName          = "EXPLICIT_OPT_IN_IMMUTABLE_RECEIPT"
 	Operation           = "gooo.test.generated-public-reuse"
 	ArtifactDenominator = 24
@@ -44,7 +44,7 @@ var decisionSource []byte
 var requiredBindings = []string{
 	"canonical-source", "canonical-semantic", "generated-output", "generated-semantic",
 	"generated-manifest", "compiler", "released-tool", "toolchain", "test-command",
-	"test-contract", "execution-package-inputs", "successful-result",
+	"test-contract", "execution-package-inputs", "execution-tool-inputs", "successful-result",
 }
 
 var canonicalCaseIDs = []string{
@@ -97,7 +97,8 @@ func loadWithDecisionSource(filename string, source, program []byte) (Policy, er
 		return Policy{}, err
 	}
 	if markers["test-reuse-contract"] != PolicyContract {
-		return Policy{}, errors.New("public test reuse policy contract version is unsupported")
+		return Policy{}, fmt.Errorf("public test reuse policy contract requires %s, observed %q",
+			PolicyContract, markers["test-reuse-contract"])
 	}
 	_, runtimeEvaluator := valueexecution.RuntimeEvidenceIdentities()
 	evaluator, err := sha256IdentityDigest(runtimeEvaluator)

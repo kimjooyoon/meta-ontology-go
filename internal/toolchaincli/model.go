@@ -1,5 +1,11 @@
 package toolchaincli
 
+import "os"
+
+// PeakRSSKiB reads the runner's peak resident-memory observation for a completed
+// process. Platforms without this measurement return an explicit error.
+func PeakRSSKiB(state *os.ProcessState) (int64, error) { return peakRSSKiB(state) }
+
 // Executor is the bounded process boundary consumed by the meta evaluator.
 type Executor interface {
 	BinaryDigest() (string, error)
