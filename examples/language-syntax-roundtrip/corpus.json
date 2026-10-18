@@ -1237,6 +1237,16 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY",
       "entity_fields_profile": "gooo.entityfields.go-projection.v6"
+    },
+    {
+      "id": "recorded-field-parent-origins",
+      "path": "examples/field-parent-origins/parent.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
     }
   ],
   "package_units": [

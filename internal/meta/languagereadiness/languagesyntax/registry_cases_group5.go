@@ -57,5 +57,7 @@ func expectedSyntaxCaseGroup5() []CaseDefinition {
 		{ID: "source-text-field-byte-bound", Path: "examples/bounded-text/main.gooo", Kind: KindValid,
 			ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax",
 			Scope: ScopeLanguageCapability, EntityFieldsProfile: "gooo.entityfields.go-projection.v6"},
+
+		{ID: "recorded-field-parent-origins", Path: "examples/field-parent-origins/parent.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
 	}
 }

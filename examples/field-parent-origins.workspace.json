@@ -1,0 +1,36 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "origin/fieldparent",
+    "activity": "Inspect"
+  },
+  "packages": [
+    {
+      "path": "origin/fieldparent",
+      "name": "fieldparent",
+      "imports": [
+        "origin/fieldlineage",
+        "origin/recordeduse"
+      ],
+      "sources": [
+        "field-parent-origins/parent.gooo"
+      ]
+    },
+    {
+      "path": "origin/fieldlineage",
+      "name": "fieldlineage",
+      "imports": [],
+      "sources": [
+        "native-field-lineage/lineage.gooo"
+      ]
+    },
+    {
+      "path": "origin/recordeduse",
+      "name": "recordeduse",
+      "imports": [],
+      "sources": [
+        "recorded-use-origins/inspect.gooo"
+      ]
+    }
+  ]
+}
