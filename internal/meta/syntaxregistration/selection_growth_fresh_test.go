@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -91,7 +92,9 @@ func TestSelectionChunkGrowth11617(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	next, err := parseSourceUnits(changes, closureRoot, "verticalsliceclosureshadow", false)
+	updated := maps.Clone(source.units)
+	maps.Copy(updated, changes)
+	next, err := parseSourceUnits(updated, closureRoot, "verticalsliceclosureshadow", false)
 	if err != nil {
 		t.Fatal(err)
 	}
