@@ -24,8 +24,8 @@ func TestPackageInspectInputTemplateUsesAuthoredKeys(t *testing.T) {
 		data = strings.ReplaceAll(data, "{{module}}", module)
 		data = strings.ReplaceAll(data, "{{namespace}}", "sample")
 		key := "sample/" + name
-		if strings.HasSuffix(key, ".template") {
-			key = strings.TrimSuffix(key, ".template")
+		if before, ok := strings.CutSuffix(key, ".template"); ok {
+			key = before
 		}
 		reader[key] = []byte(data)
 	}
