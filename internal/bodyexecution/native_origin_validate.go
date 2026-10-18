@@ -21,7 +21,10 @@ func validateRecordedNativeOrigins(runtime CompositionRuntime) error {
 		return fmt.Errorf("recorded origin site limit exceeded")
 	}
 	for _, site := range runtime.ConstructionSites {
-		if site.Kind != "" && (site.Kind != "map_values" || site.MapperActivityID == "" || len(site.Elements) != 1) || site.Kind == "" && site.MapperActivityID != "" {
+		if site.Kind != "" && site.Kind != "map_values" && site.Kind != "filter_values" ||
+			site.Kind == "map_values" && (site.MapperActivityID == "" || site.PredicateActivityID != "" || len(site.Elements) != 1) ||
+			site.Kind == "filter_values" && (site.PredicateActivityID == "" || site.MapperActivityID != "" || len(site.Elements) != 1) ||
+			site.Kind == "" && (site.MapperActivityID != "" || site.PredicateActivityID != "") {
 			return fmt.Errorf("recorded constructor kind or mapper differs")
 		}
 		if len(site.Elements) > 256 {

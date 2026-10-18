@@ -43,7 +43,8 @@ func validateLocalWindows(t CompositionTrace, sites []CompositionLocalSite, uses
 			return fmt.Errorf("local constructor site differs")
 		}
 		for i, e := range elements {
-			if e == nil || i > 0 && e.UseStart != elements[i-1].UseEnd {
+			if e == nil || i > 0 && constructions[site].Kind != "filter_values" && e.UseStart != elements[i-1].UseEnd ||
+				i > 0 && constructions[site].Kind == "filter_values" && e.UseStart < elements[i-1].UseEnd {
 				return fmt.Errorf("local constructor windows are missing or noncontiguous")
 			}
 			if err := useRoot(e.UseStart, e.UseEnd, constructions[site].RootActivityID); err != nil {

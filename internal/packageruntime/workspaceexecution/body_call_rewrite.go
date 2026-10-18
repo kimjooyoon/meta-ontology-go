@@ -44,9 +44,9 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 		}
 		if name, plain := call.Fun.(*ast.Ident); plain && name.Obj == nil && !isActivityInput(name.Name, len(d.activity.Inputs), syntax.ActivityDeclaredInputNames(d.activity)...) && bodycodegen.IsBodyPrimitiveName(name.Name) {
 			if _, declared := c[packageActivityKey(d.ref.PackagePath, name.Name)]; !declared {
-				if name.Name == "map_values" {
+				if name.Name == "map_values" || name.Name == "filter_values" {
 					if len(call.Args) != 2 {
-						err = fmt.Errorf("map_values requires a collection and a named mapper")
+						err = fmt.Errorf("%s requires a collection and a named activity", name.Name)
 						return false
 					}
 					mapper := call.Args[1]

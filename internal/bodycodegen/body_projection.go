@@ -154,6 +154,9 @@ func (p bodyProjection) lower(packageName, activityName, outputType, route strin
 	if err := p.lowerCollectionMaps(); err != nil {
 		return 0, 0, err
 	}
+	if err := p.lowerCollectionFilters(); err != nil {
+		return 0, 0, err
+	}
 	inferred := normalizeIntegerLocalInitializers(packageName, p.file, p.fset)
 	units := semanticUnitCount(p.function.Body) - inferred
 	for _, call := range p.calls {

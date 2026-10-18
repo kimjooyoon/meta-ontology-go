@@ -5,8 +5,15 @@ import "strings"
 // Only dynamic constructors add a count field. Literal-only projections retain
 // their original observer source and receipt hashes.
 func withCollectionMapObserver(observer string) string {
+	return withCollectionCountField(observer) + collectionMapReadObserver
+}
+
+func withCollectionCountField(observer string) string {
+	if strings.Contains(observer, "ElementCount *int") {
+		return observer
+	}
 	field := "\nElementCount *int `json:\"element_count,omitempty\"`\n"
-	return strings.Replace(observer, "type GoooReadConstruction struct {", "type GoooReadConstruction struct {"+field, 1) + collectionMapReadObserver
+	return strings.Replace(observer, "type GoooReadConstruction struct {", "type GoooReadConstruction struct {"+field, 1)
 }
 
 const collectionMapReadObserver = `

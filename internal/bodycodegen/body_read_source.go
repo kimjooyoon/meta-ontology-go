@@ -43,7 +43,7 @@ func bindBodyReadSource(source []byte, sourceSHA string, a *syntax.ActivityDecl,
 	if a == nil || !a.ValueProgramPresent {
 		return fail("ACTIVITY_BODY_UNAVAILABLE")
 	}
-	if origin.Kind != "index" && origin.Kind != "range_value" && origin.Kind != "map_value" {
+	if origin.Kind != "index" && origin.Kind != "range_value" && origin.Kind != "map_value" && origin.Kind != "filter_value" {
 		return fail("FORWARD_ORIGIN_DIFFERS")
 	}
 	return bindBodyExpressionSource(source, sourceSHA, a, origin.BodySHA256, BodyElementOrigin{origin.Start, origin.End, origin.Expression})

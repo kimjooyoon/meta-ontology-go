@@ -27,6 +27,9 @@ func readExpression(node ast.Node) (ast.Expr, string) {
 		if input, _, mapped := CollectionMapProjection(n); mapped {
 			return input, "map_value"
 		}
+		if input, _, filtered := CollectionFilterProjection(n); filtered {
+			return input, "filter_value"
+		}
 	}
 	return nil, ""
 }
@@ -39,6 +42,7 @@ func (p bodyProjection) captureReadOrigins(activityID, body string) map[ast.Node
 	}
 	origins := map[ast.Node]BodyReadOrigin{}
 	_, mapShadowed := findFunction(p.file, "map_values")
+	_, filterShadowed := findFunction(p.file, "filter_values")
 	for _, declaration := range p.file.Decls {
 		f, ok := declaration.(*ast.FuncDecl)
 		if !ok {
@@ -50,6 +54,9 @@ func (p bodyProjection) captureReadOrigins(activityID, body string) map[ast.Node
 			expression, kind := readExpression(node)
 			if call, ok := node.(*ast.CallExpr); ok && !mapShadowed && mapName(call.Fun, "map_values") && len(call.Args) == 2 {
 				expression, kind = call.Args[0], "map_value"
+			}
+			if call, ok := node.(*ast.CallExpr); ok && !filterShadowed && mapName(call.Fun, "filter_values") && len(call.Args) == 2 {
+				expression, kind = call.Args[0], "filter_value"
 			}
 			if expression == nil {
 				return true

@@ -91,8 +91,9 @@ func canonicalizeRouteProjection(packageName, activityName string, raw []byte, o
 	removeLocalReadMarkers(file, fset)
 	if !original {
 		restoreCollectionMaps(file)
+		restoreCollectionFilters(file)
 	}
-	if hasCollectionMaps(file) {
+	if hasCollectionMaps(file) || hasCollectionFilters(file) {
 		// Inverting a local-function projection changes token positions. For
 		// this new expression, compare AST formatting without layout hints;
 		// source and generated spans remain independently retained origins.

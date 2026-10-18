@@ -13,15 +13,16 @@ type BodyElementOrigin struct {
 }
 
 type BodyConstructionOrigin struct {
-	ActivityID       string              `json:"activity_id"`
-	NativeOrdinal    int                 `json:"native_ordinal"`
-	BodySHA256       string              `json:"body_sha256"`
-	Start            int                 `json:"decoded_start"`
-	End              int                 `json:"decoded_end"`
-	Expression       string              `json:"expression"`
-	Elements         []BodyElementOrigin `json:"elements"`
-	Kind             string              `json:"kind,omitempty"`
-	MapperActivityID string              `json:"mapper_activity_id,omitempty"`
+	ActivityID          string              `json:"activity_id"`
+	NativeOrdinal       int                 `json:"native_ordinal"`
+	BodySHA256          string              `json:"body_sha256"`
+	Start               int                 `json:"decoded_start"`
+	End                 int                 `json:"decoded_end"`
+	Expression          string              `json:"expression"`
+	Elements            []BodyElementOrigin `json:"elements"`
+	Kind                string              `json:"kind,omitempty"`
+	MapperActivityID    string              `json:"mapper_activity_id,omitempty"`
+	PredicateActivityID string              `json:"predicate_activity_id,omitempty"`
 }
 
 func sequenceConstruction(node ast.Node) *ast.CompositeLit {
@@ -44,6 +45,7 @@ func (p bodyProjection) captureConstructionOrigins(activityID, body string) map[
 	}
 	origins := map[ast.Node]BodyConstructionOrigin{}
 	_, mapShadowed := findFunction(p.file, "map_values")
+	_, filterShadowed := findFunction(p.file, "filter_values")
 	for _, declaration := range p.file.Decls {
 		f, ok := declaration.(*ast.FuncDecl)
 		if !ok {
@@ -61,7 +63,7 @@ func (p bodyProjection) captureConstructionOrigins(activityID, body string) map[
 		ast.Inspect(f.Body, func(n ast.Node) bool {
 			literal := sequenceConstruction(n)
 			var elements []ast.Expr
-			kind, mapperID := "", ""
+			kind, mapperID, predicateID := "", "", ""
 			if literal != nil {
 				elements = literal.Elts
 			} else if call, ok := n.(*ast.CallExpr); ok && !mapShadowed && mapName(call.Fun, "map_values") && len(call.Args) == 2 {
@@ -70,6 +72,12 @@ func (p bodyProjection) captureConstructionOrigins(activityID, body string) map[
 					return true
 				}
 				kind, mapperID, elements = "map_values", ids[mapper.Name], call.Args[1:]
+			} else if call, ok := n.(*ast.CallExpr); ok && !filterShadowed && mapName(call.Fun, "filter_values") && len(call.Args) == 2 {
+				predicate, valid := call.Args[1].(*ast.Ident)
+				if !valid {
+					return true
+				}
+				kind, predicateID, elements = "filter_values", ids[predicate.Name], call.Args[1:]
 			} else {
 				return true
 			}
@@ -77,7 +85,7 @@ func (p bodyProjection) captureConstructionOrigins(activityID, body string) map[
 			if !ok {
 				return true
 			}
-			origin := BodyConstructionOrigin{ActivityID: id, BodySHA256: digest([]byte(text)), Start: location.Start, End: location.End, Expression: location.Expression, Elements: []BodyElementOrigin{}, Kind: kind, MapperActivityID: mapperID}
+			origin := BodyConstructionOrigin{ActivityID: id, BodySHA256: digest([]byte(text)), Start: location.Start, End: location.End, Expression: location.Expression, Elements: []BodyElementOrigin{}, Kind: kind, MapperActivityID: mapperID, PredicateActivityID: predicateID}
 			for _, element := range elements {
 				e, valid := span(element)
 				if !valid {
@@ -105,6 +113,9 @@ func (p bodyProjection) emittedConstructionOrigins() []BodyConstructionOrigin {
 			mapped := false
 			if call, ok := n.(*ast.CallExpr); ok {
 				_, _, mapped = CollectionMapProjection(call)
+				if !mapped {
+					_, _, mapped = CollectionFilterProjection(call)
+				}
 			}
 			if literal == nil && !mapped {
 				return true

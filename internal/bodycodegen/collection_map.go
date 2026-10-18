@@ -27,10 +27,10 @@ func (r *pureCallResolver) collectionMapper(call *ast.CallExpr, caller string) (
 	if err != nil {
 		return binding, err
 	}
-	if err := r.mapNameInSource(call.Fun.(*ast.Ident), "call", caller, inputs); err != nil {
+	if err := r.collectionNameInSource("map_values", call.Fun.(*ast.Ident), "call", caller, inputs); err != nil {
 		return binding, err
 	}
-	if err := r.mapNameInSource(mapper, "mapper", caller, inputs); err != nil {
+	if err := r.collectionNameInSource("map_values", mapper, "mapper", caller, inputs); err != nil {
 		return binding, err
 	}
 	activity, err := sourceBodyActivity(r.file, mapper.Name)
@@ -46,7 +46,7 @@ func (r *pureCallResolver) collectionMapper(call *ast.CallExpr, caller string) (
 	return collectionMapperBinding{mapper.Name, parameters[0].Type, output}, nil
 }
 
-func (r *pureCallResolver) mapNameInSource(name *ast.Ident, role, caller string, inputs []InputParameter) error {
+func (r *pureCallResolver) collectionNameInSource(operation string, name *ast.Ident, role, caller string, inputs []InputParameter) error {
 	scope := ""
 	if name.Obj != nil {
 		scope = "local declaration"
@@ -58,7 +58,7 @@ func (r *pureCallResolver) mapNameInSource(name *ast.Ident, role, caller string,
 		}
 	}
 	if scope != "" {
-		return fmt.Errorf("map_values %s %q is shadowed by %s in activity %q (%s)", role, name.Name, scope, caller, r.ids[caller])
+		return fmt.Errorf("%s %s %q is shadowed by %s in activity %q (%s)", operation, role, name.Name, scope, caller, r.ids[caller])
 	}
 	return nil
 }

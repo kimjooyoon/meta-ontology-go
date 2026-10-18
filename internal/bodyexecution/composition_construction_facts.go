@@ -5,6 +5,7 @@ type CompositionConstructionFact struct {
 	CaseIndex      int    `json:"case_index"`
 	InstanceIndex  int    `json:"instance_index"`
 	ElementIndex   int    `json:"element_index"`
+	InputIndex     *int   `json:"input_index,omitempty"`
 	RootActivityID string `json:"root_activity_id"`
 	ActivityID     string `json:"activity_id"`
 	Completed      bool   `json:"completed"`
@@ -59,7 +60,7 @@ func CompositionConstructedReadFacts(runtime CompositionRuntime) []CompositionCo
 
 func compositionConstructionFact(caseIndex, instance, i int, element CompositionConstructionElement, site CompositionConstructionSite) CompositionConstructionFact {
 	part, _ := constructionElementSite(site, i)
-	f := CompositionConstructionFact{CaseIndex: caseIndex, InstanceIndex: instance, ElementIndex: i, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Completed: element.Completed, ReadStart: element.ReadStart, ReadEnd: element.ReadEnd, ReadsDropped: element.ReadsDropped, Expression: part.Expression, Mapping: "UNMAPPED"}
+	f := CompositionConstructionFact{CaseIndex: caseIndex, InstanceIndex: instance, ElementIndex: i, InputIndex: element.InputIndex, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Completed: element.Completed, ReadStart: element.ReadStart, ReadEnd: element.ReadEnd, ReadsDropped: element.ReadsDropped, Expression: part.Expression, Mapping: "UNMAPPED"}
 	if source := part.Source; source != nil && source.Status == "MAPPED" {
 		f.Mapping = source.Status
 		f.SourceSHA256 = source.SourceSHA256
