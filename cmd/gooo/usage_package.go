@@ -58,9 +58,11 @@ and record field types, presence, and cardinality. See docs/language/package-int
 
 Inspect the entry's prepared source calls before execution:
   gooo package inspect --json gooo.workspace.json
+  gooo package inspect --inputs-template gooo.workspace.json > inputs.json
 
 PREPARED shows package exports, source digests, bindings and the entry call closure.
 Authored activity IDs remain attached to original and lowered call participants.
+The input template contains editable zero values for unbound caller ports.
 Inspection makes zero program executions and model predictions. See
 docs/workspace-source-inspection.md for coverage and source-relative call spans.
 
