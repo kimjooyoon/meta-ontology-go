@@ -107,6 +107,13 @@ the existing case contract before any candidate member is written.
 | Ordinary body | Neither flag |
 | V1 required single Text record fields | `entity_fields: true` |
 | V5 Text/Boolean/Integer, optional fields or ordered collections | `ordered_collections: true` only |
+| V6 Text fields with `max_utf8_bytes`, including ordered collections | `entity_fields_profile: "gooo.entityfields.go-projection.v6"` only |
+
+The explicit profile replaces the legacy Boolean flags. For example, the
+[scope-fragment program](../examples/scope-fragments/README.md) uses both a list
+and bounded Text outputs, so its registration selects V6. Its first V5 request
+was rejected with `REGISTRATION_SOURCE_CONFORMANCE_FAILED`; selecting the source's
+actual V6 contract allowed generation. Runtime execution had already succeeded.
 
 The local-version reader's first request recorded this combination error. Its
 corrected source-bound request generated the complete nine-member proposal.
@@ -206,8 +213,10 @@ publisher authenticity or semantic correctness. The new identity requirement is
 an explicit experimental request-ABI change: version-only requests are no longer
 accepted. Native reports carry the actual binding; existing nine-role and
 canonical/projected conformance obligations remain bound to the complete write set.
-Issue #742 remains open until those input/identity/executor integrations and all
-six original acceptance obligations are supported by exact-head native evidence.
+The original six acceptance obligations of issue #742 were closed in its
+[bounded acceptance record](https://github.com/kimjooyoon/meta-ontology-go/issues/742#issuecomment-5563071729).
+That closure covers the coordinated registration operation and its stated native
+checks; broader language capability and user utility keep their own scope.
 Neither candidate byte equality nor the backend tests close product utility or
 the entire language's self-improvement goal.
 
