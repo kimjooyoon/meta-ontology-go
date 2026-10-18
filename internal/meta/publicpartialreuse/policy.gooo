@@ -55,6 +55,8 @@ for i := 0; i < 2; i++ {
     result = Unresolved("REUSE", "LOAD_PARTITION_RECEIPT", "PARTITION_RECEIPT_UNAVAILABLE")
    } else if state == "TOOL_UNOBSERVED" {
     result = Unresolved("REUSE", "OBSERVE_EXECUTION_TOOL", "PARTITION_EXECUTION_TOOL_UNOBSERVED")
+   } else if state == "PARTITION_UNOBSERVED" {
+    result = Unresolved("REUSE", "OBSERVE_PARTITION_INPUTS", "PARTITION_INPUT_SCOPE_UNOBSERVED")
    } else if state == "MISSING" {
     result = Unresolved("REUSE", "LOAD_PARTITION_RECEIPT", "MISSING_OR_STALE_PARTITION_RECEIPT")
    } else if state == "STALE" {
@@ -92,6 +94,8 @@ if reason == "CHANGED_COMPONENT_IS_UNKNOWN" {
  result.blocked_by = []string{"exact_partition_binding", "readable_partition_receipt"}
 } else if reason == "PARTITION_EXECUTION_TOOL_UNOBSERVED" {
  result.blocked_by = []string{"selected_go_command", "frozen_command_environment"}
+} else if reason == "PARTITION_INPUT_SCOPE_UNOBSERVED" {
+ result.blocked_by = []string{"module_bytes", "shared_generated_context", "partition_generation_origin"}
 } else if reason == "MISSING_OR_STALE_PARTITION_RECEIPT" {
  result.blocked_by = []string{"explicit_reuse_authorization", "immutable_successful_partition_receipt"}
 } else if reason == "STALE_PARTITION_RECEIPT_BINDING" {

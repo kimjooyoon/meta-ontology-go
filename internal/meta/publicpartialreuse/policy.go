@@ -21,7 +21,7 @@ const (
 	PolicyName          = "EXPLICIT_OPT_IN_PARTIAL_TEST_REUSE"
 	Operation           = "gooo.test.generated-public-partial-reuse"
 	PolicyActivity      = "CreateReceipt"
-	ContractVersion     = "v2"
+	ContractVersion     = "v3"
 	DecisionClosed      = "CLOSED"
 	DecisionUnknown     = "UNKNOWN"
 	DecisionRefuted     = "REFUTED"
@@ -75,6 +75,7 @@ type Policy struct {
 	Name                 string      `json:"name"`
 	Contract             string      `json:"contract"`
 	ToolProfile          string      `json:"execution_tool_profile"`
+	PartitionProfile     string      `json:"partition_input_profile"`
 	Partitions           []Partition `json:"partitions"`
 	Components           []Component `json:"components"`
 	Edges                []Edge      `json:"edges"`
@@ -123,8 +124,9 @@ func Load(filename string, source []byte) (Policy, error) {
 			continue
 		}
 		if len(current["partial-reuse-schema"]) != 1 || first(current, "partial-reuse-schema") != ContractVersion ||
-			len(current["partial-reuse-tool-profile"]) != 1 || first(current, "partial-reuse-tool-profile") != toolchaincli.GeneratedTestGoProfile {
-			return Policy{}, fmt.Errorf("partial reuse partition %q requires contract %s and execution tool profile %s",
+			len(current["partial-reuse-tool-profile"]) != 1 || first(current, "partial-reuse-tool-profile") != toolchaincli.GeneratedTestGoProfile ||
+			len(current["partial-reuse-partition-profile"]) != 1 || first(current, "partial-reuse-partition-profile") != PartitionInputProfile {
+			return Policy{}, fmt.Errorf("partial reuse partition %q requires contract %s, independent partition inputs and execution tool profile %s",
 				node.Name, ContractVersion, toolchaincli.GeneratedTestGoProfile)
 		}
 		if len(ids) != 1 || len(current["partial-reuse-test"]) != 1 || len(current["partial-reuse-symbols"]) != 1 || len(current["partial-reuse-roots"]) != 1 {
@@ -162,7 +164,7 @@ func Load(filename string, source []byte) (Policy, error) {
 	policy := Policy{
 		Schema: PolicySchema, EvaluatorSchema: EvaluatorSchema, SourceDigest: cache.HashBytes(source).String(),
 		SemanticDigest: ir.StableHash(), EvaluatorDigest: evaluatorDigest(), Package: ir.Package, Namespace: ir.Namespace.String(),
-		Activity: PolicyActivity, Name: first(all, "partial-reuse-policy"), Contract: first(all, "partial-reuse-schema"), ToolProfile: first(all, "partial-reuse-tool-profile"),
+		Activity: PolicyActivity, Name: first(all, "partial-reuse-policy"), Contract: first(all, "partial-reuse-schema"), ToolProfile: first(all, "partial-reuse-tool-profile"), PartitionProfile: first(all, "partial-reuse-partition-profile"),
 		Partitions: partitions, Components: components, Edges: edges, Cases: cases,
 		TestUnitCount: parseInt(first(all, "partial-reuse-test-unit-count")), DependencyEdgeCount: parseInt(first(all, "partial-reuse-dependency-edge-count")),
 		GeneratedArtifacts: parseInt(first(all, "partial-reuse-generated-artifact-count")), EvidenceArtifacts: parseInt(first(all, "partial-reuse-evidence-artifact-count")),
@@ -178,7 +180,7 @@ func Load(filename string, source []byte) (Policy, error) {
 
 func (policy Policy) Validate() error {
 	if policy.Schema != PolicySchema || policy.EvaluatorSchema != EvaluatorSchema || policy.Name != PolicyName ||
-		policy.Contract != ContractVersion || policy.ToolProfile != toolchaincli.GeneratedTestGoProfile || policy.Activity != PolicyActivity || policy.Package != "partialreuseexample" ||
+		policy.Contract != ContractVersion || policy.ToolProfile != toolchaincli.GeneratedTestGoProfile || policy.PartitionProfile != PartitionInputProfile || policy.Activity != PolicyActivity || policy.Package != "partialreuseexample" ||
 		policy.Namespace != "partial_reuse_example" || policy.TestUnitCount != TestUnitCount ||
 		policy.DependencyEdgeCount != DependencyEdgeCount || policy.GeneratedArtifacts != ArtifactCount ||
 		policy.EvidenceArtifacts != EvidenceCount || len(policy.Partitions) != TestUnitCount ||
@@ -238,6 +240,7 @@ func (policy Policy) SkeletonDigest() string {
 		Name             string      `json:"name"`
 		Contract         string      `json:"contract"`
 		ToolProfile      string      `json:"execution_tool_profile"`
+		PartitionProfile string      `json:"partition_input_profile"`
 		Components       []Component `json:"components"`
 		Edges            []Edge      `json:"edges"`
 		Cases            []Case      `json:"cases"`
@@ -245,7 +248,7 @@ func (policy Policy) SkeletonDigest() string {
 		RuntimeRule      string      `json:"runtime_rule"`
 		RefutedDominates bool        `json:"refuted_dominates_unknown"`
 	}
-	value := skeleton{PolicySchema, EvaluatorSchema, PolicyName, ContractVersion, policy.ToolProfile, append([]Component(nil), policy.Components...), append([]Edge(nil), policy.Edges...), append([]Case(nil), policy.Cases...), append([]string(nil), policy.Journey...), policy.RuntimeRule, policy.RefutedDominates}
+	value := skeleton{PolicySchema, EvaluatorSchema, PolicyName, ContractVersion, policy.ToolProfile, policy.PartitionProfile, append([]Component(nil), policy.Components...), append([]Edge(nil), policy.Edges...), append([]Case(nil), policy.Cases...), append([]string(nil), policy.Journey...), policy.RuntimeRule, policy.RefutedDominates}
 	return hashJSON(value)
 }
 

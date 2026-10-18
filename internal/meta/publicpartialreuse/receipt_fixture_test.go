@@ -33,6 +33,7 @@ func receiptEvaluationFixture(t *testing.T) EvaluationInput {
 	for _, partition := range policy.Partitions {
 		command := TestCommand(partition)
 		binding := Binding{
+			PartitionProfile: PartitionInputProfile, SharedProgramDigest: digest, ModuleDigest: digest,
 			PolicySourceDigest: policy.SourceDigest, PolicySemanticDigest: policy.SemanticDigest,
 			PolicyEvaluatorDigest: policy.EvaluatorDigest, CanonicalSourceDigest: digest,
 			CanonicalSemanticSubgraphDigest: digest, GeneratedArtifactDigest: digest,
@@ -49,6 +50,7 @@ func receiptEvaluationFixture(t *testing.T) EvaluationInput {
 			Schema: ReceiptSchema, Partition: partition.ID, Decision: DecisionClosed,
 			Reason: ReceiptReason, Binding: binding,
 			Original: OriginalExecution{
+				SourceDigest: policy.SourceDigest, SemanticDigest: policy.SemanticDigest, ProgramDigest: digest, ManifestDigest: digest,
 				InvocationID: digest, Operation: ReceiptOperation, ResultDigest: digest,
 				Successful: true, BuildExecutions: 1, TestExecutions: 1,
 				BuildMS: 1, TestMS: 1, WallMS: 1, PeakRSSKib: 1,

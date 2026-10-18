@@ -45,6 +45,7 @@ var compilerManifestPaths = []string{
 	"internal/meta/publictestreuse/receipt.go",
 	"internal/meta/publictestreuse/tool_inputs.go",
 	"internal/toolchaincli/go_inputs.go",
+	"internal/toolchaincli/package_inputs.go",
 	"internal/toolchaincli/go_command.go",
 	"internal/toolchaincli/model.go",
 	"internal/toolchaincli/resource_darwin.go",

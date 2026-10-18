@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	ReceiptSchema    = "gooo/public-partial-test-reuse-receipt/v2"
+	ReceiptSchema    = "gooo/public-partial-test-reuse-receipt/v3"
 	ReceiptOperation = Operation + ".baseline"
 	ReceiptReason    = "SUCCESSFUL_PARTITION_TEST_EXECUTION"
 	ReplayOperation  = Operation + ".selective"
@@ -32,6 +32,8 @@ const (
 var ErrUnobservedToolInputs = errors.New("historical partition receipt has no selected Go observations")
 
 // ErrInvalidReceipt identifies invalid content, not unavailable input.
+var ErrUnobservedPartitionInputs = errors.New("historical partition receipt has no independent package input scope")
+
 var ErrInvalidReceipt = errors.New("partial reuse receipt content is invalid")
 
 var compilerManifestPaths = []string{
@@ -47,19 +49,25 @@ var compilerManifestPaths = []string{
 	"internal/meta/publicpartialreuse/evaluator.go",
 	"internal/meta/publicpartialreuse/policy.go",
 	"internal/meta/publicpartialreuse/receipt.go",
+	"internal/meta/publicpartialreuse/package_origin.go",
 	"internal/toolchaincli/model.go",
 	"internal/toolchaincli/go_inputs.go",
+	"internal/toolchaincli/package_inputs.go",
 	"internal/toolchaincli/go_command.go",
 	"internal/toolchaincli/resource_darwin.go",
 	"internal/toolchaincli/resource_linux.go",
 	"internal/toolchaincli/resource_other.go",
 	"scripts/self-improvement-public-partial-reuse/main.go",
 	"scripts/self-improvement-public-partial-reuse/model.go",
+	"scripts/self-improvement-public-partial-reuse/origins.go",
 	"scripts/self-improvement-public-partial-reuse/run.go",
 	"scripts/self-improvement-public-partial-reuse/verify.go",
 }
 
 type Binding struct {
+	PartitionProfile                string                             `json:"partition_input_profile"`
+	SharedProgramDigest             string                             `json:"shared_program_digest"`
+	ModuleDigest                    string                             `json:"module_digest"`
 	ToolInputs                      toolchaincli.GeneratedTestGoInputs `json:"execution_tool_inputs"`
 	PolicySourceDigest              string                             `json:"policy_source_digest"`
 	PolicySemanticDigest            string                             `json:"policy_semantic_digest"`
@@ -82,6 +90,10 @@ type Binding struct {
 }
 
 type OriginalExecution struct {
+	SemanticDigest  string `json:"generation_semantic_digest"`
+	SourceDigest    string `json:"generation_source_digest"`
+	ProgramDigest   string `json:"generation_program_digest"`
+	ManifestDigest  string `json:"generation_manifest_digest"`
 	InvocationID    string `json:"invocation_id"`
 	Operation       string `json:"operation"`
 	ResultDigest    string `json:"result_digest"`
@@ -229,7 +241,7 @@ func TestCommandDigest(command, contract string) string {
 	return cache.HashBytes([]byte(command + "\x00" + contract)).String()
 }
 
-func BuildBinding(policy Policy, partition Partition, program, manifest, testContract []byte, compiler, orchestrationDigest, orchestrationOperation string, tool toolchaincli.GeneratedTestGoInputs) (Binding, error) {
+func BuildBinding(policy Policy, partition Partition, program, manifest, testContract, module []byte, compiler, orchestrationDigest, orchestrationOperation string, tool toolchaincli.GeneratedTestGoInputs) (Binding, error) {
 	if err := tool.Validate(); err != nil {
 		return Binding{}, err
 	}
@@ -245,19 +257,26 @@ func BuildBinding(policy Policy, partition Partition, program, manifest, testCon
 	if err != nil {
 		return Binding{}, err
 	}
-	wholeManifestDigest, err := manifestDigest(manifest)
+	if len(module) == 0 {
+		return Binding{}, errors.New("execution module input is missing")
+	}
+	if err := validateGenerationOrigin(policy, program, manifest); err != nil {
+		return Binding{}, err
+	}
+	sharedDigest, err := sharedProgramDigest(policy, program)
 	if err != nil {
 		return Binding{}, err
 	}
 	contractDigest := cache.HashBytes(testContract).String()
 	command := TestCommand(partition)
 	return Binding{
+		PartitionProfile: PartitionInputProfile, SharedProgramDigest: sharedDigest, ModuleDigest: cache.HashBytes(module).String(),
 		PolicySourceDigest:    cache.HashBytes([]byte(policy.SkeletonDigest())).String(),
 		PolicySemanticDigest:  cache.HashBytes([]byte(policy.SkeletonDigest() + "\x00semantic")).String(),
 		PolicyEvaluatorDigest: policy.EvaluatorDigest,
 		CanonicalSourceDigest: sourceDigest, CanonicalSemanticSubgraphDigest: semanticDigest,
 		GeneratedArtifactDigest: generatedDigest, GeneratedSemanticDigest: semanticDigest,
-		GeneratedManifestDigest: hashJSON(struct{ Whole, Partition string }{wholeManifestDigest, semanticDigest}),
+		GeneratedManifestDigest: hashJSON(struct{ Profile, Source, Semantic, Generated, Shared string }{PartitionInputProfile, sourceDigest, semanticDigest, generatedDigest, sharedDigest}),
 		CompilerDigest:          compiler, ReleasedToolDigest: ReleasedToolDigest(compiler), ToolchainDigest: tool.Digest(), ToolchainVersion: tool.Version, ToolInputs: tool,
 		TestCommand: command, TestCommandDigest: TestCommandDigest(command, contractDigest), TestContractDigest: contractDigest,
 		DependencyGraphDigest: policy.DependencyGraphDigest(), OrchestrationReportDigest: orchestrationDigest, OrchestrationOperation: orchestrationOperation,
@@ -277,6 +296,12 @@ func ValidateReceipt(receipt Receipt) error {
 	if receipt.Schema == "gooo/public-partial-test-reuse-receipt/v1" {
 		return ErrUnobservedToolInputs
 	}
+	if receipt.Schema == "gooo/public-partial-test-reuse-receipt/v2" {
+		return ErrUnobservedPartitionInputs
+	}
+	if receipt.Binding.PartitionProfile != PartitionInputProfile {
+		return errors.New("partition input profile is missing")
+	}
 	if receipt.Binding.ToolInputs.Validate() != nil ||
 		receipt.Binding.ToolchainDigest != receipt.Binding.ToolInputs.Digest() ||
 		receipt.Binding.ToolchainVersion != receipt.Binding.ToolInputs.Version {
@@ -290,6 +315,7 @@ func ValidateReceipt(receipt Receipt) error {
 		return errors.New("partial reuse receipt execution identity is invalid")
 	}
 	for _, value := range []string{
+		receipt.Binding.SharedProgramDigest, receipt.Binding.ModuleDigest, receipt.Original.SourceDigest, receipt.Original.SemanticDigest, receipt.Original.ProgramDigest, receipt.Original.ManifestDigest,
 		receipt.ReceiptID, receipt.Binding.PolicySourceDigest, receipt.Binding.PolicySemanticDigest, receipt.Binding.PolicyEvaluatorDigest,
 		receipt.Binding.CanonicalSourceDigest, receipt.Binding.CanonicalSemanticSubgraphDigest, receipt.Binding.GeneratedArtifactDigest,
 		receipt.Binding.GeneratedSemanticDigest, receipt.Binding.GeneratedManifestDigest, receipt.Binding.CompilerDigest, receipt.Binding.ReleasedToolDigest,
@@ -313,7 +339,7 @@ func ValidateReceipt(receipt Receipt) error {
 
 func VerifyReceipt(receipt Receipt, expected Binding, partition string) error {
 	if err := ValidateReceipt(receipt); err != nil {
-		if errors.Is(err, ErrUnobservedToolInputs) {
+		if errors.Is(err, ErrUnobservedToolInputs) || errors.Is(err, ErrUnobservedPartitionInputs) {
 			return err
 		}
 		return fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
@@ -387,7 +413,7 @@ func DecodeReceipt(data []byte) (Receipt, error) {
 		return Receipt{}, fmt.Errorf("%w: trailing JSON", ErrInvalidReceipt)
 	}
 	if err := ValidateReceipt(receipt); err != nil {
-		if errors.Is(err, ErrUnobservedToolInputs) {
+		if errors.Is(err, ErrUnobservedToolInputs) || errors.Is(err, ErrUnobservedPartitionInputs) {
 			return Receipt{}, err
 		}
 		return Receipt{}, fmt.Errorf("%w: %w", ErrInvalidReceipt, err)

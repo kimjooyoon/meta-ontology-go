@@ -34,7 +34,7 @@ observations against the current source and compares the reported outcome.
 Missing files and invalid content have separate observations. A broken Gooo
 program returns an evaluation error; it cannot become a successful outcome.
 
-The authored assessment suite has 22 rows and compares all ten output fields.
+The authored assessment suite has 24 rows and compares all ten output fields.
 It includes contradictory observations, first-cause ordering, invalid unused
 receipts and malformed partition lists. This population is separate from the
 six end-to-end cases below. The ordinary example has exactly two partitions.
@@ -43,10 +43,21 @@ Before any selective build or test, the existing driver now reads the source's
 ordered mask and maps it to the observed partition identities. An unresolved or
 refuted assessment exposes no selected work. Mask length and counts must agree;
 changing only the Gooo rule can request both declared tests. The original full
-baseline remains the producer of the example's receipts.
+baseline runs once on the prior source. The changed-source case reads those same
+immutable receipts, executes the changed orders test, and keeps the inventory
+receipt bytes and ID. It never establishes a fresh full baseline on the changed source.
 
-SDK/module closure and reobserving every package input before effects remain
-further integration work. The assessment alone does not establish arbitrary
+The declared `independent-declaration-partitions/v1` profile checks the complete
+generation record, then compares owned declaration and semantic projections.
+Every binding also retains the package name, imports, shared declarations, all
+comment text, exact `go.mod` bytes, test contract and selected command. Cross-owned
+references and shared declarations that reference owned symbols are rejected.
+The syntactic check can conservatively reject shadowed names.
+
+The shared package reader observes the same three regular files before build,
+before test, after test and before reuse sealing. It rejects extra members and
+changed bytes. These boundary observations are not an atomic filesystem snapshot.
+Complete SDK, transitive dependencies and external effects remain further work. The assessment alone does not establish arbitrary
 dependency closure or authorize customer CI to skip tests. It uses the existing
 interpreter with no model call.
 
@@ -63,12 +74,16 @@ reuse driver. It resolves the executable, checks its embedded Go 1.27.2 identity
 freezes the child environment and invokes the observed absolute path. The test
 execution witness retains `execution_tool_inputs`, and its result digest includes
 that observation's digest. The shared reader rechecks the command after execution.
-The source contract is now `v2` and names this execution tool profile. Receipt
-`v2` binds the command observations. Before selective work, the host observes
+The source contract is now `v3` and names this execution tool profile. Receipt
+`v3` binds the command, module and partition profile observations; the original
+execution retains the complete source, semantic, generated-program and manifest
+digests. The aggregate `v2` report records prior/current sources and reused receipt
+IDs. Whole-program byte equality is false for the changed-source case. Before selective work, the host observes
 the selected command again and presents the current bindings to Gooo. A changed
 path, executable, environment or platform makes the old receipt stale. A legacy
 `v1` receipt becomes `TOOL_UNOBSERVED`; Gooo returns `UNKNOWN` with the missing
-command and environment origins. Contradictory records still take precedence.
+command and environment origins. A `v2` receipt becomes `PARTITION_UNOBSERVED`
+because the new partition input scope was not recorded. Contradictory records still take precedence.
 The selected absolute command and frozen environment are shared by build and
 test, rechecked before and after execution, and observed again before sealing
 the reuse result. This records observed boundaries; it does not claim an atomic
@@ -83,7 +98,7 @@ separately in the current corpus.
 
 Selective reuse is explicit opt-in and fail-closed. A receipt is reusable only
 when its canonical source and semantic subgraph, generated partition artifact,
-compiler/released identity, Go 1.27 toolchain, exact test contract, dependency
+compiler/released identity, Go 1.27.2 command, exact test contract, dependency
 graph, successful result, and v14 orchestration provenance all match.
 
 The same canonical source also carries the v16 counterexample-driven semantic

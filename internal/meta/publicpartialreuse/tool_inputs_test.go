@@ -72,14 +72,15 @@ func TestPartialSourceRequiresDeclaredExecutionToolProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, edit := range [][2]string{
-		{"partial-reuse-schema=v2", "partial-reuse-schema=v1"},
+		{"partial-reuse-schema=v3", "partial-reuse-schema=v2"},
 		{"partial-reuse-tool-profile=gooo/generated-test-native-go-command/v1", ""},
+		{"partial-reuse-partition-profile=gooo/independent-declaration-partitions/v1", ""},
 	} {
 		changed := bytes.Replace(source, []byte(edit[0]), []byte(edit[1]), 1)
 		if bytes.Equal(changed, source) {
 			t.Fatal("source contract marker was not found", edit[0])
 		}
-		if _, err := Load(path, changed); err == nil || !strings.Contains(err.Error(), "contract v2") {
+		if _, err := Load(path, changed); err == nil || !strings.Contains(err.Error(), "contract v3") {
 			t.Fatal("incomplete source contract accepted current tool bindings", err)
 		}
 	}

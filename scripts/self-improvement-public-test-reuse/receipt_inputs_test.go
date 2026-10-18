@@ -21,6 +21,27 @@ func TestUnobservedLegacyReceiptProducesUnresolvedReport(t *testing.T) {
 
 func testLegacyReceiptReport(t *testing.T, schema, reason, blocked string) {
 	t.Helper()
+	output, report := legacyReceiptReport(t, schema)
+	checkLegacyReceiptDecision(t, report, reason, blocked)
+	raw := legacyReceiptReportBytes(t, output, report)
+	for name, data := range map[string][]byte{
+		"trailing":  append(append([]byte(nil), raw...), []byte("\n{}")...),
+		"duplicate": bytes.Replace(raw, []byte("{"), []byte(`{"schema":"duplicate",`), 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			filename := filepath.Join(output, name+".json")
+			if err := os.WriteFile(filename, data, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := readPublicReport(filename); err == nil {
+				t.Fatal("ambiguous report was accepted")
+			}
+		})
+	}
+}
+
+func legacyReceiptReport(t *testing.T, schema string) (string, publictestreuse.Report) {
+	t.Helper()
 	output := t.TempDir()
 	initial := publictestreuse.Report{Schema: publictestreuse.ReportSchema, Operation: publictestreuse.ReplayOperation}
 	initial.Binding.PackageInputs = publictestreuse.ExecutionPackageInputsFromBytes(
@@ -48,6 +69,11 @@ func testLegacyReceiptReport(t *testing.T, schema, reason, blocked string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	return output, report
+}
+
+func checkLegacyReceiptDecision(t *testing.T, report publictestreuse.Report, reason, blocked string) {
+	t.Helper()
 	if report.Decision != publictestreuse.DecisionUnknown || report.Reason != reason ||
 		report.CaseID != publictestreuse.CaseStaleEvidence || report.ReceiptMisses != 1 ||
 		report.TestExecutions != 0 || report.ReusedTestExecutions != 0 || report.BuildExecutions != 0 || report.ReceiptHits != 0 {
@@ -60,6 +86,10 @@ func testLegacyReceiptReport(t *testing.T, schema, reason, blocked string) {
 	if report.PeakRSSSubject != publictestreuse.PeakRSSObserver || snapshot(report).PeakRSSSubject != report.PeakRSSSubject {
 		t.Fatal("reuse summary lost the observed process")
 	}
+}
+
+func legacyReceiptReportBytes(t *testing.T, output string, report publictestreuse.Report) []byte {
+	t.Helper()
 	human, err := os.ReadFile(filepath.Join(output, "reuse-report.md"))
 	if err != nil || !strings.Contains(string(human), report.PeakRSSSubject) {
 		t.Fatal("readable report lost the memory subject", err)
@@ -72,20 +102,7 @@ func testLegacyReceiptReport(t *testing.T, schema, reason, blocked string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, data := range map[string][]byte{
-		"trailing":  append(append([]byte(nil), raw...), []byte("\n{}")...),
-		"duplicate": bytes.Replace(raw, []byte("{"), []byte(`{"schema":"duplicate",`), 1),
-	} {
-		t.Run(name, func(t *testing.T) {
-			filename := filepath.Join(output, name+".json")
-			if err := os.WriteFile(filename, data, 0o600); err != nil {
-				t.Fatal(err)
-			}
-			if _, err := readPublicReport(filename); err == nil {
-				t.Fatal("ambiguous report was accepted")
-			}
-		})
-	}
+	return raw
 }
 
 func readGoooPolicyFixture(t *testing.T) publictestreuse.Policy {

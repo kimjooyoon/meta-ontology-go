@@ -29,7 +29,7 @@ func TestPartialReuseNativeCommandResourceObservation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	metrics, result, err := executeTests(tool, directory, partition)
+	metrics, result, err := executeTests(tool, directory, partition, executionPackageBytes(program, contract))
 	if err != nil || !result.Success || result.ExitCode != 0 || !cache.Digest(result.ResultDigest).Known() ||
 		result.ToolInputs.Validate() != nil || !filepath.IsAbs(result.ToolInputs.Path) ||
 		metrics.BuildExecutions != 1 || metrics.TestExecutions != 1 || metrics.TestUnitsExecuted != 1 ||
