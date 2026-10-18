@@ -16,7 +16,7 @@
 6. 완료와 실패, 중단된 비용을 외부 저널과 원본 실행의 산출물로 남깁니다.
 
 허용 조건과 실행 결과의 분류는 공개 도구의
-[policy.gooo](https://github.com/kimjooyoon/gooo-ci-domain/blob/ae2a428e08367af5000bda46061a77d10fed0ba5/policy.gooo)에
+[policy.gooo](https://github.com/kimjooyoon/gooo-ci-domain/blob/74782caeaad2368651b3f726ac49c181aa853744/policy.gooo)에
 있습니다. 실제 Gooo 컴파일러가 생성한 Go 코드와 생성 출처도 함께 공개했습니다.
 현재 연결은 해당 도구의 리비전을 고정합니다.
 
@@ -27,6 +27,18 @@
 명령이 완료된 뒤 마지막 기록 저장이 실패하면, 이미 얻은 `WorkReceipt`와
 원래 오류를 함께 전달합니다. 완료된 명령의 결과 필드는 유지하고 CLI 종료 상태는
 실패를 알립니다. 호출자는 이 결과와 오류를 함께 읽고 후속 행동을 정해야 합니다.
+
+명령이 성공하지 못하면 같은 receipt의 결정·수락 여부·다음 행동·예측값·경과 시간을
+stderr에도 표시합니다. [main 원본 실행](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/39084671023)에서는
+race 명령의 예상 비용 1,870,434ms가 남은 1,540,277ms보다 커서 실행 전에
+`OVER_BUDGET`으로 거부됐습니다. 이 경우 `REFINE_REQUIRED_WORK`를 함께 읽어
+테스트 결과와 실행 전 거부를 구분할 수 있습니다. 명령 인자와 원문은 이 요약에 복사하지 않습니다.
+stdout의 기록 형식, 공유 시계와 검사 의무는 유지합니다.
+
+[도구 #5의 원본 CI](https://github.com/kimjooyoon/gooo-ci-domain/actions/runs/39087875323)는
+초기 대기 90초를 별도로 보존하고 수락 이후 45,932ms를 기록했습니다.
+이 중 실제 검사 명령은 25,409ms였습니다. 해당 도구의 작은 검사 범위에 대한 값이며,
+컴파일러 CI의 단축률은 새 소스의 원본 실행에서 확인해야 합니다.
 
 ## 의무와 시간의 관계
 
