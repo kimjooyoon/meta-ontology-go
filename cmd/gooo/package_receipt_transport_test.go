@@ -86,6 +86,37 @@ func TestPackageReceiptTransportReportsWriterFailures(t *testing.T) {
 	}
 }
 
+func TestPackageReceiptWriteFailureKeepsExecutionCause(t *testing.T) {
+	for _, compression := range []string{"", "gzip"} {
+		var stderr bytes.Buffer
+		cause := errors.New("original execution failed")
+		receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Decision: "FAIL_CLOSED", Error: cause.Error()}
+		code := writePackageExecution(receipt, cause, true, compression, receiptBrokenWriter{}, &stderr)
+		original := bytes.Index(stderr.Bytes(), []byte(cause.Error()))
+		transport := bytes.Index(stderr.Bytes(), []byte("write receipt:"))
+		if code != exitFailure || original < 0 || transport <= original {
+			t.Fatal("publication failure replaced original failure", code, stderr.String())
+		}
+	}
+}
+
+func TestPackageSavedWriteFailureKeepsInputCause(t *testing.T) {
+	for _, resume := range []bool{false, true} {
+		var stderr bytes.Buffer
+		path := filepath.Join(t.TempDir(), "missing-workspace")
+		args := []string{"--json", "--receipt-compression", "gzip", "--receipt", "unused", "--cases", "unused", path}
+		if resume {
+			args = append(args, "--assembly-policy-workspace", "unused")
+		}
+		code := runPackageSaved(args, OSFileReader{}, receiptBrokenWriter{}, &stderr, resume)
+		original := bytes.Index(stderr.Bytes(), []byte("execution:"))
+		transport := bytes.Index(stderr.Bytes(), []byte("write receipt:"))
+		if code != exitFailure || original < 0 || transport <= original || !bytes.Contains(stderr.Bytes(), []byte("missing-workspace")) {
+			t.Fatal("saved operation replaced its original input failure", resume, code, stderr.String())
+		}
+	}
+}
+
 type receiptBrokenWriter struct{}
 
 func (receiptBrokenWriter) Write([]byte) (int, error) { return 0, errors.New("writer unavailable") }

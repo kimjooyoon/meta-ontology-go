@@ -59,6 +59,14 @@ func writePackageReceiptJSON(output io.Writer, value any, compression string) er
 	return err
 }
 
+func writePackageReceiptFailure(stderr io.Writer, operation string, cause, writeErr error) int {
+	if cause != nil {
+		fmt.Fprintf(stderr, "gooo package %s: execution: %v\n", operation, cause)
+	}
+	fmt.Fprintf(stderr, "gooo package %s: write receipt: %v\n", operation, writeErr)
+	return exitFailure
+}
+
 type packageReceiptLimitWriter struct {
 	output  io.Writer
 	limit   int

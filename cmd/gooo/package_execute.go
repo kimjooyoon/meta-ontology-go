@@ -225,8 +225,7 @@ func readPackageBodyPlans(reader SourceReader, path string) (map[string]bodycode
 func writePackageExecution(receipt packageExecutionReceipt, cause error, jsonMode bool, compression string, stdout, stderr io.Writer) int {
 	if jsonMode {
 		if err := writePackageReceiptJSON(stdout, receipt, compression); err != nil {
-			fmt.Fprintf(stderr, "gooo package execute: write receipt: %v\n", err)
-			return exitFailure
+			return writePackageReceiptFailure(stderr, "execute", cause, err)
 		}
 	} else if cause != nil {
 		fmt.Fprintf(stderr, "gooo package execute: %v\n", cause)

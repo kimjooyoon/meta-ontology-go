@@ -43,16 +43,15 @@ func runPackageSaved(args []string, reader SourceReader, stdout, stderr io.Write
 	if err != nil {
 		receipt.Decision, receipt.Error = "FAIL_CLOSED", err.Error()
 	}
+	operation := "replay"
+	if resume {
+		operation = "resume"
+	}
 	if jsonMode {
 		if writeErr := writePackageReceiptJSON(stdout, receipt, flags["--receipt-compression"]); writeErr != nil {
-			fmt.Fprintln(stderr, writeErr)
-			return exitFailure
+			return writePackageReceiptFailure(stderr, operation, err, writeErr)
 		}
 	} else if err != nil {
-		operation := "replay"
-		if resume {
-			operation = "resume"
-		}
 		fmt.Fprintf(stderr, "gooo package %s: %v\n", operation, err)
 	} else if flags["--inputs"] != "" {
 		return writePackageActualValues(stdout, stderr, *receipt.Result)
