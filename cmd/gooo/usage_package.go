@@ -9,6 +9,10 @@ Start an origin reader and inspect its editable input:
 
 Successful input-only execution prints one JSON value per input row.
 Add --json for the complete generation, execution and origin record.
+Add --receipt-compression gzip with --json to package execute, replay or resume
+for lossless compressed output. Saved receipt readers detect gzip automatically.
+Inspect gooo version --build --json for package_receipt_transport byte limits.
+The original JSON digest and partial observation state remain unchanged.
 See docs/language/project-starters.md for the practice checks and source editing.
 
 Read recorded candidate paths:
