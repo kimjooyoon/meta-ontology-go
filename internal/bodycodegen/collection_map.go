@@ -34,21 +34,24 @@ func (r *pureCallResolver) collectionMapper(call *ast.CallExpr) (collectionMappe
 
 // A typed local function keeps the primitive within its owning source activity.
 // Its one argument evaluates the original collection exactly once. The output
-// backing array is allocated once; source-visible input slices stay immutable.
+// backing array has 256 scalar slots; the result caps capacity to its length.
+// Passing the mapper outside this scope avoids capturing source activity names.
 func lowerCollectionMap(call *ast.CallExpr, binding collectionMapperBinding) error {
-	text := fmt.Sprintf(`func(goooMapInput []%s) []%s {
- var goooMapResult = make([]%s, len(goooMapInput))
+	text := fmt.Sprintf(`func(goooMapInput []%s, goooMapApply func(%s) %s) []%s {
+ var goooMapResult [256]%s
+ var goooMapLength int
  for goooMapIndex := range goooMapInput {
-  goooMapResult[goooMapIndex] = %s(goooMapInput[goooMapIndex])
+  goooMapResult[goooMapIndex] = goooMapApply(goooMapInput[goooMapIndex])
+  goooMapLength = goooMapIndex + 1
  }
- return goooMapResult
-}(goooMapArgument)`, binding.Input, binding.Output, binding.Output, binding.Name)
+ return goooMapResult[:goooMapLength:goooMapLength]
+}(goooMapArgument, goooMapMapper)`, binding.Input, binding.Input, binding.Output, binding.Output, binding.Output)
 	expression, err := parser.ParseExpr(text)
 	if err != nil {
 		return err
 	}
 	projected := expression.(*ast.CallExpr)
-	projected.Args[0] = call.Args[0]
+	projected.Args = call.Args
 	*call = *projected
 	return nil
 }

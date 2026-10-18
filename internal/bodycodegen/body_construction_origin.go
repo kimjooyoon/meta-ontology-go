@@ -13,10 +13,12 @@ type BodyElementOrigin struct {
 }
 
 type BodyConstructionOrigin struct {
-	ActivityID    string `json:"activity_id"`
-	NativeOrdinal int    `json:"native_ordinal"`
-	BodySHA256    string `json:"body_sha256"`
-	BodyElementOrigin
+	ActivityID       string              `json:"activity_id"`
+	NativeOrdinal    int                 `json:"native_ordinal"`
+	BodySHA256       string              `json:"body_sha256"`
+	Start            int                 `json:"decoded_start"`
+	End              int                 `json:"decoded_end"`
+	Expression       string              `json:"expression"`
 	Elements         []BodyElementOrigin `json:"elements"`
 	Kind             string              `json:"kind,omitempty"`
 	MapperActivityID string              `json:"mapper_activity_id,omitempty"`
@@ -75,7 +77,7 @@ func (p bodyProjection) captureConstructionOrigins(activityID, body string) map[
 			if !ok {
 				return true
 			}
-			origin := BodyConstructionOrigin{ActivityID: id, BodySHA256: digest([]byte(text)), BodyElementOrigin: location, Elements: []BodyElementOrigin{}, Kind: kind, MapperActivityID: mapperID}
+			origin := BodyConstructionOrigin{ActivityID: id, BodySHA256: digest([]byte(text)), Start: location.Start, End: location.End, Expression: location.Expression, Elements: []BodyElementOrigin{}, Kind: kind, MapperActivityID: mapperID}
 			for _, element := range elements {
 				e, valid := span(element)
 				if !valid {

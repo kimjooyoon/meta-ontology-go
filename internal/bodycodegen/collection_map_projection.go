@@ -27,42 +27,41 @@ func mapScalarSequence(expression ast.Expr) string {
 // recognizing only a generated name would permit a changed mapper or traversal.
 func CollectionMapProjection(call *ast.CallExpr) (ast.Expr, *ast.Ident, bool) {
 	f, ok := call.Fun.(*ast.FuncLit)
-	if !ok || len(call.Args) != 1 || call.Ellipsis.IsValid() || f.Type.TypeParams != nil ||
-		f.Type.Params == nil || len(f.Type.Params.List) != 1 || f.Type.Results == nil || len(f.Type.Results.List) != 1 {
+	if !ok || len(call.Args) != 2 || call.Ellipsis.IsValid() || f.Type.TypeParams != nil || f.Type.Params == nil || len(f.Type.Params.List) != 2 || f.Type.Results == nil || len(f.Type.Results.List) != 1 || len(f.Type.Results.List[0].Names) != 0 {
 		return nil, nil, false
 	}
 	parameter := f.Type.Params.List[0]
-	output := mapScalarSequence(f.Type.Results.List[0].Type)
-	if len(parameter.Names) != 1 || parameter.Names[0].Name != "goooMapInput" ||
-		mapScalarSequence(parameter.Type) == "" || output == "" || len(f.Body.List) != 3 {
+	inputType, output := mapScalarSequence(parameter.Type), mapScalarSequence(f.Type.Results.List[0].Type)
+	if len(parameter.Names) != 1 || parameter.Names[0].Name != "goooMapInput" || inputType == "" || output == "" || len(f.Body.List) != 4 {
 		return nil, nil, false
 	}
-	declaration, ok := f.Body.List[0].(*ast.DeclStmt)
+	apply := f.Type.Params.List[1]
+	mapperType, ok := apply.Type.(*ast.FuncType)
+	if !ok || len(apply.Names) != 1 || apply.Names[0].Name != "goooMapApply" || mapperType.TypeParams != nil || mapperType.Params == nil || len(mapperType.Params.List) != 1 || mapperType.Results == nil || len(mapperType.Results.List) != 1 || len(mapperType.Params.List[0].Names) != 0 || len(mapperType.Results.List[0].Names) != 0 || !mapName(mapperType.Params.List[0].Type, inputType) || !mapName(mapperType.Results.List[0].Type, output) {
+		return nil, nil, false
+	}
+	mapper, ok := call.Args[1].(*ast.Ident)
 	if !ok {
 		return nil, nil, false
 	}
-	general, ok := declaration.Decl.(*ast.GenDecl)
-	if !ok || general.Tok != token.VAR || len(general.Specs) != 1 {
+	result, ok := mapDeclaration(f.Body.List[0], "goooMapResult")
+	if !ok {
 		return nil, nil, false
 	}
-	variable, ok := general.Specs[0].(*ast.ValueSpec)
-	if !ok || len(variable.Names) != 1 || variable.Names[0].Name != "goooMapResult" ||
-		variable.Type != nil || len(variable.Values) != 1 {
+	array, ok := result.(*ast.ArrayType)
+	if !ok || !mapName(array.Elt, output) {
 		return nil, nil, false
 	}
-	allocation, ok := variable.Values[0].(*ast.CallExpr)
-	if !ok || !mapName(allocation.Fun, "make") || len(allocation.Args) != 2 || allocation.Ellipsis.IsValid() ||
-		mapScalarSequence(allocation.Args[0]) != output {
+	limit, ok := array.Len.(*ast.BasicLit)
+	if !ok || limit.Kind != token.INT || limit.Value != "256" {
 		return nil, nil, false
 	}
-	length, ok := allocation.Args[1].(*ast.CallExpr)
-	if !ok || !mapName(length.Fun, "len") || len(length.Args) != 1 ||
-		!mapName(length.Args[0], "goooMapInput") || length.Ellipsis.IsValid() {
+	length, ok := mapDeclaration(f.Body.List[1], "goooMapLength")
+	if !ok || !mapName(length, "int") {
 		return nil, nil, false
 	}
-	loop, ok := f.Body.List[1].(*ast.RangeStmt)
-	if !ok || loop.Tok != token.DEFINE || !mapName(loop.Key, "goooMapIndex") || loop.Value != nil ||
-		!mapName(loop.X, "goooMapInput") || len(loop.Body.List) != 1 {
+	loop, ok := f.Body.List[2].(*ast.RangeStmt)
+	if !ok || loop.Tok != token.DEFINE || !mapName(loop.Key, "goooMapIndex") || loop.Value != nil || !mapName(loop.X, "goooMapInput") || len(loop.Body.List) != 2 {
 		return nil, nil, false
 	}
 	write, ok := loop.Body.List[0].(*ast.AssignStmt)
@@ -74,22 +73,50 @@ func CollectionMapProjection(call *ast.CallExpr) (ast.Expr, *ast.Ident, bool) {
 		return nil, nil, false
 	}
 	invoke, ok := write.Rhs[0].(*ast.CallExpr)
-	if !ok || len(invoke.Args) != 1 || invoke.Ellipsis.IsValid() {
-		return nil, nil, false
-	}
-	mapper, ok := invoke.Fun.(*ast.Ident)
-	if !ok {
+	if !ok || !mapName(invoke.Fun, "goooMapApply") || len(invoke.Args) != 1 || invoke.Ellipsis.IsValid() {
 		return nil, nil, false
 	}
 	read, ok := invoke.Args[0].(*ast.IndexExpr)
 	if !ok || !mapName(read.X, "goooMapInput") || !mapName(read.Index, "goooMapIndex") {
 		return nil, nil, false
 	}
-	result, ok := f.Body.List[2].(*ast.ReturnStmt)
-	if !ok || len(result.Results) != 1 || !mapName(result.Results[0], "goooMapResult") {
+	update, ok := loop.Body.List[1].(*ast.AssignStmt)
+	if !ok || update.Tok != token.ASSIGN || len(update.Lhs) != 1 || len(update.Rhs) != 1 || !mapName(update.Lhs[0], "goooMapLength") {
+		return nil, nil, false
+	}
+	add, ok := update.Rhs[0].(*ast.BinaryExpr)
+	if !ok || add.Op != token.ADD || !mapName(add.X, "goooMapIndex") {
+		return nil, nil, false
+	}
+	one, ok := add.Y.(*ast.BasicLit)
+	if !ok || one.Kind != token.INT || one.Value != "1" {
+		return nil, nil, false
+	}
+	ret, ok := f.Body.List[3].(*ast.ReturnStmt)
+	if !ok || len(ret.Results) != 1 {
+		return nil, nil, false
+	}
+	slice, ok := ret.Results[0].(*ast.SliceExpr)
+	if !ok || !slice.Slice3 || !mapName(slice.X, "goooMapResult") || slice.Low != nil || !mapName(slice.High, "goooMapLength") || !mapName(slice.Max, "goooMapLength") {
 		return nil, nil, false
 	}
 	return call.Args[0], mapper, true
+}
+
+func mapDeclaration(statement ast.Stmt, name string) (ast.Expr, bool) {
+	declaration, ok := statement.(*ast.DeclStmt)
+	if !ok {
+		return nil, false
+	}
+	general, ok := declaration.Decl.(*ast.GenDecl)
+	if !ok || general.Tok != token.VAR || len(general.Specs) != 1 {
+		return nil, false
+	}
+	variable, ok := general.Specs[0].(*ast.ValueSpec)
+	if !ok || len(variable.Names) != 1 || variable.Names[0].Name != name || len(variable.Values) != 0 {
+		return nil, false
+	}
+	return variable.Type, true
 }
 
 func restoreCollectionMaps(file *ast.File) {

@@ -25,6 +25,14 @@ func TestCollectionMapGenerateAndInterpret(t *testing.T) {
 	}
 }
 
+func TestCollectionMapDoesNotCaptureMapperNames(t *testing.T) {
+	for _, name := range []string{"len", "make", "goooMapInput", "goooMapApply", "goooMapResult", "goooMapIndex", "goooMapLength"} {
+		t.Run(name, func(t *testing.T) {
+			testCollectionMapGeneration(t, strings.ReplaceAll(collectionMapFixture, "Quote", name))
+		})
+	}
+}
+
 func testCollectionMapGeneration(t *testing.T, source string) {
 	t.Helper()
 	generated, err := Generate("mapping.gooo", []byte(source), "Project")

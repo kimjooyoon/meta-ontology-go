@@ -59,10 +59,10 @@ func TestCollectionMapEquivalenceRejectsChangedTraversal(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, change := range [][2]string{
-		{"make([]string, len(goooMapInput))", "make([]string, len(goooMapInput)+1)"},
-		{"Quote(goooMapInput[goooMapIndex])", "Quote(goooMapInput[0])"},
+		{"[256]string", "[257]string"},
+		{"goooMapApply(goooMapInput[goooMapIndex])", "goooMapApply(goooMapInput[0])"},
 		{"goooMapResult[goooMapIndex] =", "goooMapResult[0] ="},
-		{"return goooMapResult", "return goooMapResult[:0]"},
+		{"goooMapResult[:goooMapLength:goooMapLength]", "goooMapResult[:goooMapLength]"},
 		{`"[" + input + "]"`, `"(" + input + ")"`},
 	} {
 		changed := strings.Replace(generated.Source, change[0], change[1], 1)

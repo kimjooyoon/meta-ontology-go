@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/labels", "activity": "Classify"},
+  "packages": [{"path": "example/labels", "name": "labels", "imports": [], "sources": ["main.gooo.fixture"]}]
+}

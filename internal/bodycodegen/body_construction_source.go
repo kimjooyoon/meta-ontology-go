@@ -17,7 +17,7 @@ func BindBodyConstructionSources(source []byte, origins []BodyConstructionOrigin
 	for i, o := range origins {
 		result[i].Kind, result[i].MapperActivityID = o.Kind, o.MapperActivityID
 		a := activities[o.ActivityID]
-		result[i].Literal = bindBodyExpressionSource(source, sha, a, o.BodySHA256, o.BodyElementOrigin)
+		result[i].Literal = bindBodyExpressionSource(source, sha, a, o.BodySHA256, BodyElementOrigin{o.Start, o.End, o.Expression})
 		result[i].Elements = make([]*BodyExpressionSource, len(o.Elements))
 		for j, e := range o.Elements {
 			result[i].Elements[j] = bindBodyExpressionSource(source, sha, a, o.BodySHA256, e)

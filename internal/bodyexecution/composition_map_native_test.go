@@ -68,6 +68,11 @@ func TestCollectionMapNativeOrigins(t *testing.T) {
 			if runtime.ReadObservation.Status != "COMPLETE" || runtime.ModelCalls != 0 {
 				t.Fatal(runtime.ReadObservation)
 			}
+			for _, read := range runtime.ReadSites {
+				if read.Source == nil || read.Source.Status != "MAPPED" {
+					t.Fatal("read source location", read)
+				}
+			}
 			for c, trace := range runtime.Traces {
 				count := len(rows[c])
 				offset := 0
