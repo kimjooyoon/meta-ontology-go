@@ -86,8 +86,7 @@ func changeDenominator(t *testing.T, data fstest.MapFS, version int, change func
 }
 
 func failureReason(err error) string {
-	var observed *Failure
-	if errors.As(err, &observed) {
+	if observed, ok := errors.AsType[*Failure](err); ok {
 		return observed.Reason
 	}
 	return ""
