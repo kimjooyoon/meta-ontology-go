@@ -1,12 +1,15 @@
 package verify
 
 func init() {
-	branchScopeAllowlist["agent/test-reuse-tool-origin-20261018"] = []string{
+	branchScopeAllowlist["agent/gooo-execution-origins-20261018"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/self-improvement-public-continuity.yml",
 		"docs/language/language-product-priorities.ko.md",
 		"examples/self-improvement-discovery/project.gooo",
+		"examples/self-improvement-partial-reuse/README.md",
+		"internal/meta/publicpartialreuse/receipt.go",
+		"internal/meta/publicpartialreuse/resource_origin_test.go",
 		"internal/meta/publictestreuse/policy.go",
 		"internal/meta/publictestreuse/policy.gooo",
 		"internal/meta/publictestreuse/policy_inputs_test.go",
@@ -18,7 +21,9 @@ func init() {
 		"internal/toolchaincli/resource_darwin.go",
 		"internal/toolchaincli/resource_linux.go",
 		"internal/toolchaincli/resource_other.go",
-		"internal/verify/scope_public_test_tool_origin.go",
+		"internal/verify/scope_gooo_execution_origins.go",
+		"scripts/self-improvement-public-partial-reuse/native_timing_test.go",
+		"scripts/self-improvement-public-partial-reuse/run.go",
 		"scripts/self-improvement-public-test-reuse/assessment.go",
 		"scripts/self-improvement-public-test-reuse/model.go",
 		"scripts/self-improvement-public-test-reuse/receipt_inputs_test.go",
