@@ -1,6 +1,7 @@
 package syntaxregistration
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 
@@ -25,11 +26,11 @@ func bindContract() (contractBinding, error) {
 }
 
 func bindContractSource(source []byte) (contractBinding, error) {
-	file, diagnostics := syntax.ParseFile("contract.gooo", string(source))
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("contract.gooo", string(source), syntax.EntityFieldsV5Support())
 	if file == nil || diagnostics.HasErrors() {
-		return contractBinding{}, fmt.Errorf("registration contract cannot be parsed")
+		return contractBinding{}, fmt.Errorf("registration contract cannot be parsed: %v", diagnostics)
 	}
-	ir, err := bidir.Lower(file)
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, bidir.EntityFieldsV5Support())
 	if err != nil {
 		return contractBinding{}, err
 	}
@@ -40,8 +41,20 @@ func bindContractSource(source []byte) (contractBinding, error) {
 		"GenerateSyntaxDenominator", "GenerateSyntaxConformance", "GenerateDenominatorAdmission",
 		"GenerateDenominatorSelection", "GenerateDenominatorDigest",
 		"GenerateDenominatorEvidence", "GenerateMigrationConformance"}
-	if len(ir.Graph.Nodes()) != 23 {
-		return contractBinding{}, fmt.Errorf("registration contract node inventory is not exact")
+	if len(ir.Graph.Nodes()) != 26 {
+		return contractBinding{}, fmt.Errorf("registration contract node inventory is not exact: %d", len(ir.Graph.Nodes()))
+	}
+	caseInput, caseInputFound := ir.Graph.NodeByName(ir.Namespace, "CaseIntent")
+	caseOutput, caseOutputFound := ir.Graph.NodeByName(ir.Namespace, "CanonicalCase")
+	compose, composeFound := ir.Graph.NodeByName(ir.Namespace, "ComposeCase")
+	if !caseInputFound || !caseOutputFound || !composeFound || caseInput.Kind != semantic.Entity ||
+		caseOutput.Kind != semantic.Entity || compose.Kind != semantic.Activity ||
+		caseInput.ID.String() != "gooo://syntax-registration/case-intent" ||
+		caseOutput.ID.String() != "gooo://syntax-registration/canonical-case" ||
+		compose.ID.String() != "gooo://syntax-registration/compose-case" || compose.ValueProgram == "" ||
+		!ir.Graph.HasFact(semantic.FactKey{Subject: compose.ID, Predicate: semantic.Used, Object: caseInput.ID}) ||
+		!ir.Graph.HasFact(semantic.FactKey{Subject: caseOutput.ID, Predicate: semantic.WasGeneratedBy, Object: compose.ID}) {
+		return contractBinding{}, fmt.Errorf("registration case-composition activity ABI mismatch")
 	}
 	request, ok := ir.Graph.NodeByName(ir.Namespace, "RegistrationRequest")
 	if !ok || request.Kind != semantic.Entity || request.ID.String() != "gooo://syntax-registration/request" {
