@@ -33,6 +33,17 @@
   ],
   "ownership": [
     {
+      "branch": "agent/artifact-producer-lifecycle-20261018",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "docs/ci-work-domain.ko.md",
+        "internal/verify/scope_artifact_producer_lifecycle.go",
+        "scripts/ci-proof/artifacts.js"
+      ]
+    },
+    {
       "branch": "agent/shared-native-go-origin-20261018",
       "paths": [
         ".github/agent-scope-table.md",
