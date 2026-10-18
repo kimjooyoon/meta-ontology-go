@@ -58,7 +58,7 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 		declared, available := graph.displayInputNames(suite.Display)
 		for c, test := range suite.Cases {
 			if err := suite.Display.checkSubmittedInputs(test.Inputs, declared, available); err != nil {
-				return nil, fmt.Errorf("case %d: %w", c, err)
+				return nil, inputCaseDiagnostic(c, err)
 			}
 		}
 	}
@@ -66,7 +66,7 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 	for c, test := range suite.Cases {
 		row, err := graph.inputRow(test, suite.Schema != CompositionInputsSchema, suite.Display)
 		if err != nil {
-			return nil, fmt.Errorf("case %d: %w", c, err)
+			return nil, inputCaseDiagnostic(c, err)
 		}
 		rows[c] = row
 	}
@@ -84,20 +84,25 @@ func (graph compositionGraph) inputRow(test CompositionCase, requireExpectation 
 			value, hasInput := test.Inputs[key]
 			if input.From < 0 {
 				if !hasInput {
-					return nil, fmt.Errorf("root input %q requires an explicit value", shown)
+					return nil, &InputDiagnostic{Stage: "INPUT_VALIDATION", Code: "MISSING_ROOT_INPUT",
+						DeclaredKey: shown, Message: fmt.Sprintf("root input %q requires an explicit value", shown)}
 				}
 				canonical, err := graph.canonicalValue(value, input.Type)
 				if err != nil {
-					return nil, fmt.Errorf("input %q: %w", shown, err)
+					return nil, &InputDiagnostic{Stage: "INPUT_VALIDATION", Code: "INVALID_INPUT_VALUE",
+						Key: shown, Message: fmt.Sprintf("input %q: %v", shown, err)}
 				}
 				storage[roots], roots = canonical, roots+1
 			} else if hasInput {
-				return nil, fmt.Errorf("bound input %q must receive its producer's result", shown)
+				return nil, &InputDiagnostic{Stage: "INPUT_VALIDATION", Code: "BOUND_INPUT_PROVIDED",
+					Key: shown, Message: fmt.Sprintf("bound input %q must receive its producer's result", shown)}
 			}
 		}
 		if value, present := test.Expected[node.Name]; present {
 			if _, err := graph.canonicalValue(value, node.OutputType); err != nil {
-				return nil, fmt.Errorf("expected %q: %w", display.activityKey(node.Name), err)
+				shown := display.activityKey(node.Name)
+				return nil, &InputDiagnostic{Stage: "INPUT_VALIDATION", Code: "INVALID_EXPECTED_VALUE",
+					Key: shown, Message: fmt.Sprintf("expected %q: %v", shown, err)}
 			}
 			expected++
 		}

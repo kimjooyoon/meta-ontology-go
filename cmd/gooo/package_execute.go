@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -40,6 +41,7 @@ type packageExecutionReceipt struct {
 	Result            *workspaceexecution.Result       `json:"result,omitempty"`
 	Error             string                           `json:"error,omitempty"`
 	Failure           *packageruntime.Failure          `json:"failure,omitempty"`
+	InputDiagnostic   *bodyexecution.InputDiagnostic   `json:"input_diagnostic,omitempty"`
 	ReplayedFrom      string                           `json:"replayed_from_sha256,omitempty"`
 	ContinuedFrom     string                           `json:"continued_from_sha256,omitempty"`
 	ConstructionInput *constructionInputEvidence       `json:"construction_input,omitempty"`
@@ -59,9 +61,17 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 	}
 	receipt, err := executePackage(context.Background(), reader, manifestPath, flags)
 	if err != nil {
-		receipt.Decision, receipt.Error = "FAIL_CLOSED", err.Error()
+		markPackageExecutionError(&receipt, err)
 	}
 	return writePackageExecution(receipt, err, jsonMode, flags["--receipt-compression"], stdout, stderr)
+}
+
+func markPackageExecutionError(receipt *packageExecutionReceipt, err error) {
+	receipt.Decision, receipt.Error = "FAIL_CLOSED", err.Error()
+	if diagnostic, ok := errors.AsType[*bodyexecution.InputDiagnostic](err); ok {
+		copy := *diagnostic
+		receipt.InputDiagnostic = &copy
+	}
 }
 
 func parsePackageExecuteArgs(args []string) (map[string]string, string, error) {

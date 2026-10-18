@@ -41,6 +41,21 @@ the authored key. This is a display hint derived from the prepared source;
 lowered graph keys still decide validation and the hint is absent from saved
 input JSON.
 
+With `package execute --json`, a rejected workspace input also has an optional
+`input_diagnostic` object in the failure receipt. Its `stage` distinguishes
+`INPUT_RESOLUTION` (package/activity key could not be resolved) from
+`INPUT_VALIDATION` (a resolved key was not a caller port or had a missing, bound,
+or invalid value). `code` is stable for these covered input refusals:
+`UNKNOWN_ACTIVITY_KEY`, `UNKNOWN_EXPECTED_ACTIVITY`,
+`EXPECTED_PORT_NOT_ALLOWED`, `UNKNOWN_CALLER_PORT`, `MISSING_ROOT_INPUT`,
+`BOUND_INPUT_PROVIDED`, `INVALID_INPUT_VALUE`, and `INVALID_EXPECTED_VALUE`.
+`case_index` is zero-based. `key` is the submitted key when one exists;
+`declared_key` or `available_keys` comes from the prepared source. The existing
+`error` text remains for people. These fields explain the refusal; they do not
+authorize a repair, retry, or a new execution. Successful receipt shape and
+the exit status are unchanged. Replay and resume use the same projection when
+their new inputs reach this validation. Other errors can still have only text.
+
 The number of rows and serialized JSON bytes are separate limits. In this
 development source, `gooo package inspect --json <workspace.json>` reports
 `transport_capacity.rows` as 128 and `transport_capacity.input_json_bytes` as
