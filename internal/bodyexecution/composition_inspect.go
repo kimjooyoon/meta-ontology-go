@@ -161,7 +161,11 @@ func compositionInputPlaceholder(input CompositionCallerInput, records []bodycod
 			if !ok {
 				return nil, fmt.Errorf("input %q field %q has no template type", input.Key, field.Name)
 			}
-			value[field.Name] = item
+			if field.Cardinality == "many" {
+				value[field.Name] = []any{}
+			} else {
+				value[field.Name] = item
+			}
 		}
 		return value, nil
 	}

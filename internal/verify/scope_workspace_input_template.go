@@ -8,6 +8,8 @@ func init() {
 		"cmd/gooo/package_inspect_inputs_test.go",
 		"cmd/gooo/usage_package.go",
 		"docs/workspace-source-inspection.md",
+		"internal/bodyexecution/composition_inspect.go",
+		"internal/bodyexecution/composition_inspect_test.go",
 		"internal/packageruntime/workspaceexecution/input_template.go",
 		"internal/verify/scope_workspace_input_template.go",
 	}

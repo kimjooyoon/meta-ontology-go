@@ -27,6 +27,8 @@ keys, such as `example/app:Main`. For an activity with multiple unbound inputs,
 each key ends in its declared port (`.input0`, `.input1`, and so on). Existing
 bindings remove producer-fed ports from the row. Values are type-shaped zeros to
 edit before passing the file to `gooo package execute --inputs inputs.json`.
+Required repeated record fields start as empty arrays; optional fields are
+omitted.
 The command does not run a body, select a candidate, predict with a model, or
 claim that the values are useful cases or expected outputs. A source graph with
 no unbound caller ports has no input row to produce and returns an error.
