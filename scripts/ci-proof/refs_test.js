@@ -15,5 +15,11 @@ for (const value of [null, '', 'integration', 'refs/tags/integration', 'refs/pul
   assert.throws(() => normalizeProtectedBranchRef(value), /malformed|refs\/heads/);
 }
 assert.throws(() => normalizeBaseRef('pull_request', 'refs/pull/106/merge', null), /malformed/);
-assert.throws(() => normalizeBaseRef('workflow_dispatch', 'refs/heads/main'), /unsupported event/);
+assert.throws(() => normalizeBaseRef('workflow_dispatch', 'refs/heads/main'), /missing or malformed/);
+const promotion = {head: {ref: 'agent/promotion'}, base: {ref: 'main'}};
+assert.strictEqual(normalizeBaseRef('workflow_dispatch', 'refs/heads/agent/promotion', promotion), 'main');
+assert.strictEqual(normalizeHeadBranch('workflow_dispatch', 'refs/heads/agent/promotion', promotion), 'agent/promotion');
+assert.throws(() => normalizeBaseRef('workflow_dispatch', 'refs/heads/main', promotion), /does not match/);
+assert.throws(() => normalizeHeadBranch('workflow_dispatch', 'refs/heads/main', promotion), /does not match/);
+assert.throws(() => normalizeBaseRef('unknown_event', 'refs/heads/main'), /unsupported event/);
 console.log('ref normalization tests passed');

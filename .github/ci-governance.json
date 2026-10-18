@@ -7839,6 +7839,18 @@
         "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
         "internal/verify/scope_gooo_recorded_field_parent.go"
       ]
+    },
+    {
+      "branch": "agent/ci-failure-observations-20261018",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "docs/ci-work-domain.ko.md",
+        "internal/verify/scope_ci_failure_observations.go",
+        "scripts/ci-proof/failure_capture_test.js",
+        "scripts/ci-proof/refs_test.js"
+      ]
     }
   ],
   "protected_kernel_paths": [
