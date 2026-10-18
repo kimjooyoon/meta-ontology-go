@@ -56,6 +56,7 @@ func run(root, requestPath, intentPath, output string, inspect bool, started tim
 	if (requestPath == "") == (intentPath == "") {
 		return fmt.Errorf("provide one --request or --intent")
 	}
+	repository := os.DirFS(root)
 	var request syntaxregistration.Request
 	if intentPath != "" {
 		raw, err := os.ReadFile(intentPath)
@@ -66,7 +67,7 @@ func run(root, requestPath, intentPath, output string, inspect bool, started tim
 		if err != nil {
 			return err
 		}
-		request, _, err = syntaxregistration.ComposeDraft(context.Background(), intent)
+		request, _, err = syntaxregistration.ComposeCurrentDraft(context.Background(), repository, intent)
 		if err != nil {
 			return err
 		}
@@ -80,7 +81,6 @@ func run(root, requestPath, intentPath, output string, inspect bool, started tim
 			return err
 		}
 	}
-	repository := os.DirFS(root)
 	if inspect || intentPath != "" {
 		if intentPath == "" {
 			if err := syntaxregistration.VerifyCaseComposition(context.Background(), request); err != nil {

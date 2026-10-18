@@ -31,30 +31,6 @@ func TestDirectIntentExportsPinnedCandidate(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, corpus), raw, 0600); err != nil {
 		t.Fatal(err)
 	}
-	versions, err := filepath.Glob(filepath.Join(root,
-		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v*.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	baseVersion := 0
-	for _, path := range versions {
-		raw, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var evidence struct {
-			Version int `json:"version"`
-		}
-		if err := json.Unmarshal(raw, &evidence); err != nil {
-			t.Fatal(err)
-		}
-		if evidence.Version > baseVersion {
-			baseVersion = evidence.Version
-		}
-	}
-	if baseVersion == 0 {
-		t.Fatal("missing baseline denominator")
-	}
 	source := "examples/one-step-intent/main.gooo"
 	if err := os.MkdirAll(filepath.Dir(filepath.Join(root, source)), 0700); err != nil {
 		t.Fatal(err)
@@ -68,7 +44,6 @@ func TestDirectIntentExportsPinnedCandidate(t *testing.T) {
 	}
 	intent, err := json.Marshal(syntaxregistration.CaseIntent{
 		ID: "one-step-intent", Path: source, ProofChoice: "COHERENCE", Profile: "text-fields",
-		BaseVersion: baseVersion,
 	})
 	if err != nil {
 		t.Fatal(err)

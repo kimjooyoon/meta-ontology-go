@@ -15,7 +15,10 @@ The input source already exists in the caller snapshot. A draft request declares
 VALID LANGUAGE_CAPABILITY case, its source path, entity-fields or implicit-port
 support, proof choice and current denominator version. A compact `--intent`
 request can instead ask the fixed Gooo `ComposeCase` activity to produce those
-case values from an ID, path, proof choice and profile selector. Inspection adds the
+case values from an ID, path, proof choice and profile selector. The caller may
+omit `base_version`: repository observation selects it only after checking the
+contiguous v22–current denominator history and matching the latest syntax target
+to the corpus. Inspection adds the
 input/source digests, Go runtime version and execution_identity to the pinned
 request. The identity includes SHA-256 digests of
 the running generator, the selected Go driver and its compiler, plus Go version,
@@ -98,8 +101,7 @@ Compact case intent example:
   "id": "my-new-capability",
   "path": "examples/my-new-capability/main.gooo",
   "proof_choice": "COHERENCE",
-  "profile": "gooo.entityfields.go-projection.v6",
-  "base_version": 99
+  "profile": "gooo.entityfields.go-projection.v6"
 }
 ~~~
 
@@ -115,7 +117,11 @@ Selectors are `ordinary`, `text-fields`, `implicit-ports`,
 `ordered-collections`, or an exact
 `gooo.entityfields.go-projection.v1` through `.v6` profile ID. Use the exact
 profile supported by the source; the compact intent does not infer one from
-the file. `base_version` still names the current denominator explicitly.
+the file. An explicit `base_version` remains available and must equal the
+observed current version. Missing, altered or contradictory history refuses
+baseline selection; a changed input after inspection fails the later snapshot
+recheck. Baseline observation selects repository state, while Gooo source owns
+the case profile decision.
 
 The full draft request remains available when the caller already has exact
 case fields:
