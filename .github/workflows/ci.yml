@@ -853,6 +853,7 @@ jobs:
     timeout-minutes: 40
     steps:
       - name: Classify provenance producer before download
+        shell: bash
         env:
           GOOO_POLICY_RESULT: ${{ needs.policy.result }}
         run: |
