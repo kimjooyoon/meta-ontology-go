@@ -10,12 +10,13 @@ type nativeConstructionElement struct {
 }
 
 type nativeConstruction struct {
-	Case      *int                        `json:"case_index"`
-	Site      *int                        `json:"site_index"`
-	ReadStart *int                        `json:"read_start"`
-	ReadEnd   *int                        `json:"read_end"`
-	Completed *bool                       `json:"completed"`
-	Elements  []nativeConstructionElement `json:"elements"`
+	Case         *int                        `json:"case_index"`
+	Site         *int                        `json:"site_index"`
+	ReadStart    *int                        `json:"read_start"`
+	ReadEnd      *int                        `json:"read_end"`
+	Completed    *bool                       `json:"completed"`
+	Elements     []nativeConstructionElement `json:"elements"`
+	ElementCount *int                        `json:"element_count,omitempty"`
 }
 
 func (graph compositionGraph) constructionRows(events []nativeConstruction, reads []nativeReadEvent, dropped, readDrops []int, context *compositionConstructionContext, summary *CompositionReadSummary) error {
@@ -46,11 +47,12 @@ func (graph compositionGraph) constructionRows(events []nativeConstruction, read
 		if root < 0 || c < lastCase || c == lastCase && (root < lastRoot || *event.ReadStart < lastStart) {
 			return fmt.Errorf("construction evaluation order differs")
 		}
-		reserved += len(site.Elements)
-		if reserved > constructionElementLimit || len(event.Elements) > len(site.Elements) || *event.Completed && len(event.Elements) != len(site.Elements) || !*event.Completed && len(event.Elements) == 0 {
+		count, valid := constructionSize(site, event.ElementCount)
+		reserved += count
+		if !valid || reserved > constructionElementLimit || len(event.Elements) > count || *event.Completed && len(event.Elements) != count || !*event.Completed && len(event.Elements) == 0 {
 			return fmt.Errorf("construction element count differs")
 		}
-		row := CompositionConstruction{SiteIndex: s, ReadStart: *event.ReadStart, ReadEnd: *event.ReadEnd, Completed: *event.Completed, Elements: []CompositionConstructionElement{}}
+		row := CompositionConstruction{SiteIndex: s, ReadStart: *event.ReadStart, ReadEnd: *event.ReadEnd, Completed: *event.Completed, Elements: []CompositionConstructionElement{}, ElementCount: event.ElementCount}
 		cursor := row.ReadStart
 		for i, e := range event.Elements {
 			if e.ReadStart == nil || e.ReadEnd == nil || e.ReadsDropped == nil || e.Completed == nil || *e.ReadStart != cursor || *e.ReadEnd < cursor || *e.ReadEnd > row.ReadEnd || *e.ReadsDropped < 0 || *e.ReadsDropped > readDrops[c] {

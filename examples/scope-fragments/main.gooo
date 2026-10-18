@@ -1,0 +1,54 @@
+package scopefragments
+namespace scopefragments
+entity Text id "urn:gooo:type:string"
+entity Boolean id "urn:gooo:type:boolean"
+entity Request id "urn:gooo:scope-fragments:request" fields {
+ field branch id "urn:gooo:scope-fragments:branch" type string required one
+ field paths id "urn:gooo:scope-fragments:paths" type string required many
+}
+entity Fragments id "urn:gooo:scope-fragments:fragments" fields {
+ field status id "urn:gooo:scope-fragments:status" type string required one
+ field governance id "urn:gooo:scope-fragments:governance" type string required one max_utf8_bytes "66583"
+ field golang id "urn:gooo:scope-fragments:golang" type string required one max_utf8_bytes "67110"
+ field markdown id "urn:gooo:scope-fragments:markdown" type string required one max_utf8_bytes "66823"
+}
+# This finite path profile accepts only ASCII letters, digits, '.', '_', '-', '/'.
+# Fragments propose text; they do not inspect a repository or authorize changes.
+activity CanonicalPath(Text) -> Boolean id "urn:gooo:scope-fragments:canonical-path" computes `
+if len(input) == 0 || len(input) > 256 { return false }
+let component = ""
+for let offset = 0; offset < 256; offset++ {
+ if offset < len(input) {
+  let octet = int64(input[offset])
+  if octet == 47 {
+   if component == "" || component == "." || component == ".." { return false }
+   component = ""
+  } else {
+   if !((octet >= 48 && octet <= 57) || (octet >= 65 && octet <= 90) ||
+        (octet >= 97 && octet <= 122) || octet == 46 || octet == 95 || octet == 45) { return false }
+   component = component + input[offset:offset+1]
+  }
+ }
+}
+return component != "" && component != "." && component != ".."`
+activity Project(Request) -> Fragments id "urn:gooo:scope-fragments:project" computes `
+let result = Fragments{status:"OUTSIDE_PROFILE",governance:"",golang:"",markdown:""}
+if !CanonicalPath(input.branch) || len(input.branch) <= 6 { return result }
+if input.branch[0:6] != "agent/" || len(input.paths) == 0 { return result }
+let previous = ""
+let list = ""
+let go_lines = ""
+let cells = ""
+for path in input.paths {
+ if !CanonicalPath(path) || path <= previous { return result }
+ if previous != "" { list = list + ","; cells = cells + ", " }
+ list = list + "\"" + path + "\""
+ go_lines = go_lines + "\t\"" + path + "\",\n"
+ cells = cells + "\x60" + path + "\x60"
+ previous = path
+}
+result.governance = "{\"branch\":\"" + input.branch + "\",\"paths\":[" + list + "]}"
+result.golang = "branchScopeAllowlist[\"" + input.branch + "\"] = []string{\n" + go_lines + "}"
+result.markdown = "| \x60" + input.branch + "\x60 | " + cells + " |"
+result.status = "PROPOSAL"
+return result`

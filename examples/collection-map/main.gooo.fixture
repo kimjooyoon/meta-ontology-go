@@ -1,0 +1,26 @@
+package labels
+namespace collection_map
+
+entity Text id "urn:gooo:type:string"
+entity Boolean id "urn:gooo:type:boolean"
+entity Labels id "urn:collection-map:labels" fields {
+    field values id "urn:collection-map:labels:values" type string required many
+}
+entity Decisions id "urn:collection-map:decisions" fields {
+    field values id "urn:collection-map:decisions:values" type boolean required many
+}
+
+activity IsPackageLabel(Text) -> Boolean id "urn:collection-map:is-package-label" computes `
+    if len(input) == 0 || len(input) > 64 { return false }
+    if input[0] < 'a' || input[0] > 'z' { return false }
+    for i := 0; i < 64; i++ {
+        if i >= len(input) { return true }
+        let c = input[i]
+        if (c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '-' { return false }
+    }
+    return true
+`
+
+activity Classify(Labels) -> Decisions id "urn:collection-map:classify" computes `
+    return Decisions{values: map_values(input.values, IsPackageLabel)}
+`

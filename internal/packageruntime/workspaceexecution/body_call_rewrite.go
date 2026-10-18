@@ -44,6 +44,20 @@ func (c workspaceCalls) rewriteCalls(key string, d workspaceCallDeclaration, sou
 		}
 		if name, plain := call.Fun.(*ast.Ident); plain && name.Obj == nil && !isActivityInput(name.Name, len(d.activity.Inputs), syntax.ActivityDeclaredInputNames(d.activity)...) && bodycodegen.IsBodyPrimitiveName(name.Name) {
 			if _, declared := c[packageActivityKey(d.ref.PackagePath, name.Name)]; !declared {
+				if name.Name == "map_values" {
+					if len(call.Args) != 2 {
+						err = fmt.Errorf("map_values requires a collection and a named mapper")
+						return false
+					}
+					mapper := call.Args[1]
+					var target string
+					target, err = c.resolveCall(d, &ast.CallExpr{Fun: mapper})
+					if err != nil {
+						return false
+					}
+					span := mapping.OriginalRange(set.Position(mapper.Pos()).Offset-len(prefix), set.Position(mapper.End()).Offset-len(prefix))
+					sites = append(sites, WorkspaceCallSite{key, target, surface, span.Start, span.End})
+				}
 				// Keep the primitive text and descend into its arguments so that
 				// nested source activity calls still enter the dependency graph.
 				return true

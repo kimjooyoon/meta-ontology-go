@@ -23,6 +23,10 @@ func readExpression(node ast.Node) (ast.Expr, string) {
 		return n, "index"
 	case *ast.RangeStmt:
 		return n.X, "range_value"
+	case *ast.CallExpr:
+		if input, _, mapped := CollectionMapProjection(n); mapped {
+			return input, "map_value"
+		}
 	}
 	return nil, ""
 }
@@ -34,6 +38,7 @@ func (p bodyProjection) captureReadOrigins(activityID, body string) map[ast.Node
 		bodies[call.identity.Name], ids[call.identity.Name] = call.body, call.identity.ActivityID
 	}
 	origins := map[ast.Node]BodyReadOrigin{}
+	_, mapShadowed := findFunction(p.file, "map_values")
 	for _, declaration := range p.file.Decls {
 		f, ok := declaration.(*ast.FuncDecl)
 		if !ok {
@@ -43,6 +48,9 @@ func (p bodyProjection) captureReadOrigins(activityID, body string) map[ast.Node
 		base := p.fset.Position(f.Body.Lbrace).Offset + 2
 		ast.Inspect(f.Body, func(node ast.Node) bool {
 			expression, kind := readExpression(node)
+			if call, ok := node.(*ast.CallExpr); ok && !mapShadowed && mapName(call.Fun, "map_values") && len(call.Args) == 2 {
+				expression, kind = call.Args[0], "map_value"
+			}
 			if expression == nil {
 				return true
 			}
@@ -64,7 +72,7 @@ func (p bodyProjection) emittedReadOrigins() []BodyReadOrigin {
 			continue
 		}
 		ordinal := 0
-		ast.Inspect(f.Body, func(node ast.Node) bool {
+		InspectBodyProjection(f.Body, func(node ast.Node) bool {
 			if expression, _ := readExpression(node); expression == nil {
 				return true
 			}

@@ -19,7 +19,8 @@ type CompositionConstructionInstanceFact struct {
 }
 
 func compositionConstructionInstanceFact(c, instance int, created CompositionConstruction, site CompositionConstructionSite) CompositionConstructionInstanceFact {
-	fact := CompositionConstructionInstanceFact{CaseIndex: c, InstanceIndex: instance, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Completed: created.Completed, ElementCount: len(site.Elements), AttemptedElements: len(created.Elements), ReadStart: created.ReadStart, ReadEnd: created.ReadEnd, Expression: site.Expression, Mapping: "UNMAPPED"}
+	count, _ := constructionSize(site, created.ElementCount)
+	fact := CompositionConstructionInstanceFact{CaseIndex: c, InstanceIndex: instance, RootActivityID: site.RootActivityID, ActivityID: site.ActivityID, Completed: created.Completed, ElementCount: count, AttemptedElements: len(created.Elements), ReadStart: created.ReadStart, ReadEnd: created.ReadEnd, Expression: site.Expression, Mapping: "UNMAPPED"}
 	if source := site.Source; source != nil && source.Status == "MAPPED" {
 		fact.Mapping = source.Status
 		fact.SourceSHA256 = source.SourceSHA256

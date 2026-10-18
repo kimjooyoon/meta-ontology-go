@@ -24,6 +24,8 @@ type CompositionConstructionSite struct {
 	End              int                                  `json:"end_byte"`
 	Source           *bodycodegen.BodyExpressionSource    `json:"source"`
 	Elements         []CompositionConstructionElementSite `json:"elements"`
+	Kind             string                               `json:"kind,omitempty"`
+	MapperActivityID string                               `json:"mapper_activity_id,omitempty"`
 }
 
 type CompositionConstructedOrigin struct {
@@ -41,11 +43,32 @@ type CompositionConstructionElement struct {
 }
 
 type CompositionConstruction struct {
-	SiteIndex int                              `json:"site_index"`
-	ReadStart int                              `json:"read_start"`
-	ReadEnd   int                              `json:"read_end"`
-	Completed bool                             `json:"completed"`
-	Elements  []CompositionConstructionElement `json:"elements"`
+	SiteIndex    int                              `json:"site_index"`
+	ReadStart    int                              `json:"read_start"`
+	ReadEnd      int                              `json:"read_end"`
+	Completed    bool                             `json:"completed"`
+	Elements     []CompositionConstructionElement `json:"elements"`
+	ElementCount *int                             `json:"element_count,omitempty"`
+}
+
+func constructionElementSite(site CompositionConstructionSite, index int) (CompositionConstructionElementSite, bool) {
+	if site.Kind == "map_values" && index >= 0 && index < 256 && len(site.Elements) == 1 {
+		return site.Elements[0], true
+	}
+	if site.Kind == "" && index >= 0 && index < len(site.Elements) {
+		return site.Elements[index], true
+	}
+	return CompositionConstructionElementSite{}, false
+}
+
+func constructionSize(site CompositionConstructionSite, count *int) (int, bool) {
+	if site.Kind == "" {
+		return len(site.Elements), count == nil && len(site.Elements) <= 256
+	}
+	if site.Kind == "map_values" && count != nil && *count >= 0 && *count <= 256 && len(site.Elements) == 1 && site.MapperActivityID != "" {
+		return *count, true
+	}
+	return 0, false
 }
 
 type compositionConstructionContext struct {

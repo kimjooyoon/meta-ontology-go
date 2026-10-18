@@ -45,7 +45,7 @@ env:
   GOWORK: off
   GOMAXPROCS: 2
   GOOO_CI_BUDGET_MS: 2400000
-  GOOO_CI_DOMAIN_REVISION: ae2a428e08367af5000bda46061a77d10fed0ba5
+  GOOO_CI_DOMAIN_REVISION: 74782caeaad2368651b3f726ac49c181aa853744
 
 jobs:
   work-domain:
@@ -1394,6 +1394,7 @@ jobs:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-proof-input
       - name: Capture exact failure tuple
+        if: ${{ always() }}
         uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
@@ -1404,10 +1405,16 @@ jobs:
             const fs = require('fs');
             const jobsFromAPI = [];
             for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              const response = await github.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/jobs',
+                {...context.repo, run_id: context.runId, attempt_number: Number(process.env.CI_RUN_ATTEMPT || 1), per_page: 100, page});
               jobsFromAPI.push(...response.data.jobs);
               if (response.data.jobs.length < 100) break;
               if (page === 1000) throw new Error('failure job API pagination exceeded the fail-closed page limit');
+            }
+            fs.writeFileSync('ci-failure-jobs.json', JSON.stringify(jobsFromAPI, null, 2) + '\n');
+            const scopeOrigin = `${process.env.RUNNER_TEMP}/ci-domain-tool/origin.json`;
+            if (process.env.RUNNER_TEMP && fs.existsSync(scopeOrigin)) {
+              fs.copyFileSync(scopeOrigin, 'ci-failure-scope-origin.json');
             }
             const expectedJobs = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
             const {resolvePromotionPull} = require('./scripts/ci-proof/dispatch');
@@ -1658,6 +1665,18 @@ jobs:
           go run ./scripts/ci-proof --failure-input ci-failure-input.json --failure-output ci-failure.json
           jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- severity: `\(.severity)`\n- scope: `\(.scope)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- next_operation: `\(.next_operation)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `\(.catalog_path)`\n- evidence: \(.evidence_refs | join(", "))\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
           jq -r '"- failure_codes: `\(.failure_codes | join(", "))`\n- head_branch: `\(.head_branch)`\n- catalog_digest: `\(.catalog_digest)`\n- artifact_status: `\(.artifact_status)` reason `\(.artifact_reason)` refs \(.artifact_refs | map([.id, .name, .size_bytes, .digest, .run_id, .run_attempt] | @csv) | join("; "))\n- proof_artifact_ref: \(.proof_artifact_ref // "none" | tostring)\n- rejections: \(.rejections | join(", "))"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve failure observations after deadline rejection
+        if: ${{ always() && hashFiles('ci-failure-jobs.json') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-failure-observations-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ci-failure-jobs.json
+            ci-failure-input.json
+            ci-closure-input.json
+            ci-failure-scope-origin.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload failure reason manifest
         if: ${{ always() && hashFiles('ci-failure.json') != '' }}
         uses: actions/upload-artifact@v7

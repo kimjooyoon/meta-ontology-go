@@ -84,7 +84,7 @@ func compositionLocalSites(prior Composition) ([]CompositionLocalSite, error) {
 			continue
 		}
 		ids, ordinal := bindings[function.Name.Name], 0
-		ast.Inspect(function.Body, func(node ast.Node) bool { return b.visit(node, ids, &ordinal) })
+		bodycodegen.InspectBodyProjection(function.Body, func(node ast.Node) bool { return b.visit(node, ids, &ordinal) })
 	}
 	if b.mismatch != nil {
 		return nil, b.mismatch

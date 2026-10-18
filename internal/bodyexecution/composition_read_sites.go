@@ -16,6 +16,10 @@ func compositionReadNode(n ast.Node) (expression, base ast.Expr, kind string) {
 		return n, n.X, "index"
 	case *ast.RangeStmt:
 		return n.X, n.X, "range_value"
+	case *ast.CallExpr:
+		if input, _, mapped := bodycodegen.CollectionMapProjection(n); mapped {
+			return input, input, "map_value"
+		}
 	}
 	return nil, nil, ""
 }
@@ -66,7 +70,7 @@ func compositionReadSites(prior Composition) ([]CompositionReadSite, error) {
 			continue
 		}
 		ids, ordinal := bindings[f.Name.Name], 0
-		ast.Inspect(f.Body, func(node ast.Node) bool {
+		bodycodegen.InspectBodyProjection(f.Body, func(node ast.Node) bool {
 			expression, base, kind := compositionReadNode(node)
 			if expression == nil {
 				return true
@@ -135,7 +139,7 @@ func compositionReadInputs(prior Composition) []CompositionReadInput {
 // still execute, so only the addressed index itself is excluded.
 func addressedCollectionIndexes(file *ast.File) map[*ast.IndexExpr]bool {
 	result := map[*ast.IndexExpr]bool{}
-	ast.Inspect(file, func(node ast.Node) bool {
+	bodycodegen.InspectBodyProjection(file, func(node ast.Node) bool {
 		unary, ok := node.(*ast.UnaryExpr)
 		if !ok || unary.Op != token.AND {
 			return true

@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "meta/scopefragments",
+    "activity": "Project"
+  },
+  "packages": [
+    {
+      "path": "meta/scopefragments",
+      "name": "scopefragments",
+      "imports": [],
+      "sources": [
+        "main.gooo"
+      ]
+    }
+  ]
+}

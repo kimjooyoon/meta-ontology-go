@@ -332,9 +332,35 @@ typed positional arguments. Their acyclic call closure is included in generation
 and replay; see [pure activity reuse](../../examples/pure-activity-calls/README.md).
 `body-compose --entry Name` executes one entry and its explicit producers while
 its pure callees receive arguments from expressions. Recursive, indirect,
-external and assembling-callee calls, imports, loops and external effects fail
-closed. The generated result is written to stdout; this command does not
+external and assembling-callee calls and external effects fail closed.
+Bounded counted and collection loops follow their declared body profiles.
+The generated result is written to stdout; this command does not
 mutate the repository.
+
+The static pure-call limit is 4096 named activity calls per invocation, inclusive.
+The compiler adds call-site bounds, including both sides of a conditional, and
+multiplies calls inside a loop by its permitted iteration count. A return
+expression is counted once in its activity. These conservative bounds describe
+the compiler's accepted execution envelope; they do not measure runtime calls,
+elapsed time, or the smallest possible bound for the source.
+
+Development builds expose `call_budget` on a failing `body-codegen --json`
+report. It identifies the caller and callee by name and stable ID, and gives the
+zero-based call ordinal, limit, and the calculation that first crosses it:
+
+```text
+prefix_after = prefix_before + multiplicity * (1 + callee_bound)
+```
+
+For example, calling a helper with four leaf calls inside a 1024-iteration loop
+contributes `1024 * (1 + 4) = 5120`. `prefix_after` stops at that first excess;
+later calls and callers have not been totaled. `multiplicity_capped` states
+whether the loop multiplier saturated above the limit. The ordinal uses the
+same source traversal as call-closure edges, including positions occupied by
+primitive calls. Together with the report's source digest, these facts let an
+agent locate the expensive source expression and choose a source-level
+refactoring. The failure emits no generated code. Raising a limit or splitting
+an invocation also needs separate reasoning about total work across invocations.
 
 The v3 JSON report records the source/program/generated digests, source and
 lowered semantic-unit counts, candidate and final route, Laya decision and

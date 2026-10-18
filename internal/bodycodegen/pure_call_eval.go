@@ -25,6 +25,15 @@ func (e *integerBodyEvaluator) evaluatePureCall(call *ast.CallExpr) (any, error)
 	if function == nil || len(function.Type.Params.List) != len(call.Args) {
 		return nil, fmt.Errorf("pure call %q has no matching typed function", name.Name)
 	}
+	return e.invokePureFunction(function, func(frame *integerBodyEvaluator) error {
+		return e.bindPureCallArguments(call, function, frame)
+	})
+}
+
+func (e *integerBodyEvaluator) invokePureFunction(function *ast.FuncDecl, bind func(*integerBodyEvaluator) error) (any, error) {
+	if e.callDepth >= 16 {
+		return nil, fmt.Errorf("pure call exceeds its depth bound")
+	}
 	if e.callCount == nil {
 		e.callCount = new(int)
 	}
@@ -35,16 +44,16 @@ func (e *integerBodyEvaluator) evaluatePureCall(call *ast.CallExpr) (any, error)
 	frame := integerBodyEvaluator{context: e.context, information: e.information,
 		functions: e.functions, callDepth: e.callDepth + 1, callCount: e.callCount, environment: map[types.Object]any{},
 		localCalls: e.localCalls, caseIndex: e.caseIndex}
-	if err := e.bindPureCallArguments(call, function, &frame); err != nil {
+	if err := bind(&frame); err != nil {
 		return nil, err
 	}
 	e.localCalls.enter(e.caseIndex, function, &frame)
 	value, returned, err := frame.evaluateBlock(function.Body)
 	if err != nil {
-		return nil, fmt.Errorf("pure call %q: %w", name.Name, err)
+		return nil, fmt.Errorf("pure call %q: %w", function.Name.Name, err)
 	}
 	if !returned {
-		return nil, fmt.Errorf("pure call %q did not return", name.Name)
+		return nil, fmt.Errorf("pure call %q did not return", function.Name.Name)
 	}
 	output := e.information.Types[function.Type.Results.List[0].Type].Type
 	return coerceBodyValue(value, output)
