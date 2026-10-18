@@ -18,20 +18,16 @@ func (p *readProjection) collectLocalReadNodes(file *ast.File, bindings map[stri
 			p.nodes = append(p.nodes, readProjectionNode{node: f.Body, start: p.offset(f.Body.Pos()), end: p.offset(f.Body.End()), localKind: "scope", variables: variables})
 		}
 		bodycodegen.InspectBodyProjection(f.Body, func(node ast.Node) bool {
-			if call, ok := node.(*ast.CallExpr); ok {
-				_, _, mapped := bodycodegen.CollectionMapProjection(call)
-				_, _, filtered := bodycodegen.CollectionFilterProjection(call)
-				if mapped || filtered {
-					c, cf := constructs[conditionOriginKey{ids[0], ids[1], constructionOrdinal}]
-					r, rf := lookup[conditionOriginKey{ids[0], ids[1], ordinal}]
-					constructionOrdinal++
-					ordinal++
-					if cf && rf && (mapped && constructionSites[c].Kind == "map_values" && sites[r].Kind == "map_value" ||
-						filtered && constructionSites[c].Kind == "filter_values" && sites[r].Kind == "filter_value") {
-						p.nodes = append(p.nodes, readProjectionNode{node: call, site: c, mapReadSite: r, start: p.offset(call.Pos()), end: p.offset(call.End())})
-					}
-					return true
+			if constructionKind, readKind := collectionReadKinds(node); constructionKind != "" {
+				call := node.(*ast.CallExpr)
+				c, cf := constructs[conditionOriginKey{ids[0], ids[1], constructionOrdinal}]
+				r, rf := lookup[conditionOriginKey{ids[0], ids[1], ordinal}]
+				constructionOrdinal++
+				ordinal++
+				if cf && rf && constructionSites[c].Kind == constructionKind && sites[r].Kind == readKind {
+					p.nodes = append(p.nodes, readProjectionNode{node: call, site: c, mapReadSite: r, start: p.offset(call.Pos()), end: p.offset(call.End())})
 				}
+				return true
 			}
 			if index, found := local.writes[node]; found {
 				if _, iteration := node.(*ast.RangeStmt); !iteration {
@@ -77,4 +73,18 @@ func (p *readProjection) collectLocalReadNodes(file *ast.File, bindings map[stri
 		})
 	}
 	return localRanges
+}
+
+func collectionReadKinds(node ast.Node) (constructionKind, readKind string) {
+	call, ok := node.(*ast.CallExpr)
+	if !ok {
+		return "", ""
+	}
+	if _, _, mapped := bodycodegen.CollectionMapProjection(call); mapped {
+		return "map_values", "map_value"
+	}
+	if _, _, filtered := bodycodegen.CollectionFilterProjection(call); filtered {
+		return "filter_values", "filter_value"
+	}
+	return "", ""
 }
