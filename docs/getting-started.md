@@ -88,6 +88,31 @@ four input rows. `execution.json` retains the selected program and observations.
 Replay uses the saved choices on three additional input rows without a new search
 or model call. These input-only rows have no expected answers and earn no correctness score.
 
+The generated `inputs.json` has one object per input row. Its first row has this
+shape (the generated file contains two more rows):
+
+```json
+{
+  "schema": "gooo/body-composition-inputs/v1",
+  "inputs": [{
+    "diagnostic/diagnostics:Diagnose.input0": 1,
+    "diagnostic/diagnostics:Diagnose.input1": 3,
+    "diagnostic/diagnostics:Diagnose.input2": 1,
+    "diagnostic/diagnostics:Diagnose.input3": "missing branch result"
+  }]
+}
+```
+
+For activities with multiple inputs, read each key as
+`<package path>:<activity>.<input port>`. The diagnostic starter uses module
+`diagnostic` even when its directory is named
+`my-diagnostic`; `gooo.workspace.json` supplies the package path and
+`diagnostics.gooo` declares the activity's positional inputs. If you pass
+`--module` to `gooo init`, use that module in the keys. An activity with one
+input uses the whole `<package path>:<activity>` key, whether its value is a
+scalar or a record. The [scope-fragments input](../examples/scope-fragments/inputs.json)
+shows a record value.
+
 ## Change something useful
 
 Open `inputs.json`. The four `Diagnose` input keys are matched outputs (`input0`),
