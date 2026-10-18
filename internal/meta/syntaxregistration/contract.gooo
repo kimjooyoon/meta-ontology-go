@@ -13,6 +13,64 @@ entity DenominatorSelection id "gooo://syntax-registration/denominator-selection
 entity DenominatorDigest id "gooo://syntax-registration/denominator-digest"
 entity DenominatorEvidence id "gooo://syntax-registration/denominator-evidence"
 entity MigrationConformance id "gooo://syntax-registration/migration-conformance"
+entity CaseIntent id "gooo://syntax-registration/case-intent" fields {
+    field case_id id "gooo://syntax-registration/case-intent/id" type string required one
+    field path id "gooo://syntax-registration/case-intent/path" type string required one
+    field proof_choice id "gooo://syntax-registration/case-intent/proof-choice" type string required one
+    field profile id "gooo://syntax-registration/case-intent/profile" type string required one
+}
+entity CanonicalCase id "gooo://syntax-registration/canonical-case" fields {
+    field case_id id "gooo://syntax-registration/canonical-case/id" type string required one
+    field path id "gooo://syntax-registration/canonical-case/path" type string required one
+    field kind id "gooo://syntax-registration/canonical-case/kind" type string required one
+    field expected_decision id "gooo://syntax-registration/canonical-case/expected-decision" type string required one
+    field proof_choice id "gooo://syntax-registration/canonical-case/proof-choice" type string required one
+    field meta_operation id "gooo://syntax-registration/canonical-case/meta-operation" type string required one
+    field scope id "gooo://syntax-registration/canonical-case/scope" type string required one
+    field ordered_collections id "gooo://syntax-registration/canonical-case/ordered-collections" type boolean required one
+    field entity_fields id "gooo://syntax-registration/canonical-case/entity-fields" type boolean required one
+    field implicit_activity_ports id "gooo://syntax-registration/canonical-case/implicit-activity-ports" type boolean required one
+    field entity_fields_profile id "gooo://syntax-registration/canonical-case/entity-fields-profile" type string required one
+    field accepted id "gooo://syntax-registration/canonical-case/accepted" type boolean required one
+}
+
+# A compact caller intent becomes exact corpus values here. The host still
+# observes the source, replays the case and independently checks its shape.
+activity ComposeCase(CaseIntent) -> CanonicalCase
+    id "gooo://syntax-registration/compose-case" computes `
+let result = CanonicalCase{case_id: input.case_id, path: input.path, kind: "VALID",
+    expected_decision: "PASS", proof_choice: input.proof_choice,
+    meta_operation: "replay-language-syntax", scope: "LANGUAGE_CAPABILITY",
+    ordered_collections: false, entity_fields: false,
+    implicit_activity_ports: false, entity_fields_profile: "", accepted: true}
+if input.case_id == "" || input.path == "" {
+    result.accepted = false
+}
+if input.proof_choice != "FOUNDATION" && input.proof_choice != "COHERENCE" &&
+    input.proof_choice != "REGRESSION" {
+    result.accepted = false
+}
+if input.profile == "ordinary" {
+    return result
+}
+if input.profile == "text-fields" {
+    result.entity_fields = true
+} else if input.profile == "implicit-ports" {
+    result.implicit_activity_ports = true
+} else if input.profile == "ordered-collections" {
+    result.ordered_collections = true
+} else if input.profile == "gooo.entityfields.go-projection.v1" ||
+    input.profile == "gooo.entityfields.go-projection.v2" ||
+    input.profile == "gooo.entityfields.go-projection.v3" ||
+    input.profile == "gooo.entityfields.go-projection.v4" ||
+    input.profile == "gooo.entityfields.go-projection.v5" ||
+    input.profile == "gooo.entityfields.go-projection.v6" {
+    result.entity_fields_profile = input.profile
+} else {
+    result.accepted = false
+}
+return result
+`
 
 activity PinRegistrationExecutionIdentity(RegistrationRequest) -> PinnedRegistrationInput
 activity RegisterSyntaxCapability(PinnedRegistrationInput) -> RegistrationCandidate computes "syntax.register:v2"
