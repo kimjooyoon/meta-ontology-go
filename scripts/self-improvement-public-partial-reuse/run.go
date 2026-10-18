@@ -19,6 +19,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicorchestration"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse"
+	"github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
 func run(input runInput) error {
@@ -273,7 +274,7 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 	receipts := map[string]publicpartialreuse.Receipt{}
 	receiptPaths := map[string]string{}
 	for _, partition := range policy.Partitions {
-		observed, testResult, err := executeTests(baselinePackage, partition, filepath.Join(out, "baseline-time-"+partition.ID))
+		observed, testResult, err := executeTests(baselinePackage, partition)
 		if err != nil {
 			return caseArtifacts{}, err
 		}
@@ -312,7 +313,7 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 			return caseArtifacts{}, err
 		}
 		for _, partition := range selection.Partitions {
-			observed, _, err := executeTests(selectivePackage, partition, filepath.Join(out, "selective-time-"+partition.ID))
+			observed, _, err := executeTests(selectivePackage, partition)
 			if err != nil {
 				return caseArtifacts{}, err
 			}
@@ -427,12 +428,12 @@ func preparePackage(directory string, program, testContract []byte) error {
 	return writeNew(filepath.Join(directory, "go.mod"), []byte("module partial-reuse-example\n\ngo 1.27.2\n"), 0o644)
 }
 
-func executeTests(directory string, partition publicpartialreuse.Partition, timePrefix string) (publicpartialreuse.Metrics, executionResult, error) {
-	build, _, err := runTimed(directory, "build", []string{"build", "."}, timePrefix, nil)
+func executeTests(directory string, partition publicpartialreuse.Partition) (publicpartialreuse.Metrics, executionResult, error) {
+	build, _, err := runTimed(directory, "build", []string{"build", "."}, nil)
 	if err != nil {
 		return publicpartialreuse.Metrics{}, executionResult{}, err
 	}
-	test, passed, err := runTimed(directory, "test", publicpartialreuse.TestCommandArgs(partition), timePrefix, []string{partition.TestName})
+	test, passed, err := runTimed(directory, "test", publicpartialreuse.TestCommandArgs(partition), []string{partition.TestName})
 	if err != nil {
 		return publicpartialreuse.Metrics{}, executionResult{}, err
 	}
@@ -442,19 +443,15 @@ func executeTests(directory string, partition publicpartialreuse.Partition, time
 	return publicpartialreuse.Metrics{TestUnitsTotal: publicpartialreuse.TestUnitCount, TestUnitsExecuted: len(passed), BuildExecutions: 1, TestExecutions: len(passed), BuildMS: build.WallMS, TestMS: test.WallMS, WallMS: build.WallMS + test.WallMS, PeakRSSKib: maxInt64(build.PeakRSSKib, test.PeakRSSKib)}, test, nil
 }
 
-func runTimed(directory, label string, args []string, prefix string, expectedTests []string) (executionResult, []string, error) {
-	if err := os.MkdirAll(filepath.Dir(prefix), 0o755); err != nil {
-		return executionResult{}, nil, err
-	}
-	timeFile := prefix + "-" + label + ".rss"
+func runTimed(directory, label string, args []string, expectedTests []string) (executionResult, []string, error) {
 	started := time.Now()
-	commandArgs := append([]string{"-f", "%e %M", "-o", timeFile, "go"}, args...)
-	command := exec.Command("/usr/bin/time", commandArgs...)
+	command := exec.Command("go", args...)
 	command.Dir = directory
 	command.Env = append(os.Environ(), "GOTOOLCHAIN=local", "GOFLAGS=-mod=readonly", "GOWORK=off")
 	var stdout, stderr bytes.Buffer
 	command.Stdout, command.Stderr = &stdout, &stderr
 	err := command.Run()
+	wallMS := maxInt64(1, int64(time.Since(started)/time.Millisecond))
 	exitCode := 0
 	if err != nil {
 		exitCode = 1
@@ -462,20 +459,12 @@ func runTimed(directory, label string, args []string, prefix string, expectedTes
 			exitCode = exitError.ExitCode()
 		}
 	}
-	rss, readErr := os.ReadFile(timeFile)
-	if readErr != nil {
-		return executionResult{}, nil, readErr
-	}
 	if err != nil {
 		return executionResult{}, nil, fmt.Errorf("generated command %s failed: %w: stdout=%q stderr=%q", label, err, stdout.String(), stderr.String())
 	}
-	fields := strings.Fields(string(rss))
-	if len(fields) != 2 {
-		return executionResult{}, nil, fmt.Errorf("generated command runtime evidence is malformed: %q", strings.TrimSpace(string(rss)))
-	}
-	peak, parseErr := strconv.ParseInt(fields[1], 10, 64)
-	if parseErr != nil || peak <= 0 {
-		return executionResult{}, nil, fmt.Errorf("generated command peak RSS is not positive: %q", strings.TrimSpace(string(rss)))
+	peak, resourceErr := toolchaincli.PeakRSSKiB(command.ProcessState)
+	if resourceErr != nil {
+		return executionResult{}, nil, fmt.Errorf("generated command resource observation: %w", resourceErr)
 	}
 	var passed []string
 	if len(expectedTests) > 0 {
@@ -498,7 +487,7 @@ func runTimed(directory, label string, args []string, prefix string, expectedTes
 		}
 		fmt.Printf("PARTIAL_REUSE_TEST_EXECUTION=%s\n", witness)
 	}
-	return executionResult{Success: err == nil, ExitCode: exitCode, ResultDigest: resultDigest, WallMS: maxInt64(1, int64(time.Since(started)/time.Millisecond)), PeakRSSKib: peak}, passed, nil
+	return executionResult{Success: err == nil, ExitCode: exitCode, ResultDigest: resultDigest, WallMS: wallMS, PeakRSSKib: peak}, passed, nil
 }
 
 func decisionCounts(cases []publicpartialreuse.CaseReport) (int, int, int) {

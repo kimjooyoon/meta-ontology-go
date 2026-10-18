@@ -50,6 +50,14 @@ immediately before effects remain further integration work. The assessment
 alone does not establish arbitrary dependency closure or authorize customer CI
 to skip tests. It uses the existing interpreter with no model call.
 
+The host driver measures completed Go commands through the shared operating
+system resource reader on Darwin and Linux. `peak_rss_kib` is the largest
+completed build/test command observation in that stage, with Darwin bytes
+converted to KiB. It does not describe the compiler observer or a simultaneous
+sum of processes. The driver uses no GNU `time` options or timing sidecar files;
+unavailable resource observations remain errors. This change adds portability,
+not a cross-platform performance comparison.
+
 The v15 acceptance denominator is fixed at six cases: two `CLOSED`, two
 `UNKNOWN`, and two `REFUTED`. The original v15 source was registered as one
 append-only language package member. Its historical corpus increment was 58 to
