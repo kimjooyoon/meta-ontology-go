@@ -852,6 +852,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
+      - name: Classify provenance producer before download
+        shell: bash
+        env:
+          GOOO_POLICY_RESULT: ${{ needs.policy.result }}
+        run: |
+          case "$GOOO_POLICY_RESULT" in
+            success) ;;
+            failure) echo 'ARTIFACT_PRODUCER_FAILED: CI policy; next=inspect-ci-policy' >&2; exit 1 ;;
+            cancelled) echo 'ARTIFACT_PRODUCER_CANCELLED: CI policy; next=inspect-ci-policy' >&2; exit 1 ;;
+            skipped) echo 'ARTIFACT_PRODUCER_UNSELECTED: CI policy; next=inspect-ci-policy-selection' >&2; exit 1 ;;
+            *) echo 'ARTIFACT_PRODUCER_UNOBSERVED: CI policy; next=observe-ci-policy' >&2; exit 1 ;;
+          esac
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -1072,11 +1084,14 @@ jobs:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
-            const {listWorkflowArtifacts, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
+            const {listWorkflowArtifacts, listWorkflowJobs, observeArtifactProducer, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
             const rows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
             const attempt = Number(process.env.CI_RUN_ATTEMPT || 1);
-            const report = selectArtifactLineage(rows, 'ci-evidence', context.runId, attempt);
-            const replay = selectArtifactLineage(rows.slice().reverse(), 'ci-evidence', context.runId, attempt);
+            const jobs = await listWorkflowJobs(page => github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+            const head = context.payload.pull_request?.head?.sha || context.sha;
+            const producer = observeArtifactProducer(jobs, 'CI evidence', context.runId, attempt, head);
+            const report = selectArtifactLineage(rows, 'ci-evidence', context.runId, attempt, producer);
+            const replay = selectArtifactLineage(rows.slice().reverse(), 'ci-evidence', context.runId, attempt, producer);
             if (report.report_digest !== replay.report_digest) throw new Error('artifact lineage replay digest mismatch');
             fs.writeFileSync('ci-artifact-lineage.json', JSON.stringify(report, null, 2) + '\n');
             await core.summary
@@ -1085,6 +1100,7 @@ jobs:
                 [{data: 'indicator', header: true}, {data: 'value', header: true}],
                 ['decision', report.decision],
                 ['reason', report.reason],
+                ['producer', `${producer.job_name}: ${producer.state} (${producer.conclusion || producer.status || 'unobserved'})`],
                 ['current attempt', String(report.current_attempt)],
                 ['selected attempt', String(report.summary.selected_attempt)],
                 ['fallback distance', String(report.summary.fallback_distance_attempts)],
@@ -1107,9 +1123,12 @@ jobs:
         uses: actions/github-script@v9.0.0
         with:
           script: |
+            const fs = require('fs');
             const {listWorkflowArtifacts, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
             const rows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
-            const report = selectArtifactLineage(rows, 'ci-execution-tools', context.runId, Number(process.env.GITHUB_RUN_ATTEMPT));
+            const attempt = Number(process.env.GITHUB_RUN_ATTEMPT);
+            const producer = JSON.parse(fs.readFileSync('ci-artifact-lineage.json', 'utf8')).producer;
+            const report = selectArtifactLineage(rows, 'ci-execution-tools', context.runId, attempt, producer);
             if (report.decision !== 'EXACT' || !report.exact_consumption_authorized) {
               throw new Error(`${report.decision}: ${report.reason}`);
             }
