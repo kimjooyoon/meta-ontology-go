@@ -104,10 +104,16 @@ func translateCases(program Program, suite bodyexecution.CompositionCases) (body
 		return bodyexecution.CompositionCases{}, fmt.Errorf("workspace execution requires gooo/body-composition-cases/v1 or gooo/body-composition-inputs/v1")
 	}
 	byKey := make(map[string]ActivityRef, len(program.Activities))
-	for _, activity := range program.Activities {
-		byKey[packageActivityKey(activity.PackagePath, activity.Activity)] = activity
+	display := &bodyexecution.CompositionCaseDisplay{
+		ActivityKeys:    make(map[string]string, len(program.Activities)),
+		SubmittedInputs: make(map[string]bodyexecution.CompositionSubmittedInput),
 	}
-	translated := bodyexecution.CompositionCases{Schema: suite.Schema, Cases: make([]bodyexecution.CompositionCase, len(suite.Cases))}
+	for _, activity := range program.Activities {
+		key := packageActivityKey(activity.PackagePath, activity.Activity)
+		byKey[key] = activity
+		display.ActivityKeys[activity.LoweredName] = key
+	}
+	translated := bodyexecution.CompositionCases{Schema: suite.Schema, Cases: make([]bodyexecution.CompositionCase, len(suite.Cases)), Display: display}
 	for index, test := range suite.Cases {
 		row := bodyexecution.CompositionCase{Inputs: make(map[string]json.RawMessage, len(test.Inputs)), Expected: make(map[string]json.RawMessage, len(test.Expected))}
 		for key, value := range test.Inputs {
@@ -120,6 +126,9 @@ func translateCases(program Program, suite bodyexecution.CompositionCases) (body
 				translatedKey += "." + suffix
 			}
 			row.Inputs[translatedKey] = append(json.RawMessage(nil), value...)
+			display.SubmittedInputs[translatedKey] = bodyexecution.CompositionSubmittedInput{
+				Key: key, Activity: ref.LoweredName,
+			}
 		}
 		for key, value := range test.Expected {
 			ref, suffix, err := resolveCaseActivity(key, byKey)
@@ -142,7 +151,9 @@ func resolveCaseActivity(key string, activities map[string]ActivityRef) (Activit
 	}
 	for candidate, ref := range activities {
 		if len(key) > len(candidate) && key[:len(candidate)] == candidate && key[len(candidate)] == '.' {
-			return ref, key[len(candidate)+1:], nil
+			if port := key[len(candidate)+1:]; port != "" {
+				return ref, port, nil
+			}
 		}
 	}
 	return ActivityRef{}, "", fmt.Errorf("unknown package activity key %q; use <package-path>:<activity>[.<input-port>]", key)
