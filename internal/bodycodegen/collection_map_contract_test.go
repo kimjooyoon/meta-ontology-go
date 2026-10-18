@@ -2,6 +2,7 @@ package bodycodegen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -86,8 +87,33 @@ func TestCollectionMapRetainsCallBound(t *testing.T) {
 			if err != nil || generated.Report.CallClosure.MaxCallsPerInvocation != 4096 {
 				t.Fatal("exact existing call bound", err, generated.Report.CallClosure)
 			}
-		} else if err == nil || !strings.Contains(err.Error(), "4096") {
-			t.Fatal("map escaped existing call bound", err)
+		} else {
+			failure, ok := errors.AsType[*PureCallBudgetError](err)
+			if !ok || failure.CallerID != "urn:mapping:project" || failure.CalleeID != "urn:mapping:quote" ||
+				failure.Multiplicity != 256 || failure.MultiplicityCapped || failure.PrefixBefore != 0 ||
+				failure.CalleeBound != 16 || failure.PrefixAfter != 4352 || failure.Limit != 4096 {
+				t.Fatal("map lost its actual mapper identity or call bound", err)
+			}
+		}
+	}
+}
+
+func TestCollectionMapLoopBudgetReportsCappedMultiplicity(t *testing.T) {
+	for _, count := range []int{16, 17} {
+		body := fmt.Sprintf("let result = input; for let i = 0; i < %d; i++ { result = Paths{values:map_values(result.values,Quote)} }; return result", count)
+		source := strings.Replace(collectionMapFixture, "return Paths{values: map_values(input.values, Quote)}", body, 1)
+		generated, err := Generate("loop-map.gooo", []byte(source), "Project")
+		if count == 16 {
+			if err != nil || generated.Report.CallClosure.MaxCallsPerInvocation != 4096 {
+				t.Fatal("inclusive map/loop bound changed", err)
+			}
+			continue
+		}
+		failure, ok := errors.AsType[*PureCallBudgetError](err)
+		if !ok || failure.Callee != "Quote" || failure.CalleeID != "urn:mapping:quote" ||
+			failure.Multiplicity != 4097 || !failure.MultiplicityCapped || failure.PrefixAfter != 4097 ||
+			failure.CalleeBound != 0 || failure.PrefixBefore != 0 || generated.Source != "" {
+			t.Fatal("map/loop refusal lost the saturated bound", err)
 		}
 	}
 }
