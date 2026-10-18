@@ -15,37 +15,41 @@ diagnostic tool and reuses it on new inputs. It needs no model or API key.
 
 Use **Go 1.27.2** for native execution, matching your Gooo executable's operating
 system and architecture. Check with `go version`. The compiler below is the
-experimental [v0.6.34-dev release](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.34-dev).
+experimental [v0.6.35-dev release](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.35-dev).
 The release is pinned so these instructions do not silently select later changes.
 
 On macOS or Linux, start in a new working directory and install locally:
 
 ```sh
 GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.2 \
-  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.34-dev
+  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.35-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo version --build --json
 ```
 
-The version output includes `version: "0.6.34-dev"`. Module and VCS fields depend
+The version output includes `version: "0.6.35-dev"`. Module and VCS fields depend
 on the installation method; the release manifest binds the public archives to
-source `b266c0e2cf6878385b59788945861a03e33f766b`, which pins SDK `v0.2.44-experimental`.
-Keep this compiler with your experiment for later replay.
+source `de99b770b8b5adea608233c3c0664902336e3310`, which pins SDK `v0.2.51-experimental`.
+Native archives report `source_status: "CLEAN_VCS"` and that source commit.
+A versioned module installation reports `module.version` and `module.sum`; its
+VCS fields remain `UNOBSERVED_VCS`. Archive module versions can be pre-tag
+pseudoversions. Record the language `version` and the reported identity fields
+with the installation method. Keep this compiler with your experiment for replay.
 The `export` applies to this shell; a new shell needs the same absolute directory
 on its `PATH`.
 
 Alternatively, download and extract the matching archive, then add its directory
 to `PATH` (or invoke the extracted `gooo` / `gooo.exe` by its full path):
 
-| Platform | v0.6.34-dev archive |
+| Platform | v0.6.35-dev archive |
 | --- | --- |
-| macOS Apple Silicon | [darwin-arm64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.34-dev/gooo-darwin-arm64.tar.gz) |
-| macOS Intel | [darwin-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.34-dev/gooo-darwin-amd64.tar.gz) |
-| Linux x86-64 | [linux-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.34-dev/gooo-linux-amd64.tar.gz) |
-| Windows x86-64 | [windows-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.34-dev/gooo-windows-amd64.zip) |
+| macOS Apple Silicon | [darwin-arm64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.35-dev/gooo-darwin-arm64.tar.gz) |
+| macOS Intel | [darwin-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.35-dev/gooo-darwin-amd64.tar.gz) |
+| Linux x86-64 | [linux-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.35-dev/gooo-linux-amd64.tar.gz) |
+| Windows x86-64 | [windows-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.35-dev/gooo-windows-amd64.zip) |
 
 Compare the archive's SHA-256 with the published
-[SHA256SUMS](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.34-dev/SHA256SUMS).
+[SHA256SUMS](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.35-dev/SHA256SUMS).
 These archives contain the compiler; native execution still needs Go 1.27.2.
 When Go is elsewhere, add `--go /path/to/go1.27.2` to each execute/replay command.
 On Windows, run the commands below in **Command Prompt (`cmd.exe`)**, using
