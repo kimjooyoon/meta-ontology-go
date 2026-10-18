@@ -22,11 +22,13 @@ const syntaxRoot = "internal/meta/languagereadiness/languagesyntax/"
 const closureRoot = "internal/meta/languageassurance/verticalsliceclosureshadow/"
 
 type Request struct {
-	Case           languagesyntax.CaseDefinition `json:"case"`
-	BaseVersion    int                           `json:"base_version"`
-	SnapshotDigest string                        `json:"snapshot_digest"`
-	SourceDigest   string                        `json:"source_digest"`
-	Toolchain      string                        `json:"toolchain"`
+	Case             languagesyntax.CaseDefinition `json:"case"`
+	BaseVersion      int                           `json:"base_version"`
+	CaseIntent       *CaseIntent                   `json:"case_intent,omitempty"`
+	CaseSourceDigest string                        `json:"case_source_digest,omitempty"`
+	SnapshotDigest   string                        `json:"snapshot_digest"`
+	SourceDigest     string                        `json:"source_digest"`
+	Toolchain        string                        `json:"toolchain"`
 
 	ExecutionIdentity ExecutionIdentity `json:"execution_identity"`
 	PromoteMetaSource bool              `json:"promote_meta_source,omitempty"`

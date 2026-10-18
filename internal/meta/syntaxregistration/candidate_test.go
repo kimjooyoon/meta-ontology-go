@@ -221,6 +221,7 @@ func promotedMetaFixture(t *testing.T) (fstest.MapFS, Request) {
 	request.Case.ID = "syntax-registration-meta-contract"
 	request.Case.Path = "internal/meta/syntaxregistration/contract.gooo"
 	request.Case.EntityFields = false
+	request.Case.EntityFieldsProfile = "gooo.entityfields.go-projection.v5"
 	request.PromoteMetaSource = true
 	source, err := os.ReadFile("contract.gooo")
 	if err != nil {

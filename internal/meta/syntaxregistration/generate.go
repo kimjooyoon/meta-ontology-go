@@ -1,6 +1,7 @@
 package syntaxregistration
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -11,6 +12,9 @@ import (
 // Generate closes all nine semantic artifact roles or emits no candidate.
 // Physical member paths come from exact AST ownership, not filename guesses.
 func (plan Plan) Generate(repository fs.FS) (Candidate, error) {
+	if err := VerifyCaseComposition(context.Background(), plan.request); err != nil {
+		return Candidate{}, err
+	}
 	if plan.digest == "" || len(plan.binding.activities) != 10 || len(plan.binding.outputs) != 10 || plan.inputs == nil || plan.binding.inputActivity == "" {
 		return Candidate{}, failure("REFUTED", "validate-plan", "REGISTRATION_PLAN_NOT_COMPILED", "", "compile-source-bound-plan")
 	}

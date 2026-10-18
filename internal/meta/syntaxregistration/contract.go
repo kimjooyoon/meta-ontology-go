@@ -1,6 +1,7 @@
 package syntaxregistration
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 
@@ -20,29 +21,19 @@ type contractBinding struct {
 	inputActivity, inputOutput string
 }
 
-func bindContract() (contractBinding, error) {
-	return bindContractSource(contractSource)
-}
-
 func bindContractSource(source []byte) (contractBinding, error) {
-	file, diagnostics := syntax.ParseFile("contract.gooo", string(source))
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("contract.gooo", string(source), syntax.EntityFieldsV5Support())
 	if file == nil || diagnostics.HasErrors() {
-		return contractBinding{}, fmt.Errorf("registration contract cannot be parsed")
+		return contractBinding{}, fmt.Errorf("registration contract cannot be parsed: %v", diagnostics)
 	}
-	ir, err := bidir.Lower(file)
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, bidir.EntityFieldsV5Support())
 	if err != nil {
 		return contractBinding{}, err
 	}
-	outputs := []string{"RegistrationCandidate", "SyntaxCorpus", "NativeRegistry",
-		"SyntaxDenominator", "SyntaxConformance", "DenominatorAdmission",
-		"DenominatorSelection", "DenominatorDigest", "DenominatorEvidence", "MigrationConformance"}
-	activities := []string{Operation, "GenerateSyntaxCorpus", "GenerateNativeRegistry",
-		"GenerateSyntaxDenominator", "GenerateSyntaxConformance", "GenerateDenominatorAdmission",
-		"GenerateDenominatorSelection", "GenerateDenominatorDigest",
-		"GenerateDenominatorEvidence", "GenerateMigrationConformance"}
-	if len(ir.Graph.Nodes()) != 23 {
-		return contractBinding{}, fmt.Errorf("registration contract node inventory is not exact")
+	if err := bindCaseComposition(ir); err != nil {
+		return contractBinding{}, err
 	}
+	outputs, activities := registrationRoles()
 	request, ok := ir.Graph.NodeByName(ir.Namespace, "RegistrationRequest")
 	if !ok || request.Kind != semantic.Entity || request.ID.String() != "gooo://syntax-registration/request" {
 		return contractBinding{}, fmt.Errorf("registration request identity mismatch")
