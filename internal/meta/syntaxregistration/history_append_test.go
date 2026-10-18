@@ -30,9 +30,7 @@ func TestHistoryAppendPreservesPriorHelperOwners(t *testing.T) {
 		t.Fatalf("append changed %d source units: %v", len(changes), err)
 	}
 	updated := maps.Clone(source.units)
-	for path, raw := range changes {
-		updated[path] = raw
-	}
+	maps.Copy(updated, changes)
 	after, err := parseSourceUnits(updated, closureRoot, "verticalsliceclosureshadow", false)
 	if err != nil {
 		t.Fatal(err)

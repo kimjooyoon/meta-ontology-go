@@ -83,7 +83,8 @@ func extendSelection(source *goSource, name, result, kind, empty string, capabil
 		}
 		wrapper, _ := renderSelection(name, kind, empty, entries)
 		source.replace(root, wrapper)
-		source.appendAt(last, fmt.Sprintf("\nfunc %sChunk%d(total int) %s {\nswitch total {\ncase %d: return %s\n}\nreturn %s\n}\n",
+		source.appendAt(last, fmt.Sprintf("\nfunc %sChunk%d(total int) %s {\nswitch total {\n"+
+			"case %d: return %s\n}\nreturn %s\n}\n",
 			name, len(helpers), kind, capability+1, result, empty))
 		return nil
 	}

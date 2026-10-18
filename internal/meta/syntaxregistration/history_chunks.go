@@ -86,7 +86,8 @@ func appendHistoryOrigin(source *goSource, history historyOrigins, version, targ
 	}
 	index := len(history.helpers)
 	source.replace(last.Body.List[1], fmt.Sprintf("return %s%d(version)", historyChunkPrefix, index))
-	source.appendAt(last, fmt.Sprintf("\nfunc %s%d(version int) (int, bool) {\nswitch version {\ncase %d: return %d, true\n}\nreturn 0, false\n}\n",
+	source.appendAt(last, fmt.Sprintf("\nfunc %s%d(version int) (int, bool) {\nswitch version {\n"+
+		"case %d: return %d, true\n}\nreturn 0, false\n}\n",
 		historyChunkPrefix, index, version, target))
 	return nil
 }

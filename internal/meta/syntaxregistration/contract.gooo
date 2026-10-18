@@ -20,8 +20,10 @@ activity GenerateSyntaxCorpus(PinnedRegistrationInput) -> SyntaxCorpus
 activity GenerateNativeRegistry(PinnedRegistrationInput) -> NativeRegistry
 activity GenerateSyntaxDenominator(PinnedRegistrationInput) -> SyntaxDenominator
 activity GenerateSyntaxConformance(PinnedRegistrationInput) -> SyntaxConformance
-activity GenerateDenominatorAdmission(PinnedRegistrationInput) -> DenominatorAdmission computes "syntax.history.append:v1"
-activity GenerateDenominatorSelection(PinnedRegistrationInput) -> DenominatorSelection computes "syntax.selection.append:v1"
+activity GenerateDenominatorAdmission(PinnedRegistrationInput) -> DenominatorAdmission
+    computes "syntax.history.append:v1"
+activity GenerateDenominatorSelection(PinnedRegistrationInput) -> DenominatorSelection
+    computes "syntax.selection.append:v1"
 activity GenerateDenominatorDigest(PinnedRegistrationInput) -> DenominatorDigest
 activity GenerateDenominatorEvidence(PinnedRegistrationInput) -> DenominatorEvidence
 activity GenerateMigrationConformance(PinnedRegistrationInput) -> MigrationConformance
