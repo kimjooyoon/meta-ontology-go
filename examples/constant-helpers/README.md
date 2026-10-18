@@ -32,3 +32,6 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 현재 추가한 범위는 본문에서 부르는 고정 `computes` 활동이다. 외부 입력으로
 시작하는 실행 진입점은 기존 입력 계약을 사용한다. 이 예제의 진입점은 Text를
 받는 `Prepare`이고, `EmptyPlan`을 별도 입력 단계로 만들지 않는다.
+
+이 프로그램은 기존 Gooo 문법 등록 작업으로 사례 목록에 포함했다. 등록 작업이
+관련 9개 파일을 함께 만들며, 기존 사례와 지표 이력을 보존한다.
