@@ -1,10 +1,12 @@
 package publicpartialreuse
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 type Scenario struct {
@@ -55,23 +57,25 @@ type UnknownState struct {
 }
 
 type CaseReport struct {
-	Schema               string        `json:"schema"`
-	Operation            string        `json:"operation"`
-	CaseID               string        `json:"case_id"`
-	Decision             string        `json:"decision"`
-	Reason               string        `json:"reason"`
-	Unknown              *UnknownState `json:"unknown"`
-	ExpectedDecision     string        `json:"expected_decision"`
-	Before               Metrics       `json:"before"`
-	After                Metrics       `json:"after"`
-	ImpactedPartitions   int           `json:"impacted_partitions"`
-	UnaffectedPartitions int           `json:"unaffected_partitions"`
-	ClosureEdges         int           `json:"closure_edges"`
-	ReceiptHits          int           `json:"receipt_hits"`
-	ReceiptMisses        int           `json:"receipt_misses"`
-	Comparisons          Comparisons   `json:"comparisons"`
-	RepositoryWrites     int           `json:"repository_writes"`
-	LocalTestExecutions  int           `json:"local_test_executions"`
+	PolicyInputs         Observation             `json:"policy_inputs"`
+	PolicyEvaluation     *bodycodegen.FixedValue `json:"policy_evaluation"`
+	Schema               string                  `json:"schema"`
+	Operation            string                  `json:"operation"`
+	CaseID               string                  `json:"case_id"`
+	Decision             string                  `json:"decision"`
+	Reason               string                  `json:"reason"`
+	Unknown              *UnknownState           `json:"unknown"`
+	ExpectedDecision     string                  `json:"expected_decision"`
+	Before               Metrics                 `json:"before"`
+	After                Metrics                 `json:"after"`
+	ImpactedPartitions   int                     `json:"impacted_partitions"`
+	UnaffectedPartitions int                     `json:"unaffected_partitions"`
+	ClosureEdges         int                     `json:"closure_edges"`
+	ReceiptHits          int                     `json:"receipt_hits"`
+	ReceiptMisses        int                     `json:"receipt_misses"`
+	Comparisons          Comparisons             `json:"comparisons"`
+	RepositoryWrites     int                     `json:"repository_writes"`
+	LocalTestExecutions  int                     `json:"local_test_executions"`
 }
 
 type EvaluationInput struct {
@@ -89,80 +93,26 @@ func Evaluate(input EvaluationInput) (CaseReport, error) {
 	if err := policy.Validate(); err != nil {
 		return CaseReport{}, err
 	}
-	scenario := ScenarioForCase(input.Case)
-	declared := declaredEdges(policy, scenario)
-	actual := actualEdges(policy)
-	closure, closureEdges, closureKnown := impactClosure(policy, scenario.Changed, declared)
-	unknowns := make([]UnknownState, 0, 2)
-	refuted := make([]string, 0, 2)
-	if !closureKnown {
-		unknowns = append(unknowns, unknownState("IMPACT", "COMPUTE_CLOSURE", "CHANGED_COMPONENT_IS_UNKNOWN", []string{"canonical_changed_component", "canonical_dependency_graph"}))
+	observation, impacted, closureEdges := observe(input)
+	value, assessment, err := policy.Assess(context.Background(), observation)
+	if err != nil {
+		return CaseReport{}, err
 	}
-	if scenario.GraphVariant == "unbounded" {
-		unknowns = append(unknowns, unknownState("IMPACT", "BOUND_CLOSURE", "UNBOUNDED_IMPACT_SCOPE", []string{"bounded_dependency_closure", "finite_partition_ownership"}))
-	}
-	missing := edgeDifference(actual, declared)
-	if len(missing) > 0 {
-		if hiddenDependencyOutsideClosure(missing, scenario.Changed, closure) {
-			refuted = append(refuted, "CHANGED_DEPENDENCY_OUTSIDE_COMPUTED_CLOSURE")
-		} else {
-			unknowns = append(unknowns, unknownState("GRAPH", "VALIDATE_DEPENDENCY_EDGES", "MISSING_DEPENDENCY_EDGE", []string{"canonical_dependency_graph", "complete_source_component_relations"}))
-		}
-	}
-
-	impacted := 0
-	for _, partition := range policy.Partitions {
-		if closure[partition.ID] {
-			impacted++
-			continue
-		}
-		if err := input.ReceiptErrors[partition.ID]; err != nil {
-			if errors.Is(err, ErrInvalidReceipt) {
-				refuted = append(refuted, "TAMPERED_PARTITION_RECEIPT")
-			} else {
-				unknowns = append(unknowns, unknownState("REUSE", "LOAD_PARTITION_RECEIPT", "PARTITION_RECEIPT_UNAVAILABLE", []string{"readable_partition_receipt", "exact_partition_binding"}))
-			}
-			continue
-		}
-		receipt, ok := input.Receipts[partition.ID]
-		if !ok {
-			unknowns = append(unknowns, unknownState("REUSE", "LOAD_PARTITION_RECEIPT", "MISSING_OR_STALE_PARTITION_RECEIPT", []string{"immutable_successful_partition_receipt", "explicit_reuse_authorization"}))
-			continue
-		}
-		if err := VerifyReceipt(receipt, input.Bindings[partition.ID], partition.ID); err != nil {
-			if errors.Is(err, ErrInvalidReceipt) {
-				refuted = append(refuted, "TAMPERED_PARTITION_RECEIPT")
-			} else {
-				unknowns = append(unknowns, unknownState("REUSE", "VALIDATE_PARTITION_RECEIPT", "STALE_PARTITION_RECEIPT_BINDING", []string{"exact_partition_binding", "same_test_contract", "same_toolchain"}))
-			}
-		}
-	}
-
-	decision := DecisionClosed
-	reason := ReuseReason
-	var unknown *UnknownState
-	if len(refuted) > 0 {
-		decision = DecisionRefuted
-		reason = RefutedReason
-	} else if len(unknowns) > 0 {
-		decision = DecisionUnknown
-		reason = unknowns[0].Reason
-		unknown = &unknowns[0]
-	}
+	decision, reason, unknown := assessment.Decision, assessment.Reason, assessment.unknown()
 	after := input.Execution
 	after.TestUnitsTotal = policy.TestUnitCount
 	if decision != DecisionClosed {
 		after.TestUnitsExecuted, after.TestUnitsReused, after.BuildExecutions, after.TestExecutions = 0, 0, 0, 0
 		after.BuildMS, after.TestMS = 0, 0
 	} else {
-		after.TestUnitsExecuted = impacted
-		after.TestUnitsReused = policy.TestUnitCount - impacted
+		after.TestUnitsExecuted = assessment.TestUnitsRequired
+		after.TestUnitsReused = assessment.TestUnitsReusable
 		if after.TestUnitsExecuted != after.TestExecutions {
 			return CaseReport{}, errors.New("partial reuse execution metrics do not equal impacted closure")
 		}
 	}
 	return CaseReport{
-		Schema: "gooo/public-partial-test-reuse-report/v1", Operation: ReplayOperation, CaseID: input.Case.ID,
+		Schema: CaseReportSchema, PolicyInputs: observation, PolicyEvaluation: &value, Operation: ReplayOperation, CaseID: input.Case.ID,
 		Decision: decision, Reason: reason, Unknown: unknown, ExpectedDecision: input.Case.Decision,
 		After: after, ImpactedPartitions: impacted, UnaffectedPartitions: policy.TestUnitCount - impacted, ClosureEdges: closureEdges,
 		ReceiptHits: after.TestUnitsReused, ReceiptMisses: policy.TestUnitCount - after.TestUnitsReused, Comparisons: input.Comparisons,
@@ -253,12 +203,10 @@ func hiddenDependencyOutsideClosure(missing []Edge, changed []string, closure ma
 	return false
 }
 
-func unknownState(stage, step, reason string, blocked []string) UnknownState {
-	sort.Strings(blocked)
-	return UnknownState{Stage: stage, Step: step, Reason: reason, UnknownClass: UnknownClass, NextOperation: UnknownNext, BlockedBy: blocked}
-}
-
 func CompareCase(report CaseReport, expected string) error {
+	if err := VerifyAssessment(report); err != nil {
+		return err
+	}
 	if report.Decision != expected {
 		return fmt.Errorf("case %s decision=%s want=%s", report.CaseID, report.Decision, expected)
 	}

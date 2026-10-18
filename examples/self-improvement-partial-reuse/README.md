@@ -18,6 +18,32 @@ implementation lowers this source, derives the semantic subgraphs and actual
 edges, computes impact closure, and validates immutable partition receipts.
 It does not select behavior from filenames or maintain a parallel case switch.
 
+## Source-owned assessment
+
+The development evaluator now passes graph and receipt observations to
+[`policy.gooo`](../../internal/meta/publicpartialreuse/policy.gooo). `Assess`
+chooses the outcome, first unresolved cause and required/reusable test counts.
+`Refuted()` supplies a shared constant result without a dummy input. Go still
+reads receipts, traverses the declared graph and observes execution results.
+
+The policy and case report use their `v2` schemas. The case report retains the
+observations and the existing fixed-value record: activity ID, source digest,
+projection digest and returned value. Report verification re-evaluates those
+observations against the current source and compares the reported outcome.
+Missing files and invalid content have separate observations. A broken Gooo
+program returns an evaluation error; it cannot become a successful outcome.
+
+The authored assessment suite has 20 rows and compares all nine output fields.
+It includes contradictory observations, first-cause ordering, invalid unused
+receipts and malformed partition lists. This population is separate from the
+six end-to-end cases below. The ordinary example has exactly two partitions.
+
+The execution driver still owns pre-execution partition scheduling. Moving
+that selection to the source, binding the actual child Go tool and reobserving
+inputs immediately before effects are further integration work. This report
+assessment alone does not establish arbitrary dependency closure or authorize
+customer CI to skip tests. It uses the existing interpreter with no model call.
+
 The v15 acceptance denominator is fixed at six cases: two `CLOSED`, two
 `UNKNOWN`, and two `REFUTED`. The source is registered as one append-only
 language package member; the repository language corpus therefore advances

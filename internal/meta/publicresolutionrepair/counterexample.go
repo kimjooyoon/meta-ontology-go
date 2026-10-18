@@ -32,6 +32,7 @@ type Counterexample struct {
 }
 
 type v15Case struct {
+	Schema             string `json:"schema"`
 	CaseID             string `json:"case_id"`
 	Decision           string `json:"decision"`
 	Reason             string `json:"reason"`
@@ -66,6 +67,9 @@ func LoadCounterexample(hiddenRecord, aggregateReport []byte, policy Policy) (Co
 	if err := json.Unmarshal(hiddenRecord, &hidden); err != nil {
 		return Counterexample{}, fmt.Errorf("decode v15 hidden-dependency record: %w", err)
 	}
+	if hidden.Schema != "gooo/public-partial-test-reuse-report/v1" && hidden.Schema != "gooo/public-partial-test-reuse-report/v2" {
+		return Counterexample{}, errors.New("partial reuse counterexample has an unsupported source schema")
+	}
 	var aggregate v15Aggregate
 	if err := json.Unmarshal(aggregateReport, &aggregate); err != nil {
 		return Counterexample{}, fmt.Errorf("decode v15 partial-reuse report: %w", err)
@@ -92,7 +96,7 @@ func LoadCounterexample(hiddenRecord, aggregateReport []byte, policy Policy) (Co
 		return Counterexample{}, fmt.Errorf("v15 hidden-dependency target %q is not a canonical partition", target)
 	}
 	return Counterexample{
-		Valid: true, RecordSchema: "gooo/public-partial-test-reuse-report/v1", RecordDigest: cache.HashBytes(hiddenRecord).String(),
+		Valid: true, RecordSchema: hidden.Schema, RecordDigest: cache.HashBytes(hiddenRecord).String(),
 		AggregateReportDigest: cache.HashBytes(aggregateReport).String(), OriginSourceDigest: aggregate.Policy.SourceDigest,
 		Operation: hidden.Operation, CaseID: hidden.CaseID, Decision: hidden.Decision, Reason: hidden.Reason,
 		ChangedComponent: sourceCase.Changed, GraphVariant: sourceCase.GraphVariant, OmittedTarget: target,
