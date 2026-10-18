@@ -68,6 +68,12 @@ func bindContractSource(source []byte) (contractBinding, error) {
 		if index == 0 && activity.ValueProgram != "syntax.register:v2" {
 			return contractBinding{}, fmt.Errorf("registration native program mismatch")
 		}
+		if name == "GenerateDenominatorAdmission" && activity.ValueProgram != "syntax.history.append:v1" {
+			return contractBinding{}, fmt.Errorf("registration history append program mismatch")
+		}
+		if name == "GenerateDenominatorSelection" && activity.ValueProgram != "syntax.selection.append:v1" {
+			return contractBinding{}, fmt.Errorf("registration selection append program mismatch")
+		}
 		binding.activities = append(binding.activities, activity.ID.String())
 		binding.outputs = append(binding.outputs, output.ID.String())
 	}
