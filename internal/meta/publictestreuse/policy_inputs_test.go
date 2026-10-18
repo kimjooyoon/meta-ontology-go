@@ -3,6 +3,7 @@ package publictestreuse
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -25,8 +26,9 @@ func TestPolicyRequiresObservedPackageAndToolContract(t *testing.T) {
 		if bytes.Equal(source, changed) {
 			t.Fatal("fixture contract marker was not found")
 		}
-		if _, err := Load(filename, changed); err == nil {
-			t.Fatal("unversioned or historical policy was accepted for current reuse")
+		_, err := Load(filename, changed)
+		if err == nil || !strings.Contains(err.Error(), "requires v4, observed") {
+			t.Fatal("historical contract lost the required and observed version", err)
 		}
 	}
 	for _, binding := range []string{"execution-package-inputs", "execution-tool-inputs"} {
