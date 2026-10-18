@@ -1,0 +1,17 @@
+package workplan
+namespace constant_helpers
+
+entity Text id "urn:gooo:type:string"
+entity Plan id "urn:constant-helpers:plan" fields {
+    field state id "urn:constant-helpers:plan:state" type string required one
+    field tasks id "urn:constant-helpers:plan:tasks" type string required many
+}
+
+activity EmptyPlan() -> Plan id "urn:constant-helpers:empty-plan" computes `
+    return Plan{state: "NO_WORK", tasks: []string{}}
+`
+
+activity Prepare(Text) -> Plan id "urn:constant-helpers:prepare" computes `
+    if len(input) == 0 { return EmptyPlan() }
+    return Plan{state: "READY", tasks: []string{input}}
+`
