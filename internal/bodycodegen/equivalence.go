@@ -89,6 +89,15 @@ func canonicalizeRouteProjection(packageName, activityName string, raw []byte, o
 		restoreRecordNames(file, records)
 	}
 	removeLocalReadMarkers(file, fset)
+	if !original {
+		restoreCollectionMaps(file)
+	}
+	if hasCollectionMaps(file) {
+		// Inverting a local-function projection changes token positions. For
+		// this new expression, compare AST formatting without layout hints;
+		// source and generated spans remain independently retained origins.
+		fset = token.NewFileSet()
+	}
 	function, ok := findFunction(file, activityName)
 	if !ok {
 		return nil, fmt.Errorf("route equivalence projection has no declared function")

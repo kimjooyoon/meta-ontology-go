@@ -151,6 +151,9 @@ func (p bodyProjection) lower(packageName, activityName, outputType, route strin
 	if !blockTerminates(p.function.Body) {
 		return 0, 0, fmt.Errorf("lowered activity %q body does not return on every control-flow path", activityName)
 	}
+	if err := p.lowerCollectionMaps(); err != nil {
+		return 0, 0, err
+	}
 	inferred := normalizeIntegerLocalInitializers(packageName, p.file, p.fset)
 	units := semanticUnitCount(p.function.Body) - inferred
 	for _, call := range p.calls {

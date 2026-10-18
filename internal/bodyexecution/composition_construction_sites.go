@@ -51,6 +51,21 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 	if err != nil {
 		return nil, err
 	}
+	// The new local map projection has dynamic element sites. Until their
+	// source bindings are retained, the literal-only observer cannot consume
+	// its internal range and indexed writes as ordinary source expressions.
+	mapProjection := false
+	ast.Inspect(file, func(node ast.Node) bool {
+		if call, ok := node.(*ast.CallExpr); ok {
+			if _, _, mapped := bodycodegen.CollectionMapProjection(call); mapped {
+				mapProjection = true
+			}
+		}
+		return !mapProjection
+	})
+	if mapProjection {
+		return nil, fmt.Errorf("collection map native execution requires dynamic construction source bindings")
+	}
 	info := &types.Info{Types: map[ast.Expr]types.TypeAndValue{}}
 	if _, err := new(types.Config).Check("gooo.observed.constructions", fset, []*ast.File{file}, info); err != nil {
 		return nil, err

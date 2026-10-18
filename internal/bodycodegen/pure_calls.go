@@ -11,7 +11,9 @@ import (
 
 const pureCallLimit = 4096
 
-func bodyPrimitiveName(name string) bool { return name == "len" || name == "int64" }
+func bodyPrimitiveName(name string) bool {
+	return name == "len" || name == "int64" || name == "map_values"
+}
 
 // IsBodyPrimitiveName identifies the pure body's primitive spellings. A source
 // activity or local value with the same name still takes precedence in scope.
@@ -112,6 +114,15 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 	budget, height := 0, 0
 	for ordinal, site := range sites {
 		callee := site.name
+		multiplicity := site.maximum
+		if callee == "map_values" && r.ids[callee] == "" {
+			binding, bindErr := r.collectionMapper(site.expression)
+			if bindErr != nil {
+				return 0, bindErr
+			}
+			callee = binding.Name
+			multiplicity = pureCallMultiplicity(multiplicity, RepeatedFieldLimit)
+		}
 		// Source-declared activities retain their identity even when their name
 		// shadows a Go primitive. Primitives themselves add no activity edge.
 		if bodyPrimitiveName(callee) && r.ids[callee] == "" {
@@ -123,7 +134,7 @@ func (r *pureCallResolver) visit(name, body string, depth int) (int, error) {
 		}
 		r.edges = append(r.edges, PureCallEdge{CallerID: r.ids[name], CalleeID: r.ids[callee], Ordinal: ordinal})
 		height = max(height, 1+r.heights[callee])
-		budget += site.maximum * (1 + cost)
+		budget += multiplicity * (1 + cost)
 		if budget > pureCallLimit {
 			return 0, fmt.Errorf("pure activity closure exceeds %d calls per invocation", pureCallLimit)
 		}

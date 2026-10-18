@@ -1,0 +1,89 @@
+package bodycodegen
+
+import (
+	"fmt"
+	"go/ast"
+	"go/parser"
+)
+
+type collectionMapperBinding struct {
+	Name, Input, Output string
+}
+
+func (r *pureCallResolver) collectionMapper(call *ast.CallExpr) (collectionMapperBinding, error) {
+	var binding collectionMapperBinding
+	if call == nil || len(call.Args) != 2 {
+		return binding, fmt.Errorf("map_values requires a collection and a named unary scalar activity")
+	}
+	mapper, ok := call.Args[1].(*ast.Ident)
+	if !ok || mapper.Obj != nil || r.ids[mapper.Name] == "" {
+		return binding, fmt.Errorf("map_values mapper must name a source-declared activity")
+	}
+	activity, err := sourceBodyActivity(r.file, mapper.Name)
+	if err != nil || activity.Assembly != nil {
+		return binding, fmt.Errorf("map_values mapper requires a fixed computes activity")
+	}
+	parameters, err := sourceBodyParameters(activity, r.records, r.file)
+	output, found := bodyEntityType(activity.Output, r.records, r.file)
+	scalar := func(t string) bool { return t == "int64" || t == "string" || t == "bool" }
+	if err != nil || len(parameters) != 1 || !scalar(parameters[0].Type) || !found || !scalar(output) {
+		return binding, fmt.Errorf("map_values mapper requires one Integer, Text or Boolean input and scalar output")
+	}
+	return collectionMapperBinding{mapper.Name, parameters[0].Type, output}, nil
+}
+
+// A typed local function keeps the primitive within its owning source activity.
+// Its one argument evaluates the original collection exactly once. The output
+// backing array is allocated once; source-visible input slices stay immutable.
+func lowerCollectionMap(call *ast.CallExpr, binding collectionMapperBinding) error {
+	text := fmt.Sprintf(`func(goooMapInput []%s) []%s {
+ var goooMapResult = make([]%s, len(goooMapInput))
+ for goooMapIndex := range goooMapInput {
+  goooMapResult[goooMapIndex] = %s(goooMapInput[goooMapIndex])
+ }
+ return goooMapResult
+}(goooMapArgument)`, binding.Input, binding.Output, binding.Output, binding.Name)
+	expression, err := parser.ParseExpr(text)
+	if err != nil {
+		return err
+	}
+	projected := expression.(*ast.CallExpr)
+	projected.Args[0] = call.Args[0]
+	*call = *projected
+	return nil
+}
+
+func (p bodyProjection) lowerCollectionMaps() error {
+	if _, shadowed := findFunction(p.file, "map_values"); shadowed {
+		return nil
+	}
+	bindings := map[string]collectionMapperBinding{}
+	for _, f := range p.calls {
+		if len(f.parameters) == 1 {
+			bindings[f.identity.Name] = collectionMapperBinding{f.identity.Name, f.parameters[0].Type, f.output}
+		}
+	}
+	var err error
+	ast.Inspect(p.file, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok || err != nil {
+			return err == nil
+		}
+		name, ok := call.Fun.(*ast.Ident)
+		if !ok || name.Name != "map_values" {
+			return true
+		}
+		if len(call.Args) != 2 {
+			err = fmt.Errorf("map_values requires two arguments")
+			return false
+		}
+		mapper, ok := call.Args[1].(*ast.Ident)
+		if !ok || bindings[mapper.Name].Name == "" {
+			err = fmt.Errorf("map_values mapper has no resolved source binding")
+			return false
+		}
+		err = lowerCollectionMap(call, bindings[mapper.Name])
+		return err == nil
+	})
+	return err
+}
