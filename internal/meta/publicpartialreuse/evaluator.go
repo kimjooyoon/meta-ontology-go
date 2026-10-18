@@ -108,7 +108,7 @@ func Evaluate(input EvaluationInput) (CaseReport, error) {
 		after.TestUnitsExecuted = assessment.TestUnitsRequired
 		after.TestUnitsReused = assessment.TestUnitsReusable
 		if after.TestUnitsExecuted != after.TestExecutions {
-			return CaseReport{}, errors.New("partial reuse execution metrics do not equal impacted closure")
+			return CaseReport{}, errors.New("execution observations do not match the Gooo selection")
 		}
 	}
 	return CaseReport{

@@ -39,6 +39,7 @@ var compilerManifestPaths = []string{
 	"internal/meta/publicpartialreuse/assessment.go",
 	"internal/meta/publicpartialreuse/observation.go",
 	"internal/meta/publicpartialreuse/policy.gooo",
+	"internal/meta/publicpartialreuse/selection.go",
 	"internal/meta/publicpartialreuse/digest.go",
 	"internal/meta/publicpartialreuse/evaluator.go",
 	"internal/meta/publicpartialreuse/policy.go",

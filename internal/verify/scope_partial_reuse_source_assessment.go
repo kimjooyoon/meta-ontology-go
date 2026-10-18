@@ -21,9 +21,12 @@ func init() {
 		"internal/meta/publicpartialreuse/policy.go",
 		"internal/meta/publicpartialreuse/policy.gooo",
 		"internal/meta/publicpartialreuse/receipt.go",
+		"internal/meta/publicpartialreuse/selection.go",
+		"internal/meta/publicpartialreuse/selection_test.go",
 		"internal/meta/publicpartialreuse/testdata/assessments.json",
 		"internal/meta/publicresolutionrepair/counterexample.go",
 		"internal/meta/publicresolutionrepair/counterexample_schema_test.go",
 		"internal/verify/scope_partial_reuse_source_assessment.go",
+		"scripts/self-improvement-public-partial-reuse/run.go",
 	}
 }

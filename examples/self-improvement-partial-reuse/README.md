@@ -22,7 +22,8 @@ It does not select behavior from filenames or maintain a parallel case switch.
 
 The development evaluator now passes graph and receipt observations to
 [`policy.gooo`](../../internal/meta/publicpartialreuse/policy.gooo). `Assess`
-chooses the outcome, first unresolved cause and required/reusable test counts.
+chooses the outcome, first unresolved cause, ordered execution mask and
+required/reusable test counts.
 `Refuted()` supplies a shared constant result without a dummy input. Go still
 reads receipts, traverses the declared graph and observes execution results.
 
@@ -33,16 +34,21 @@ observations against the current source and compares the reported outcome.
 Missing files and invalid content have separate observations. A broken Gooo
 program returns an evaluation error; it cannot become a successful outcome.
 
-The authored assessment suite has 20 rows and compares all nine output fields.
+The authored assessment suite has 20 rows and compares all ten output fields.
 It includes contradictory observations, first-cause ordering, invalid unused
 receipts and malformed partition lists. This population is separate from the
 six end-to-end cases below. The ordinary example has exactly two partitions.
 
-The execution driver still owns pre-execution partition scheduling. Moving
-that selection to the source, binding the actual child Go tool and reobserving
-inputs immediately before effects are further integration work. This report
-assessment alone does not establish arbitrary dependency closure or authorize
-customer CI to skip tests. It uses the existing interpreter with no model call.
+Before any selective build or test, the existing driver now reads the source's
+ordered mask and maps it to the observed partition identities. An unresolved or
+refuted assessment exposes no selected work. Mask length and counts must agree;
+changing only the Gooo rule can request both declared tests. The original full
+baseline remains the producer of the example's receipts.
+
+Binding the actual child Go tool, SDK/module closure and reobserving inputs
+immediately before effects remain further integration work. The assessment
+alone does not establish arbitrary dependency closure or authorize customer CI
+to skip tests. It uses the existing interpreter with no model call.
 
 The v15 acceptance denominator is fixed at six cases: two `CLOSED`, two
 `UNKNOWN`, and two `REFUTED`. The source is registered as one append-only

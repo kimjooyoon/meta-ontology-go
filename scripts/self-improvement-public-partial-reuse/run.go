@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -295,17 +296,22 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 		}
 		bindings[partition.ID], receipts[partition.ID], receiptPaths[partition.ID] = binding, receipt, path
 	}
-	selected := selectedPartitions(policy, item)
+	selection, err := publicpartialreuse.Select(context.Background(), publicpartialreuse.EvaluationInput{
+		Policy: policy, Case: item, Bindings: bindings, Receipts: receipts,
+	})
+	if err != nil {
+		return caseArtifacts{}, err
+	}
+	if selection.Assessment.Decision != publicpartialreuse.DecisionClosed {
+		return caseArtifacts{}, fmt.Errorf("Gooo selective execution is %s: %s", selection.Assessment.Decision, selection.Assessment.Reason)
+	}
 	after := publicpartialreuse.Metrics{TestUnitsTotal: policy.TestUnitCount}
-	if len(selected) > 0 {
+	if len(selection.Partitions) > 0 {
 		selectivePackage := filepath.Join(out, "selective-package")
 		if err := preparePackage(selectivePackage, program, testContract); err != nil {
 			return caseArtifacts{}, err
 		}
-		for _, partition := range policy.Partitions {
-			if !slices.Contains(selected, partition.ID) {
-				continue
-			}
+		for _, partition := range selection.Partitions {
 			observed, _, err := executeTests(selectivePackage, partition, filepath.Join(out, "selective-time-"+partition.ID))
 			if err != nil {
 				return caseArtifacts{}, err
@@ -376,18 +382,6 @@ func executeNegativeCases(policy publicpartialreuse.Policy, positive caseArtifac
 		}
 	}
 	return results, nil
-}
-
-func selectedPartitions(policy publicpartialreuse.Policy, item publicpartialreuse.Case) []string {
-	if item.Changed == "none" {
-		return nil
-	}
-	for _, partition := range policy.Partitions {
-		if partition.ID == item.Changed {
-			return []string{partition.ID}
-		}
-	}
-	return nil
 }
 
 func addExecutionMetrics(total *publicpartialreuse.Metrics, observed publicpartialreuse.Metrics) {

@@ -35,6 +35,7 @@ type Assessment struct {
 	BlockedBy         []string `json:"blocked_by"`
 	TestUnitsRequired int      `json:"test_units_required"`
 	TestUnitsReusable int      `json:"test_units_reusable"`
+	ExecutePartitions []bool   `json:"execute_partitions"`
 }
 
 func (policy Policy) Assess(ctx context.Context, input Observation) (bodycodegen.FixedValue, Assessment, error) {

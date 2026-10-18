@@ -20,6 +20,7 @@ entity Assessment id "gooo://partial-reuse/assessment/v1" fields {
  field unknown_class id "gooo://partial-reuse/assessment/unknown-class" type string required one
  field next_operation id "gooo://partial-reuse/assessment/next-operation" type string required one
  field blocked_by id "gooo://partial-reuse/assessment/blocked-by" type string required many
+ field execute_partitions id "gooo://partial-reuse/assessment/execute-partitions" type boolean required many
  field test_units_required id "gooo://partial-reuse/assessment/test-units-required" type integer required one
  field test_units_reusable id "gooo://partial-reuse/assessment/test-units-reusable" type integer required one
 }
@@ -30,7 +31,7 @@ entity Assessment id "gooo://partial-reuse/assessment/v1" fields {
 activity Assess(Observation) -> Assessment id "gooo://partial-reuse/assess/v1" computes `
 let result = Assessment{decision: "CLOSED", reason: "AUTHORIZED_UNAFFECTED_PARTITION_RECEIPT_REUSE",
  stage: "", step: "", unknown_class: "", next_operation: "", blocked_by: []string{},
- test_units_required: 0, test_units_reusable: 0}
+ test_units_required: 0, test_units_reusable: 0, execute_partitions: []bool{}}
 if len(input.impacted) != 2 || len(input.receipt_states) != 2 {
  return Unresolved("INPUT", "BIND_ORDERED_PARTITIONS", "PARTITION_OBSERVATION_SHAPE_UNBOUND")
 }
@@ -63,6 +64,7 @@ for i := 0; i < 2; i++ {
  }
 }
 if result.decision == "CLOSED" {
+ result.execute_partitions = input.impacted
  result.test_units_required = impacted_count
  result.test_units_reusable = 2 - impacted_count
 }
@@ -71,13 +73,13 @@ return result
 activity Refuted() -> Assessment id "gooo://partial-reuse/refuted/v1" computes `
 return Assessment{decision: "REFUTED", reason: "FAIL_CLOSED_PARTIAL_REUSE_CONTRADICTION",
  stage: "", step: "", unknown_class: "", next_operation: "", blocked_by: []string{},
- test_units_required: 0, test_units_reusable: 0}
+ test_units_required: 0, test_units_reusable: 0, execute_partitions: []bool{}}
 `
 activity Unresolved(stage Text, step Text, reason Text) -> Assessment
  id "gooo://partial-reuse/unresolved/v1" computes `
 let result = Assessment{decision: "UNKNOWN", reason: reason, stage: stage, step: step,
  unknown_class: "INCOMPLETE_OR_AMBIGUOUS_EVIDENCE", next_operation: "REPAIR_CANONICAL_GRAPH_OR_RECEIPT",
- blocked_by: []string{}, test_units_required: 0, test_units_reusable: 0}
+ blocked_by: []string{}, test_units_required: 0, test_units_reusable: 0, execute_partitions: []bool{}}
 if reason == "CHANGED_COMPONENT_IS_UNKNOWN" {
  result.blocked_by = []string{"canonical_changed_component", "canonical_dependency_graph"}
 } else if reason == "UNBOUNDED_IMPACT_SCOPE" {
