@@ -4,6 +4,7 @@ const checks = [
   ['format', 'gofmt'], ['vet', 'go vet'], ['test', 'go test'],
   ['race', 'go test -race'], ['semantic', 'Semantic conformance'],
 ];
+const transientStatuses = new Set([500, 502, 503, 504]);
 
 async function joinCanonicalChecks(github, context, env, options = {}) {
   const now = options.now || Date.now;
@@ -16,18 +17,34 @@ async function joinCanonicalChecks(github, context, env, options = {}) {
       !Number.isSafeInteger(attempt) || attempt <= 0 || !/^[0-9a-f]{40}$/.test(head || '')) {
     throw new Error('canonical join requires the original clock, head and attempt');
   }
+  let unavailableStatus = 0;
   while (now() < started + budget) {
     const jobs = [];
+    let unavailable = false;
     for (let page = 1; ; page++) {
       if (page > 1000) throw new Error('canonical join pagination limit');
-      const response = await github.request(
-        'GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/jobs',
-        {...context.repo, run_id: context.runId, attempt_number: attempt, per_page: 100, page},
-      );
+      let response;
+      try {
+        response = await github.request(
+          'GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/jobs',
+          {...context.repo, run_id: context.runId, attempt_number: attempt, per_page: 100, page},
+        );
+      } catch (error) {
+        if (!transientStatuses.has(error?.status)) throw error;
+        unavailableStatus = error.status;
+        unavailable = true;
+        break;
+      }
       if (!Array.isArray(response.data?.jobs)) throw new Error('canonical join jobs missing');
       jobs.push(...response.data.jobs);
       if (response.data.jobs.length < 100) break;
     }
+    if (unavailable) {
+      const remaining = started + budget - now();
+      if (remaining > 0) await sleep(Math.min(15000, remaining));
+      continue;
+    }
+    unavailableStatus = 0;
     const retained = [];
     for (const [key, name] of checks) {
       const matches = jobs.filter(job => job.name === name);
@@ -47,6 +64,10 @@ async function joinCanonicalChecks(github, context, env, options = {}) {
     }
     const remaining = started + budget - now();
     if (remaining > 0) await sleep(Math.min(15000, remaining));
+  }
+  if (unavailableStatus) {
+    throw new Error(`canonical join GitHub jobs unavailable (HTTP ${unavailableStatus})` +
+      ' before shared work budget exhausted');
   }
   throw new Error('original shared work budget exhausted before canonical checks joined');
 }
