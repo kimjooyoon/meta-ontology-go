@@ -4,6 +4,8 @@ func init() {
 	branchScopeAllowlist["agent/syntax-append-record-20261019"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		".github/workflows/ci.yml",
+		"docs/ci-work-domain.ko.md",
 		"docs/syntax-registration-candidate.md",
 		"internal/meta/syntaxregistration/append_record.go",
 		"internal/meta/syntaxregistration/append_record_test.go",
@@ -16,6 +18,8 @@ func init() {
 		"internal/meta/syntaxregistration/denominator_test.go",
 		"internal/meta/syntaxregistration/generate.go",
 		"internal/meta/syntaxregistration/types.go",
+		"internal/verify/ci_work_shell_fresh124073_test.go",
 		"internal/verify/scope_syntax_append_record_20261019.go",
+		"scripts/ci-work-shell.sh",
 	}
 }
