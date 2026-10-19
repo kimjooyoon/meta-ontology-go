@@ -3,11 +3,13 @@ package toolchainrelease
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"os"
+	"strconv"
 	"time"
 )
 
-func writeTarGzip(path, name string, data []byte) error {
+func writeTarGzip(path string, members []archiveMember) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -17,15 +19,19 @@ func writeTarGzip(path, name string, data []byte) error {
 	gzipWriter.Header.ModTime = time.Unix(0, 0).UTC()
 	gzipWriter.Header.OS = 255
 	tarWriter := tar.NewWriter(gzipWriter)
-	header := &tar.Header{
-		Name: name, Mode: 0o755, Size: int64(len(data)),
-		ModTime: time.Unix(0, 0).UTC(), Format: tar.FormatUSTAR,
-	}
-	if err := tarWriter.WriteHeader(header); err != nil {
-		return err
-	}
-	if _, err := tarWriter.Write(data); err != nil {
-		return err
+	for _, member := range members {
+		mode, err := strconv.ParseInt(member.evidence.Mode, 8, 64)
+		if err != nil {
+			return fmt.Errorf("TOOLCHAIN_RELEASE_MEMBER_MODE_INVALID: %w", err)
+		}
+		header := &tar.Header{Name: member.evidence.Name, Mode: mode, Size: int64(len(member.data)),
+			ModTime: time.Unix(0, 0).UTC(), Format: tar.FormatUSTAR}
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return err
+		}
+		if _, err := tarWriter.Write(member.data); err != nil {
+			return err
+		}
 	}
 	if err := tarWriter.Close(); err != nil {
 		return err

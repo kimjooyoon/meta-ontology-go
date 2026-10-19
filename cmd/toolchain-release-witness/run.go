@@ -35,7 +35,7 @@ func run(cfg config, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	evidence, err := release.LoadEvidence(cfg.receipts)
+	evidence, err := release.LoadEvidence(cfg.root, cfg.receipts)
 	if err != nil {
 		return err
 	}

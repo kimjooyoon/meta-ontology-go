@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func LoadEvidence(directory string) ([]PlatformEvidence, error) {
+func LoadEvidence(root, directory string) ([]PlatformEvidence, error) {
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func LoadEvidence(directory string) ([]PlatformEvidence, error) {
 			return nil, err
 		}
 		item := PlatformEvidence{Receipt: receipt, ReceiptVerified: receiptDigestValid(receipt)}
-		item.ArchivePath, item.ArchiveVerified = verifyReceiptArchive(directory, receipt)
+		item.ArchivePath, item.ArchiveVerified = verifyReceiptArchive(root, directory, receipt)
 		evidence = append(evidence, item)
 	}
 	sort.Slice(evidence, func(i, j int) bool {

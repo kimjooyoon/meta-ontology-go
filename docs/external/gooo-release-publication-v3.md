@@ -4,8 +4,8 @@ This contract publishes the next Gooo CLI development prerelease without
 treating a pull request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.6.36-dev
-version  = 0.6.36-dev
+tag      = v0.6.37-dev
+version  = 0.6.37-dev
 status   = development
 release  = prerelease
 latest   = false
@@ -47,6 +47,14 @@ The release asset denominator is exactly 9:
 7. `release-report.json`
 8. `version.json`
 9. `SHA256SUMS`
+
+Each of the four platform archives contains five members selected by the
+`RequiredMembers` activity in `payload.gooo`: the executable, the root license,
+the two pinned direct-module licenses and a generated NOTICE. The v2 platform
+receipt binds the activity's source and projection digests, each member's source
+and content digest, and the whole-archive digest. The readiness reader opens
+the archive and checks every member. These five internal members do not change
+the nine public asset names or the eight checksum entries.
 
 `SHA256SUMS` contains exactly 8 entries, one for every other release asset. The
 manifest contains the seven payload digests, the readiness run ID, exact source

@@ -1,0 +1,38 @@
+package verify
+
+func init() {
+	branchScopeAllowlist["agent/release-license-payload-20261019"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/gooo-release-publish.yml",
+		"cmd/gooo/version.go",
+		"cmd/gooo/version_test.go",
+		"cmd/toolchain-release-witness/run.go",
+		"docs/external/gooo-release-publication-v3.md",
+		"docs/language/release-payload-origins.md",
+		"docs/releases/0.6.37-dev.md",
+		"examples/language-syntax-roundtrip/corpus.json",
+		"go.mod",
+		"go.sum",
+		"internal/meta/languagereadiness/languagesyntax/registry.go",
+		"internal/meta/languagereadiness/toolchainrelease/contract.go",
+		"internal/meta/languagereadiness/toolchainrelease/payload.gooo",
+		"internal/meta/languagereadiness/toolchainrelease/payload_archive_read.go",
+		"internal/meta/languagereadiness/toolchainrelease/payload_binary.go",
+		"internal/meta/languagereadiness/toolchainrelease/payload_contents.go",
+		"internal/meta/languagereadiness/toolchainrelease/payload_policy.go",
+		"internal/meta/languagereadiness/toolchainrelease/payload_test.go",
+		"internal/meta/languagereadiness/toolchainrelease/platform_archive.go",
+		"internal/meta/languagereadiness/toolchainrelease/platform_build.go",
+		"internal/meta/languagereadiness/toolchainrelease/platform_receipt.go",
+		"internal/meta/languagereadiness/toolchainrelease/platform_replay.go",
+		"internal/meta/languagereadiness/toolchainrelease/platform_tar.go",
+		"internal/meta/languagereadiness/toolchainrelease/platform_zip.go",
+		"internal/meta/languagereadiness/toolchainrelease/receipt.go",
+		"internal/meta/languagereadiness/toolchainrelease/receipt_archive.go",
+		"internal/meta/languagereadiness/toolchainrelease/receipt_load.go",
+		"internal/verify/scope_release_license_payload_20261019.go",
+		"licenses/gooo-decision-runtime/LICENSE",
+		"licenses/gooo-jev/LICENSE",
+	}
+}
