@@ -90,6 +90,20 @@ func inspectProfileHintSource(ctx context.Context, repository fs.FS, path string
 	return inspectProfileHintSourceForCapability(ctx, repository, path, "", source)
 }
 
+func readProfileHintSource(repository fs.FS, path string) ([]byte, string) {
+	if !fs.ValidPath(path) || path == "." || !strings.HasSuffix(path, ".gooo") {
+		return nil, "INVALID_SOURCE_PATH"
+	}
+	raw, err := fs.ReadFile(repository, path)
+	if err != nil {
+		return nil, "SOURCE_UNREADABLE"
+	}
+	if len(raw) > 1<<20 {
+		return nil, "SOURCE_TOO_LARGE"
+	}
+	return raw, ""
+}
+
 func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS, path, requirement string,
 	source []byte) ProfileHintReport {
 	report := ProfileHintReport{Schema: ProfileHintSchema, Authority: "ADVISORY_ONLY",
@@ -99,17 +113,9 @@ func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS
 		report.Reason = "INVALID_REQUIRED_CAPABILITY"
 		return report
 	}
-	if !fs.ValidPath(path) || path == "." || !strings.HasSuffix(path, ".gooo") {
-		report.Reason = "INVALID_SOURCE_PATH"
-		return report
-	}
-	raw, err := fs.ReadFile(repository, path)
-	if err != nil {
-		report.Reason = "SOURCE_UNREADABLE"
-		return report
-	}
-	if len(raw) > 1<<20 {
-		report.Reason = "SOURCE_TOO_LARGE"
+	raw, reason := readProfileHintSource(repository, path)
+	if reason != "" {
+		report.Reason = reason
 		return report
 	}
 	report.SourceDigest = digest(raw)
