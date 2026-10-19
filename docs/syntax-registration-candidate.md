@@ -100,6 +100,22 @@ runtime improvement is inferred from the source edit count.
 
 ## Caller path
 
+An agent can inspect a source before choosing the intent's parser profile:
+
+~~~sh
+go run ./cmd/syntax-registration-candidate -root PROJECT -profile-hint examples/my-new-capability/main.gooo
+~~~
+
+This read-only mode pins the source bytes, replays them under the ordinary,
+implicit-port and exact V1–V6 profiles, and reports every observed decision.
+The Gooo `SuggestRegistrationProfile` activity chooses one passing profile in
+that order. The result includes the source digest and activity/projection
+origins. Its `ADVISORY_ONLY` authority never fills in `CaseIntent.profile` or
+changes registration: the agent must still supply that field, and generation
+independently replays the selected profile. An unreadable source reports
+`UNKNOWN`; a source rejected by all profiles reports `NO_MATCH`. Neither
+result writes files or grants admission.
+
 Use the implemented experimental entry point:
 
 ~~~sh
@@ -140,7 +156,8 @@ Selectors are `ordinary`, `text-fields`, `implicit-ports`,
 `ordered-collections`, or an exact
 `gooo.entityfields.go-projection.v1` through `.v6` profile ID. Use the exact
 profile supported by the source; the compact intent does not infer one from
-the file. An explicit `base_version` remains available and must equal the
+the file even when a profile hint was requested. An explicit `base_version`
+remains available and must equal the
 observed current version. Missing, altered or contradictory history refuses
 baseline selection; a changed input after inspection fails the later snapshot
 recheck. Baseline observation selects repository state, while Gooo source owns
