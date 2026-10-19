@@ -2,6 +2,7 @@ package syntaxregistration
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -44,5 +45,18 @@ func TestProfileExerciseExplainsUnreadableAndUnparseableSource(t *testing.T) {
 	if invalid.Known || invalid.Reason != "SOURCE_PARSE_UNAVAILABLE" ||
 		expectedExerciseStatus("entity-many", invalid) != "UNKNOWN" {
 		t.Fatalf("unparseable source became a negative observation: %+v", invalid)
+	}
+}
+
+func TestProfileExerciseWitnessUsesOriginalUTF8ByteOffsets(t *testing.T) {
+	source := []byte("package p namespace n\n# 한글 메모\n" +
+		"entity E id \"urn:e\" fields { field F id \"urn:f\" type string required one }")
+	observed := observeProfileExercise("utf8.gooo", source, "entity-string")
+	witness := observed.FirstWitness
+	start := strings.Index(string(source), "field F")
+	if !observed.Known || witness == nil || start < 0 || witness.StartByte != start ||
+		witness.EndByte > len(source) ||
+		string(source[witness.StartByte:witness.EndByte]) != `field F id "urn:f" type string required one` {
+		t.Fatalf("witness was not anchored to original UTF-8 bytes: %+v", observed)
 	}
 }
