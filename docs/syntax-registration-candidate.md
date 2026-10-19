@@ -140,14 +140,18 @@ the example actually exercises that capability.
 `source_exercise` reports that second question separately for an entity
 capability request. The syntax observer reads the same pinned source bytes and
 counts matching authored fields. `EXERCISED` includes one field's stable entity
-and field IDs and byte span; `NOT_EXERCISED` means the source parsed but had no
-matching field, and `UNKNOWN` means the source could not be inspected. A request
+and field IDs and a half-open `[start_byte,end_byte)` span in the original UTF-8
+bytes. `NOT_EXERCISED` means the source parsed but had no matching field and
+no unresolved type spelling that could hide one. `UNKNOWN` includes unreadable
+source, syntax inspection failure, or a type alias whose target this observer
+cannot resolve; its `reason` names the cause. A request
 for a parser route reports `ROUTE_ONLY`; an omitted requirement reports
 `NOT_REQUESTED`. The Gooo `SuggestRegistrationProfile` activity decides this
 status from the observation, and the host checks it before returning the hint.
 For `entity-string`, `entity-boolean`, and `entity-integer`, the observer
 recognizes the authored builtin spelling, its `gooo:` lookup, or its stable
-`urn:gooo:type:` ID; it does not resolve arbitrary nominal aliases. The status
+`urn:gooo:type:` ID. Arbitrary nominal aliases remain unknown for a negative
+type observation. The status
 does not change compatible profiles, select `CaseIntent.profile`, or admit a
 registration. It is a source-feature observation, not semantic validity or a
 claim that the feature executed.
