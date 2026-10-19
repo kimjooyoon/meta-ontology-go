@@ -107,11 +107,41 @@ go run ./cmd/syntax-registration-candidate -root PROJECT -profile-hint examples/
 ~~~
 
 This read-only mode pins the source bytes, replays them under the ordinary,
-implicit-port and exact V1–V6 profiles, and reports every observed decision.
+text-fields, implicit-port, ordered-collections and exact V1–V6 profiles, and
+reports every observed decision. These are all ten profiles accepted by the
+compact `CaseIntent.profile` selector. For example, a source with ordered
+fields can pass both `ordered-collections` and exact V5/V6, so parsing alone
+does not identify its intended registration contract.
+
+An agent can add an explicit capability requirement without making a draft:
+
+~~~sh
+go run ./cmd/syntax-registration-candidate -root PROJECT \
+  -profile-hint examples/my-new-capability/main.gooo \
+  -require-capability entity-many
+~~~
+
+The fixed Gooo activity combines that request with the ten pinned replay
+decisions and chooses the least exact entity-fields profile that passes the
+source and satisfies the requested capability. The host independently checks
+the requirement against the syntax kernel's validated profile capabilities.
+The accepted requirements are `ordinary`, `text-fields`, `implicit-ports`,
+`ordered-collections`, `entity-string`, `entity-boolean`, `entity-integer`,
+`entity-optional`, `entity-many`, and `entity-text-bound`. The first four
+request an exact route; the entity requirements ask for a capability floor
+within V1–V6. An unknown requirement reports `UNKNOWN`. For several passing
+profiles under an explicit entity requirement, `MINIMAL_HINT` shows the first
+passing version and the complete `compatible_profiles` set. It is still only
+a proposed choice: a later `CaseIntent.profile` must state the exact profile.
+Passing a profile means the source is compatible with it. The caller's
+requirement records the intended capability; replay does not establish that
+the example actually exercises that capability.
+
 The Gooo `SuggestRegistrationProfile` activity reports the first passing
-profile in that order and counts all passing profiles. `compatible_profiles`
-lists those profiles. A single match has status `HINT`; several have status
-`AMBIGUOUS`. The first passing profile is only a source-compatible starting
+profile in that order and counts all passing profiles for the request.
+`compatible_profiles` lists those profiles, while `profiles` retains every
+raw replay result. A single match has status `HINT`; several matches without
+a requested capability have status `AMBIGUOUS`. The first passing profile is only a source-compatible starting
 point: the source cannot reveal which wider capability contract the caller
 intends. When the result is ambiguous, choose the exact profile from the
 capabilities the new case is meant to register, not from the first passing

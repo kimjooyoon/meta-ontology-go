@@ -57,8 +57,11 @@ entity AppendRecord id "gooo://syntax-registration/append-record" fields {
 entity ProfileObservation id "gooo://syntax-registration/profile-observation" fields {
     field path id "gooo://syntax-registration/profile-observation/path" type string required one
     field source_digest id "gooo://syntax-registration/profile-observation/source" type string required one
+    field required_capability id "gooo://syntax-registration/profile-observation/requirement" type string required one
     field ordinary id "gooo://syntax-registration/profile-observation/ordinary" type boolean required one
+    field text_fields id "gooo://syntax-registration/profile-observation/text-fields" type boolean required one
     field implicit_ports id "gooo://syntax-registration/profile-observation/implicit" type boolean required one
+    field ordered_collections id "gooo://syntax-registration/profile-observation/collections" type boolean required one
     field v1 id "gooo://syntax-registration/profile-observation/v1" type boolean required one
     field v2 id "gooo://syntax-registration/profile-observation/v2" type boolean required one
     field v3 id "gooo://syntax-registration/profile-observation/v3" type boolean required one
@@ -69,6 +72,7 @@ entity ProfileObservation id "gooo://syntax-registration/profile-observation" fi
 entity ProfileHint id "gooo://syntax-registration/profile-hint" fields {
     field path id "gooo://syntax-registration/profile-hint/path" type string required one
     field source_digest id "gooo://syntax-registration/profile-hint/source" type string required one
+    field required_capability id "gooo://syntax-registration/profile-hint/requirement" type string required one
     field profile id "gooo://syntax-registration/profile-hint/profile" type string required one
     field status id "gooo://syntax-registration/profile-hint/status" type string required one
     field match_count id "gooo://syntax-registration/profile-hint/match-count" type integer required one
@@ -136,38 +140,67 @@ return result
 # explicit profile in CaseIntent and independently replays that choice.
 activity SuggestRegistrationProfile(ProfileObservation) -> ProfileHint
     id "gooo://syntax-registration/suggest-profile" computes `
+let requirement = input.required_capability
+let minimum = 0
+if requirement == "entity-string" { minimum = 1 }
+if requirement == "entity-boolean" { minimum = 2 }
+if requirement == "entity-integer" { minimum = 3 }
+if requirement == "entity-optional" { minimum = 4 }
+if requirement == "entity-many" { minimum = 5 }
+if requirement == "entity-text-bound" { minimum = 6 }
+let ordinary = input.ordinary && (requirement == "" || requirement == "ordinary")
+let text_fields = input.text_fields && (requirement == "" || requirement == "text-fields")
+let implicit_ports = input.implicit_ports && (requirement == "" || requirement == "implicit-ports")
+let ordered_collections = input.ordered_collections &&
+    (requirement == "" || requirement == "ordered-collections")
+let v1 = input.v1 && (requirement == "" || (minimum > 0 && minimum <= 1))
+let v2 = input.v2 && (requirement == "" || (minimum > 0 && minimum <= 2))
+let v3 = input.v3 && (requirement == "" || (minimum > 0 && minimum <= 3))
+let v4 = input.v4 && (requirement == "" || (minimum > 0 && minimum <= 4))
+let v5 = input.v5 && (requirement == "" || (minimum > 0 && minimum <= 5))
+let v6 = input.v6 && (requirement == "" || (minimum > 0 && minimum <= 6))
 let matches = 0
-if input.ordinary { matches = matches + 1 }
-if input.implicit_ports { matches = matches + 1 }
-if input.v1 { matches = matches + 1 }
-if input.v2 { matches = matches + 1 }
-if input.v3 { matches = matches + 1 }
-if input.v4 { matches = matches + 1 }
-if input.v5 { matches = matches + 1 }
-if input.v6 { matches = matches + 1 }
+if ordinary { matches = matches + 1 }
+if text_fields { matches = matches + 1 }
+if implicit_ports { matches = matches + 1 }
+if ordered_collections { matches = matches + 1 }
+if v1 { matches = matches + 1 }
+if v2 { matches = matches + 1 }
+if v3 { matches = matches + 1 }
+if v4 { matches = matches + 1 }
+if v5 { matches = matches + 1 }
+if v6 { matches = matches + 1 }
 let result = ProfileHint{path: input.path, source_digest: input.source_digest,
-    profile: "", status: "NO_MATCH", match_count: matches}
-if input.ordinary {
+    required_capability: requirement, profile: "", status: "NO_MATCH", match_count: matches}
+if ordinary {
     result.profile = "ordinary"
-} else if input.implicit_ports {
+} else if text_fields {
+    result.profile = "text-fields"
+} else if implicit_ports {
     result.profile = "implicit-ports"
-} else if input.v1 {
+} else if ordered_collections {
+    result.profile = "ordered-collections"
+} else if v1 {
     result.profile = "gooo.entityfields.go-projection.v1"
-} else if input.v2 {
+} else if v2 {
     result.profile = "gooo.entityfields.go-projection.v2"
-} else if input.v3 {
+} else if v3 {
     result.profile = "gooo.entityfields.go-projection.v3"
-} else if input.v4 {
+} else if v4 {
     result.profile = "gooo.entityfields.go-projection.v4"
-} else if input.v5 {
+} else if v5 {
     result.profile = "gooo.entityfields.go-projection.v5"
-} else if input.v6 {
+} else if v6 {
     result.profile = "gooo.entityfields.go-projection.v6"
 }
 if matches == 1 {
     result.status = "HINT"
 } else if matches > 1 {
-    result.status = "AMBIGUOUS"
+    if requirement == "" {
+        result.status = "AMBIGUOUS"
+    } else {
+        result.status = "MINIMAL_HINT"
+    }
 }
 return result
 `

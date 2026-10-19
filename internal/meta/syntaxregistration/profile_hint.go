@@ -13,10 +13,11 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
-const ProfileHintSchema = "gooo/syntax-registration-profile-hint/v2"
+const ProfileHintSchema = "gooo/syntax-registration-profile-hint/v3"
 
 var hintProfiles = [...]string{
-	"ordinary", "implicit-ports", "gooo.entityfields.go-projection.v1",
+	"ordinary", "text-fields", "implicit-ports", "ordered-collections",
+	"gooo.entityfields.go-projection.v1",
 	"gooo.entityfields.go-projection.v2", "gooo.entityfields.go-projection.v3",
 	"gooo.entityfields.go-projection.v4", "gooo.entityfields.go-projection.v5",
 	"gooo.entityfields.go-projection.v6",
@@ -35,6 +36,7 @@ type ProfileHintReport struct {
 	Authority          string          `json:"authority"`
 	Path               string          `json:"path"`
 	SourceDigest       string          `json:"source_digest,omitempty"`
+	RequiredCapability string          `json:"required_capability,omitempty"`
 	Status             string          `json:"status"`
 	SuggestedProfile   string          `json:"suggested_profile,omitempty"`
 	CompatibleProfiles []string        `json:"compatible_profiles"`
@@ -47,46 +49,73 @@ type ProfileHintReport struct {
 }
 
 type profileObservation struct {
-	Path          string `json:"path"`
-	SourceDigest  string `json:"source_digest"`
-	Ordinary      bool   `json:"ordinary"`
-	ImplicitPorts bool   `json:"implicit_ports"`
-	V1            bool   `json:"v1"`
-	V2            bool   `json:"v2"`
-	V3            bool   `json:"v3"`
-	V4            bool   `json:"v4"`
-	V5            bool   `json:"v5"`
-	V6            bool   `json:"v6"`
+	Path               string `json:"path"`
+	SourceDigest       string `json:"source_digest"`
+	RequiredCapability string `json:"required_capability"`
+	Ordinary           bool   `json:"ordinary"`
+	TextFields         bool   `json:"text_fields"`
+	ImplicitPorts      bool   `json:"implicit_ports"`
+	OrderedCollections bool   `json:"ordered_collections"`
+	V1                 bool   `json:"v1"`
+	V2                 bool   `json:"v2"`
+	V3                 bool   `json:"v3"`
+	V4                 bool   `json:"v4"`
+	V5                 bool   `json:"v5"`
+	V6                 bool   `json:"v6"`
 }
 
 type profileHintValue struct {
-	Path         string `json:"path"`
-	SourceDigest string `json:"source_digest"`
-	Profile      string `json:"profile"`
-	Status       string `json:"status"`
-	MatchCount   int    `json:"match_count"`
+	Path               string `json:"path"`
+	SourceDigest       string `json:"source_digest"`
+	RequiredCapability string `json:"required_capability"`
+	Profile            string `json:"profile"`
+	Status             string `json:"status"`
+	MatchCount         int    `json:"match_count"`
 }
 
 // InspectProfileHint pins one source before trying the exact parser profiles.
 // Missing or invalid source is a diagnostic result, not a registration failure.
 func InspectProfileHint(ctx context.Context, repository fs.FS, path string) ProfileHintReport {
-	return inspectProfileHintSource(ctx, repository, path, contractSource)
+	return InspectProfileHintForCapability(ctx, repository, path, "")
+}
+
+// InspectProfileHintForCapability narrows the advisory choice by an explicit
+// caller requirement while retaining every pinned replay observation.
+func InspectProfileHintForCapability(ctx context.Context, repository fs.FS,
+	path, requirement string) ProfileHintReport {
+	return inspectProfileHintSourceForCapability(ctx, repository, path, requirement, contractSource)
 }
 
 func inspectProfileHintSource(ctx context.Context, repository fs.FS, path string, source []byte) ProfileHintReport {
-	report := ProfileHintReport{Schema: ProfileHintSchema, Authority: "ADVISORY_ONLY",
-		Path: path, Status: "UNKNOWN", Profiles: []ProfileReplay{}, CompatibleProfiles: []string{}}
+	return inspectProfileHintSourceForCapability(ctx, repository, path, "", source)
+}
+
+func readProfileHintSource(repository fs.FS, path string) ([]byte, string) {
 	if !fs.ValidPath(path) || path == "." || !strings.HasSuffix(path, ".gooo") {
-		report.Reason = "INVALID_SOURCE_PATH"
-		return report
+		return nil, "INVALID_SOURCE_PATH"
 	}
 	raw, err := fs.ReadFile(repository, path)
 	if err != nil {
-		report.Reason = "SOURCE_UNREADABLE"
-		return report
+		return nil, "SOURCE_UNREADABLE"
 	}
 	if len(raw) > 1<<20 {
-		report.Reason = "SOURCE_TOO_LARGE"
+		return nil, "SOURCE_TOO_LARGE"
+	}
+	return raw, ""
+}
+
+func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS, path, requirement string,
+	source []byte) ProfileHintReport {
+	report := ProfileHintReport{Schema: ProfileHintSchema, Authority: "ADVISORY_ONLY",
+		Path: path, RequiredCapability: requirement, Status: "UNKNOWN",
+		Profiles: []ProfileReplay{}, CompatibleProfiles: []string{}}
+	if !validProfileRequirement(requirement) {
+		report.Reason = "INVALID_REQUIRED_CAPABILITY"
+		return report
+	}
+	raw, reason := readProfileHintSource(repository, path)
+	if reason != "" {
+		report.Reason = reason
 		return report
 	}
 	report.SourceDigest = digest(raw)
@@ -96,8 +125,12 @@ func inspectProfileHintSource(ctx context.Context, repository fs.FS, path string
 		definition := languagesyntax.CaseDefinition{Path: path, Kind: languagesyntax.KindValid}
 		switch profile {
 		case "ordinary":
+		case "text-fields":
+			definition.EntityFields = true
 		case "implicit-ports":
 			definition.ImplicitActivityPorts = true
+		case "ordered-collections":
+			definition.OrderedCollections = true
 		default:
 			definition.EntityFieldsProfile = profile
 		}
@@ -111,13 +144,14 @@ func inspectProfileHintSource(ctx context.Context, repository fs.FS, path string
 		passed[index] = result.ObservedDecision == replay.DecisionPass
 	}
 	for index, profile := range hintProfiles {
-		if passed[index] {
+		if passed[index] && profileSatisfiesRequirement(profile, requirement) {
 			report.CompatibleProfiles = append(report.CompatibleProfiles, profile)
 		}
 	}
 	observation := profileObservation{Path: path, SourceDigest: report.SourceDigest,
-		Ordinary: passed[0], ImplicitPorts: passed[1], V1: passed[2], V2: passed[3],
-		V3: passed[4], V4: passed[5], V5: passed[6], V6: passed[7]}
+		RequiredCapability: requirement, Ordinary: passed[0], TextFields: passed[1],
+		ImplicitPorts: passed[2], OrderedCollections: passed[3], V1: passed[4],
+		V2: passed[5], V3: passed[6], V4: passed[7], V5: passed[8], V6: passed[9]}
 	input, _ := json.Marshal([]any{observation})
 	value, err := bodycodegen.EvaluateFixedValue(ctx, "internal/meta/syntaxregistration/contract.gooo",
 		source, "SuggestRegistrationProfile", input)
@@ -127,7 +161,7 @@ func inspectProfileHintSource(ctx context.Context, repository fs.FS, path string
 	}
 	report.ActivityID, report.ActivitySource, report.ProjectionDigest =
 		value.ActivityID, value.SourceSHA256, value.ProjectionSHA256
-	if !validProfileHint(value, source, path, report.SourceDigest, passed, &report) {
+	if !validProfileHint(value, source, path, report.SourceDigest, &report) {
 		report.Reason = "HINT_CONTRACT_MISMATCH"
 		return report
 	}
@@ -135,7 +169,7 @@ func inspectProfileHintSource(ctx context.Context, repository fs.FS, path string
 }
 
 func validProfileHint(value bodycodegen.FixedValue, source []byte, path, sourceDigest string,
-	passed [len(hintProfiles)]bool, report *ProfileHintReport) bool {
+	report *ProfileHintReport) bool {
 	if value.ActivityID != "gooo://syntax-registration/suggest-profile" ||
 		value.SourceSHA256 != digest(source) || value.ProjectionSHA256 == "" {
 		return false
@@ -143,23 +177,26 @@ func validProfileHint(value bodycodegen.FixedValue, source []byte, path, sourceD
 	var hint profileHintValue
 	if err := decodeStrict(value.Value, &hint); err != nil ||
 		hint.Path != path || hint.SourceDigest != sourceDigest ||
+		hint.RequiredCapability != report.RequiredCapability ||
 		hint.MatchCount != len(report.CompatibleProfiles) {
 		return false
 	}
-	if hint.Status == "NO_MATCH" && hint.Profile == "" && !slices.Contains(passed[:], true) {
+	if hint.Status == "NO_MATCH" && hint.Profile == "" && len(report.CompatibleProfiles) == 0 {
 		report.Status = hint.Status
 		return true
 	}
-	if (hint.Status != "HINT" || hint.MatchCount != 1) &&
-		(hint.Status != "AMBIGUOUS" || hint.MatchCount <= 1) {
+	wantStatus := "AMBIGUOUS"
+	if hint.MatchCount == 1 {
+		wantStatus = "HINT"
+	} else if report.RequiredCapability != "" {
+		wantStatus = "MINIMAL_HINT"
+	}
+	if hint.Status != wantStatus || hint.MatchCount == 0 ||
+		!slices.Contains(report.CompatibleProfiles, hint.Profile) ||
+		(report.RequiredCapability != "" && hint.Profile != report.CompatibleProfiles[0]) {
 		return false
 	}
-	for index, profile := range hintProfiles {
-		if hint.Profile == profile && passed[index] {
-			report.Status, report.SuggestedProfile, report.MatchCount =
-				hint.Status, profile, hint.MatchCount
-			return true
-		}
-	}
-	return false
+	report.Status, report.SuggestedProfile, report.MatchCount =
+		hint.Status, hint.Profile, hint.MatchCount
+	return true
 }
