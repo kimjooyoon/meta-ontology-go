@@ -54,6 +54,24 @@ entity AppendRecord id "gooo://syntax-registration/append-record" fields {
     field next_target id "gooo://syntax-registration/append-record/next-target" type integer required one
     field accepted id "gooo://syntax-registration/append-record/accepted" type boolean required one
 }
+entity ProfileObservation id "gooo://syntax-registration/profile-observation" fields {
+    field path id "gooo://syntax-registration/profile-observation/path" type string required one
+    field source_digest id "gooo://syntax-registration/profile-observation/source" type string required one
+    field ordinary id "gooo://syntax-registration/profile-observation/ordinary" type boolean required one
+    field implicit_ports id "gooo://syntax-registration/profile-observation/implicit" type boolean required one
+    field v1 id "gooo://syntax-registration/profile-observation/v1" type boolean required one
+    field v2 id "gooo://syntax-registration/profile-observation/v2" type boolean required one
+    field v3 id "gooo://syntax-registration/profile-observation/v3" type boolean required one
+    field v4 id "gooo://syntax-registration/profile-observation/v4" type boolean required one
+    field v5 id "gooo://syntax-registration/profile-observation/v5" type boolean required one
+    field v6 id "gooo://syntax-registration/profile-observation/v6" type boolean required one
+}
+entity ProfileHint id "gooo://syntax-registration/profile-hint" fields {
+    field path id "gooo://syntax-registration/profile-hint/path" type string required one
+    field source_digest id "gooo://syntax-registration/profile-hint/source" type string required one
+    field profile id "gooo://syntax-registration/profile-hint/profile" type string required one
+    field status id "gooo://syntax-registration/profile-hint/status" type string required one
+}
 
 # A compact caller intent becomes exact corpus values here. The host still
 # observes the source, replays the case and independently checks its shape.
@@ -109,6 +127,34 @@ if input.case_id == "" || input.path == "" || input.source_digest == "" ||
     input.base_target != input.corpus_target {
     result.accepted = false
 }
+return result
+`
+
+# The observer replays one pinned source under each explicit parser profile.
+# This preference is only an agent hint; registration still requires an
+# explicit profile in CaseIntent and independently replays that choice.
+activity SuggestRegistrationProfile(ProfileObservation) -> ProfileHint
+    id "gooo://syntax-registration/suggest-profile" computes `
+let result = ProfileHint{path: input.path, source_digest: input.source_digest,
+    profile: "", status: "NO_MATCH"}
+if input.ordinary {
+    result.profile = "ordinary"
+} else if input.implicit_ports {
+    result.profile = "implicit-ports"
+} else if input.v1 {
+    result.profile = "gooo.entityfields.go-projection.v1"
+} else if input.v2 {
+    result.profile = "gooo.entityfields.go-projection.v2"
+} else if input.v3 {
+    result.profile = "gooo.entityfields.go-projection.v3"
+} else if input.v4 {
+    result.profile = "gooo.entityfields.go-projection.v4"
+} else if input.v5 {
+    result.profile = "gooo.entityfields.go-projection.v5"
+} else if input.v6 {
+    result.profile = "gooo.entityfields.go-projection.v6"
+}
+if result.profile != "" { result.status = "HINT" }
 return result
 `
 
