@@ -32,9 +32,14 @@ func (plan Plan) Generate(repository fs.FS) (Candidate, error) {
 	if err != nil {
 		return Candidate{}, err
 	}
-	version := plan.request.BaseVersion + 1
-	previous := plan.inputs[denominatorPath(version-1)]
-	next, err := generateDenominator(previous, version-1, capability)
+	previous := plan.inputs[denominatorPath(plan.request.BaseVersion)]
+	appendRecord, appendOrigin, err := composeRegistrationAppend(context.Background(),
+		plan.request, previous, capability, contractSource)
+	if err != nil {
+		return Candidate{}, err
+	}
+	version := appendRecord.NextVersion
+	next, err := generateDenominator(previous, appendRecord)
 	if err != nil {
 		return Candidate{}, failure("REFUTED", "bind-denominator", "REGISTRATION_BASELINE_DENOMINATOR_MISMATCH", "", "restore-bound-baseline")
 	}
@@ -67,7 +72,7 @@ func (plan Plan) Generate(repository fs.FS) (Candidate, error) {
 		run    func() error
 	}{
 		{1, syntax, func() error { return generateRegistry(syntax, plan.request) }},
-		{2, syntax, func() error { return generateModel(syntax, plan.inputs[corpusPath]) }},
+		{2, syntax, func() error { return generateModel(syntax, plan.inputs[corpusPath], appendRecord) }},
 		{3, conformance, func() error {
 			return generateSyntaxTests(conformance, plan.inputs[corpusPath], plan.request.PromoteMetaSource)
 		}},
@@ -106,6 +111,8 @@ func (plan Plan) Generate(repository fs.FS) (Candidate, error) {
 	candidate := Candidate{Operation: Operation, ActivityID: plan.binding.activities[0],
 		ContractDigest: plan.binding.source, SemanticDigest: plan.binding.semantic,
 		InputDigest: plan.digest, RequestDigest: digestValue(plan.request), Toolchain: plan.request.Toolchain,
+		AppendRecord: appendRecord, AppendActivityID: appendOrigin.ActivityID,
+		AppendSourceDigest: appendOrigin.SourceSHA256, AppendProjectionDigest: appendOrigin.ProjectionSHA256,
 		ExecutionBinding: ExecutionBinding{ActivityID: plan.binding.inputActivity,
 			InputID: "gooo://syntax-registration/request", OutputID: plan.binding.inputOutput,
 			Identity: plan.request.ExecutionIdentity},
