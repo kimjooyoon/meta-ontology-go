@@ -108,8 +108,14 @@ go run ./cmd/syntax-registration-candidate -root PROJECT -profile-hint examples/
 
 This read-only mode pins the source bytes, replays them under the ordinary,
 implicit-port and exact V1–V6 profiles, and reports every observed decision.
-The Gooo `SuggestRegistrationProfile` activity chooses one passing profile in
-that order. The result includes the source digest and activity/projection
+The Gooo `SuggestRegistrationProfile` activity reports the first passing
+profile in that order and counts all passing profiles. `compatible_profiles`
+lists those profiles. A single match has status `HINT`; several have status
+`AMBIGUOUS`. The first passing profile is only a source-compatible starting
+point: the source cannot reveal which wider capability contract the caller
+intends. When the result is ambiguous, choose the exact profile from the
+capabilities the new case is meant to register, not from the first passing
+entry alone. The result includes the source digest and activity/projection
 origins. Its `ADVISORY_ONLY` authority never fills in `CaseIntent.profile` or
 changes registration: the agent must still supply that field, and generation
 independently replays the selected profile. An unreadable source reports
