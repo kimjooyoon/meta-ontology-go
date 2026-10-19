@@ -13,7 +13,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
-const ProfileHintSchema = "gooo/syntax-registration-profile-hint/v1"
+const ProfileHintSchema = "gooo/syntax-registration-profile-hint/v2"
 
 var hintProfiles = [...]string{
 	"ordinary", "implicit-ports", "gooo.entityfields.go-projection.v1",
@@ -31,17 +31,19 @@ type ProfileReplay struct {
 // ProfileHintReport is advisory. Only an explicit, later CaseIntent can select
 // a profile, and candidate generation replays that source independently.
 type ProfileHintReport struct {
-	Schema           string          `json:"schema"`
-	Authority        string          `json:"authority"`
-	Path             string          `json:"path"`
-	SourceDigest     string          `json:"source_digest,omitempty"`
-	Status           string          `json:"status"`
-	SuggestedProfile string          `json:"suggested_profile,omitempty"`
-	Reason           string          `json:"reason,omitempty"`
-	Profiles         []ProfileReplay `json:"profiles"`
-	ActivityID       string          `json:"activity_id,omitempty"`
-	ActivitySource   string          `json:"activity_source_sha256,omitempty"`
-	ProjectionDigest string          `json:"projection_sha256,omitempty"`
+	Schema             string          `json:"schema"`
+	Authority          string          `json:"authority"`
+	Path               string          `json:"path"`
+	SourceDigest       string          `json:"source_digest,omitempty"`
+	Status             string          `json:"status"`
+	SuggestedProfile   string          `json:"suggested_profile,omitempty"`
+	CompatibleProfiles []string        `json:"compatible_profiles"`
+	MatchCount         int             `json:"match_count"`
+	Reason             string          `json:"reason,omitempty"`
+	Profiles           []ProfileReplay `json:"profiles"`
+	ActivityID         string          `json:"activity_id,omitempty"`
+	ActivitySource     string          `json:"activity_source_sha256,omitempty"`
+	ProjectionDigest   string          `json:"projection_sha256,omitempty"`
 }
 
 type profileObservation struct {
@@ -62,6 +64,7 @@ type profileHintValue struct {
 	SourceDigest string `json:"source_digest"`
 	Profile      string `json:"profile"`
 	Status       string `json:"status"`
+	MatchCount   int    `json:"match_count"`
 }
 
 // InspectProfileHint pins one source before trying the exact parser profiles.
@@ -72,7 +75,7 @@ func InspectProfileHint(ctx context.Context, repository fs.FS, path string) Prof
 
 func inspectProfileHintSource(ctx context.Context, repository fs.FS, path string, source []byte) ProfileHintReport {
 	report := ProfileHintReport{Schema: ProfileHintSchema, Authority: "ADVISORY_ONLY",
-		Path: path, Status: "UNKNOWN", Profiles: []ProfileReplay{}}
+		Path: path, Status: "UNKNOWN", Profiles: []ProfileReplay{}, CompatibleProfiles: []string{}}
 	if !fs.ValidPath(path) || path == "." || !strings.HasSuffix(path, ".gooo") {
 		report.Reason = "INVALID_SOURCE_PATH"
 		return report
@@ -107,6 +110,11 @@ func inspectProfileHintSource(ctx context.Context, repository fs.FS, path string
 		}
 		passed[index] = result.ObservedDecision == replay.DecisionPass
 	}
+	for index, profile := range hintProfiles {
+		if passed[index] {
+			report.CompatibleProfiles = append(report.CompatibleProfiles, profile)
+		}
+	}
 	observation := profileObservation{Path: path, SourceDigest: report.SourceDigest,
 		Ordinary: passed[0], ImplicitPorts: passed[1], V1: passed[2], V2: passed[3],
 		V3: passed[4], V4: passed[5], V5: passed[6], V6: passed[7]}
@@ -134,19 +142,22 @@ func validProfileHint(value bodycodegen.FixedValue, source []byte, path, sourceD
 	}
 	var hint profileHintValue
 	if err := decodeStrict(value.Value, &hint); err != nil ||
-		hint.Path != path || hint.SourceDigest != sourceDigest {
+		hint.Path != path || hint.SourceDigest != sourceDigest ||
+		hint.MatchCount != len(report.CompatibleProfiles) {
 		return false
 	}
 	if hint.Status == "NO_MATCH" && hint.Profile == "" && !slices.Contains(passed[:], true) {
 		report.Status = hint.Status
 		return true
 	}
-	if hint.Status != "HINT" {
+	if (hint.Status != "HINT" || hint.MatchCount != 1) &&
+		(hint.Status != "AMBIGUOUS" || hint.MatchCount <= 1) {
 		return false
 	}
 	for index, profile := range hintProfiles {
 		if hint.Profile == profile && passed[index] {
-			report.Status, report.SuggestedProfile = hint.Status, profile
+			report.Status, report.SuggestedProfile, report.MatchCount =
+				hint.Status, profile, hint.MatchCount
 			return true
 		}
 	}
