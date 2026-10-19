@@ -6,6 +6,23 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
+type ProfileExerciseWitness struct {
+	EntityID  string `json:"entity_id"`
+	FieldID   string `json:"field_id"`
+	StartByte int    `json:"start_byte"`
+	EndByte   int    `json:"end_byte"`
+}
+
+// ProfileExercise observes authored syntax. Its status is a checked Gooo
+// assessment, independent of parser compatibility and registration authority.
+type ProfileExercise struct {
+	Status       string                  `json:"status"`
+	Reason       string                  `json:"reason,omitempty"`
+	Known        bool                    `json:"source_observation_known"`
+	MatchCount   int                     `json:"match_count"`
+	FirstWitness *ProfileExerciseWitness `json:"first_witness,omitempty"`
+}
+
 // observeProfileExercise reads the same pinned bytes used for parser replay.
 // It observes authored field syntax only; nominal type resolution and
 // registration acceptance remain separate operations.

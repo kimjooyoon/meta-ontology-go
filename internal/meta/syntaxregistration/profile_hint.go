@@ -29,23 +29,6 @@ type ProfileReplay struct {
 	Diagnostics []string `json:"diagnostics"`
 }
 
-type ProfileExerciseWitness struct {
-	EntityID  string `json:"entity_id"`
-	FieldID   string `json:"field_id"`
-	StartByte int    `json:"start_byte"`
-	EndByte   int    `json:"end_byte"`
-}
-
-// ProfileExercise observes authored syntax. Its status is a checked Gooo
-// assessment, independent of parser compatibility and registration authority.
-type ProfileExercise struct {
-	Status       string                  `json:"status"`
-	Reason       string                  `json:"reason,omitempty"`
-	Known        bool                    `json:"source_observation_known"`
-	MatchCount   int                     `json:"match_count"`
-	FirstWitness *ProfileExerciseWitness `json:"first_witness,omitempty"`
-}
-
 // ProfileHintReport is advisory. Only an explicit, later CaseIntent can select
 // a profile, and candidate generation replays that source independently.
 type ProfileHintReport struct {
