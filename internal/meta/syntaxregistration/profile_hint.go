@@ -40,6 +40,7 @@ type ProfileExerciseWitness struct {
 // assessment, independent of parser compatibility and registration authority.
 type ProfileExercise struct {
 	Status       string                  `json:"status"`
+	Reason       string                  `json:"reason,omitempty"`
 	Known        bool                    `json:"source_observation_known"`
 	MatchCount   int                     `json:"match_count"`
 	FirstWitness *ProfileExerciseWitness `json:"first_witness,omitempty"`
@@ -132,11 +133,13 @@ func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS
 		Profiles: []ProfileReplay{}, CompatibleProfiles: []string{}}
 	if !validProfileRequirement(requirement) {
 		report.Reason = "INVALID_REQUIRED_CAPABILITY"
+		report.Exercise.Reason = report.Reason
 		return report
 	}
 	raw, reason := readProfileHintSource(repository, path)
 	if reason != "" {
 		report.Reason = reason
+		report.Exercise.Reason = reason
 		return report
 	}
 	report.SourceDigest = digest(raw)

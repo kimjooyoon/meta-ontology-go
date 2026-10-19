@@ -16,15 +16,20 @@ func observeProfileExercise(path string, raw []byte, requirement string) Profile
 	}
 	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(path, string(raw), syntax.EntityFieldsV6Support())
 	if file == nil || diagnostics.HasErrors() {
+		result.Reason = "SOURCE_PARSE_UNAVAILABLE"
 		return result
 	}
 	result.Known = true
+	unresolvedType := false
 	for _, declaration := range file.Declarations {
 		entity, ok := declaration.(*syntax.EntityDecl)
 		if !ok {
 			continue
 		}
 		for _, field := range entity.Fields {
+			if isTypeRequirement(requirement) && !knownBuiltinFieldType(field.TypeRef.Spelling) {
+				unresolvedType = true
+			}
 			if !fieldExercisesRequirement(field, requirement) {
 				continue
 			}
@@ -35,38 +40,9 @@ func observeProfileExercise(path string, raw []byte, requirement string) Profile
 			}
 		}
 	}
+	if result.MatchCount == 0 && unresolvedType {
+		result.Known = false
+		result.Reason = "TYPE_REFERENCE_UNRESOLVED"
+	}
 	return result
-}
-
-func fieldExercisesRequirement(field syntax.FieldDecl, requirement string) bool {
-	switch requirement {
-	case "entity-string", "entity-boolean", "entity-integer":
-		name := strings.TrimPrefix(requirement, "entity-")
-		spelling := field.TypeRef.Spelling
-		return spelling == name || spelling == "gooo:"+name || spelling == "urn:gooo:type:"+name
-	case "entity-optional":
-		return field.Presence == syntax.FieldPresenceOptional
-	case "entity-many":
-		return field.Cardinality == syntax.FieldCardinalityMany
-	case "entity-text-bound":
-		return field.TextBound.IsSet()
-	default:
-		return false
-	}
-}
-
-func expectedExerciseStatus(requirement string, exercise ProfileExercise) string {
-	if requirement == "" {
-		return "NOT_REQUESTED"
-	}
-	if !strings.HasPrefix(requirement, "entity-") {
-		return "ROUTE_ONLY"
-	}
-	if !exercise.Known {
-		return "UNKNOWN"
-	}
-	if exercise.MatchCount > 0 {
-		return "EXERCISED"
-	}
-	return "NOT_EXERCISED"
 }
