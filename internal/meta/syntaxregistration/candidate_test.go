@@ -98,6 +98,9 @@ func TestCandidateIsCompleteSourceBoundReplayWithoutAuthority(t *testing.T) {
 	if !reflect.DeepEqual(first, replay) || first.Emitted != len(first.Members) || first.Required != first.Emitted ||
 		first.RequiredArtifacts != 9 || len(first.Artifacts) != 9 ||
 		first.ContractDigest == "" || first.SemanticDigest == "" || first.ActivityID == "" ||
+		first.AppendActivityID != "gooo://syntax-registration/compose-append" ||
+		first.AppendSourceDigest != first.ContractDigest || first.AppendProjectionDigest == "" ||
+		first.AppendRecord.NextVersion != request.BaseVersion+1 || !first.AppendRecord.Accepted ||
 		first.ApplyAuthorized || first.PromotionAllowed || first.RepositoryWrites != 0 ||
 		first.State != "PROPOSAL_ONLY" || first.Admission != "UNASSESSED" {
 		t.Fatalf("candidate lost source/replay/authority boundaries: %#v", first)

@@ -52,6 +52,29 @@ The operation emits PROPOSAL_ONLY / UNASSESSED, never apply or promotion
 permission. Missing, duplicated, altered or historical-path candidate members
 fail candidate validation. Replay equality alone is not semantic acceptance.
 
+### Gooo-owned append record
+
+The Gooo `ComposeRegistrationAppend` activity receives an observed case ID,
+source path and digest, the exact prior denominator digest and version, and
+independently counted syntax targets from the denominator and corpus. It emits
+a typed append record with the next version and syntax target. The candidate
+exposes this record and the activity, source and projection digests so an agent
+can see which source decision produced the proposed boundary.
+
+The syntax counter projection takes its next capability target from the record
+and checks it against the independently counted corpus. The native denominator
+reader checks the prior JSON bytes and schema, repeats the target arithmetic,
+and preserves the other boundaries and link obligations.
+The source replay and candidate reconstruction remain separate checks. Changed
+Gooo append logic, a contradictory corpus count and changed historical bytes
+are rejected. The record is a proposal; it does not grant write or merge
+authority.
+
+This step transfers the append decision into Gooo source. It adds no historical
+rewrite and does not reduce the nine semantic roles or nine physical members of
+an ordinary registration. Consolidating the registry and counter *files* still
+requires a separate source-backed change and measured before/after cost.
+
 ### Append-only history projection
 
 The Gooo `GenerateDenominatorAdmission` and `GenerateDenominatorSelection`

@@ -84,6 +84,11 @@ type Candidate struct {
 	ApplyAuthorized   bool       `json:"apply_authorized"`
 	PromotionAllowed  bool       `json:"promotion_authorized"`
 
+	AppendRecord           AppendRecord `json:"append_record"`
+	AppendActivityID       string       `json:"append_activity_id"`
+	AppendSourceDigest     string       `json:"append_source_digest"`
+	AppendProjectionDigest string       `json:"append_projection_digest"`
+
 	ExecutionBinding ExecutionBinding `json:"execution_binding"`
 }
 

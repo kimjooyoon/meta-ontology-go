@@ -186,12 +186,16 @@ func corpusTotals(raw []byte) (total, valid, capability int, err error) {
 	return
 }
 
-func generateModel(source *goSource, corpus []byte) error {
+func generateModel(source *goSource, corpus []byte, record AppendRecord) error {
 	total, valid, capability, err := corpusTotals(corpus)
 	if err != nil {
 		return err
 	}
-	expected := map[string]int{"totalCases": total, "validCases": valid, "FixedCapabilityTotal": capability}
+	if capability != record.CorpusTarget || record.NextTarget != capability+1 {
+		return fmt.Errorf("Gooo append target does not match the syntax corpus")
+	}
+	expected := map[string]int{"totalCases": total + 1, "validCases": valid + 1,
+		"FixedCapabilityTotal": record.NextTarget}
 	seen := map[string]int{}
 	for _, declaration := range source.file.Decls {
 		group, ok := declaration.(*ast.GenDecl)
@@ -209,11 +213,11 @@ func generateModel(source *goSource, corpus []byte) error {
 				continue
 			}
 			actual, literal := integer(value.Values[0])
-			if !literal || actual != old {
+			if !literal || actual != old-1 {
 				return fmt.Errorf("baseline syntax denominator mismatch: %s", name)
 			}
 			seen[name]++
-			source.replace(value.Values[0], strconv.Itoa(old+1))
+			source.replace(value.Values[0], strconv.Itoa(old))
 		}
 	}
 	for _, name := range sortedPaths(expected) {
