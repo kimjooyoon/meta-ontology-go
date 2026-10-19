@@ -26,6 +26,7 @@ type document struct {
 // symbols use open documents only; edits and source maps remain unsupported.
 type Server struct {
 	parser        Parser
+	serverVersion string
 	documents     map[string]*document
 	initialized   bool
 	shutdown      bool
@@ -37,12 +38,22 @@ type Server struct {
 }
 
 func NewServer(parsers ...Parser) *Server {
+	return NewServerWithVersion("", parsers...)
+}
+
+// NewServerWithVersion binds the executable's advertised version to this LSP
+// instance. A direct library caller without version metadata gets an explicit
+// fallback rather than a stale release label.
+func NewServerWithVersion(version string, parsers ...Parser) *Server {
+	if version == "" {
+		version = "unspecified"
+	}
 	parser := Parser(SyntaxParser{})
 	if len(parsers) > 0 && parsers[0] != nil {
 		parser = parsers[0]
 	}
 	return &Server{
-		parser: parser, documents: make(map[string]*document),
+		parser: parser, serverVersion: version, documents: make(map[string]*document),
 		inflight: make(map[string]*inFlightRequest), cacheIdentity: newDocumentCacheIdentity(parser),
 	}
 }

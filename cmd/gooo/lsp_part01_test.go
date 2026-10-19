@@ -28,7 +28,8 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 		Result  lsp.InitializeResult `json:"result"`
 	}
 	decodeLSPJSON(t, messages[0], &initialize)
-	if initialize.JSONRPC != "2.0" || initialize.ID != 1 || initialize.Result.ServerInfo.Name != "gooo-lsp" || initialize.Result.ServerInfo.Version != "current-ddaf" {
+	if initialize.JSONRPC != "2.0" || initialize.ID != 1 ||
+		initialize.Result.ServerInfo.Name != "gooo-lsp" || initialize.Result.ServerInfo.Version != goooVersion {
 		t.Fatalf("initialize envelope = %#v", initialize)
 	}
 	want := lsp.ServerCapabilities{
