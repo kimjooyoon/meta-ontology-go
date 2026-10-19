@@ -1,0 +1,46 @@
+package toolchainrelease
+namespace releasepayload
+
+entity Platform id "gooo://release-payload/platform" fields {
+    field windows id "gooo://release-payload/platform/windows" type boolean required one
+}
+entity Members id "gooo://release-payload/members" fields {
+    field binary_path id "gooo://release-payload/members/binary" type string required one
+    field root_license_path id "gooo://release-payload/members/root-license" type string required one
+    field root_license_sha256 id "gooo://release-payload/members/root-license-sha256" type string required one
+    field runtime_license_path id "gooo://release-payload/members/runtime-license" type string required one
+    field runtime_license_sha256 id "gooo://release-payload/members/runtime-license-sha256" type string required one
+    field runtime_module id "gooo://release-payload/members/runtime-module" type string required one
+    field runtime_version id "gooo://release-payload/members/runtime-version" type string required one
+    field runtime_ref id "gooo://release-payload/members/runtime-ref" type string required one
+    field jev_license_path id "gooo://release-payload/members/jev-license" type string required one
+    field jev_license_sha256 id "gooo://release-payload/members/jev-license-sha256" type string required one
+    field jev_module id "gooo://release-payload/members/jev-module" type string required one
+    field jev_version id "gooo://release-payload/members/jev-version" type string required one
+    field jev_ref id "gooo://release-payload/members/jev-ref" type string required one
+    field notice_path id "gooo://release-payload/members/notice" type string required one
+}
+
+# The release writer implements these paths. Its reader checks the archive
+# independently against this source, the pinned module graph and source texts.
+activity RequiredMembers(Platform) -> Members
+    id "gooo://release-payload/required-members" computes `
+let result = Members{
+    binary_path: "gooo", root_license_path: "LICENSE",
+    root_license_sha256: "sha256:5177457bc30b96eae6f786d0fbe3d1fda382edef61ecef25eb6f446a8b35b4f3",
+    runtime_license_path: "licenses/gooo-decision-runtime/LICENSE",
+    runtime_license_sha256: "sha256:3ad2cd8fe84a937a0005a2934e377432f2f86fe10ff86c4242cc48f49ebf4947",
+    runtime_module: "github.com/kimjooyoon/gooo-decision-runtime",
+    runtime_version: "v0.2.51-experimental",
+    runtime_ref: "a1e755ba422faefda757d61c2fcd45e1d56453a9",
+    jev_license_path: "licenses/gooo-jev/LICENSE",
+    jev_license_sha256: "sha256:7e6da5f9095a021486d2c867ce56160223b414c31c5bf7c3f29212c429b4ac05",
+    jev_module: "github.com/kimjooyoon/gooo-jev",
+    jev_version: "v0.0.0-20261019011127-aa4cc4ed706a",
+    jev_ref: "aa4cc4ed706a1ba4866fc5e6a8177b76bd9a7927",
+    notice_path: "NOTICE"}
+if input.windows {
+    result.binary_path = "gooo.exe"
+}
+return result
+`

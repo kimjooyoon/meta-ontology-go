@@ -1382,6 +1382,7 @@
     "internal/meta/syntaxregistration/profile_migration.gooo",
     "examples/source-owned-cohort-observations/main.gooo",
     "internal/meta/publictestreuse/policy.gooo",
-    "examples/measurement-metadata/main.gooo"
+    "examples/measurement-metadata/main.gooo",
+    "internal/meta/languagereadiness/toolchainrelease/payload.gooo"
   ]
 }

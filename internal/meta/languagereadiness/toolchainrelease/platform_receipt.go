@@ -1,7 +1,7 @@
 package toolchainrelease
 
 func newPlatformReceipt(input BuildInput, build BuildEvidence, smoke SmokeEvidence,
-	archive ReplayEvidence, binaryDigest string, binaryBytes int64) PlatformReceipt {
+	archive ReplayEvidence, payload PayloadEvidence, binaryDigest string, binaryBytes int64) PlatformReceipt {
 	return PlatformReceipt{
 		Schema:     PlatformReceiptSchema,
 		Decision:   DecisionPass,
@@ -16,6 +16,7 @@ func newPlatformReceipt(input BuildInput, build BuildEvidence, smoke SmokeEviden
 			Bytes: binaryBytes, Builds: 2, ReplayEqual: true,
 		},
 		Archive:             archive,
+		Payload:             payload,
 		ArchiveFormat:       input.Target.ArchiveFormat,
 		Smoke:               smoke,
 		RepositoryWrites:    0,
