@@ -23,15 +23,19 @@ type denominator struct {
 	Boundaries    []boundary `json:"boundaries"`
 }
 
-func generateDenominator(raw []byte, version, capability int) ([]byte, error) {
+func generateDenominator(raw []byte, record AppendRecord) ([]byte, error) {
 	var value denominator
 	if err := decodeStrict(raw, &value); err != nil {
 		return nil, err
 	}
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
-		value.Version != version || value.DenominatorID != denominatorID(version) ||
+		value.Version != record.BaseVersion || value.DenominatorID != denominatorID(record.BaseVersion) ||
 		len(value.Boundaries) != 6 || value.Boundaries[0].ID != "syntax" ||
-		value.Boundaries[0].Target != capability {
+		record.CaseID == "" || record.Path == "" || record.SourceDigest == "" ||
+		value.Boundaries[0].Target != record.CorpusTarget ||
+		value.Boundaries[0].Target != record.BaseTarget || digest(raw) != record.BaselineDigest ||
+		record.NextVersion != record.BaseVersion+1 || record.NextTarget != record.BaseTarget+1 ||
+		!record.Accepted {
 		return nil, fmt.Errorf("baseline denominator does not match the registered corpus")
 	}
 	links := 0
@@ -42,9 +46,9 @@ func generateDenominator(raw []byte, version, capability int) ([]byte, error) {
 		return nil, fmt.Errorf("baseline denominator has no link obligations")
 	}
 	baselineLinks := links
-	value.Version++
+	value.Version = record.NextVersion
 	value.DenominatorID = denominatorID(value.Version)
-	value.Boundaries[0].Target++
+	value.Boundaries[0].Target = record.NextTarget
 	links = 0
 	for _, item := range value.Boundaries {
 		links += item.LinkTarget

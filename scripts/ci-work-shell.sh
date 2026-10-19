@@ -8,6 +8,8 @@ test -n "${GOOO_CI_ORIGIN_ROOT:-}"
 test -n "${GOOO_CI_BUDGET_MS:-}"
 test -n "${GITHUB_JOB:-}"
 test -n "${GITHUB_ACTION:-}"
+test -n "${GITHUB_RUN_ID:-}"
+test -n "${GITHUB_RUN_ATTEMPT:-}"
 
 # GitHub supplies the expanded step body. Preserve that actual command extent.
 # The journal and receipts remain outside the active logical source checkout.
@@ -16,6 +18,7 @@ purpose="${GITHUB_EVENT_NAME}:${GITHUB_BASE_REF:-${GITHUB_REF_NAME}}"
 unit="urn:gooo:ci-command:${purpose}:${GITHUB_JOB}:${GITHUB_ACTION}"
 receipt="$GOOO_CI_ORIGIN_ROOT/${GITHUB_ACTION}.json"
 arguments=(work --root "$PWD" --head "$GOOO_CI_SOURCE_HEAD" --unit "$unit"
+  --execution-id "${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}"
   --started-at "$GOOO_CI_STARTED_AT" --budget-ms "$GOOO_CI_BUDGET_MS"
   --journal "$GOOO_CI_ORIGIN_ROOT/command-origins.jsonl")
 if [[ -n "${GOOO_CI_ACTIVATION_ORIGIN:-}" ]]; then

@@ -22,7 +22,11 @@ func TestGenerateDenominatorPreservesExpandedLinkBaseline(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := generateDenominator(raw, 47, 79)
+	record := AppendRecord{BaseVersion: 47, BaseTarget: 79, CorpusTarget: 79,
+		CaseID: "expanded-link-fixture", Path: "examples/expanded-link/main.gooo",
+		SourceDigest: digest([]byte("fixture source")), BaselineDigest: digest(raw),
+		NextVersion: 48, NextTarget: 80, Accepted: true}
+	generated, err := generateDenominator(raw, record)
 	if err != nil {
 		t.Fatalf("expanded baseline was rejected: %v", err)
 	}
