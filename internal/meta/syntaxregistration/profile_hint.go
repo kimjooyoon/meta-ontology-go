@@ -77,6 +77,13 @@ type profileHintValue struct {
 	ExerciseStatus     string `json:"exercise_status"`
 }
 
+type profileReplayResult struct {
+	profiles   []ProfileReplay
+	compatible []string
+	passed     [len(hintProfiles)]bool
+	unknown    bool
+}
+
 // InspectProfileHint pins one source before trying the exact parser profiles.
 // Missing or invalid source is a diagnostic result, not a registration failure.
 func InspectProfileHint(ctx context.Context, repository fs.FS, path string) ProfileHintReport {
@@ -127,35 +134,13 @@ func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS
 	}
 	report.SourceDigest = digest(raw)
 	report.Exercise = observeProfileExercise(path, raw, requirement)
-	pinned := fstest.MapFS{path: &fstest.MapFile{Data: raw}}
-	var passed [len(hintProfiles)]bool
-	for index, profile := range hintProfiles {
-		definition := languagesyntax.CaseDefinition{Path: path, Kind: languagesyntax.KindValid}
-		switch profile {
-		case "ordinary":
-		case "text-fields":
-			definition.EntityFields = true
-		case "implicit-ports":
-			definition.ImplicitActivityPorts = true
-		case "ordered-collections":
-			definition.OrderedCollections = true
-		default:
-			definition.EntityFieldsProfile = profile
-		}
-		result := languagesyntax.ReplayCase(pinned, definition)
-		report.Profiles = append(report.Profiles, ProfileReplay{Profile: profile,
-			Decision: result.ObservedDecision, Diagnostics: result.Diagnostics})
-		if result.ObservedDecision == replay.DecisionUnknown {
-			report.Reason = "PROFILE_OBSERVATION_UNKNOWN"
-			return report
-		}
-		passed[index] = result.ObservedDecision == replay.DecisionPass
+	replayed := replayProfileHintSource(path, raw, requirement)
+	report.Profiles, report.CompatibleProfiles = replayed.profiles, replayed.compatible
+	if replayed.unknown {
+		report.Reason = "PROFILE_OBSERVATION_UNKNOWN"
+		return report
 	}
-	for index, profile := range hintProfiles {
-		if passed[index] && profileSatisfiesRequirement(profile, requirement) {
-			report.CompatibleProfiles = append(report.CompatibleProfiles, profile)
-		}
-	}
+	passed := replayed.passed
 	observation := profileObservation{Path: path, SourceDigest: report.SourceDigest,
 		RequiredCapability: requirement, ExerciseKnown: report.Exercise.Known,
 		ExerciseCount: int64(report.Exercise.MatchCount), Ordinary: passed[0], TextFields: passed[1],
@@ -175,6 +160,41 @@ func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS
 		return report
 	}
 	return report
+}
+
+// replayProfileHintSource owns parser compatibility observations. The caller
+// keeps source exercise and the Gooo decision separate from this host replay.
+func replayProfileHintSource(path string, raw []byte, requirement string) profileReplayResult {
+	pinned := fstest.MapFS{path: &fstest.MapFile{Data: raw}}
+	result := profileReplayResult{profiles: []ProfileReplay{}, compatible: []string{}}
+	for index, profile := range hintProfiles {
+		definition := languagesyntax.CaseDefinition{Path: path, Kind: languagesyntax.KindValid}
+		switch profile {
+		case "ordinary":
+		case "text-fields":
+			definition.EntityFields = true
+		case "implicit-ports":
+			definition.ImplicitActivityPorts = true
+		case "ordered-collections":
+			definition.OrderedCollections = true
+		default:
+			definition.EntityFieldsProfile = profile
+		}
+		replayResult := languagesyntax.ReplayCase(pinned, definition)
+		result.profiles = append(result.profiles, ProfileReplay{Profile: profile,
+			Decision: replayResult.ObservedDecision, Diagnostics: replayResult.Diagnostics})
+		if replayResult.ObservedDecision == replay.DecisionUnknown {
+			result.unknown = true
+			return result
+		}
+		result.passed[index] = replayResult.ObservedDecision == replay.DecisionPass
+	}
+	for index, profile := range hintProfiles {
+		if result.passed[index] && profileSatisfiesRequirement(profile, requirement) {
+			result.compatible = append(result.compatible, profile)
+		}
+	}
+	return result
 }
 
 func validProfileHint(value bodycodegen.FixedValue, source []byte, path, sourceDigest string,
