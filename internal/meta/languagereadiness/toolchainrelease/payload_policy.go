@@ -106,7 +106,7 @@ func verifyPayloadModules(root string, members requiredMembers) error {
 	want := map[string]string{members.RuntimeModule: members.RuntimeVersion, members.JevModule: members.JevVersion}
 	actual := map[string]string{}
 	inRequire := false
-	for _, original := range strings.Split(string(raw), "\n") {
+	for original := range strings.SplitSeq(string(raw), "\n") {
 		line := strings.TrimSpace(original)
 		if line == "" || strings.HasPrefix(line, "//") {
 			continue
@@ -125,8 +125,8 @@ func verifyPayloadModules(root string, members requiredMembers) error {
 		if !inRequire && !strings.HasPrefix(line, "require ") {
 			continue
 		}
-		if strings.HasPrefix(line, "require ") {
-			line = strings.TrimPrefix(line, "require ")
+		if after, ok := strings.CutPrefix(line, "require "); ok {
+			line = after
 		}
 		if strings.Contains(line, "// indirect") {
 			continue
