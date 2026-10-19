@@ -11,7 +11,7 @@ func bindContract() (contractBinding, error) {
 }
 
 func bindCaseComposition(ir semantic.IR) error {
-	if len(ir.Graph.Nodes()) != 29 {
+	if len(ir.Graph.Nodes()) != 32 {
 		return fmt.Errorf("registration contract node inventory is not exact: %d", len(ir.Graph.Nodes()))
 	}
 	input, inputFound := ir.Graph.NodeByName(ir.Namespace, "CaseIntent")
@@ -51,6 +51,22 @@ func bindAppendComposition(ir semantic.IR) error {
 		}) {
 			return fmt.Errorf("registration append record is not an input to %s", name)
 		}
+	}
+	return nil
+}
+
+func bindProfileHint(ir semantic.IR) error {
+	input, inputFound := ir.Graph.NodeByName(ir.Namespace, "ProfileObservation")
+	output, outputFound := ir.Graph.NodeByName(ir.Namespace, "ProfileHint")
+	activity, activityFound := ir.Graph.NodeByName(ir.Namespace, "SuggestRegistrationProfile")
+	if !inputFound || !outputFound || !activityFound || input.Kind != semantic.Entity ||
+		output.Kind != semantic.Entity || activity.Kind != semantic.Activity ||
+		input.ID.String() != "gooo://syntax-registration/profile-observation" ||
+		output.ID.String() != "gooo://syntax-registration/profile-hint" ||
+		activity.ID.String() != "gooo://syntax-registration/suggest-profile" || activity.ValueProgram == "" ||
+		!ir.Graph.HasFact(semantic.FactKey{Subject: activity.ID, Predicate: semantic.Used, Object: input.ID}) ||
+		!ir.Graph.HasFact(semantic.FactKey{Subject: output.ID, Predicate: semantic.WasGeneratedBy, Object: activity.ID}) {
+		return fmt.Errorf("registration profile-hint activity ABI mismatch")
 	}
 	return nil
 }

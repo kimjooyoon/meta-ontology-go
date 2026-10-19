@@ -29,7 +29,20 @@ func main() {
 	output := flag.String("output", "", "new caller-owned directory outside the project")
 	inspect := flag.Bool("inspect", false, "observe input digests without generating a candidate")
 	inventory := flag.Bool("inventory", false, "read source membership without generating or replaying cases")
+	profileHint := flag.String("profile-hint", "", "read-only advisory parser profile hint for one .gooo path")
 	flag.Parse()
+	if *profileHint != "" {
+		if *requestPath != "" || *intentPath != "" || *output != "" || *inspect || *inventory {
+			fmt.Fprintln(os.Stderr, "--profile-hint uses only --root")
+			os.Exit(1)
+		}
+		report := syntaxregistration.InspectProfileHint(context.Background(), os.DirFS(*root), *profileHint)
+		if err := json.NewEncoder(os.Stdout).Encode(report); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if *inventory {
 		if *requestPath != "" || *intentPath != "" || *output != "" || *inspect {
 			fmt.Fprintln(os.Stderr, "--inventory uses only --root")

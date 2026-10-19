@@ -36,6 +36,9 @@ func bindContractSource(source []byte) (contractBinding, error) {
 	if err := bindAppendComposition(ir); err != nil {
 		return contractBinding{}, err
 	}
+	if err := bindProfileHint(ir); err != nil {
+		return contractBinding{}, err
+	}
 	outputs, activities := registrationRoles()
 	request, ok := ir.Graph.NodeByName(ir.Namespace, "RegistrationRequest")
 	if !ok || request.Kind != semantic.Entity || request.ID.String() != "gooo://syntax-registration/request" {
