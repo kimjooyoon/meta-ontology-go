@@ -10,11 +10,14 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry declares 111 cases: 108 valid sources and three invalid
-fixtures. Of these, 109 are `LANGUAGE_CAPABILITY` and two
-(`self-improvement-ci-continuation` and `domain-completeness-profile`) are
-`GOVERNANCE_OBSERVATION` cases. The twelve native origin readers are registered
-as language capability cases under the exact V5 field profile.
+At corpus blob `b5181791baa2f347f44bedbc99597a72c43a311e`, the `v2`
+registry declares 137 cases: 134 valid sources and three invalid fixtures.
+The valid sources comprise 132 `LANGUAGE_CAPABILITY` cases and two
+`GOVERNANCE_OBSERVATION` cases (`self-improvement-ci-continuation` and
+`domain-completeness-profile`). All three invalid fixtures are language
+capability cases. The twelve native origin readers are registered as language
+capability cases under the exact V5 field profile. New registrations change
+these totals; the linked corpus is authoritative for the current checkout.
 
 Case totals come from the [corpus](../../examples/language-syntax-roundtrip/corpus.json)
 and [native model](../../internal/meta/languagereadiness/languagesyntax/model.go).
@@ -80,7 +83,7 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 107 valid cases satisfy all five preservation laws |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all valid cases in the pinned corpus satisfy all five preservation laws |
 | REGRESSION | reject-invalid-syntax-with-zero-effects | all three diagnostics reject and writes and authority remain zero |
 
 ## CI authority
