@@ -13,6 +13,10 @@ func BuildPlatform(input BuildInput) (PlatformReceipt, error) {
 	if err := requireRepositoryHead(input.Root, input.ExpectedHead); err != nil {
 		return PlatformReceipt{}, err
 	}
+	payload, err := buildReleasePayload(input.Root, input.Target, input.ExpectedHead)
+	if err != nil {
+		return PlatformReceipt{}, err
+	}
 	before, err := repositoryState(input.Root)
 	if err != nil || before != "" {
 		return PlatformReceipt{}, fmt.Errorf("TOOLCHAIN_RELEASE_REPOSITORY_NOT_CLEAN")
@@ -38,6 +42,9 @@ func BuildPlatform(input BuildInput) (PlatformReceipt, error) {
 	if err != nil {
 		return PlatformReceipt{}, err
 	}
+	if err := verifyBinaryModules(firstBinary, payload.policy.Members); err != nil {
+		return PlatformReceipt{}, err
+	}
 	smoke, err := smokeBinary(firstBinary, input.Root)
 	if err != nil {
 		return PlatformReceipt{}, err
@@ -45,7 +52,7 @@ func BuildPlatform(input BuildInput) (PlatformReceipt, error) {
 	if err := smokeLanguageExamples(firstBinary, work, input); err != nil {
 		return PlatformReceipt{}, err
 	}
-	archive, err := buildArchives(work, input, firstBinary, secondBinary)
+	archive, memberEvidence, err := buildArchives(work, input, firstBinary, secondBinary, payload)
 	if err != nil {
 		return PlatformReceipt{}, err
 	}
@@ -53,6 +60,6 @@ func BuildPlatform(input BuildInput) (PlatformReceipt, error) {
 	if err != nil || after != before {
 		return PlatformReceipt{}, fmt.Errorf("TOOLCHAIN_RELEASE_REPOSITORY_WRITE")
 	}
-	receipt := newPlatformReceipt(input, build, smoke, archive, binaryDigest, binaryBytes)
+	receipt := newPlatformReceipt(input, build, smoke, archive, memberEvidence, binaryDigest, binaryBytes)
 	return FinalizeReceipt(receipt)
 }
