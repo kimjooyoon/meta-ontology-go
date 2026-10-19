@@ -1,7 +1,7 @@
 package toolchainrelease
 
 const (
-	PlatformReceiptSchema = "gooo/toolchain-release-platform-receipt/v1"
+	PlatformReceiptSchema = "gooo/toolchain-release-platform-receipt/v2"
 	CorpusSchema          = "gooo/toolchain-cross-platform-release-corpus/v1"
 	ReportSchema          = "gooo/toolchain-cross-platform-release-report/v1"
 	MetaOperation         = "assemble-exact-cross-platform-release"

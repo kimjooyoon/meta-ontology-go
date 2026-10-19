@@ -16,5 +16,5 @@ tool (
 
 require (
 	github.com/kimjooyoon/gooo-decision-runtime v0.2.51-experimental
-	github.com/kimjooyoon/gooo-jev v0.0.0-20260928032625-e146e6dbb34a
+	github.com/kimjooyoon/gooo-jev v0.0.0-20261019011127-aa4cc4ed706a
 )
