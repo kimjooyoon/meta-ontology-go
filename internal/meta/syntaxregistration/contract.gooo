@@ -33,6 +33,27 @@ entity CanonicalCase id "gooo://syntax-registration/canonical-case" fields {
     field entity_fields_profile id "gooo://syntax-registration/canonical-case/entity-fields-profile" type string required one
     field accepted id "gooo://syntax-registration/canonical-case/accepted" type boolean required one
 }
+entity AppendObservation id "gooo://syntax-registration/append-observation" fields {
+    field case_id id "gooo://syntax-registration/append-observation/id" type string required one
+    field path id "gooo://syntax-registration/append-observation/path" type string required one
+    field source_digest id "gooo://syntax-registration/append-observation/source" type string required one
+    field baseline_digest id "gooo://syntax-registration/append-observation/baseline" type string required one
+    field base_version id "gooo://syntax-registration/append-observation/version" type integer required one
+    field base_target id "gooo://syntax-registration/append-observation/target" type integer required one
+    field corpus_target id "gooo://syntax-registration/append-observation/corpus" type integer required one
+}
+entity AppendRecord id "gooo://syntax-registration/append-record" fields {
+    field case_id id "gooo://syntax-registration/append-record/id" type string required one
+    field path id "gooo://syntax-registration/append-record/path" type string required one
+    field source_digest id "gooo://syntax-registration/append-record/source" type string required one
+    field baseline_digest id "gooo://syntax-registration/append-record/baseline" type string required one
+    field base_version id "gooo://syntax-registration/append-record/base-version" type integer required one
+    field base_target id "gooo://syntax-registration/append-record/base-target" type integer required one
+    field corpus_target id "gooo://syntax-registration/append-record/corpus-target" type integer required one
+    field next_version id "gooo://syntax-registration/append-record/next-version" type integer required one
+    field next_target id "gooo://syntax-registration/append-record/next-target" type integer required one
+    field accepted id "gooo://syntax-registration/append-record/accepted" type boolean required one
+}
 
 # A compact caller intent becomes exact corpus values here. The host still
 # observes the source, replays the case and independently checks its shape.
@@ -72,16 +93,35 @@ if input.profile == "text-fields" {
 return result
 `
 
+# The repository observer supplies the pinned history and corpus counts.
+# Gooo decides the next append identity; the native reader checks the exact
+# historical bytes and source replay independently before proposing files.
+activity ComposeRegistrationAppend(AppendObservation) -> AppendRecord
+    id "gooo://syntax-registration/compose-append" computes `
+let result = AppendRecord{case_id: input.case_id, path: input.path,
+    source_digest: input.source_digest, baseline_digest: input.baseline_digest,
+    base_version: input.base_version, base_target: input.base_target,
+    corpus_target: input.corpus_target, next_version: input.base_version + 1,
+    next_target: input.base_target + 1, accepted: true}
+if input.case_id == "" || input.path == "" || input.source_digest == "" ||
+    input.baseline_digest == "" || input.base_version < 22 ||
+    input.base_version >= 10000 || input.base_target < 1 ||
+    input.base_target != input.corpus_target {
+    result.accepted = false
+}
+return result
+`
+
 activity PinRegistrationExecutionIdentity(RegistrationRequest) -> PinnedRegistrationInput
 activity RegisterSyntaxCapability(PinnedRegistrationInput) -> RegistrationCandidate computes "syntax.register:v2"
 activity GenerateSyntaxCorpus(PinnedRegistrationInput) -> SyntaxCorpus
 activity GenerateNativeRegistry(PinnedRegistrationInput) -> NativeRegistry
-activity GenerateSyntaxDenominator(PinnedRegistrationInput) -> SyntaxDenominator
+activity GenerateSyntaxDenominator(PinnedRegistrationInput, AppendRecord) -> SyntaxDenominator
 activity GenerateSyntaxConformance(PinnedRegistrationInput) -> SyntaxConformance
-activity GenerateDenominatorAdmission(PinnedRegistrationInput) -> DenominatorAdmission
+activity GenerateDenominatorAdmission(PinnedRegistrationInput, AppendRecord) -> DenominatorAdmission
     computes "syntax.history.append:v1"
-activity GenerateDenominatorSelection(PinnedRegistrationInput) -> DenominatorSelection
+activity GenerateDenominatorSelection(PinnedRegistrationInput, AppendRecord) -> DenominatorSelection
     computes "syntax.selection.append:v1"
-activity GenerateDenominatorDigest(PinnedRegistrationInput) -> DenominatorDigest
-activity GenerateDenominatorEvidence(PinnedRegistrationInput) -> DenominatorEvidence
-activity GenerateMigrationConformance(PinnedRegistrationInput) -> MigrationConformance
+activity GenerateDenominatorDigest(PinnedRegistrationInput, AppendRecord) -> DenominatorDigest
+activity GenerateDenominatorEvidence(PinnedRegistrationInput, AppendRecord) -> DenominatorEvidence
+activity GenerateMigrationConformance(PinnedRegistrationInput, AppendRecord) -> MigrationConformance

@@ -57,6 +57,7 @@ func TestActualSharedWorkShell124073(t *testing.T) {
 		"GOOO_CI_DOMAIN="+tool, "GOOO_CI_STARTED_AT="+time.Now().UTC().Format(time.RFC3339Nano),
 		"GOOO_CI_SOURCE_HEAD="+head, "GOOO_CI_ORIGIN_ROOT="+origins,
 		"GOOO_CI_ACTIVATION_ORIGIN=", "GOOO_CI_BUDGET_MS=600000", "GITHUB_JOB=fresh124073", "GITHUB_ACTION=fresh_step124073",
+		"GITHUB_RUN_ID=124073", "GITHUB_RUN_ATTEMPT=2",
 		"GITHUB_EVENT_NAME=pull_request", "GITHUB_BASE_REF=dev", "GITHUB_REF_NAME=fresh124073", "GITHUB_OUTPUT="+outputFile)
 	logs, err := command.CombinedOutput()
 	if err != nil {
@@ -69,8 +70,10 @@ func TestActualSharedWorkShell124073(t *testing.T) {
 	var result struct {
 		Decision                   string
 		ScopeElapsedMS, DeadlineMS int64
+		Spec                       struct{ ExecutionID string }
 	}
-	if err = json.Unmarshal(receipt, &result); err != nil || result.Decision != "COMMAND_COMPLETED" || result.ScopeElapsedMS >= result.DeadlineMS {
+	if err = json.Unmarshal(receipt, &result); err != nil || result.Decision != "COMMAND_COMPLETED" ||
+		result.ScopeElapsedMS >= result.DeadlineMS || result.Spec.ExecutionID != "124073/2" {
 		t.Fatal(string(receipt), err)
 	}
 	if string(logs) != "source-owned work124073\n" {
