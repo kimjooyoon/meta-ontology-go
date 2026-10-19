@@ -71,6 +71,7 @@ entity ProfileHint id "gooo://syntax-registration/profile-hint" fields {
     field source_digest id "gooo://syntax-registration/profile-hint/source" type string required one
     field profile id "gooo://syntax-registration/profile-hint/profile" type string required one
     field status id "gooo://syntax-registration/profile-hint/status" type string required one
+    field match_count id "gooo://syntax-registration/profile-hint/match-count" type integer required one
 }
 
 # A compact caller intent becomes exact corpus values here. The host still
@@ -135,8 +136,17 @@ return result
 # explicit profile in CaseIntent and independently replays that choice.
 activity SuggestRegistrationProfile(ProfileObservation) -> ProfileHint
     id "gooo://syntax-registration/suggest-profile" computes `
+let matches = 0
+if input.ordinary { matches = matches + 1 }
+if input.implicit_ports { matches = matches + 1 }
+if input.v1 { matches = matches + 1 }
+if input.v2 { matches = matches + 1 }
+if input.v3 { matches = matches + 1 }
+if input.v4 { matches = matches + 1 }
+if input.v5 { matches = matches + 1 }
+if input.v6 { matches = matches + 1 }
 let result = ProfileHint{path: input.path, source_digest: input.source_digest,
-    profile: "", status: "NO_MATCH"}
+    profile: "", status: "NO_MATCH", match_count: matches}
 if input.ordinary {
     result.profile = "ordinary"
 } else if input.implicit_ports {
@@ -154,7 +164,11 @@ if input.ordinary {
 } else if input.v6 {
     result.profile = "gooo.entityfields.go-projection.v6"
 }
-if result.profile != "" { result.status = "HINT" }
+if matches == 1 {
+    result.status = "HINT"
+} else if matches > 1 {
+    result.status = "AMBIGUOUS"
+}
 return result
 `
 
