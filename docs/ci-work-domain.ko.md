@@ -16,7 +16,7 @@
 6. 완료와 실패, 중단된 비용을 외부 저널과 원본 실행의 산출물로 남깁니다.
 
 허용 조건과 실행 결과의 분류는 공개 도구의
-[policy.gooo](https://github.com/kimjooyoon/gooo-ci-domain/blob/8b621c007a988a1490c31f60d5bdd8818b91e583/policy.gooo)에
+[policy.gooo](https://github.com/kimjooyoon/gooo-ci-domain/blob/d054a0fe012248c51725dd4a8e85ab0900a726cc/policy.gooo)에
 있습니다. 실제 Gooo 컴파일러가 생성한 Go 코드와 생성 출처도 함께 공개했습니다.
 현재 연결은 해당 도구의 리비전을 고정합니다.
 
