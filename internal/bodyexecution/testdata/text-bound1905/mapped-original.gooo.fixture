@@ -1,6 +1,6 @@
 // Copyright 2026 Gooo Go Ports contributors.
 // Original private capability scaffold, BSD-3-Clause; see the repository LICENSE.
-// The mapped formatting witness follows Go1.27.3 netip.go:884-892,
+// The mapped formatting witness follows Go1.27.2 netip.go:884-892,
 // Copyright 2020 The Go Authors; immutable revision
 // 022c8636110ebac86a9b88724cda168ed713c21f, SHA256
 // 32295f4761825d8c6fdade4dad093b08683bdd1945010bee8a90a298e18cf208.

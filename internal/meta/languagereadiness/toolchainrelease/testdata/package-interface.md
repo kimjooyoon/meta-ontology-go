@@ -1,7 +1,7 @@
 # Package interface fixture
 
 `package-interface.json` is the exact JSON output of compiler source
-`8f4c96386a50fb7d79072bb5a743ef276b658214`, built with Go 1.27.3:
+`8f4c96386a50fb7d79072bb5a743ef276b658214`, built with Go 1.27.2:
 
 ```sh
 gooo package interface --json examples/package-optional-record-flow/gooo.workspace.json

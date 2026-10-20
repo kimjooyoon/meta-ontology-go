@@ -1,7 +1,7 @@
 # Retained V2 native API observation
 
 These are exact gzip-compressed JSON bytes from one fresh zero-weight V2
-release-profile observation on darwin/arm64, Go1.27.3, source
+release-profile observation on darwin/arm64, Go1.27.2, source
 `7f57c454603d40465ac3e3764451fe26f5143062` and public SDK0.2.42. The binary's
 VCS state was clean and no local module replacement was used.
 

@@ -2,7 +2,7 @@
 
 `canonical-native-construct-20261011.json.gz` is the unmodified compressed stdout
 from the once-recorded native model construction at compiler source
-`c96aaee02d35f50b591fd930309550f3d85d2691`, Go1.27.3 and SDK0.2.40.
+`c96aaee02d35f50b591fd930309550f3d85d2691`, Go1.27.2 and SDK0.2.40.
 Its SHA256 is `38e70f3f9806fa4d2fe40be3f4479166d17b6134967535ab2dd9b0bcb2193468`.
 
 The [public observation](https://github.com/kimjooyoon/meta-ontology-go/wiki/Canonical-Branch-Inputs)
