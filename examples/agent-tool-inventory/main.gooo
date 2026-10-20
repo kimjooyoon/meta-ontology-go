@@ -1,0 +1,82 @@
+package toolinventory
+namespace toolinventory
+
+entity Text id "urn:gooo:type:string"
+
+entity Inventory id "urn:gooo:agent-tool-inventory:inventory" fields {
+    field required_origin id "urn:gooo:agent-tool-inventory:required-origin" type string required one
+    field before_origin id "urn:gooo:agent-tool-inventory:before-origin" type string required one
+    field after_origin id "urn:gooo:agent-tool-inventory:after-origin" type string required one
+    field required_ids id "urn:gooo:agent-tool-inventory:required-ids" type string required many
+    field before_ids id "urn:gooo:agent-tool-inventory:before-ids" type string required many
+    field after_ids id "urn:gooo:agent-tool-inventory:after-ids" type string required many
+}
+
+entity Search id "urn:gooo:agent-tool-inventory:search" fields {
+    field required_ids id "urn:gooo:agent-tool-inventory:search-required-ids" type string required many
+    field observed_ids id "urn:gooo:agent-tool-inventory:search-observed-ids" type string required many
+}
+
+entity Assessment id "urn:gooo:agent-tool-inventory:assessment" fields {
+    field status id "urn:gooo:agent-tool-inventory:status" type string required one
+    field required_origin id "urn:gooo:agent-tool-inventory:result-required-origin" type string required one
+    field before_origin id "urn:gooo:agent-tool-inventory:result-before-origin" type string required one
+    field after_origin id "urn:gooo:agent-tool-inventory:result-after-origin" type string required one
+    field required_count id "urn:gooo:agent-tool-inventory:required-count" type integer required one
+    field before_count id "urn:gooo:agent-tool-inventory:before-count" type integer required one
+    field after_count id "urn:gooo:agent-tool-inventory:after-count" type integer required one
+    field all_before id "urn:gooo:agent-tool-inventory:all-before" type boolean required one
+    field all_after id "urn:gooo:agent-tool-inventory:all-after" type boolean required one
+    field first_missing_before id "urn:gooo:agent-tool-inventory:first-missing-before" type string required one
+    field first_missing_after id "urn:gooo:agent-tool-inventory:first-missing-after" type string required one
+}
+
+activity FirstMissing(Search) -> Text id "urn:gooo:agent-tool-inventory:first-missing" computes `
+for required in input.required_ids {
+    let found = false
+    for observed in input.observed_ids {
+        if observed == required { found = true }
+    }
+    if !found { return required }
+}
+return ""
+`
+
+activity Inspect(Inventory) -> Assessment id "urn:gooo:agent-tool-inventory:inspect" computes `
+let valid_required = len(input.required_ids) > 0
+for id in input.required_ids {
+    if id == "" { valid_required = false }
+}
+let valid_origins = input.required_origin != "" && input.before_origin != "" && input.after_origin != ""
+let all_before = false
+let all_after = false
+let first_missing_before = ""
+let first_missing_after = ""
+if valid_required && valid_origins {
+    first_missing_before = FirstMissing(Search{required_ids: input.required_ids, observed_ids: input.before_ids})
+    first_missing_after = FirstMissing(Search{required_ids: input.required_ids, observed_ids: input.after_ids})
+    all_before = first_missing_before == ""
+    all_after = first_missing_after == ""
+}
+let status = "INVALID_REQUIRED"
+if valid_required && !valid_origins { status = "INVALID_ORIGIN" }
+if valid_required && valid_origins {
+    status = "MISSING_BOTH"
+    if all_before && all_after { status = "PRESENT_BOTH" }
+    if !all_before && all_after { status = "RECOVERED" }
+    if all_before && !all_after { status = "REGRESSED" }
+}
+return Assessment{
+    status: status,
+    required_origin: input.required_origin,
+    before_origin: input.before_origin,
+    after_origin: input.after_origin,
+    required_count: int64(len(input.required_ids)),
+    before_count: int64(len(input.before_ids)),
+    after_count: int64(len(input.after_ids)),
+    all_before: all_before,
+    all_after: all_after,
+    first_missing_before: first_missing_before,
+    first_missing_after: first_missing_after,
+}
+`
