@@ -41,7 +41,7 @@ defaults:
     shell: bash ./scripts/ci-work-shell.sh {0}
 
 env:
-  GOTOOLCHAIN: go1.27.2
+  GOTOOLCHAIN: go1.27.3
   GOWORK: off
   GOMAXPROCS: 2
   GOOO_CI_BUDGET_MS: 2400000
@@ -66,7 +66,7 @@ jobs:
           } >> "$GITHUB_ENV"
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Compile the pinned Gooo work domain once
         shell: bash
@@ -112,7 +112,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -125,7 +125,7 @@ jobs:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Bind the declared Go 1.27 toolchain
         run: |
-          test "$(go env GOVERSION)" = "go1.27.2"
+          test "$(go env GOVERSION)" = "go1.27.3"
           go version
       - name: Require Go modernizers and module graph at a fixed point
         run: |
@@ -227,7 +227,7 @@ jobs:
           jq -n \
             --arg schema gooo/go-format-remediation/v1 \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            --arg toolchain go1.27.2 \
+            --arg toolchain go1.27.3 \
             --arg go_version "$(go version)" \
             --arg go_env_goversion "$(go env GOVERSION)" \
             --argjson paths "$paths_json" \
@@ -257,7 +257,7 @@ jobs:
           jq -e \
             --arg schema gooo/go-format-remediation/v1 \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            --arg toolchain go1.27.2 \
+            --arg toolchain go1.27.3 \
             --argjson paths "$paths_json" \
             --arg path_count "$path_count" \
             --arg patch_sha256 "$patch_sha256" \
@@ -295,7 +295,7 @@ jobs:
           test "$path_count" -ge 0
           jq -e \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            '.head_sha == $head_sha and .toolchain == "go1.27.2" and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
+            '.head_sha == $head_sha and .toolchain == "go1.27.3" and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
             "$receipt" > /dev/null
           cmp -s "$patch_a" "$patch_b"
           cmp -s "$patch_a" "$patch_a_fixed"
@@ -331,7 +331,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -371,7 +371,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -411,7 +411,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -451,7 +451,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -498,7 +498,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -871,7 +871,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1031,7 +1031,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1394,7 +1394,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1740,7 +1740,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1874,7 +1874,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: true
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1919,7 +1919,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain

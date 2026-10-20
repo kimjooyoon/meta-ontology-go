@@ -15,7 +15,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
 
-const bodySearchRunUsage = "usage: gooo body-search-run --source <source.gooo> --activity <name> --cases <cases.json> [--go-bin <go1.27.2>]"
+const bodySearchRunUsage = "usage: gooo body-search-run --source <source.gooo> --activity <name> --cases <cases.json> [--go-bin <go1.27.3>]"
 
 type bodySearchRunResult struct {
 	Schema     string               `json:"schema"`

@@ -12,7 +12,7 @@ import (
 func TestExecutionToolInputsRetainCanonicalIdentity(t *testing.T) {
 	digest := strings.Repeat("a", 64)
 	observed := toolchaincli.GeneratedTestGoInputs{Profile: ExecutionToolProfile, Path: "/sdk/bin/go",
-		ExecutableDigest: digest, Version: "go1.27.2", Platform: "darwin/arm64", EnvironmentDigest: digest}
+		ExecutableDigest: digest, Version: "go1.27.3", Platform: "darwin/arm64", EnvironmentDigest: digest}
 	inputs := ExecutionToolInputs(observed)
 	// Independently encoded from the existing named struct, sorted JSON field
 	// names and typed string values. JSON equality alone misses a type alias.

@@ -10,9 +10,9 @@ import (
 func TestGeneratedTestGoInputsWireRepresentation(t *testing.T) {
 	digest := strings.Repeat("a", 64)
 	inputs := GeneratedTestGoInputs{Profile: GeneratedTestGoProfile, Path: "/sdk/bin/go",
-		ExecutableDigest: digest, Version: "go1.27.2", Platform: "darwin/arm64", EnvironmentDigest: digest}
+		ExecutableDigest: digest, Version: "go1.27.3", Platform: "darwin/arm64", EnvironmentDigest: digest}
 	want := `{"profile":"gooo/generated-test-native-go-command/v1","path":"/sdk/bin/go","executable_digest":"` + digest +
-		`","version":"go1.27.2","platform":"darwin/arm64","environment_digest":"` + digest + `"}`
+		`","version":"go1.27.3","platform":"darwin/arm64","environment_digest":"` + digest + `"}`
 	raw, err := json.Marshal(inputs)
 	if err != nil || string(raw) != want || inputs.Validate() != nil {
 		t.Fatal("shared observer changed the existing receipt input representation", err)

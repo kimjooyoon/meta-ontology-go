@@ -23,11 +23,11 @@ jobs:
 
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
           cache: false
 
       - name: Require exact Go toolchain
-        run: test "$(go env GOVERSION)" = "go1.27.2"
+        run: test "$(go env GOVERSION)" = "go1.27.3"
 
       - name: Check the authoritative Gooo program
         run: go run ./cmd/gooo check --semantic examples/self-improvement-minimal-loop/main.gooo

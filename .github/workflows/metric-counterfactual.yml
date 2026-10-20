@@ -54,7 +54,7 @@ jobs:
   counterfactual:
     runs-on: ubuntu-latest
     env:
-      GOTOOLCHAIN: go1.27.2
+      GOTOOLCHAIN: go1.27.3
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v7
@@ -62,7 +62,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
       - name: Generate, replay, and independently constrain the counterfactual
         shell: bash
         run: |
@@ -118,7 +118,7 @@ jobs:
   repository-topology-use-case:
     runs-on: ubuntu-latest
     env:
-      GOTOOLCHAIN: go1.27.2
+      GOTOOLCHAIN: go1.27.3
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out the exact repository subject
@@ -198,7 +198,7 @@ jobs:
   intervention:
     runs-on: ubuntu-latest
     env:
-      GOTOOLCHAIN: go1.27.2
+      GOTOOLCHAIN: go1.27.3
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v7
@@ -206,7 +206,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
       - name: Compile the plan into dimensions and constrain every residual
         env:
           METRICS_COMMIT_SHA: ${{ env.SUBJECT_SHA }}
@@ -268,7 +268,7 @@ jobs:
     needs: intervention
     runs-on: ubuntu-latest
     env:
-      GOTOOLCHAIN: go1.27.2
+      GOTOOLCHAIN: go1.27.3
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v7
@@ -276,7 +276,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
       - name: Download exact intervention evidence
         uses: actions/download-artifact@v8
         with:
@@ -374,7 +374,7 @@ jobs:
     needs: strategy
     runs-on: ubuntu-latest
     env:
-      GOTOOLCHAIN: go1.27.2
+      GOTOOLCHAIN: go1.27.3
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
       REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
@@ -384,7 +384,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
       - name: Verify predecessor continuity independently
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -441,7 +441,7 @@ jobs:
     needs: strategy
     runs-on: ubuntu-24.04
     env:
-      GOTOOLCHAIN: go1.27.2
+      GOTOOLCHAIN: go1.27.3
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
     steps:
@@ -454,7 +454,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
       - name: Assert causal workflows use the selected setup-go release
         shell: bash
         run: |
@@ -719,7 +719,7 @@ jobs:
       concept_operation_artifact_digest: ${{ steps.concept-operation-upload.outputs.artifact-digest }}
       concept_operation_artifact_url: ${{ steps.concept-operation-upload.outputs.artifact-url }}
     env:
-      GOTOOLCHAIN: go1.27.2
+      GOTOOLCHAIN: go1.27.3
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v7
@@ -727,7 +727,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
       - name: Download exact metric strategy evidence
         uses: actions/download-artifact@v8
         with:
@@ -879,7 +879,7 @@ jobs:
     needs: program
     runs-on: ubuntu-latest
     env:
-      GOTOOLCHAIN: go1.27.2
+      GOTOOLCHAIN: go1.27.3
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       PRODUCER_ARTIFACT_ID: ${{ needs.program.outputs.concept_operation_artifact_id }}
       PRODUCER_ARTIFACT_DIGEST: ${{ needs.program.outputs.concept_operation_artifact_digest }}
@@ -892,7 +892,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
       - name: Prepare read-only observation workspace
         run: mkdir -p "$RUNNER_TEMP/metric-concept-operation-observation/unpacked" "$RUNNER_TEMP/metric-concept-operation-observation/concept/first" "$RUNNER_TEMP/metric-concept-operation-observation/concept/replay" "$RUNNER_TEMP/metric-concept-operation-observation/readiness/first" "$RUNNER_TEMP/metric-concept-operation-observation/readiness/replay" "$RUNNER_TEMP/metric-concept-operation-observation/baseline"
       - name: Download and authenticate exact producer bundle

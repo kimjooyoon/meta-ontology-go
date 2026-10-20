@@ -3,7 +3,7 @@
 The four `typed-path-*.json.gz` files are byte-identical gzip -n copies of actual
 CLI stdout from clean accepted compiler source
 `426caecb711e47da26fe659237a117f301d112f4`, captured on 2026-10-10 KST with
-Go1.27.2 and the existing own model. Their embedded producers remain unchanged.
+Go1.27.3 and the existing own model. Their embedded producers remain unchanged.
 No original generation was rerun to create these fixtures.
 
 Unary inspection declined the one-choice typed input; record inspection was

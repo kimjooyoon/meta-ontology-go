@@ -23,10 +23,10 @@
 소스에서 사용하며, 컴파일러 배포는 별도 검사를 거쳐 진행합니다.
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-context \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo body-context \
   --activity Charge --model explicit-neutral-model.json source.gooo
 
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-codegen \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo body-codegen \
   --json --activity Charge --path-model explicit-neutral-model.json source.gooo
 ```
 

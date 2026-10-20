@@ -31,7 +31,7 @@ callback(nil, nil)
 if value != 75 { t.Fatal(value) }
 }
 `)
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module callback.origin53143\n\ngo 1.27.2\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module callback.origin53143\n\ngo 1.27.3\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "fixture_test.go"), source, 0o644); err != nil {
@@ -104,7 +104,7 @@ func TestCallbackImportScopeChange53143(t *testing.T) {
 	}
 	probe := &callbackImportProbe53143{base: evidence.standard.fallback}
 	evidence.standard.fallback = probe
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module callback.changed53143\n\ngo 1.27.2\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module callback.changed53143\n\ngo 1.27.3\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := callbackPreviewFactoryCandidate(root, source, "fixture_test.go", set, file, target, callback, evidence, captures, callbackPreviewEffects(callback, evidence, set)); err != nil {

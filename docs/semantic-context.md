@@ -11,7 +11,7 @@ gooo context examples/billing/main.gooo billing://activity/pay-order \
 ```
 
 ID는 `inspect`의 결과에서 고릅니다. 현재 체크아웃에서는
-`GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo`를 `gooo` 대신 사용할 수 있습니다.
+`GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo`를 `gooo` 대신 사용할 수 있습니다.
 공개 0.6.34 이후 개발 기능이며, 해당 명령이 포함된 릴리스에서 설치 명령으로 사용할 수 있습니다.
 
 응답은 다음 정보를 담습니다.

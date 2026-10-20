@@ -2,7 +2,7 @@
 
 The two compressed JSON files preserve one construction and one saved replay
 of `examples/caller-fill-history` by clean development compiler
-`87caaa692603c0fc1ff5db44010ab157347cce70`, version `0.6.30-dev`, Go `1.27.2`,
+`87caaa692603c0fc1ff5db44010ab157347cce70`, version `0.6.30-dev`, Go `1.27.3`,
 decision runtime `0.2.41-experimental`, on macOS arm64. The source and both case
 files were checked before and after the commands. No model was configured.
 

@@ -16,7 +16,7 @@ import (
 func freshStandardRoot31711(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module experiment.local/origin31711\n\ngo 1.27.2\n"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module experiment.local/origin31711\n\ngo 1.27.3\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	return root
@@ -124,7 +124,7 @@ func TestStandardImportScopeChanges31711(t *testing.T) {
 		t.Fatal(err)
 	}
 	module := filepath.Join(root, "go.mod")
-	if err := os.WriteFile(module, []byte("module experiment.local/origin31711\n\ngo 1.27.2\n// a new module origin\n"), 0600); err != nil {
+	if err := os.WriteFile(module, []byte("module experiment.local/origin31711\n\ngo 1.27.3\n// a new module origin\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	changed := newModuleImporterWithStandard(root, session)

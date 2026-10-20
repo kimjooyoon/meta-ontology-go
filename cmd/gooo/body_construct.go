@@ -15,7 +15,7 @@ import (
 
 const bodyConstructUsage = "usage: gooo body-construct --source <source.gooo> --cases <evaluation.json> " +
 	"(--construction-cases <feedback.json> --attempts <1..64> [--entry <activity>] [--model <model.json>] [--fill-model <model.json>] | " +
-	"--construction <construction.json>) [--go-bin <go1.27.2>] [--out <new-directory>] [--format json|text|markdown]\n" +
+	"--construction <construction.json>) [--go-bin <go1.27.3>] [--out <new-directory>] [--format json|text|markdown]\n" +
 	"       gooo body-construct --report <saved-result.json> [--format text|markdown|json]"
 
 type bodyConstructOutput struct {

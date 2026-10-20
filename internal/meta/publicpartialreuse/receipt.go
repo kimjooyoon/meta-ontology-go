@@ -326,7 +326,7 @@ func ValidateReceipt(receipt Receipt) error {
 			return errors.New("partial reuse receipt has unknown digest evidence")
 		}
 	}
-	if receipt.Binding.ToolchainVersion != "go1.27.2" || receipt.Binding.TestCommand == "" || receipt.Binding.OrchestrationOperation != "gooo.self-improvement.public-orchestration" ||
+	if receipt.Binding.ToolchainVersion != "go1.27.3" || receipt.Binding.TestCommand == "" || receipt.Binding.OrchestrationOperation != "gooo.self-improvement.public-orchestration" ||
 		receipt.Binding.TestCommandDigest != TestCommandDigest(receipt.Binding.TestCommand, receipt.Binding.TestContractDigest) {
 		return errors.New("partial reuse receipt command or toolchain binding is invalid")
 	}

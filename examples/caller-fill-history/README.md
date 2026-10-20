@@ -21,7 +21,7 @@ correctness or model-quality result.
 Use a checkout containing fill-local observation support and a new output directory:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o ./gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o ./gooo ./cmd/gooo
 ./gooo body-construct --source examples/caller-fill-history/main.gooo.fixture \
   --entry Main --attempts 4 \
   --construction-cases examples/caller-fill-history/construction-cases.json \

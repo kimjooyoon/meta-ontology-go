@@ -1,7 +1,7 @@
 # Search an expression around an assembled helper
 
 This example connects a record helper to integer IR search. It requires Gooo
-0.6.30 or later and Go 1.27.2. Earlier compiler 0.6.29 rejected this combination
+0.6.30 or later and Go 1.27.3. Earlier compiler 0.6.29 rejected this combination
 before caller execution. See the [release guide](../../docs/releases/0.6.30-dev.md).
 
 `Seed` first chooses its record field expression. `Divide` then calls that helper
@@ -13,7 +13,7 @@ candidate budget. The constant denominator `1` meets the supplied cases.
 From the compiler checkout:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o ./gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o ./gooo ./cmd/gooo
 ./gooo body-construct --source examples/caller-search-calls/main.gooo.fixture \
   --entry Main --construction-cases examples/caller-search-calls/construction-cases.json \
   --cases examples/caller-search-calls/evaluation-cases.json \

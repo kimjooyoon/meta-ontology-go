@@ -2,7 +2,7 @@
 
 The 20 `plan-inputs-*.json.gz` files retain the exact CLI stdout from four actual
 journeys with clean compiler source `a15b413412ad7b465a0567fb1db4de5706a8c2a8`,
-Go 1.27.2 and the unchanged scalar own-model fixture. Capture occurred on
+Go 1.27.3 and the unchanged scalar own-model fixture. Capture occurred on
 2026-10-10 KST before the 0.6.23 version bump. Gzip has no timestamp or source name.
 The source/producer identities inside the original observations remain unchanged.
 

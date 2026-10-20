@@ -22,7 +22,7 @@ type GeneratedTestGoInputs struct {
 
 func (inputs GeneratedTestGoInputs) Validate() error {
 	if inputs.Profile != GeneratedTestGoProfile || inputs.Path == "" || len(inputs.Path) > 4096 ||
-		strings.ContainsRune(inputs.Path, 0) || inputs.Version != "go1.27.2" ||
+		strings.ContainsRune(inputs.Path, 0) || inputs.Version != "go1.27.3" ||
 		inputs.Platform == "" || len(inputs.Platform) > 64 ||
 		!cache.Digest(inputs.ExecutableDigest).Known() || !cache.Digest(inputs.EnvironmentDigest).Known() {
 		return errors.New("selected Go command observations are incomplete")

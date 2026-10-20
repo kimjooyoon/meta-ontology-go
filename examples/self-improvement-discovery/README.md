@@ -73,7 +73,7 @@ its ordinary two-entity shape and journey metadata. A caller may run the fixed
 immutable caller-owned receipt, and later request reuse explicitly. The
 second public command validates the receipt against the canonical source and
 semantic digest, generated program and manifest, compiler and released-tool
-identity, Go 1.27.2 toolchain, test command, test contract, and successful
+identity, Go 1.27.3 toolchain, test command, test contract, and successful
 original result. It never auto-skips a test.
 
 The v2 binding records an ordered, fixed-size profile of the execution

@@ -17,7 +17,7 @@
 CLI 파일 묶음은 API로 관찰한 본문을 제공한다. 이 CLI 묶음의 로컬 재실행은 포함하지 않는다.
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo package execute --json \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo package execute --json \
   --cases examples/source-owner-identity/cases.json \
   examples/source-owner-identity/workspace.json
 ```

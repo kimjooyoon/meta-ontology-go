@@ -10,10 +10,10 @@ zero and one, entering `Step(2)` and `Step(3)`. Those inputs were used even befo
 the constructor selected a candidate. The constructor retains the actual calls
 at both its initial preflight and the later activity-generation checkpoint.
 
-From a compiler checkout containing this feature, with Go 1.27.2:
+From a compiler checkout containing this feature, with Go 1.27.3:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o ./gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o ./gooo ./cmd/gooo
 ./gooo body-construct --source examples/caller-search-validation/main.gooo.fixture \
   --entry Main --construction-cases examples/caller-search-validation/construction-cases.json \
   --cases examples/caller-search-validation/evaluation-cases.json \

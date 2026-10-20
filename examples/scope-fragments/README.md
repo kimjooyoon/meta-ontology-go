@@ -7,7 +7,7 @@
 ## 실행
 
 이 폴더의 세 파일(`main.gooo`, `gooo.workspace.json`, `inputs.json`)을 함께 두고 실행한다.
-Gooo CLI와 Go 1.27.2가 필요하다. 모델 호출은 0회다.
+Gooo CLI와 Go 1.27.3가 필요하다. 모델 호출은 0회다.
 
 ```sh
 gooo package execute --json --inputs inputs.json gooo.workspace.json > execution.json

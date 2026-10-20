@@ -2,7 +2,7 @@
 
 The five `package-caller-*inputs*.json.gz` files are compressed original command
 outputs from clean compiler source `92c1b7f860bd7d72fe6a06c7bd5d6f727f43242b`,
-built with Go 1.27.2 on macOS arm64. That development source still reports
+built with Go 1.27.3 on macOS arm64. That development source still reports
 `0.6.17-dev`; the public 0.6.17 binary predates the input-only command option.
 The native release profile separately runs the current candidate on each target.
 

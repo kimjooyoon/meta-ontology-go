@@ -11,10 +11,10 @@ checking every candidate, comparing behavior, emitting and replaying the body.
 The helper can also appear inside a candidate expression. Integer, multiple
 argument and declared record helper signatures use the existing pure-call rules.
 
-From a compiler checkout containing this feature, with Go 1.27.2:
+From a compiler checkout containing this feature, with Go 1.27.3:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o ./gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o ./gooo ./cmd/gooo
 ./gooo body-construct --source examples/caller-fill-calls/main.gooo.fixture \
   --entry Main --construction-cases examples/caller-fill-calls/construction-cases.json \
   --cases examples/caller-fill-calls/evaluation-cases.json \

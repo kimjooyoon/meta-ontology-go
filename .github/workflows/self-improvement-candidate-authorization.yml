@@ -35,7 +35,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.2
+          go-version: 1.27.3
           check-latest: true
 
       - name: Locate and bind candidate delivery
@@ -166,7 +166,7 @@ jobs:
       - name: Install Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
           cache: false
 
       - name: Verify exact auth run and source artifact

@@ -14,7 +14,7 @@ Use the model file and checksum from the
 set `model` to that local file. From a checkout containing helper-fill support:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o ./gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o ./gooo ./cmd/gooo
 ./gooo body-construct --source examples/caller-model-fill/main.gooo.fixture \
   --entry Main --model "$model" --attempts 4 \
   --construction-cases examples/caller-model-fill/construction-cases.json \

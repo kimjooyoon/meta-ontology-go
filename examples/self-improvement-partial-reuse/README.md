@@ -70,7 +70,7 @@ unavailable resource observations remain errors. This change adds portability,
 not a cross-platform performance comparison.
 
 Command execution now uses the same bounded native Go observer as the whole-test
-reuse driver. It resolves the executable, checks its embedded Go 1.27.2 identity,
+reuse driver. It resolves the executable, checks its embedded Go 1.27.3 identity,
 freezes the child environment and invokes the observed absolute path. The test
 execution witness retains `execution_tool_inputs`, and its result digest includes
 that observation's digest. The shared reader rechecks the command after execution.
@@ -98,7 +98,7 @@ separately in the current corpus.
 
 Selective reuse is explicit opt-in and fail-closed. A receipt is reusable only
 when its canonical source and semantic subgraph, generated partition artifact,
-compiler/released identity, Go 1.27.2 command, exact test contract, dependency
+compiler/released identity, Go 1.27.3 command, exact test contract, dependency
 graph, successful result, and v14 orchestration provenance all match.
 
 The same canonical source also carries the v16 counterexample-driven semantic

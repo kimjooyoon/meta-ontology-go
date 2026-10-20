@@ -8,7 +8,7 @@ inputs or calls an assembling helper.
 From the `v0.6.29-dev` source checkout, build the binary and inspect a graph:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -trimpath -o .gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -trimpath -o .gooo ./cmd/gooo
 ./.gooo body-plan --source examples/body-codegen/native-input-joins.gooo.fixture --entry Label
 ```
 

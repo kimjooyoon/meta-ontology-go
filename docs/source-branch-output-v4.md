@@ -25,7 +25,7 @@ six output cases, three Boolean cases and four possible combinations of two
 binary choices. From this checkout, deterministic construction is:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-codegen \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo body-codegen \
   --json --activity Charge examples/body-codegen/branch-owned-output-v4.gooo.fixture
 ```
 
