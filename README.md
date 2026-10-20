@@ -300,7 +300,11 @@ the source and accepts a local compact model through `--tiny-model`; without a
 provider it chooses deterministically from the same declared assignments. See
 [project starters](docs/language/project-starters.md).
 
-## First run
+## Earlier development guides and examples
+
+For a first project, use the [pinned first program](docs/getting-started.md)
+linked above. The guides and `@dev` commands below describe development
+snapshots and may differ from the pinned release.
 
 The [0.6.24 development guide](docs/releases/0.6.24-dev.md) starts with inspecting
 a model/source pair, reconstructing a branch from caller feedback and replaying

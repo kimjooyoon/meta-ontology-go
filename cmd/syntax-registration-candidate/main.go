@@ -30,18 +30,24 @@ func main() {
 	inspect := flag.Bool("inspect", false, "observe input digests without generating a candidate")
 	inventory := flag.Bool("inventory", false, "read source membership without generating or replaying cases")
 	profileHint := flag.String("profile-hint", "", "read-only advisory parser profile hint for one .gooo path")
+	requiredCapability := flag.String("require-capability", "", "narrow --profile-hint to a requested language capability")
 	flag.Parse()
 	if *profileHint != "" {
 		if *requestPath != "" || *intentPath != "" || *output != "" || *inspect || *inventory {
 			fmt.Fprintln(os.Stderr, "--profile-hint uses only --root")
 			os.Exit(1)
 		}
-		report := syntaxregistration.InspectProfileHint(context.Background(), os.DirFS(*root), *profileHint)
+		report := syntaxregistration.InspectProfileHintForCapability(context.Background(), os.DirFS(*root),
+			*profileHint, *requiredCapability)
 		if err := json.NewEncoder(os.Stdout).Encode(report); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 		return
+	}
+	if *requiredCapability != "" {
+		fmt.Fprintln(os.Stderr, "--require-capability needs --profile-hint")
+		os.Exit(1)
 	}
 	if *inventory {
 		if *requestPath != "" || *intentPath != "" || *output != "" || *inspect {

@@ -36,6 +36,33 @@ async function main() {
     sleep: async ms => { waited += ms; }});
   assert.strictEqual(observed, 2);
   assert.strictEqual(waited, 15000);
+  let transientCalls = 0;
+  let transientWaited = 0;
+  const transient = {request: async () => {
+    if (++transientCalls < 3) throw Object.assign(new Error('GitHub unavailable'), {status: 502});
+    return {data: {jobs}};
+  }};
+  const recovered = await joinCanonicalChecks(transient, context, env,
+    {now: () => originTime + transientWaited, sleep: async ms => { transientWaited += ms; }});
+  assert.strictEqual(recovered.jobs.length, 5);
+  assert.strictEqual(transientCalls, 3);
+  assert.strictEqual(transientWaited, 30000);
+  let permanentCalls = 0;
+  const forbidden = {request: async () => {
+    permanentCalls++;
+    throw Object.assign(new Error('forbidden'), {status: 403});
+  }};
+  await assert.rejects(joinCanonicalChecks(forbidden, context, env, options), /forbidden/);
+  assert.strictEqual(permanentCalls, 1);
+  let unavailableWaited = 0;
+  const unavailable = {request: async () => {
+    throw Object.assign(new Error('GitHub unavailable'), {status: 503});
+  }};
+  await assert.rejects(joinCanonicalChecks(unavailable, context,
+    {...env, GOOO_CI_BUDGET_MS: '30000'},
+    {now: () => originTime + unavailableWaited, sleep: async ms => { unavailableWaited += ms; }}),
+  /HTTP 503.*shared work budget exhausted/);
+  assert.strictEqual(unavailableWaited, 30000);
   await assert.rejects(joinCanonicalChecks(api([]), context, env,
     {now: () => originTime + 60000}), /shared work budget exhausted/);
 

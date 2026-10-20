@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/fs"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -11,14 +12,20 @@ import (
 
 func TestProfileHintUsesPinnedReplayAndGoooChoice(t *testing.T) {
 	repository := osProjectFS()
-	for _, row := range []struct{ path, want string }{
-		{"examples/billing/main.gooo", "ordinary"},
-		{"examples/collection-filter/main.gooo", "gooo.entityfields.go-projection.v5"},
-		{"examples/scope-fragments/main.gooo", "gooo.entityfields.go-projection.v6"},
+	for _, row := range []struct {
+		path, want, status string
+		matches            int
+	}{
+		{"examples/billing/main.gooo", "ordinary", "AMBIGUOUS", 10},
+		{"examples/collection-filter/main.gooo", "ordered-collections", "AMBIGUOUS", 3},
+		{"examples/scope-fragments/main.gooo", "gooo.entityfields.go-projection.v6", "HINT", 1},
 	} {
 		t.Run(row.path, func(t *testing.T) {
 			report := InspectProfileHint(context.Background(), repository, row.path)
-			if report.Status != "HINT" || report.SuggestedProfile != row.want ||
+			if report.Status != row.status || report.SuggestedProfile != row.want ||
+				report.MatchCount != row.matches ||
+				report.MatchCount != len(report.CompatibleProfiles) ||
+				!slices.Contains(report.CompatibleProfiles, row.want) ||
 				report.Authority != "ADVISORY_ONLY" || len(report.Profiles) != len(hintProfiles) ||
 				report.ActivityID != "gooo://syntax-registration/suggest-profile" ||
 				report.ActivitySource != digest(contractSource) || report.SourceDigest == "" ||
@@ -28,22 +35,72 @@ func TestProfileHintUsesPinnedReplayAndGoooChoice(t *testing.T) {
 		})
 	}
 	path := "examples/collection-filter/main.gooo"
-	changed := strings.Replace(string(contractSource), "} else if input.v5 {",
-		"} else if false && input.v5 {", 1)
+	changed := strings.Replace(string(contractSource), "} else if ordered_collections {",
+		"} else if false && ordered_collections {", 1)
 	if changed == string(contractSource) {
 		t.Fatal("Gooo intervention did not change the profile decision")
 	}
 	other := inspectProfileHintSource(context.Background(), repository, path, []byte(changed))
-	if other.Status != "HINT" || other.SuggestedProfile != "gooo.entityfields.go-projection.v6" ||
+	if other.Status != "AMBIGUOUS" || other.SuggestedProfile != "gooo.entityfields.go-projection.v5" ||
 		other.ActivitySource != digest([]byte(changed)) {
 		t.Fatalf("Gooo source did not own the advisory choice: %+v", other)
+	}
+	wrongCount := strings.Replace(string(contractSource),
+		"if v5 { matches = matches + 1 }", "if v5 { matches = matches + 2 }", 1)
+	if wrongCount == string(contractSource) {
+		t.Fatal("Gooo intervention did not change the match count")
+	}
+	invalid := inspectProfileHintSource(context.Background(), repository, path, []byte(wrongCount))
+	if invalid.Status != "UNKNOWN" || invalid.Reason != "HINT_CONTRACT_MISMATCH" {
+		t.Fatalf("mismatched Gooo count was trusted: %+v", invalid)
+	}
+}
+
+func TestProfileHintUsesExplicitCapabilityWithoutChangingCaseIntent(t *testing.T) {
+	repository := osProjectFS()
+	for _, row := range []struct {
+		path, requirement, want, status string
+		matches                         int
+	}{
+		{"examples/billing/main.gooo", "entity-string", "gooo.entityfields.go-projection.v1", "MINIMAL_HINT", 6},
+		{"examples/billing/main.gooo", "entity-boolean", "gooo.entityfields.go-projection.v2", "MINIMAL_HINT", 5},
+		{"examples/billing/main.gooo", "entity-integer", "gooo.entityfields.go-projection.v3", "MINIMAL_HINT", 4},
+		{"examples/billing/main.gooo", "entity-optional", "gooo.entityfields.go-projection.v4", "MINIMAL_HINT", 3},
+		{"examples/collection-filter/main.gooo", "entity-many", "gooo.entityfields.go-projection.v5", "MINIMAL_HINT", 2},
+		{"examples/billing/main.gooo", "entity-text-bound", "gooo.entityfields.go-projection.v6", "HINT", 1},
+		{"examples/billing/main.gooo", "ordinary", "ordinary", "HINT", 1},
+		{"examples/billing/main.gooo", "text-fields", "text-fields", "HINT", 1},
+		{"examples/billing/main.gooo", "implicit-ports", "implicit-ports", "HINT", 1},
+		{"examples/collection-filter/main.gooo", "ordered-collections", "ordered-collections", "HINT", 1},
+	} {
+		t.Run(row.requirement, func(t *testing.T) {
+			report := InspectProfileHintForCapability(context.Background(), repository, row.path, row.requirement)
+			if report.RequiredCapability != row.requirement || report.Status != row.status ||
+				report.SuggestedProfile != row.want || report.MatchCount != row.matches ||
+				report.MatchCount != len(report.CompatibleProfiles) || len(report.Profiles) != len(hintProfiles) ||
+				report.Authority != "ADVISORY_ONLY" || report.ActivitySource != digest(contractSource) {
+				t.Fatalf("explicit capability did not constrain the Gooo hint: %+v", report)
+			}
+		})
+	}
+	changed := strings.Replace(string(contractSource), "} else if v5 {",
+		"} else if false && v5 {", 1)
+	if changed == string(contractSource) {
+		t.Fatal("Gooo minimum choice was not found")
+	}
+	invalid := inspectProfileHintSourceForCapability(context.Background(), repository,
+		"examples/collection-filter/main.gooo", "entity-many", []byte(changed))
+	if invalid.Status != "UNKNOWN" || invalid.Reason != "HINT_CONTRACT_MISMATCH" {
+		t.Fatalf("nonminimum Gooo choice was trusted: %+v", invalid)
 	}
 }
 
 func TestProfileHintBadSourceIsAdvisory(t *testing.T) {
 	repository := fstest.MapFS{"bad.gooo": &fstest.MapFile{Data: []byte("package broken\nentity")}}
 	bad := InspectProfileHint(context.Background(), repository, "bad.gooo")
-	if bad.Status != "NO_MATCH" || bad.SuggestedProfile != "" || len(bad.Profiles) != len(hintProfiles) {
+	if bad.Status != "NO_MATCH" || bad.SuggestedProfile != "" ||
+		bad.MatchCount != 0 || len(bad.CompatibleProfiles) != 0 ||
+		len(bad.Profiles) != len(hintProfiles) {
 		t.Fatalf("invalid source received a profile: %+v", bad)
 	}
 	missing := InspectProfileHint(context.Background(), repository, "missing.gooo")
@@ -54,6 +111,17 @@ func TestProfileHintBadSourceIsAdvisory(t *testing.T) {
 	invalidPath := InspectProfileHint(context.Background(), repository, "../bad.gooo")
 	if invalidPath.Status != "UNKNOWN" || invalidPath.Reason != "INVALID_SOURCE_PATH" {
 		t.Fatalf("invalid path should remain advisory unknown: %+v", invalidPath)
+	}
+	invalidRequirement := InspectProfileHintForCapability(context.Background(), repository, "bad.gooo", "unknown")
+	if invalidRequirement.Status != "UNKNOWN" || invalidRequirement.Reason != "INVALID_REQUIRED_CAPABILITY" ||
+		len(invalidRequirement.Profiles) != 0 {
+		t.Fatalf("unknown capability received an inference: %+v", invalidRequirement)
+	}
+	unsupported := InspectProfileHintForCapability(context.Background(), osProjectFS(),
+		"examples/collection-filter/main.gooo", "ordinary")
+	if unsupported.Status != "NO_MATCH" || unsupported.MatchCount != 0 ||
+		unsupported.SuggestedProfile != "" || len(unsupported.Profiles) != len(hintProfiles) {
+		t.Fatalf("unsupported requested route received a hint: %+v", unsupported)
 	}
 }
 
