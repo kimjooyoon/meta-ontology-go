@@ -107,9 +107,64 @@ go run ./cmd/syntax-registration-candidate -root PROJECT -profile-hint examples/
 ~~~
 
 This read-only mode pins the source bytes, replays them under the ordinary,
-implicit-port and exact V1–V6 profiles, and reports every observed decision.
-The Gooo `SuggestRegistrationProfile` activity chooses one passing profile in
-that order. The result includes the source digest and activity/projection
+text-fields, implicit-port, ordered-collections and exact V1–V6 profiles, and
+reports every observed decision. These are all ten profiles accepted by the
+compact `CaseIntent.profile` selector. For example, a source with ordered
+fields can pass both `ordered-collections` and exact V5/V6, so parsing alone
+does not identify its intended registration contract.
+
+An agent can add an explicit capability requirement without making a draft:
+
+~~~sh
+go run ./cmd/syntax-registration-candidate -root PROJECT \
+  -profile-hint examples/my-new-capability/main.gooo \
+  -require-capability entity-many
+~~~
+
+The fixed Gooo activity combines that request with the ten pinned replay
+decisions and chooses the least exact entity-fields profile that passes the
+source and satisfies the requested capability. The host independently checks
+the requirement against the syntax kernel's validated profile capabilities.
+The accepted requirements are `ordinary`, `text-fields`, `implicit-ports`,
+`ordered-collections`, `entity-string`, `entity-boolean`, `entity-integer`,
+`entity-optional`, `entity-many`, and `entity-text-bound`. The first four
+request an exact route; the entity requirements ask for a capability floor
+within V1–V6. An unknown requirement reports `UNKNOWN`. For several passing
+profiles under an explicit entity requirement, `MINIMAL_HINT` shows the first
+passing version and the complete `compatible_profiles` set. It is still only
+a proposed choice: a later `CaseIntent.profile` must state the exact profile.
+Passing a profile means the source is compatible with it. The caller's
+requirement records the intended capability; replay does not establish that
+the example actually exercises that capability.
+
+`source_exercise` reports that second question separately for an entity
+capability request. The syntax observer reads the same pinned source bytes and
+counts matching authored fields. `EXERCISED` includes one field's stable entity
+and field IDs and a half-open `[start_byte,end_byte)` span in the original UTF-8
+bytes. `NOT_EXERCISED` means the source parsed but had no matching field and
+no unresolved type spelling that could hide one. `UNKNOWN` includes unreadable
+source, syntax inspection failure, or a type alias whose target this observer
+cannot resolve; its `reason` names the cause. A request
+for a parser route reports `ROUTE_ONLY`; an omitted requirement reports
+`NOT_REQUESTED`. The Gooo `SuggestRegistrationProfile` activity decides this
+status from the observation, and the host checks it before returning the hint.
+For `entity-string`, `entity-boolean`, and `entity-integer`, the observer
+recognizes the authored builtin spelling, its `gooo:` lookup, or its stable
+`urn:gooo:type:` ID. Arbitrary nominal aliases remain unknown for a negative
+type observation. The status
+does not change compatible profiles, select `CaseIntent.profile`, or admit a
+registration. It is a source-feature observation, not semantic validity or a
+claim that the feature executed.
+
+The Gooo `SuggestRegistrationProfile` activity reports the first passing
+profile in that order and counts all passing profiles for the request.
+`compatible_profiles` lists those profiles, while `profiles` retains every
+raw replay result. A single match has status `HINT`; several matches without
+a requested capability have status `AMBIGUOUS`. The first passing profile is only a source-compatible starting
+point: the source cannot reveal which wider capability contract the caller
+intends. When the result is ambiguous, choose the exact profile from the
+capabilities the new case is meant to register, not from the first passing
+entry alone. The result includes the source digest and activity/projection
 origins. Its `ADVISORY_ONLY` authority never fills in `CaseIntent.profile` or
 changes registration: the agent must still supply that field, and generation
 independently replays the selected profile. An unreadable source reports

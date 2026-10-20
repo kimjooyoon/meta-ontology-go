@@ -25,7 +25,7 @@ func runLSP(args []string, input io.Reader, stdout, stderr io.Writer) int {
 }
 
 func runLSPContext(ctx context.Context, input io.Reader, stdout, stderr io.Writer) int {
-	if err := lsp.NewServer().ServeContext(ctx, input, stdout); err != nil {
+	if err := lsp.NewServerWithVersion(goooVersion).ServeContext(ctx, input, stdout); err != nil {
 		if !errors.Is(err, context.Canceled) {
 			fmt.Fprintf(stderr, "gooo: lsp: %v\n", err)
 		}
