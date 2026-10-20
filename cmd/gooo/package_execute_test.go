@@ -53,6 +53,10 @@ bind core.Normalize.result -> Main.input
 		receipt.Result.Program.Entry.Activity != "Main" {
 		t.Fatalf("workspace execution receipt is incomplete: %#v", receipt)
 	}
+	var human bytes.Buffer
+	if code := writePackageExecution(receipt, nil, false, "", &human, &stderr); code != exitOK || bytes.Contains(human.Bytes(), []byte("local origin:")) {
+		t.Fatalf("program without local sites gained an origin claim: code=%d stdout=%q", code, human.String())
+	}
 }
 
 func TestRunPackageExecuteLoadsActivityBodyPlans(t *testing.T) {
