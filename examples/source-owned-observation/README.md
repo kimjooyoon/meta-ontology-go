@@ -26,10 +26,10 @@ the declaration does not establish equivalence on every integer.
 ## Run from a compiler checkout containing this feature
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-codegen --json \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo body-codegen --json \
   --activity Fee examples/source-owned-observation/main.gooo.fixture
 
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-compose \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo body-compose \
   --source examples/source-owned-observation/main.gooo.fixture --entry Main \
   --cases examples/source-owned-observation/evaluation.json \
   --out /tmp/gooo-source-owned-observation
@@ -67,7 +67,7 @@ answered `Fee(17) = -6`, and Main returns Fee directly. Both requirements cannot
 hold for either declared candidate.
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-construct \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo body-construct \
   --source examples/source-owned-observation/main.gooo.fixture --entry Main \
   --construction-cases examples/source-owned-observation/caller-conflict.json \
   --cases examples/source-owned-observation/evaluation.json --attempts 2 \

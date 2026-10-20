@@ -8,7 +8,7 @@ import (
 
 func TestCompilationInputBudgetIsStageOwned110319(t *testing.T) {
 	root := t.TempDir()
-	writeImporterFixture(t, root, "go.mod", "module budget110319\n\ngo 1.27.2\n")
+	writeImporterFixture(t, root, "go.mod", "module budget110319\n\ngo 1.27.3\n")
 	writeImporterFixture(t, root, "dep/value.go", "package dep\nconst Value=57\n")
 	directory := filepath.Join(root, "dep")
 	source, err := os.ReadFile(filepath.Join(directory, "value.go"))

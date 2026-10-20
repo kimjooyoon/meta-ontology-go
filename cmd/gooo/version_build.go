@@ -49,7 +49,7 @@ func versionBuildMetadata(info *debug.BuildInfo, runtimeVersion string) versionB
 	result := versionBuildInfo{Schema: "gooo/build-identity/v1", Language: "gooo", Version: goooVersion,
 		Status: versionStatus, GoVersion: runtimeVersion, ModuleVersion: "unobserved",
 		CompilerSourceSHA: "UNBOUND_LOCAL_SOURCE", SourceStatus: "UNOBSERVED_VCS",
-		VCSRevision: "unobserved", VCSModified: "unobserved", NativeGoRequired: "go1.27.2",
+		VCSRevision: "unobserved", VCSModified: "unobserved", NativeGoRequired: "go1.27.3",
 		SDK:            versionSDKInfo{ModulePath: decisionRuntimeModule, Version: "unobserved"},
 		PureBodyLimits: bodycodegen.CurrentProfileLimits(), PackageReceiptTransport: currentPackageReceiptTransport()}
 	if info == nil {
@@ -144,7 +144,7 @@ func runBuildVersion(asJSON bool, stdout io.Writer) int {
 			return exitFailure
 		}
 	}
-	if _, err := fmt.Fprintln(stdout, "native execution: Go1.27.2 selected automatically; --go-bin chooses an explicit executable"); err != nil {
+	if _, err := fmt.Fprintln(stdout, "native execution: Go1.27.3 selected automatically; --go-bin chooses an explicit executable"); err != nil {
 		return exitFailure
 	}
 	return exitOK

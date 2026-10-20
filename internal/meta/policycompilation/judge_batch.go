@@ -35,7 +35,7 @@ func ExecuteGeneratedBatch(ctx context.Context, judgeSource []byte, inputs []Cas
 	if runtime.GOOS == "windows" {
 		binaryPath += ".exe"
 	}
-	environment := append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.2")
+	environment := append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.3")
 	build := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", binaryPath, sourcePath)
 	build.Dir, build.Env = work, environment
 	if output, err := build.CombinedOutput(); err != nil {

@@ -69,7 +69,7 @@ func packageInputReceiptFixture(t *testing.T) Receipt {
 	}
 	binding.TestCommandDigest = TestCommandDigest(binding.TestCommand, binding.TestContractDigest)
 	binding.ToolInputs = ExecutionToolInputs{Profile: ExecutionToolProfile, Path: "/fixture/go",
-		ExecutableDigest: digest, Version: "go1.27.2", Platform: "fixture/host", EnvironmentDigest: digest}
+		ExecutableDigest: digest, Version: "go1.27.3", Platform: "fixture/host", EnvironmentDigest: digest}
 	binding.ToolchainVersion = binding.ToolInputs.Version
 	binding.ToolchainDigest = binding.ToolInputs.Digest()
 	receipt := Receipt{

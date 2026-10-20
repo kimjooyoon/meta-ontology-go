@@ -10,7 +10,7 @@ gooo package execute --json \
   examples/workspace-input-observations/gooo.workspace.json
 ```
 
-Pass `--go /path/to/go1.27.2` when the Go executable on PATH differs from the
+Pass `--go /path/to/go1.27.3` when the Go executable on PATH differs from the
 required toolchain. This example runs locally with deterministic construction.
 
 `gooo package inspect --json <workspace.json>` reports `transport_capacity`

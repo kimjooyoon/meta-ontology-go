@@ -16,9 +16,9 @@ func TestInspectResponseCarriesDirectlyDecodablePinnedRequest(t *testing.T) {
 		BaseVersion: 99, PromoteMetaSource: true,
 		SnapshotDigest: "stale", SourceDigest: "stale", Toolchain: "stale",
 	}
-	identity := syntaxregistration.ExecutionIdentity{GoVersion: "go1.27.2", GOOS: "linux", GOARCH: "amd64",
+	identity := syntaxregistration.ExecutionIdentity{GoVersion: "go1.27.3", GOOS: "linux", GOARCH: "amd64",
 		ExecutableDigest: "sha256:generator", GoCommandDigest: "sha256:driver", CompilerDigest: "sha256:compiler"}
-	response := newInspectionResponse(request, "sha256:snapshot", "sha256:source", "go1.27.2", identity)
+	response := newInspectionResponse(request, "sha256:snapshot", "sha256:source", "go1.27.3", identity)
 	raw, err := json.Marshal(response)
 	if err != nil {
 		t.Fatal(err)

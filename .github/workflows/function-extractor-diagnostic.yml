@@ -57,11 +57,11 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
           cache: false
       - name: Validate request binding and every diagnostic shell body
         env:
-          GOTOOLCHAIN: go1.27.2
+          GOTOOLCHAIN: go1.27.3
           GOWORK: 'off'
         run: go test ./scripts/action-runtime -run '^TestDiagnosticRequestOwnsHistoricalSubject$' -count=1
   diagnose:
@@ -95,7 +95,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
           cache: false
 
       - name: Materialize exact logical workspace

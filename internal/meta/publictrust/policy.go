@@ -27,7 +27,7 @@ const (
 	ExpectedMetaRows         = 16
 	ExpectedActiveBadges     = 11
 	ExpectedCategoryCount    = 5
-	ExpectedGoVersion        = "1.27.2"
+	ExpectedGoVersion        = "1.27.3"
 	ExpectedRepositoryWrites = 0
 	ExpectedLocalTestRuns    = 0
 )

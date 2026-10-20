@@ -9,10 +9,10 @@ Use the public Gooo 0.6.32 compiler containing the one-hole grammar. The
 [0.6.32 guide](../../docs/releases/0.6.32-dev.md) identifies the actual source,
 platform checks and published files. The earlier 0.6.31 compiler predates this grammar.
 
-From the compiler checkout with Go 1.27.2:
+From the compiler checkout with Go 1.27.3:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o ./gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o ./gooo ./cmd/gooo
 ./gooo package execute --json \
   --cases examples/single-condition-byte-search/cases.json \
   examples/single-condition-byte-search/gooo.workspace.json > byte-execution.json

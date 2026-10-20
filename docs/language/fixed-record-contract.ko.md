@@ -54,7 +54,7 @@ go run ./cmd/gooo body-codegen --json --activity Decide examples/fixed-record-co
 
 ## 생성한 프로그램에서도 대조하기
 
-Go 1.27.2를 준비하고 결과를 저장할 새 경로를 지정합니다.
+Go 1.27.3를 준비하고 결과를 저장할 새 경로를 지정합니다.
 
 ```sh
 go run ./cmd/gooo body-compose --source examples/fixed-record-contract/main.gooo --entry Decide --cases examples/fixed-record-contract/evaluation.json --out /tmp/gooo-fixed-record-contract

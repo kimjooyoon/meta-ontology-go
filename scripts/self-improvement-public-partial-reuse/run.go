@@ -50,8 +50,8 @@ func run(input runInput) error {
 	if err != nil {
 		return err
 	}
-	if runtime.Version() != "go1.27.2" {
-		return fmt.Errorf("partial reuse requires Go 1.27.2, got %s", runtime.Version())
+	if runtime.Version() != "go1.27.3" {
+		return fmt.Errorf("partial reuse requires Go 1.27.3, got %s", runtime.Version())
 	}
 	compiler, err := publicpartialreuse.CompilerDigest(input.RepoRoot)
 	if err != nil {
@@ -467,7 +467,7 @@ func runGenerate(gooo, source, out string) error {
 }
 
 func executionPackageBytes(program, contract []byte) [3][]byte {
-	return [3][]byte{contract, []byte("module partial-reuse-example\n\ngo 1.27.2\n"), program}
+	return [3][]byte{contract, []byte("module partial-reuse-example\n\ngo 1.27.3\n"), program}
 }
 
 func preparePackage(directory string, program, testContract []byte) error {

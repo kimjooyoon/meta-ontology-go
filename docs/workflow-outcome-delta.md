@@ -3,10 +3,10 @@
 The published [0.6.27 development release](releases/0.6.27-dev.md) adds `gooo body-outcomes-delta`. It reads saved results from
 `body-construct` or `body-compose` and shows what changed for each caller input.
 The public binary supports text and JSON output. The current development source
-also supports Markdown; build it with Go1.27.2 for all commands below.
+also supports Markdown; build it with Go1.27.3 for all commands below.
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o /tmp/gooo-outcomes ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o /tmp/gooo-outcomes ./cmd/gooo
 /tmp/gooo-outcomes body-outcomes-delta --before before.json --after after.json
 /tmp/gooo-outcomes body-outcomes-delta --before before.json --after after.json --json
 ```

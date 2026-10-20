@@ -10,7 +10,7 @@ The example's Gooo activity defines the package-label rule: 1–64 ASCII bytes,
 starting with a lowercase letter, followed by lowercase letters, digits or `-`.
 Its result stays in input order. Duplicate labels retain separate positions.
 
-From the repository root, with Go 1.27.2:
+From the repository root, with Go 1.27.3:
 
 ```sh
 go run ./cmd/gooo package execute --json \

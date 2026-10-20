@@ -12,11 +12,11 @@ import (
 func TestExecutionToolInputsRetainCanonicalIdentity(t *testing.T) {
 	digest := strings.Repeat("a", 64)
 	observed := toolchaincli.GeneratedTestGoInputs{Profile: ExecutionToolProfile, Path: "/sdk/bin/go",
-		ExecutableDigest: digest, Version: "go1.27.2", Platform: "darwin/arm64", EnvironmentDigest: digest}
+		ExecutableDigest: digest, Version: "go1.27.3", Platform: "darwin/arm64", EnvironmentDigest: digest}
 	inputs := ExecutionToolInputs(observed)
 	// Independently encoded from the existing named struct, sorted JSON field
 	// names and typed string values. JSON equality alone misses a type alias.
-	const want = "a7d6a59e4e07e3b7e04b01ccea8686b09d188a100c863860bb59861c4d26ad87"
+	const want = "65ddcc75acc0d20ac371de65bc63e64f5b3df56cd96bf73eb4f1b65bb1f49333"
 	if inputs.Digest() != want || inputs.Validate() != nil {
 		t.Fatal("shared observation changed the domain's canonical identity", inputs.Digest())
 	}

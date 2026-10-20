@@ -30,7 +30,7 @@
 관찰은 포함하지 않는다.
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo package execute --json \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo package execute --json \
   --cases examples/condition-origins/cases.json \
   examples/condition-origins/workspace.json
 ```

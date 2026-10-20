@@ -58,7 +58,7 @@ func revisionBindings(t *testing.T, input EvaluationInput, policy Policy, progra
 	bindings := map[string]Binding{}
 	for _, partition := range policy.Partitions {
 		old := input.Bindings[partition.ID]
-		binding, err := BuildBinding(policy, partition, program, revisionManifest(policy, program), []byte("fixed test contract"), []byte("module fixture\n\ngo 1.27.2\n"),
+		binding, err := BuildBinding(policy, partition, program, revisionManifest(policy, program), []byte("fixed test contract"), []byte("module fixture\n\ngo 1.27.3\n"),
 			old.CompilerDigest, old.OrchestrationReportDigest, old.OrchestrationOperation, old.ToolInputs)
 		if err != nil {
 			t.Fatal(err)
@@ -113,7 +113,7 @@ func TestPartitionBindingRetainsSharedInputs(t *testing.T) {
 	partition := policy.Partitions[0]
 	old := before[partition.ID]
 	after, err := BuildBinding(policy, partition, program, revisionManifest(policy, program), []byte("fixed test contract"),
-		[]byte("module changed\n\ngo 1.27.2\n"), old.CompilerDigest, old.OrchestrationReportDigest, old.OrchestrationOperation, old.ToolInputs)
+		[]byte("module changed\n\ngo 1.27.3\n"), old.CompilerDigest, old.OrchestrationReportDigest, old.OrchestrationOperation, old.ToolInputs)
 	if err != nil || old == after || old.ModuleDigest == after.ModuleDigest {
 		t.Fatal("module change retained binding", err)
 	}

@@ -28,7 +28,7 @@ the compiler from a checkout containing this fix; the
 [release guide](../../docs/releases/0.6.30-dev.md) also covers the published version:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o ./gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o ./gooo ./cmd/gooo
 ./gooo body-construct --source examples/caller-search-checkpoint/main.gooo.fixture \
   --entry Main --attempts 8 \
   --construction-cases examples/caller-search-checkpoint/construction-cases.json \

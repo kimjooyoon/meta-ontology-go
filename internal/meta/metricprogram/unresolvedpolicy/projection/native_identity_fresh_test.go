@@ -58,7 +58,7 @@ func renamedDisposition1866(source []byte, flags bool) []byte {
 func runNativeDisposition1866(t *testing.T, source, target, projection, harness []byte) {
 	t.Helper()
 	directory := t.TempDir()
-	for path, raw := range map[string][]byte{"go.mod": []byte("module native1866\ngo 1.27.2\n"),
+	for path, raw := range map[string][]byte{"go.mod": []byte("module native1866\ngo 1.27.3\n"),
 		"target.go": target, "projection.go": projection, "native_test.go": harness} {
 		if err := os.WriteFile(filepath.Join(directory, path), raw, 0600); err != nil {
 			t.Fatal(err)

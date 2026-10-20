@@ -16,7 +16,7 @@ func callbackDependencyFixture(t *testing.T) (callbackListedPackage, callbackLis
 	t.Helper()
 	root := t.TempDir()
 	for name, raw := range map[string]string{
-		"go.mod":   "module example.invalid/dependency\n\ngo 1.27.2\n",
+		"go.mod":   "module example.invalid/dependency\n\ngo 1.27.3\n",
 		"value.go": "package dependency\nconst Value = 7\n",
 		"other.go": "package dependency\nconst Other = 8\n",
 		"data.txt": "embedded-input",
@@ -183,9 +183,9 @@ func TestCallbackDependencySelectionNativeCI(t *testing.T) {
 	}
 	root := t.TempDir()
 	files := map[string]string{
-		"go.mod":                         "module example.invalid/subject\n\ngo 1.27.2\nrequire example.invalid/dependency v1.2.3\nreplace example.invalid/dependency => ./dependency\n",
+		"go.mod":                         "module example.invalid/subject\n\ngo 1.27.3\nrequire example.invalid/dependency v1.2.3\nreplace example.invalid/dependency => ./dependency\n",
 		"subject_test.go":                "package subject\nimport (\"testing\"; \"example.invalid/dependency\")\nfunc TestRequired(t *testing.T) { if dependency.Value != 7 { t.Fatal(dependency.Value) } }\n",
-		"dependency/go.mod":              "module example.invalid/dependency\n\ngo 1.27.2\n",
+		"dependency/go.mod":              "module example.invalid/dependency\n\ngo 1.27.3\n",
 		"dependency/value.go":            "package dependency\nimport (\"example.invalid/dependency/transitive\"; _ \"embed\")\n//go:embed data.txt\nvar Data string\nconst Value = transitive.Value\n",
 		"dependency/data.txt":            "native-embedded-input",
 		"dependency/transitive/value.go": "package transitive\nconst Value = 7\n",

@@ -22,7 +22,7 @@ func TestActualSharedWorkShell124073(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write("go.mod", "module work124073.example/program\n\ngo 1.27.2\n")
+	write("go.mod", "module work124073.example/program\n\ngo 1.27.3\n")
 	write("source.go", "package work124073\nconst Value=191\n")
 	write("intent.txt", "source-owned work124073\n")
 	git := func(args ...string) string {
