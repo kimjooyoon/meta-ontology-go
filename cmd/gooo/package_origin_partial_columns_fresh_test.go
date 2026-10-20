@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -33,12 +34,21 @@ activity Build(Integer) -> Integer id "urn:partialcols12317:build" computes "let
 	}
 	saveColumnsOutput12161(t, "partial12317-producer.json", producer.Bytes())
 	var p packageExecutionReceipt
-	if err := json.Unmarshal(producer.Bytes(), &p); err != nil || p.Result == nil || p.Result.Runtime.FinitePassed != 1 {
+	if err := json.Unmarshal(producer.Bytes(), &p); err != nil || p.Decision != "PASS" || p.Result == nil || p.Result.Runtime.FinitePassed != 1 {
 		t.Fatal("new helper-loop producer", err)
 	}
 	summary := p.Result.Runtime.LocalObservation
 	if summary == nil || summary.Status != "PARTIAL" || summary.RecordedWrites != 4096 || summary.WritesDropped == 0 {
 		t.Fatal("actual recording did not exceed its bound", summary)
+	}
+	var human bytes.Buffer
+	if code := writePackageExecution(p, nil, false, "", &human, &diagnostics); code != exitOK {
+		t.Fatal("text execution summary", code, diagnostics.String())
+	}
+	for _, want := range []string{"finite=1/1", "local origin: PARTIAL", "recorded_writes=4096", "writes_dropped="} {
+		if !strings.Contains(human.String(), want) {
+			t.Fatalf("text summary %q omitted %q", human.String(), want)
+		}
 	}
 	receipt := filepath.Join(root, "saved.json")
 	if err := os.WriteFile(receipt, producer.Bytes(), 0600); err != nil {

@@ -247,6 +247,12 @@ func writePackageExecution(receipt packageExecutionReceipt, cause error, jsonMod
 		fmt.Fprintf(stdout, "executed workspace entry: %s.%s activities=%d finite=%d/%d replayed=%t digest=%s\n",
 			result.Program.Entry.PackagePath, result.Program.Entry.Activity, len(result.Program.Activities),
 			result.Runtime.FinitePassed, result.Runtime.FiniteTotal, result.Runtime.RuntimeReplayed, result.Runtime.CompositionSHA256)
+		if local := result.Runtime.LocalObservation; local != nil {
+			fmt.Fprintf(stdout, "local origin: %s recorded_writes=%d writes_dropped=%d recorded_uses=%d unresolved_uses=%d\n",
+				local.Status, local.RecordedWrites, local.WritesDropped, local.RecordedUses, local.Unresolved)
+		} else if len(result.Runtime.LocalSites) > 0 {
+			fmt.Fprintln(stdout, "local origin: UNOBSERVED")
+		}
 	}
 	if cause != nil {
 		return exitFailure
