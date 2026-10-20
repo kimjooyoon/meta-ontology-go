@@ -233,6 +233,33 @@
           "first_missing_after": ""
         }
       }
+    },
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_ids": ["mcp://server-a/alpha"],
+          "before_ids": ["mcp://server-a/alpha"],
+          "after_ids": ["mcp://server-b/alpha"]
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "REGRESSED",
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_count": 1,
+          "before_count": 1,
+          "after_count": 1,
+          "all_before": true,
+          "all_after": false,
+          "first_missing_before": "",
+          "first_missing_after": "mcp://server-a/alpha"
+        }
+      }
     }
   ]
 }
