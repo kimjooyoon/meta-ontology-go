@@ -8,7 +8,7 @@ activity KeepNonempty(Text) -> Boolean id "urn:collection-filter:keep-nonempty" 
 activity Select(Labels) -> Labels id "urn:collection-filter:select" computes `return Labels{values: filter_values(input.values, KeepNonempty)}`
 ```
 
-Run the three named cases from the repository root with Go 1.27.2:
+Run the three named cases from the repository root with Go 1.27.3:
 
 ```sh
 go run ./cmd/gooo package execute --json \

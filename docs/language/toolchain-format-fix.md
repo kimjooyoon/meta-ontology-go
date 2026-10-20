@@ -120,12 +120,12 @@ separately. A retained deadline cause still makes capture incomplete. These
 fields describe what the reader observed and requested, without inferring which
 event won at the operating-system boundary.
 
-The [Go process API](https://pkg.go.dev/os/exec@go1.27.2#Cmd) distinguishes process
+The [Go process API](https://pkg.go.dev/os/exec@go1.27.3#Cmd) distinguishes process
 termination from output-pipe completion. This change does not establish that
 all descendants terminated and does not bound before/after filesystem snapshots.
 
 The retained prefix is byte-preserving at the Go capture boundary, including a
 UTF-8 character split at the size limit. Existing string-based report JSON can
-replace invalid UTF-8 during encoding; see the [Go JSON contract](https://pkg.go.dev/encoding/json@go1.27.2#Marshal).
+replace invalid UTF-8 during encoding; see the [Go JSON contract](https://pkg.go.dev/encoding/json@go1.27.3#Marshal).
 A later versioned report contract must separate raw bytes and their length/digest
 from a readable text projection before claiming byte-exact persisted output.

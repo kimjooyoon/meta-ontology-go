@@ -28,7 +28,7 @@ try {
   assert.throws(() => verifyOrigin(root, {...origin, tools: []}, context), /tools missing/);
   assert.throws(() => verifyOrigin(root, {...origin, tools: origin.tools.slice().reverse()}, context), /member mismatch/);
   const wrongBuild = structuredClone(origin);
-  wrongBuild.tools[0].build_info = wrongBuild.tools[0].build_info.replace('go1.27.2', 'go1.27.1');
+  wrongBuild.tools[0].build_info = wrongBuild.tools[0].build_info.replace('go1.27.3', 'go1.27.1');
   assert.throws(() => verifyOrigin(root, wrongBuild, context), /build info mismatch/);
   fs.appendFileSync(path.join(root, 'gooo'), 'changed');
   assert.throws(() => verifyOrigin(root, origin, context), /bytes mismatch/);

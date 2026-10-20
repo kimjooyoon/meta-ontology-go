@@ -92,7 +92,7 @@ const modelsFinishHelp = `Included record-field example:
 Model metadata selects the input format. Inspection makes zero predictions and
 candidate tests. READY_FOR_RANKING means that input is supported; source and
 caller case results measure the constructed program. Saved replay makes zero
-new predictions. Native execution requires Go1.27.2 on the host.
+new predictions. Native execution requires Go1.27.3 on the host.
 
 See docs/declared-contract-model.md and docs/record-model-preflight.md.
 `

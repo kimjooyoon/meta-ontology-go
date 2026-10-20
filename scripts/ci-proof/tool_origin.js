@@ -12,7 +12,7 @@ function currentContext(env = process.env) {
   const context = {
     repository: env.GITHUB_REPOSITORY, source_head: env.GOOO_CI_SOURCE_HEAD,
     run_id: env.GITHUB_RUN_ID, run_attempt: env.GITHUB_RUN_ATTEMPT,
-    platform: process.platform, arch: process.arch, toolchain: 'go1.27.2',
+    platform: process.platform, arch: process.arch, toolchain: 'go1.27.3',
   };
   if (!context.repository || !/^[0-9a-f]{40}$/.test(context.source_head || '') ||
       !/^[1-9][0-9]*$/.test(context.run_id || '') || !/^[1-9][0-9]*$/.test(context.run_attempt || '')) {

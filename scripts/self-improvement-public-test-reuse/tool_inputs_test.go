@@ -28,13 +28,13 @@ func testGoCommand(t *testing.T) toolchaincli.GeneratedTestGoCommand {
 
 func TestSelectedGoCommandUsesObservedExecutableAndEnvironment(t *testing.T) {
 	tool := testGoCommand(t)
-	if !filepath.IsAbs(tool.Inputs.Path) || tool.Inputs.Version != "go1.27.2" {
+	if !filepath.IsAbs(tool.Inputs.Path) || tool.Inputs.Version != "go1.27.3" {
 		t.Fatal("selected executable identity missing", tool.Inputs)
 	}
 	command := exec.Command(tool.Inputs.Path, "version")
 	command.Env = tool.Env
 	output, err := command.Output()
-	if err != nil || strings.TrimSpace(string(output)) != "go version go1.27.2 "+runtime.GOOS+"/"+runtime.GOARCH {
+	if err != nil || strings.TrimSpace(string(output)) != "go version go1.27.3 "+runtime.GOOS+"/"+runtime.GOARCH {
 		t.Fatal("actual selected Go differs from recorded build information", err, string(output))
 	}
 	if err := tool.VerifyBytes(); err != nil {

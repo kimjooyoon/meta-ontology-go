@@ -9,7 +9,7 @@ import (
 
 func TestCompilationCaptureEmbeddedOrigin144617(t *testing.T) {
 	root := t.TempDir()
-	writeImporterFixture(t, root, "go.mod", "module embed144617.example/scope\n\ngo 1.27.2\n")
+	writeImporterFixture(t, root, "go.mod", "module embed144617.example/scope\n\ngo 1.27.3\n")
 	writeImporterFixture(t, root, "entry.go", "package capture144617\nimport _ \"embed\"\n//go:embed assets/note.txt\nvar Payload string\nfunc Value() string{return Payload}\n")
 	writeImporterFixture(t, root, "assets/note.txt", "first source144617\n")
 	imports := newModuleImporter(root)

@@ -8,7 +8,7 @@ missing ID for each side. It also carries the caller's three origin identifiers
 into the result. The classifier has no model call and does not read the host's
 configuration itself.
 
-Run the eight named cases from the repository root with Go 1.27.2:
+Run the eight named cases from the repository root with Go 1.27.3:
 
 ```sh
 go run ./cmd/gooo package execute --json \

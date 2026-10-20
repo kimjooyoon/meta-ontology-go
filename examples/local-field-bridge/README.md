@@ -16,7 +16,7 @@ let assembled=State{score:moved_score,live:moved_live,tag:moved_tag}
 
 ## 새 입력으로 실행
 
-저장소 루트에서 Go 1.27.2를 사용합니다.
+저장소 루트에서 Go 1.27.3를 사용합니다.
 
 ```sh
 go run ./cmd/gooo package execute --json \

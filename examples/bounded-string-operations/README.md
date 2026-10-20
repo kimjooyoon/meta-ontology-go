@@ -10,7 +10,7 @@ compares bytes in a separate bounded helper; both callers have their own counted
 loops. `RuneCount` counts UTF-8 leading bytes within the valid Text contract.
 
 From this directory, with public Gooo 0.6.32 or source containing counted-loop and
-Text-index support, and Go 1.27.2 available:
+Text-index support, and Go 1.27.3 available:
 
 ```sh
 gooo package execute --json --cases cases.json gooo.workspace.json > execution.json

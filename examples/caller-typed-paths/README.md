@@ -1,12 +1,12 @@
 # Let a caller reconsider a locally complete branch
 
 Development source after the public 0.6.23 release adds typed-path bodies to
-`body-construct`. Build that source with Go 1.27.2; the existing 0.6.23 release
+`body-construct`. Build that source with Go 1.27.3; the existing 0.6.23 release
 continues to support its recorded record/search/fill construction contracts.
 Build a separately named development binary from the checkout:
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o /tmp/gooo-typed-dev ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o /tmp/gooo-typed-dev ./cmd/gooo
 ```
 
 `Choose` has two permitted branch layouts. Both return zero for its local

@@ -68,7 +68,7 @@ func TestNativeFieldHistory13421(t *testing.T) {
 	}
 	observation["driver"] = driver
 	root := t.TempDir()
-	for name, raw := range map[string][]byte{"go.mod": []byte("module example/field13421\n\ngo 1.27.2\n"), "projection.go": []byte(projection), "driver.go": []byte(driver)} {
+	for name, raw := range map[string][]byte{"go.mod": []byte("module example/field13421\n\ngo 1.27.3\n"), "projection.go": []byte(projection), "driver.go": []byte(driver)} {
 		if err := os.WriteFile(filepath.Join(root, name), raw, 0600); err != nil {
 			t.Fatal(err)
 		}

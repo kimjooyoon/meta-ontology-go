@@ -3,6 +3,7 @@ package verify
 import (
 	"encoding/json"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -37,8 +38,9 @@ func TestCommandEvolutionBindsBothChangedWorkflowJobs(t *testing.T) {
 		if !found || len(digests) == 0 {
 			t.Fatal("changed job has no original source population", job)
 		}
-		body, _, _ = strings.Cut(body, "\n  failure-report:\n")
-		body, _, _ = strings.Cut(body, "\n  proof:\n")
+		if end := regexp.MustCompile(`(?m)^  [a-z][a-z0-9_-]*:\n`).FindStringIndex(body); end != nil {
+			body = body[:end[0]]
+		}
 		if err := bindCommandEvolution(workCommands124073(body), digests, rows); err != nil {
 			t.Fatal("changed source lost command ancestry", job, err)
 		}

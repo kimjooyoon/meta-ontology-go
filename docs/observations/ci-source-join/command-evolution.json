@@ -5,6 +5,38 @@
   "changed_workflow_source_head": "16f8f7655c0381dd2ddc59eecd0aace401b9f878",
   "workflow_sha256": "b5e2b6350e2cc5cb9e8f1c90dbf57be5e6b7e13db495871fc3dbc33f1b8a07a0",
   "jobs": {
+    "format": [
+      {
+        "original_index": 0,
+        "before_sha256": "1af7fc8c4e955b531a86201675cf50b8198d4a9ce97e72e254a73fc81f4add88",
+        "after_sha256": "55b1b9906fe30ff3ac0f18171ec7a2679645cc79f40266cb1337b5cc7f842988",
+        "operation": "bind_go_1_27_3_toolchain"
+      },
+      {
+        "original_index": 1,
+        "before_sha256": "2f04cd5b6e086bcbc1eea901980fcda61add3ade712d62b151f4ec0d8f39ebf2",
+        "after_sha256": "2f04cd5b6e086bcbc1eea901980fcda61add3ade712d62b151f4ec0d8f39ebf2",
+        "operation": "retain_modernizer_check"
+      },
+      {
+        "original_index": 2,
+        "before_sha256": "a8ccd820ec899abfc650723fa8978577b11a2719dc1f64d2e128d908fccf3a84",
+        "after_sha256": "a8ccd820ec899abfc650723fa8978577b11a2719dc1f64d2e128d908fccf3a84",
+        "operation": "retain_format_check"
+      },
+      {
+        "original_index": 3,
+        "before_sha256": "e78fa189671f42a895601b9caedae4d2e6e774930ec73294a361d6929f68cfa5",
+        "after_sha256": "c1f15162a7cf88a9808acf91cdd05a3ba8e6cf902528bd1d48f3c2c135fc0d1a",
+        "operation": "rebind_format_remediation_receipt_to_go_1_27_3"
+      },
+      {
+        "original_index": 4,
+        "before_sha256": "5a8e3debf706e36a457b7a319a1e8761cd6921670ef4faa12bbf81671765d054",
+        "after_sha256": "b6c3e70fd1cb823fc82975dd23c1f379e6d26fe1a87e64261641e7beec6cfb67",
+        "operation": "rebind_format_remediation_validation_to_go_1_27_3"
+      }
+    ],
     "evidence": [
       {
         "original_index": -1,
