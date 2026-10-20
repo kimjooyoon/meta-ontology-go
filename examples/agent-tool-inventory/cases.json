@@ -1,0 +1,265 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "config://required",
+          "before_origin": "host://enabled",
+          "after_origin": "host://disabled",
+          "required_ids": [
+            "mcp.alpha",
+            "mcp.beta"
+          ],
+          "before_ids": [
+            "mcp.alpha",
+            "mcp.beta"
+          ],
+          "after_ids": []
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "REGRESSED",
+          "required_origin": "config://required",
+          "before_origin": "host://enabled",
+          "after_origin": "host://disabled",
+          "required_count": 2,
+          "before_count": 2,
+          "after_count": 0,
+          "all_before": true,
+          "all_after": false,
+          "first_missing_before": "",
+          "first_missing_after": "mcp.alpha"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "config://required",
+          "before_origin": "host://disabled",
+          "after_origin": "host://enabled",
+          "required_ids": [
+            "mcp.alpha",
+            "mcp.beta"
+          ],
+          "before_ids": [],
+          "after_ids": [
+            "mcp.beta",
+            "mcp.alpha"
+          ]
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "RECOVERED",
+          "required_origin": "config://required",
+          "before_origin": "host://disabled",
+          "after_origin": "host://enabled",
+          "required_count": 2,
+          "before_count": 0,
+          "after_count": 2,
+          "all_before": false,
+          "all_after": true,
+          "first_missing_before": "mcp.alpha",
+          "first_missing_after": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_ids": [
+            "mcp.alpha",
+            "mcp.beta"
+          ],
+          "before_ids": [
+            "mcp.alpha",
+            "mcp.beta"
+          ],
+          "after_ids": [
+            "mcp.beta",
+            "mcp.alpha",
+            "mcp.beta"
+          ]
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "PRESENT_BOTH",
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_count": 2,
+          "before_count": 2,
+          "after_count": 3,
+          "all_before": true,
+          "all_after": true,
+          "first_missing_before": "",
+          "first_missing_after": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_ids": [
+            "mcp.beta",
+            "mcp.alpha"
+          ],
+          "before_ids": [
+            "mcp.alpha"
+          ],
+          "after_ids": [
+            "other"
+          ]
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "MISSING_BOTH",
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_count": 2,
+          "before_count": 1,
+          "after_count": 1,
+          "all_before": false,
+          "all_after": false,
+          "first_missing_before": "mcp.beta",
+          "first_missing_after": "mcp.beta"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_ids": [],
+          "before_ids": [],
+          "after_ids": []
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "INVALID_REQUIRED",
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_count": 0,
+          "before_count": 0,
+          "after_count": 0,
+          "all_before": false,
+          "all_after": false,
+          "first_missing_before": "",
+          "first_missing_after": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_ids": [
+            "mcp.alpha"
+          ],
+          "before_ids": [
+            "mcp.alpha"
+          ],
+          "after_ids": [
+            "mcp.alpha"
+          ]
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "INVALID_ORIGIN",
+          "required_origin": "",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_count": 1,
+          "before_count": 1,
+          "after_count": 1,
+          "all_before": false,
+          "all_after": false,
+          "first_missing_before": "",
+          "first_missing_after": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_ids": [
+            "mcp.alpha",
+            ""
+          ],
+          "before_ids": [
+            "mcp.alpha",
+            ""
+          ],
+          "after_ids": [
+            "mcp.alpha",
+            ""
+          ]
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "INVALID_REQUIRED",
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_count": 2,
+          "before_count": 2,
+          "after_count": 2,
+          "all_before": false,
+          "all_after": false,
+          "first_missing_before": "",
+          "first_missing_after": ""
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/agent-tool-inventory:Inspect": {
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_ids": ["mcp://server-a/alpha"],
+          "before_ids": ["mcp://server-a/alpha"],
+          "after_ids": ["mcp://server-b/alpha"]
+        }
+      },
+      "expected": {
+        "example/agent-tool-inventory:Inspect": {
+          "status": "REGRESSED",
+          "required_origin": "config://required",
+          "before_origin": "host://one",
+          "after_origin": "host://two",
+          "required_count": 1,
+          "before_count": 1,
+          "after_count": 1,
+          "all_before": true,
+          "all_after": false,
+          "first_missing_before": "",
+          "first_missing_after": "mcp://server-a/alpha"
+        }
+      }
+    }
+  ]
+}
