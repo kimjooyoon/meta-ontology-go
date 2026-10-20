@@ -38,7 +38,8 @@ func TestPackageSourceDigestUsesJSONStringBytesAndRejectsRawDigest(t *testing.T)
 	want := fmt.Sprintf("sha256:%x", sha256.Sum256(jsonString))
 	raw := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(source.Content)))
 	if entry.SourceDigest != want || raw == want {
-		t.Fatalf("source entry does not distinguish JSON string bytes from raw source bytes: stored=%q json=%q raw=%q", entry.SourceDigest, want, raw)
+		t.Fatalf("source entry does not distinguish JSON string bytes from raw source bytes: "+
+			"stored=%q json=%q raw=%q", entry.SourceDigest, want, raw)
 	}
 	if _, err := ParseResolvedPackageSource(image, "records", source); err != nil {
 		t.Fatalf("matching JSON string digest should replay: %v", err)
