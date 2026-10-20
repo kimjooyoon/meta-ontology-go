@@ -819,7 +819,7 @@ training cases. The Go API is `IRBodySearchPlan.ExternalTrainingFeedback
 
 ```json
 {
-  "source_digest": "sha256:<lowercase hex of the original .gooo bytes>",
+  "source_digest": "sha256:<lowercase hex of the Gooo bytes supplied to this search>",
   "training_suite_sha256": "sha256:<lowercase hex of canonical typed training cases>",
   "candidate_id": "identity",
   "observations": [
@@ -829,9 +829,9 @@ training cases. The Go API is `IRBodySearchPlan.ExternalTrainingFeedback
 }
 ```
 
-`source_digest` binds the exact original DSL byte sequence using the same
-`sha256:<hex>` notation as receipts. `training_suite_sha256` binds Go's
-canonical `encoding/json` encoding of the typed `[]IRBodyFillTestCase` in
+`source_digest` binds the exact DSL bytes supplied to this search invocation,
+using the same `sha256:<hex>` notation as receipts. `training_suite_sha256`
+binds Go's canonical `encoding/json` encoding of the typed `[]IRBodyFillTestCase` in
 `test_cases`. An observation must name a declared training input and its exact
 expected value; duplicate inputs, holdout rows, stale digests, unknown
 candidates, and a `passed` value that disagrees with `actual == expected` are
@@ -839,6 +839,12 @@ rejected before any provider call. There must be 1 through 4096 observations,
 and each observation must explicitly supply non-null `input`, `expected`,
 `actual`, and `passed` fields. The observation list contains measured values,
 not an attestation that a particular CI system produced them.
+
+This request field differs from the package image's
+`result.program.workspace_image.packages[].sources[].source_digest`, which
+hashes the Go JSON encoding of a source string. Compare each field only with
+the byte representation named by its full path; see the
+[source digest table](../getting-started.md#read-a-digest-with-its-full-field-path).
 
 External observations are advisory prior feedback. They are not authenticated
 CI proof, a semantic authority, or a score for this search invocation. Gooo

@@ -11,7 +11,7 @@ and misses the holdout. The caller's construction example then requires
 selects `47 - input`. The final body is measured on the holdout after selection.
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo body-construct \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo body-construct \
   --source examples/source-path-holdouts/main.gooo.fixture --entry Main \
   --construction-cases examples/source-path-holdouts/construction.json \
   --cases examples/source-path-holdouts/evaluation.json --attempts 2 \

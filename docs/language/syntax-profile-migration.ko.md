@@ -13,7 +13,7 @@ Gooo 원문을 확장하다 보면 같은 프로그램에 더 넓은 필드 타�
 
 하나의 실행 파일을 만들어 관찰·생성·검증에 사용합니다. 실행 파일 자체의 해시도
 입력 정체성에 포함되므로, 다른 소스로 다시 빌드하면 요청을 새로 관찰해야 합니다.
-현재 저장소는 Go 1.27.2를 사용합니다.
+현재 저장소는 Go 1.27.3를 사용합니다.
 
 ```sh
 go build -o /tmp/gooo-syntax-profile-migration ./cmd/syntax-profile-migration

@@ -106,7 +106,7 @@ go run ./cmd/gooo body-compose \
 
 ## Generate, inspect and execute
 
-From a checkout with Go 1.27.2:
+From a checkout with Go 1.27.3:
 
 ```sh
 go run ./cmd/gooo body-context --include-plan --activity Select \

@@ -16,7 +16,7 @@ func TestCompiledOriginPartitionInvariance134117(t *testing.T) {
 	}
 	for _, split := range []bool{false, true} {
 		root := t.TempDir()
-		writeImporterFixture(t, root, "go.mod", "module partition134117.example/module\n\ngo 1.27.2\n")
+		writeImporterFixture(t, root, "go.mod", "module partition134117.example/module\n\ngo 1.27.3\n")
 		if split {
 			for i, decl := range values {
 				writeImporterFixture(t, root, fmt.Sprintf("part%03d.go", i), "package partition134117\n"+decl)

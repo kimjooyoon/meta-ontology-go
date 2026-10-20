@@ -39,12 +39,12 @@ func receiptEvaluationFixture(t *testing.T) EvaluationInput {
 			CanonicalSemanticSubgraphDigest: digest, GeneratedArtifactDigest: digest,
 			GeneratedSemanticDigest: digest, GeneratedManifestDigest: digest,
 			CompilerDigest: digest, ReleasedToolDigest: ReleasedToolDigest(digest),
-			ToolchainDigest: digest, ToolchainVersion: "go1.27.2", TestCommand: command,
+			ToolchainDigest: digest, ToolchainVersion: "go1.27.3", TestCommand: command,
 			TestCommandDigest: TestCommandDigest(command, digest), TestContractDigest: digest,
 			DependencyGraphDigest: policy.DependencyGraphDigest(), OrchestrationReportDigest: digest,
 			OrchestrationOperation: "gooo.self-improvement.public-orchestration",
 		}
-		binding.ToolInputs = toolchaincli.GeneratedTestGoInputs{Profile: toolchaincli.GeneratedTestGoProfile, Path: "/fixture/go", ExecutableDigest: digest, Version: "go1.27.2", Platform: "fixture/host", EnvironmentDigest: digest}
+		binding.ToolInputs = toolchaincli.GeneratedTestGoInputs{Profile: toolchaincli.GeneratedTestGoProfile, Path: "/fixture/go", ExecutableDigest: digest, Version: "go1.27.3", Platform: "fixture/host", EnvironmentDigest: digest}
 		binding.ToolchainDigest = binding.ToolInputs.Digest()
 		receipt := Receipt{
 			Schema: ReceiptSchema, Partition: partition.ID, Decision: DecisionClosed,

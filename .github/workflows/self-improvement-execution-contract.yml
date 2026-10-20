@@ -143,14 +143,14 @@ jobs:
       - name: Install Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
           cache: false
 
       - name: Bind the exact subject and toolchain
         shell: bash
         run: |
           set -euo pipefail
-          test "$(go env GOVERSION)" = "go1.27.2"
+          test "$(go env GOVERSION)" = "go1.27.3"
           test "$(git rev-parse HEAD)" = "$TOOLING_SHA"
           test "$(git status --porcelain)" = ""
 

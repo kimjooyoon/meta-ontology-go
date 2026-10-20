@@ -5,7 +5,7 @@ Gooo로 문자열을 한 바이트씩 읽어 원하는 값의 위치를 찾는 �
 
 This example runs with [Gooo 0.6.31-dev](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.31-dev).
 The [release guide](../../docs/releases/0.6.31-dev.md) identifies its source and
-four native platform checks. Generated code execution needs Go 1.27.2.
+four native platform checks. Generated code execution needs Go 1.27.3.
 
 `search.gooo.fixture` implements byte search in Gooo. `app.gooo.fixture` imports it
 and passes a declared `Query` record. The loop counter is a local initialized to

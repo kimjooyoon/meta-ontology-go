@@ -15,7 +15,7 @@ import (
 func compilationFixture101719(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	writeImporterFixture(t, root, "go.mod", "module experiment.compilation101719\n\ngo 1.27.2\n")
+	writeImporterFixture(t, root, "go.mod", "module experiment.compilation101719\n\ngo 1.27.3\n")
 	writeImporterFixture(t, root, "dep/value.go", `package dep
 import "context"
 type Number int
@@ -91,7 +91,7 @@ func Use(ctx context.Context) dep.Number { return dep.Value(ctx) }
 }
 func TestInvalidDependencyBodyIsUnresolved101719(t *testing.T) {
 	root := t.TempDir()
-	writeImporterFixture(t, root, "go.mod", "module invalid.compilation101719\n\ngo 1.27.2\n")
+	writeImporterFixture(t, root, "go.mod", "module invalid.compilation101719\n\ngo 1.27.3\n")
 	writeImporterFixture(t, root, "dep/value.go", "package dep\nfunc Value() int {return \"invalid-body101719\"}\n")
 	importer := newModuleImporter(root)
 	if pkg, err := importer.Import("invalid.compilation101719/dep"); err == nil || pkg != nil || len(importer.compilationOrigins) != 0 {

@@ -13,7 +13,7 @@ new input-only path shown below.
 
 ## Run the example
 
-From the repository root, with Go 1.27.2:
+From the repository root, with Go 1.27.3:
 
 ```sh
 go build -o /tmp/gooo-package ./cmd/gooo

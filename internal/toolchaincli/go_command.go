@@ -64,8 +64,8 @@ func nativeGeneratedTestGoBytes(path string) (string, string, error) {
 		return "", "", fmt.Errorf("selected Go tool is not a bounded regular executable")
 	}
 	info, err := buildinfo.Read(file)
-	if err != nil || info.Path != "cmd/go" || info.GoVersion != "go1.27.2" {
-		return "", "", fmt.Errorf("selected Go tool requires native cmd/go built with go1.27.2")
+	if err != nil || info.Path != "cmd/go" || info.GoVersion != "go1.27.3" {
+		return "", "", fmt.Errorf("selected Go tool requires native cmd/go built with go1.27.3")
 	}
 	settings := map[string]string{}
 	for _, setting := range info.Settings {

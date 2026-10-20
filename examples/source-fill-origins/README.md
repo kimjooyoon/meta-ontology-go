@@ -45,7 +45,7 @@ fixture를 로컬에서 재실행하지 않았다. 모델 호출은 0회다. 문
 패키지를 실행하는 경로에서도 최종 조건에 `construction`이 연결된다.
 
 ```sh
-GOWORK=off GOTOOLCHAIN=go1.27.2 go run ./cmd/gooo package execute --json \
+GOWORK=off GOTOOLCHAIN=go1.27.3 go run ./cmd/gooo package execute --json \
   --cases examples/source-fill-origins/cli3937/cases.json \
   examples/source-fill-origins/cli3937/workspace.json
 ```

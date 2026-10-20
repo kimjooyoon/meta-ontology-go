@@ -44,7 +44,7 @@ func TestFixedRecordNativeFresh1767(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := output.Runtime
-	expectedGo := "go version go1.27.2 " + runtime.GOOS + "/" + runtime.GOARCH
+	expectedGo := "go version go1.27.3 " + runtime.GOOS + "/" + runtime.GOARCH
 	if !output.GeneratedNow || output.Composition.Stage != "COMPLETE" || r.Stage != "COMPLETE" ||
 		r.FinitePassed != 4 || r.FiniteTotal != 4 || len(r.Runs) != 2 || !r.RuntimeReplayed || !r.ProjectionReplayed ||
 		r.ModelCalls != 0 || r.OriginalSourceSHA256 != projectionbundle.Digest(raw) || r.GoVersion != expectedGo ||

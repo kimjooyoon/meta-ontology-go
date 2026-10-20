@@ -20,7 +20,7 @@
 ## 실행
 
 EntityFields V5와 `for … in`을 포함한 개발 소스의 CLI가 필요하다.
-Go 툴체인은 1.27.2다. 저장소 루트에서 새 출력 폴더를 지정한다.
+Go 툴체인은 1.27.3다. 저장소 루트에서 새 출력 폴더를 지정한다.
 
 ```sh
 gooo body-compose --source examples/batch-planner/main.gooo \

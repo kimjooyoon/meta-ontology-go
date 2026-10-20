@@ -51,7 +51,7 @@ curl -fL https://github.com/kimjooyoon/gooo-decision-runtime/releases/download/v
   -o out/interaction-model/model-interaction-v1.json
 printf '%s\n' '4b61fe8d84df77c8dfac6a880eedcddfd8f5f903fa538d1e80532dd77f74b1ac  out/interaction-model/model-interaction-v1.json' \
   | shasum -a 256 -c -
-GOWORK=off GOTOOLCHAIN=go1.27.2 go build -o out/gooo ./cmd/gooo
+GOWORK=off GOTOOLCHAIN=go1.27.3 go build -o out/gooo ./cmd/gooo
 out/gooo version --build --json
 
 out/gooo body-context --activity Choose \
