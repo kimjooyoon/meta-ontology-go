@@ -819,7 +819,7 @@ training cases. The Go API is `IRBodySearchPlan.ExternalTrainingFeedback
 
 ```json
 {
-  "source_digest": "sha256:<lowercase hex of the original .gooo bytes>",
+  "source_digest": "sha256:<lowercase hex of the Gooo bytes supplied to this search>",
   "training_suite_sha256": "sha256:<lowercase hex of canonical typed training cases>",
   "candidate_id": "identity",
   "observations": [
@@ -829,9 +829,9 @@ training cases. The Go API is `IRBodySearchPlan.ExternalTrainingFeedback
 }
 ```
 
-`source_digest` binds the exact original DSL byte sequence using the same
-`sha256:<hex>` notation as receipts. `training_suite_sha256` binds Go's
-canonical `encoding/json` encoding of the typed `[]IRBodyFillTestCase` in
+`source_digest` binds the exact DSL bytes supplied to this search invocation,
+using the same `sha256:<hex>` notation as receipts. `training_suite_sha256`
+binds Go's canonical `encoding/json` encoding of the typed `[]IRBodyFillTestCase` in
 `test_cases`. An observation must name a declared training input and its exact
 expected value; duplicate inputs, holdout rows, stale digests, unknown
 candidates, and a `passed` value that disagrees with `actual == expected` are

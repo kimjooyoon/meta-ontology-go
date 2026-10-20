@@ -66,9 +66,12 @@ string serialized by Go `json.Marshal`. In `package execute --json`, the same
 representation appears at
 `result.program.workspace_image.packages[].sources[].source_digest`.
 `ir-search` input `external_training_feedback.source_digest` instead hashes
-the original `.gooo` bytes. `result.execution_source_sha256` hashes the
-combined source after body fills, which can differ from the initial
-`result.program.lowered_gooo_source`. Use package path and filename to identify
+the raw Gooo bytes supplied to that search invocation. A generation step's
+`result.composition.steps[].generation.report.source_digest` hashes its own
+Gooo input bytes; earlier fills can change them.
+`result.execution_source_sha256` hashes the combined source after body fills,
+which can differ from `result.program.lowered_gooo_source`.
+Use package path and filename to identify
 the source, and use replay for the saved program's source check. Include the full
 JSON path and compared representation when reporting a mismatch; unequal
 hashes of different representations do not establish a source change.
