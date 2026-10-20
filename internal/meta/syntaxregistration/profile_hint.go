@@ -13,7 +13,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
-const ProfileHintSchema = "gooo/syntax-registration-profile-hint/v3"
+const ProfileHintSchema = "gooo/syntax-registration-profile-hint/v4"
 
 var hintProfiles = [...]string{
 	"ordinary", "text-fields", "implicit-ports", "ordered-collections",
@@ -43,6 +43,7 @@ type ProfileHintReport struct {
 	MatchCount         int             `json:"match_count"`
 	Reason             string          `json:"reason,omitempty"`
 	Profiles           []ProfileReplay `json:"profiles"`
+	Exercise           ProfileExercise `json:"source_exercise"`
 	ActivityID         string          `json:"activity_id,omitempty"`
 	ActivitySource     string          `json:"activity_source_sha256,omitempty"`
 	ProjectionDigest   string          `json:"projection_sha256,omitempty"`
@@ -52,6 +53,8 @@ type profileObservation struct {
 	Path               string `json:"path"`
 	SourceDigest       string `json:"source_digest"`
 	RequiredCapability string `json:"required_capability"`
+	ExerciseKnown      bool   `json:"exercise_known"`
+	ExerciseCount      int64  `json:"exercise_count"`
 	Ordinary           bool   `json:"ordinary"`
 	TextFields         bool   `json:"text_fields"`
 	ImplicitPorts      bool   `json:"implicit_ports"`
@@ -71,6 +74,14 @@ type profileHintValue struct {
 	Profile            string `json:"profile"`
 	Status             string `json:"status"`
 	MatchCount         int    `json:"match_count"`
+	ExerciseStatus     string `json:"exercise_status"`
+}
+
+type profileReplayResult struct {
+	profiles   []ProfileReplay
+	compatible []string
+	passed     [len(hintProfiles)]bool
+	unknown    bool
 }
 
 // InspectProfileHint pins one source before trying the exact parser profiles.
@@ -108,48 +119,31 @@ func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS
 	source []byte) ProfileHintReport {
 	report := ProfileHintReport{Schema: ProfileHintSchema, Authority: "ADVISORY_ONLY",
 		Path: path, RequiredCapability: requirement, Status: "UNKNOWN",
+		Exercise: ProfileExercise{Status: "UNKNOWN"},
 		Profiles: []ProfileReplay{}, CompatibleProfiles: []string{}}
 	if !validProfileRequirement(requirement) {
 		report.Reason = "INVALID_REQUIRED_CAPABILITY"
+		report.Exercise.Reason = report.Reason
 		return report
 	}
 	raw, reason := readProfileHintSource(repository, path)
 	if reason != "" {
 		report.Reason = reason
+		report.Exercise.Reason = reason
 		return report
 	}
 	report.SourceDigest = digest(raw)
-	pinned := fstest.MapFS{path: &fstest.MapFile{Data: raw}}
-	var passed [len(hintProfiles)]bool
-	for index, profile := range hintProfiles {
-		definition := languagesyntax.CaseDefinition{Path: path, Kind: languagesyntax.KindValid}
-		switch profile {
-		case "ordinary":
-		case "text-fields":
-			definition.EntityFields = true
-		case "implicit-ports":
-			definition.ImplicitActivityPorts = true
-		case "ordered-collections":
-			definition.OrderedCollections = true
-		default:
-			definition.EntityFieldsProfile = profile
-		}
-		result := languagesyntax.ReplayCase(pinned, definition)
-		report.Profiles = append(report.Profiles, ProfileReplay{Profile: profile,
-			Decision: result.ObservedDecision, Diagnostics: result.Diagnostics})
-		if result.ObservedDecision == replay.DecisionUnknown {
-			report.Reason = "PROFILE_OBSERVATION_UNKNOWN"
-			return report
-		}
-		passed[index] = result.ObservedDecision == replay.DecisionPass
+	report.Exercise = observeProfileExercise(path, raw, requirement)
+	replayed := replayProfileHintSource(path, raw, requirement)
+	report.Profiles, report.CompatibleProfiles = replayed.profiles, replayed.compatible
+	if replayed.unknown {
+		report.Reason = "PROFILE_OBSERVATION_UNKNOWN"
+		return report
 	}
-	for index, profile := range hintProfiles {
-		if passed[index] && profileSatisfiesRequirement(profile, requirement) {
-			report.CompatibleProfiles = append(report.CompatibleProfiles, profile)
-		}
-	}
+	passed := replayed.passed
 	observation := profileObservation{Path: path, SourceDigest: report.SourceDigest,
-		RequiredCapability: requirement, Ordinary: passed[0], TextFields: passed[1],
+		RequiredCapability: requirement, ExerciseKnown: report.Exercise.Known,
+		ExerciseCount: int64(report.Exercise.MatchCount), Ordinary: passed[0], TextFields: passed[1],
 		ImplicitPorts: passed[2], OrderedCollections: passed[3], V1: passed[4],
 		V2: passed[5], V3: passed[6], V4: passed[7], V5: passed[8], V6: passed[9]}
 	input, _ := json.Marshal([]any{observation})
@@ -168,6 +162,41 @@ func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS
 	return report
 }
 
+// replayProfileHintSource owns parser compatibility observations. The caller
+// keeps source exercise and the Gooo decision separate from this host replay.
+func replayProfileHintSource(path string, raw []byte, requirement string) profileReplayResult {
+	pinned := fstest.MapFS{path: &fstest.MapFile{Data: raw}}
+	result := profileReplayResult{profiles: []ProfileReplay{}, compatible: []string{}}
+	for index, profile := range hintProfiles {
+		definition := languagesyntax.CaseDefinition{Path: path, Kind: languagesyntax.KindValid}
+		switch profile {
+		case "ordinary":
+		case "text-fields":
+			definition.EntityFields = true
+		case "implicit-ports":
+			definition.ImplicitActivityPorts = true
+		case "ordered-collections":
+			definition.OrderedCollections = true
+		default:
+			definition.EntityFieldsProfile = profile
+		}
+		replayResult := languagesyntax.ReplayCase(pinned, definition)
+		result.profiles = append(result.profiles, ProfileReplay{Profile: profile,
+			Decision: replayResult.ObservedDecision, Diagnostics: replayResult.Diagnostics})
+		if replayResult.ObservedDecision == replay.DecisionUnknown {
+			result.unknown = true
+			return result
+		}
+		result.passed[index] = replayResult.ObservedDecision == replay.DecisionPass
+	}
+	for index, profile := range hintProfiles {
+		if result.passed[index] && profileSatisfiesRequirement(profile, requirement) {
+			result.compatible = append(result.compatible, profile)
+		}
+	}
+	return result
+}
+
 func validProfileHint(value bodycodegen.FixedValue, source []byte, path, sourceDigest string,
 	report *ProfileHintReport) bool {
 	if value.ActivityID != "gooo://syntax-registration/suggest-profile" ||
@@ -178,11 +207,13 @@ func validProfileHint(value bodycodegen.FixedValue, source []byte, path, sourceD
 	if err := decodeStrict(value.Value, &hint); err != nil ||
 		hint.Path != path || hint.SourceDigest != sourceDigest ||
 		hint.RequiredCapability != report.RequiredCapability ||
-		hint.MatchCount != len(report.CompatibleProfiles) {
+		hint.MatchCount != len(report.CompatibleProfiles) ||
+		hint.ExerciseStatus != expectedExerciseStatus(report.RequiredCapability, report.Exercise) {
 		return false
 	}
 	if hint.Status == "NO_MATCH" && hint.Profile == "" && len(report.CompatibleProfiles) == 0 {
 		report.Status = hint.Status
+		report.Exercise.Status = hint.ExerciseStatus
 		return true
 	}
 	wantStatus := "AMBIGUOUS"
@@ -198,5 +229,6 @@ func validProfileHint(value bodycodegen.FixedValue, source []byte, path, sourceD
 	}
 	report.Status, report.SuggestedProfile, report.MatchCount =
 		hint.Status, hint.Profile, hint.MatchCount
+	report.Exercise.Status = hint.ExerciseStatus
 	return true
 }
