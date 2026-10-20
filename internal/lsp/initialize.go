@@ -55,7 +55,7 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 				},
 			},
 		},
-		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},
+		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: server.serverVersion},
 	}
 	return resultResponse(request.ID, result), nil, nil
 }
