@@ -179,16 +179,18 @@ compatibility change with its own cases.
 
 ### Read a digest with its full field path
 
-The receipt keeps several different source representations. In the pinned
-compiler's direct `--cases` / `--inputs` walkthrough, these fields describe
-different inputs to SHA-256:
+Gooo exposes several source representations. Read each field in the command
+result or plan that contains it; the same digest prefix does not imply the
+same input bytes:
 
 | Receipt field | What it describes |
 | --- | --- |
 | `manifest_digest`, `inputs_digest`, `cases_digest` | The bytes of the corresponding supplied file, when that input mode is present. |
+| `gooo package resolve --json`: `result.image.packages[].sources[].source_digest` | SHA-256 of `json.Marshal(source.Content)`, where `Content` is the source string loaded from the file. |
 | `result.program.workspace_image.packages[].sources[].source_digest` | The stored source string serialized by Go `json.Marshal`, including JSON quoting and escaping. This is different from hashing the raw `.gooo` file. |
-| The same source entry's `semantic_digest` | The compiler's semantic IR digest. |
+| `result.program.workspace_image.packages[].sources[].semantic_digest` | The compiler's semantic IR digest for that source entry. |
 | `result.execution_source_sha256` | The combined, lowered Gooo source after applying body fills, passed to composition execution. If fills changed it, it differs from the initial `result.program.lowered_gooo_source`. |
+| `ir-search` plan input: `external_training_feedback.source_digest` | SHA-256 of the original `.gooo` file bytes, before any lowering or body fill. This field belongs to a different input contract. |
 
 Match the source entry by package path and filename. Use the existing replay
 command to validate a saved program against its current sources; do not replace
@@ -196,6 +198,13 @@ that check with equality between unrelated digest fields. When reporting a
 mismatch, retain the compiler version, full JSON path and the bytes or
 representation you compared. The source string's JSON digest is not a raw file
 checksum.
+
+For a source string containing Korean text, quotes and newlines, the two
+computations are `sha256(json.Marshal(sourceString))` and
+`sha256([]byte(sourceString))`. They produce different values. Passing the
+raw-byte value as a package image's `source_digest` is rejected as stale type
+evidence; it does not prove that the file changed. The normal package path
+still computes only its existing image digest.
 
 ### Read values through the runtime trace
 

@@ -840,6 +840,12 @@ and each observation must explicitly supply non-null `input`, `expected`,
 `actual`, and `passed` fields. The observation list contains measured values,
 not an attestation that a particular CI system produced them.
 
+This request field differs from the package image's
+`result.program.workspace_image.packages[].sources[].source_digest`, which
+hashes the Go JSON encoding of a source string. Compare each field only with
+the byte representation named by its full path; see the
+[source digest table](../getting-started.md#read-a-digest-with-its-full-field-path).
+
 External observations are advisory prior feedback. They are not authenticated
 CI proof, a semantic authority, or a score for this search invocation. Gooo
 does not score a candidate before asking the chooser; after a candidate is

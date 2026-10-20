@@ -90,8 +90,11 @@ func ParseResolvedPackageSource(image Image, packagePath string, source Source) 
 			}
 		}
 	}
-	if matched == nil || matched.SourceDigest != digestValue(source.Content) {
-		return nil, fmt.Errorf("package source %q has absent or stale type evidence", source.Filename)
+	if matched == nil {
+		return nil, fmt.Errorf("package source %q has absent type evidence at image.packages[].sources[].source_digest", source.Filename)
+	}
+	if matched.SourceDigest != digestValue(source.Content) {
+		return nil, fmt.Errorf("package source %q has stale type evidence at image.packages[].sources[].source_digest: expected sha256(json.Marshal(source.Content)); compare JSON string bytes, not raw file bytes", source.Filename)
 	}
 	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(source.Filename, source.Content, syntax.EntityFieldsV4Support())
 	if file == nil || diagnostics.HasErrors() {
