@@ -29,15 +29,15 @@ type occurrence struct {
 }
 
 type projectionEdit struct {
-	Path           string `json:"path"`
-	Line           int    `json:"line"`
-	StartByte      int    `json:"start_byte"`
-	EndByte        int    `json:"end_byte"`
-	Before         string `json:"before"`
-	After          string `json:"after"`
-	PreimageSHA256 string `json:"preimage_sha256"`
-	RuleID         string `json:"rule_id"`
-	RuleVersion    int    `json:"rule_version"`
+	Path              string `json:"path"`
+	Line              int    `json:"line"`
+	StartByte         int    `json:"start_byte"`
+	EndByte           int    `json:"end_byte"`
+	Before            string `json:"before"`
+	After             string `json:"after"`
+	PreimageSHA256    string `json:"preimage_sha256"`
+	ClassifierID      string `json:"classifier_id"`
+	ClassifierVersion int    `json:"classifier_version"`
 }
 
 type projectionPlan struct {
@@ -249,7 +249,7 @@ func buildProjectionPlan(observed report, next string) (projectionPlan, error) {
 		plan.CandidateEdits = append(plan.CandidateEdits, projectionEdit{
 			Path: site.Path, Line: site.Line, StartByte: site.StartByte, EndByte: site.EndByte,
 			Before: observed.Version, After: next, PreimageSHA256: site.SHA256,
-			RuleID: "urn:gooo:toolchain-projection:rule:" + site.Role, RuleVersion: 1,
+			ClassifierID: "urn:gooo:toolchain-impact:classifier:" + site.Role, ClassifierVersion: 1,
 		})
 	}
 	if len(plan.Unresolved) != observed.UnresolvedOccurrences ||

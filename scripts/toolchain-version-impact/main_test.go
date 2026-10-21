@@ -96,8 +96,8 @@ func TestProjectionPlanBindsExactSpansAndLeavesUnknownOpen(t *testing.T) {
 		if string(data[edit.StartByte:edit.EndByte]) != edit.Before || digest(data) != edit.PreimageSHA256 {
 			t.Fatalf("candidate lacks exact preimage: %+v", edit)
 		}
-		if !strings.HasPrefix(edit.RuleID, "urn:gooo:toolchain-projection:rule:") {
-			t.Fatalf("candidate lacks source rule: %+v", edit)
+		if !strings.HasPrefix(edit.ClassifierID, "urn:gooo:toolchain-impact:classifier:") {
+			t.Fatalf("candidate lacks classifier identity: %+v", edit)
 		}
 	}
 	if _, err := buildProjectionPlan(observed, "next"); err == nil {

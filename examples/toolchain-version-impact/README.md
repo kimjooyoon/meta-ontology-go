@@ -37,7 +37,7 @@ go run ./cmd/gooo package execute --json --cases \
 분류됨은 구문을 식별했다는 뜻이며, 생성이나 출처 관계가 입증됐다는 뜻은 아닙니다.
 
 `--plan-version`은 분류된 표기의 정확한 바이트 구간, 변경 전후 값,
-파일 원본 SHA-256, 투영 규칙 ID와 버전을 한 계획에 묶습니다. 나머지 표기는
+파일 원본 SHA-256, 관찰에 쓰인 구문 분류기 ID와 버전을 한 계획에 묶습니다. 나머지 표기는
 `unresolved`에 남습니다. [plan.gooo](plan.gooo)의 `AssessProjection`은
 후보 수와 관찰 수가 일치하고 미분류·중복 구간·과거 기록 수정이 없을 때만
 `READY_FOR_DETACHED_PROJECTION`을 반환합니다. 이 도구는 후보 파일을 아직
@@ -47,7 +47,8 @@ go run ./cmd/gooo package execute --json --cases \
 `observation_sha256`은 직렬화된 관찰 기록의 해시입니다. `plan_core_sha256`은
 그 값을 포함하되 자기 자신의 해시 필드는 빈 문자열이고 `provenance`가 없는
 계획 본문의 해시입니다. Gooo 판단 입출력이 이 값을 그대로 전달합니다.
-계획의 JSON-LD에는 실제 계획 생성 활동이 관찰 기록을 `prov:used`했고,
+구문 분류기 ID는 Go 어댑터의 관찰 방법을 식별하며, 아직 자동 수정 규칙의
+의미 ID가 아닙니다. 계획의 JSON-LD에는 실제 계획 생성 활동이 관찰 기록을 `prov:used`했고,
 계획을 `prov:wasGeneratedBy` 했다는 관계만 둡니다. 파일을 실제로 고치지
 않았으므로 후보 파일의 생성 관계는 주장하지 않습니다.
 
