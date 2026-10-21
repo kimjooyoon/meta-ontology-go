@@ -47,6 +47,32 @@ rm "$saved"
 Gooo는 완료 여부와 프레임·활동 일치도 다시 확인해 두 관계를 구성합니다.
 값의 이동을 보려면 이 두 방향을 함께 읽으면 됩니다.
 
+## 보관된 읽기 비율
+
+같은 Gooo 소스의 `MeasureRetention`은 저장 기록에서 **보관된 지역 읽기 수**와
+**한도 때문에 누락된 읽기 수**를 따로 받습니다. 분모는 두 수의 합이며 결과는
+만분율(`retention_basis_points`)입니다. 예를 들어 보관 32건·누락 8건이면
+`8000`입니다. 이 값은 관찰된 읽기의 **기록 보관 비율**이며 프로그램의 정답률,
+전체 의존성의 발견률 또는 CI 시간 지표가 아닙니다. 저장 기록이 주장한 수치를
+계산하며, 기록 생산자의 실행을 새로 증명하지 않습니다. 비율 계산 규칙은
+`ComputeRetention`에 있고, `MeasureRetention`이 기록의 열을 읽어 그 규칙에 전달합니다.
+
+```sh
+go run ./cmd/gooo package execute --json \
+  --origin-receipt examples/recorded-use-origins/full-producer-receipt.json.gz \
+  --origin-shape local-use-columns --origin-offset 15 \
+  examples/recorded-use-origins/retention.workspace.json
+```
+
+이 저장 기록에서 보관 32건·누락 0건, `10000`을 관찰했습니다. 선택한 페이지는
+한 행이므로 `page_complete=false`입니다. `other_origins_dropped`는 프레임이나
+대입 기록의 누락을 별도로 나타냅니다. 기록의 원문 JSON 해시, 선택 소스 해시,
+지역 관찰 해시는 결과에 각각 남습니다. 유효하지 않은 입력이나 정수 범위 밖의
+분모는 `INVALID_INPUT`과 `-1`로 표시합니다. 독립적인 [6개 통제 입력](retention-cases.json)은
+보관·누락·다른 종류의 누락·잘못된 페이지·오버플로와 큰 누락 수를 구분합니다. 이 실행은
+원래 생산자를 다시 실행하거나 모델을 호출하지 않습니다. 현재 활동은 읽기 한 건이
+선택된 페이지를 요구하므로 보관된 읽기가 0건인 기록은 별도로 다뤄야 합니다.
+
 대입이 보관되지 않았다면 `UNRESOLVED_LOCAL_USE`와 원래 이유를 반환합니다.
 `NO_RECORDED_ASSIGNMENT`와 `WRITE_LIMIT`를 구분하고, 이 경우 관계 IRI는 빈 값입니다.
 앞선 기록 일부가 한도에 걸려도 지금 보관된 정상 읽기 관계는 유지하면서
