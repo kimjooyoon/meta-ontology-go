@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 )
 
 const projectionActivityID = "urn:gooo:toolchain-projection:assess"
@@ -60,7 +62,9 @@ func executeProjectionDecision(inputs map[string]any) (projectionDecision, error
 	if err := input.Close(); err != nil {
 		return projectionDecision{}, err
 	}
-	command := exec.Command("go", "run", "./cmd/gooo", "package", "execute", "--json", "--inputs", input.Name(),
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	command := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "package", "execute", "--json", "--inputs", input.Name(),
 		"examples/toolchain-version-impact/plan.workspace.json")
 	output, err := command.Output()
 	if err != nil {
