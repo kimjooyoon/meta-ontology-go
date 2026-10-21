@@ -27,6 +27,7 @@ func TestClassifyOnlyExactSelectors(t *testing.T) {
 }
 
 func TestGoooToolchainDeclarationsJoinDetachedProjection(t *testing.T) {
+	clearGitTestEnvironment(t)
 	root := t.TempDir()
 	write := func(path, source string) {
 		t.Helper()
@@ -88,19 +89,7 @@ func TestGoooToolchainDeclarationsJoinDetachedProjection(t *testing.T) {
 }
 
 func TestDetachedProjectionRequiresClosedSourceAndExactPreimages(t *testing.T) {
-	for _, key := range []string{"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"} {
-		previous, existed := os.LookupEnv(key)
-		if err := os.Unsetenv(key); err != nil {
-			t.Fatal(err)
-		}
-		t.Cleanup(func() {
-			if existed {
-				_ = os.Setenv(key, previous)
-			} else {
-				_ = os.Unsetenv(key)
-			}
-		})
-	}
+	clearGitTestEnvironment(t)
 	root := t.TempDir()
 	write := func(path, value string) {
 		t.Helper()
@@ -207,6 +196,23 @@ func TestDetachedProjectionRequiresClosedSourceAndExactPreimages(t *testing.T) {
 	openDecision.CandidateEdits = len(openPlan.CandidateEdits)
 	if _, err := materializeCandidate(root, filepath.Join(t.TempDir(), "open"), openPlan, openDecision); err == nil {
 		t.Fatal("unresolved consumer accepted despite ready-looking decision")
+	}
+}
+
+func clearGitTestEnvironment(t *testing.T) {
+	t.Helper()
+	for _, key := range []string{"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"} {
+		previous, existed := os.LookupEnv(key)
+		if err := os.Unsetenv(key); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if existed {
+				_ = os.Setenv(key, previous)
+			} else {
+				_ = os.Unsetenv(key)
+			}
+		})
 	}
 }
 
