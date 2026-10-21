@@ -114,8 +114,8 @@ record scope and decline scalar criteria with
 `SCALAR_CRITERIA_FEATURE_CONTRACT_UNAVAILABLE`.
 
 Development source containing the [scalar source model adapter](scalar-source-model.ko.md)
-can load the separate `gooo/scalar-criteria-model/v1` artifact from SDK
-`v0.2.51-experimental`. It ranks the declared combinations once per request;
+can load the separate `gooo/scalar-criteria-model/v1` artifact from SDK v0.2.51-experimental.
+It ranks the declared combinations once per request;
 the existing source evaluator checks candidates against the fixed predicates.
 The optional [criteria source flow](criteria-source-flow.ko.md) exports their
 typed structure through `body-context --value-flow`, and `--model` prepares the

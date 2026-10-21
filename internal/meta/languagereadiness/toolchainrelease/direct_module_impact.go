@@ -6,13 +6,10 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
-	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -23,30 +20,32 @@ const directModuleSourcePath = "examples/direct-module-impact/plan.gooo"
 const directModuleActivityID = "urn:gooo:direct-module-impact:assess"
 
 type DirectModuleImpact struct {
-	Schema            string              `json:"schema"`
-	Module            string              `json:"module"`
-	CurrentVersion    string              `json:"current_version"`
-	ProposedVersion   string              `json:"proposed_version"`
-	Inputs            map[string]string   `json:"input_sha256"`
-	Outputs           []string            `json:"cochange_outputs"`
-	ActiveRules       []activeVersionRule `json:"active_version_rules"`
-	OutsideScope      []string            `json:"outside_scope_current_references"`
-	HistoricalScope   []string            `json:"historical_current_references"`
-	ArchiveHead       string              `json:"archive_head_commit"`
-	ArchiveRoots      []string            `json:"historical_roots"`
-	ScanScope         string              `json:"reference_scan_scope"`
-	TrackedPathsSHA   string              `json:"tracked_paths_sha256"`
-	TrackedFiles      int                 `json:"tracked_files_scanned"`
-	ReferenceFiles    int                 `json:"tracked_reference_files"`
-	ScanElapsedUS     int64               `json:"reference_scan_elapsed_microseconds"`
-	ObservedElapsedUS int64               `json:"observation_elapsed_microseconds"`
-	ObservedOutputs   int                 `json:"observed_outputs"`
-	ProjectedOutputs  int                 `json:"projected_outputs"`
-	Unresolved        []string            `json:"unresolved"`
-	Download          moduleDownload      `json:"download"`
-	PlanSHA256        string              `json:"plan_sha256"`
-	Decision          moduleDecision      `json:"gooo_decision"`
-	Provenance        map[string]any      `json:"provenance"`
+	Schema            string                     `json:"schema"`
+	Module            string                     `json:"module"`
+	CurrentVersion    string                     `json:"current_version"`
+	ProposedVersion   string                     `json:"proposed_version"`
+	Inputs            map[string]string          `json:"input_sha256"`
+	Outputs           []string                   `json:"cochange_outputs"`
+	ActiveRules       []activeVersionRule        `json:"active_version_rules"`
+	PreservedSpans    []preservedVersionSpanRule `json:"preserved_version_spans"`
+	HistoricalRules   []historicalFileRule       `json:"historical_file_rules"`
+	OutsideScope      []string                   `json:"outside_scope_current_references"`
+	HistoricalScope   []string                   `json:"historical_current_references"`
+	ArchiveHead       string                     `json:"archive_head_commit"`
+	ArchiveRoots      []string                   `json:"historical_roots"`
+	ScanScope         string                     `json:"reference_scan_scope"`
+	TrackedPathsSHA   string                     `json:"tracked_paths_sha256"`
+	TrackedFiles      int                        `json:"tracked_files_scanned"`
+	ReferenceFiles    int                        `json:"tracked_reference_files"`
+	ScanElapsedUS     int64                      `json:"reference_scan_elapsed_microseconds"`
+	ObservedElapsedUS int64                      `json:"observation_elapsed_microseconds"`
+	ObservedOutputs   int                        `json:"observed_outputs"`
+	ProjectedOutputs  int                        `json:"projected_outputs"`
+	Unresolved        []string                   `json:"unresolved"`
+	Download          moduleDownload             `json:"download"`
+	PlanSHA256        string                     `json:"plan_sha256"`
+	Decision          moduleDecision             `json:"gooo_decision"`
+	Provenance        map[string]any             `json:"provenance"`
 }
 
 type moduleDownload struct {
@@ -121,18 +120,22 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 	if err != nil {
 		return DirectModuleImpact{}, err
 	}
-	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v4", Module: module,
+	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v5", Module: module,
 		CurrentVersion: current, ProposedVersion: proposed, Inputs: map[string]string{},
 		Outputs: paths[:len(paths)-1], ActiveRules: rules,
-		OutsideScope: []string{}, HistoricalScope: []string{}, Unresolved: []string{}}
+		PreservedSpans: []preservedVersionSpanRule{},
+		OutsideScope:   []string{}, HistoricalScope: []string{}, Unresolved: []string{}}
 	if err := readImpactPreimages(root, paths, &result); err != nil {
 		return DirectModuleImpact{}, err
 	}
-	for _, rule := range rules {
-		raw, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rule.Path)))
-		if err != nil || bytes.Count(raw, []byte(rule.Prefix+current)) != 1 {
-			result.Unresolved = append(result.Unresolved, "active version rule does not identify one source span: "+rule.ID)
-		}
+	if err := readPreservedVersionSpans(ctx, root, &result); err != nil {
+		return DirectModuleImpact{}, err
+	}
+	if err := observePlanVersionMentions(root, &result); err != nil {
+		return DirectModuleImpact{}, err
+	}
+	if err := observeDocumentSpans(root, &result); err != nil {
+		return DirectModuleImpact{}, err
 	}
 	if err := observeTrackedModuleReferences(ctx, root, current, &result); err != nil {
 		return DirectModuleImpact{}, err
@@ -180,8 +183,15 @@ func readAffectedSurfaces(ctx context.Context, root, module, licensePath string)
 		return nil, nil, nil, err
 	}
 	paths := pathsForRules(surfaces)
+	seenPaths := map[string]bool{}
+	for _, name := range paths {
+		seenPaths[name] = true
+	}
 	for _, rule := range rules {
-		paths = append(paths, rule.Path)
+		if !seenPaths[rule.Path] {
+			paths = append(paths, rule.Path)
+			seenPaths[rule.Path] = true
+		}
 	}
 	return source, append(paths, directModuleSourcePath), rules, nil
 }
@@ -207,7 +217,7 @@ func readActiveVersionRules(ctx context.Context, source []byte, module string,
 		len(declared.Paths) > 16 {
 		return nil, fmt.Errorf("Gooo active version rule columns are inconsistent")
 	}
-	seenPaths, seenIDs := map[string]bool{}, map[string]bool{}
+	seenPaths, seenSpans, seenIDs := map[string]bool{}, map[string]bool{}, map[string]bool{}
 	for _, name := range basePaths {
 		seenPaths[name] = true
 	}
@@ -218,11 +228,12 @@ func readActiveVersionRules(ctx context.Context, source []byte, module string,
 			path.IsAbs(name) || path.Clean(name) != name ||
 			strings.HasPrefix(name, "../") || strings.Contains(name, "\\") ||
 			seenPaths[name] || prefix == "" || len(prefix) > 256 ||
+			seenSpans[name+"\x00"+prefix] ||
 			!strings.HasPrefix(id, "urn:gooo:direct-module-impact:rule:") ||
 			strings.ContainsAny(id, " \t\r\n") || seenIDs[id] {
 			return nil, fmt.Errorf("Gooo active version rule has an invalid or repeated source identity")
 		}
-		seenPaths[name], seenIDs[id] = true, true
+		seenSpans[name+"\x00"+prefix], seenIDs[id] = true, true
 		rules = append(rules, activeVersionRule{Path: name, Prefix: prefix, ID: id})
 	}
 	return rules, nil
@@ -311,6 +322,8 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 		Inputs                        map[string]string
 		OutsideScope, HistoricalScope []string
 		ActiveRules                   []activeVersionRule
+		PreservedSpans                []preservedVersionSpanRule
+		HistoricalRules               []historicalFileRule
 		ArchiveHead                   string
 		ArchiveRoots                  []string
 		ScanScope, TrackedPathsSHA    string
@@ -318,6 +331,7 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 		Download                      moduleDownload
 	}{result.Module, result.CurrentVersion, result.ProposedVersion,
 		result.Inputs, result.OutsideScope, result.HistoricalScope, result.ActiveRules,
+		result.PreservedSpans, result.HistoricalRules,
 		result.ArchiveHead, result.ArchiveRoots, result.ScanScope, result.TrackedPathsSHA,
 		result.TrackedFiles, result.ReferenceFiles, result.Download})
 	if err != nil {
@@ -472,73 +486,4 @@ func downloadModule(module, version string) (moduleDownload, error) {
 		}
 	}
 	return result, nil
-}
-
-func directModuleProvenance(result DirectModuleImpact) map[string]any {
-	graph := []any{}
-	used := []string{}
-	paths := make([]string, 0, len(result.Inputs))
-	for name := range result.Inputs {
-		paths = append(paths, name)
-	}
-	sort.Strings(paths)
-	for _, name := range paths {
-		digest := result.Inputs[name]
-		id := repositoryFileID(name, digest)
-		file := map[string]any{"@id": id, "@type": "prov:Entity",
-			"gooo:path": name, "gooo:sha256": digest}
-		if slices.Contains(result.HistoricalScope, name) {
-			headID := "urn:gooo:committed-file:" + result.ArchiveHead + ":" + url.PathEscape(name)
-			graph = append(graph, map[string]any{"@id": headID, "@type": "prov:Entity",
-				"gooo:commit": result.ArchiveHead, "gooo:path": name, "gooo:sha256": digest})
-			file["prov:wasDerivedFrom"] = map[string]string{"@id": headID}
-			file["gooo:referenceRole"] = "historical"
-		}
-		graph = append(graph, file)
-		used = append(used, id)
-	}
-	for _, rule := range result.ActiveRules {
-		graph = append(graph, map[string]any{"@id": rule.ID, "@type": "prov:Entity",
-			"gooo:path": rule.Path, "gooo:prefix": rule.Prefix,
-			"prov:wasDerivedFrom": map[string]string{
-				"@id": repositoryFileID(directModuleSourcePath, result.Inputs[directModuleSourcePath])}})
-		used = append(used, rule.ID)
-	}
-	if result.Download.Path != "" {
-		moduleID := "urn:gooo:module-download:" + result.Module + "@" + result.ProposedVersion
-		graph = append(graph, map[string]any{"@id": moduleID, "@type": "prov:Entity",
-			"gooo:ref": result.Download.Ref, "gooo:vcs": result.Download.VCS,
-			"gooo:source_url": result.Download.SourceURL, "gooo:sum": result.Download.Sum,
-			"gooo:go_mod_sum":     result.Download.GoModSum,
-			"gooo:license_sha256": result.Download.LicenseSHA})
-		used = append(used, moduleID)
-	}
-	activity := "urn:gooo:direct-module-impact:observation:" + result.PlanSHA256
-	graph = append(graph, map[string]any{"@id": activity, "@type": "prov:Activity",
-		"prov:used": provReferences(used), "gooo:referenceScanScope": result.ScanScope,
-		"gooo:trackedPathsSHA256":    result.TrackedPathsSHA,
-		"gooo:trackedFilesScanned":   result.TrackedFiles,
-		"gooo:trackedReferenceFiles": result.ReferenceFiles})
-	graph = append(graph, map[string]any{"@id": "urn:gooo:direct-module-impact:decision:" + result.PlanSHA256,
-		"@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activity},
-		"gooo:status": result.Decision.Status, "gooo:cochangeScope": result.Outputs,
-		"gooo:outsideScope":       result.OutsideScope,
-		"gooo:historicalScope":    result.HistoricalScope,
-		"gooo:archiveHeadCommit":  result.ArchiveHead,
-		"gooo:archiveRoots":       result.ArchiveRoots,
-		"gooo:activeVersionRules": result.ActiveRules})
-	return map[string]any{"@context": map[string]string{"prov": "http://www.w3.org/ns/prov#",
-		"gooo": "https://github.com/kimjooyoon/meta-ontology-go/ns#"}, "@graph": graph}
-}
-
-func provReferences(ids []string) []any {
-	references := make([]any, 0, len(ids))
-	for _, id := range ids {
-		references = append(references, map[string]string{"@id": id})
-	}
-	return references
-}
-
-func repositoryFileID(name, digest string) string {
-	return "urn:gooo:repository-file:" + url.PathEscape(name) + ":" + digest
 }

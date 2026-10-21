@@ -40,12 +40,38 @@ activity RequiredActiveVersionRules(ModuleIdentity) -> ActiveVersionRules
     id "urn:gooo:direct-module-impact:required-active-version-rules" computes `
 if input.module_path == "github.com/kimjooyoon/gooo-decision-runtime" {
     return ActiveVersionRules{
-        paths: []string{"README.md"},
-        prefixes: []string{"The development source pins **Go SDK "},
-        rule_ids: []string{"urn:gooo:direct-module-impact:rule:live-readme-sdk"},
+        paths: []string{"README.md", "docs/scalar-source-model.ko.md", "docs/source-scalar-criteria.md"},
+        prefixes: []string{"The development source pins **Go SDK ", "이 변경을 포함한 개발 소스는 SDK ", "artifact from SDK "},
+        rule_ids: []string{"urn:gooo:direct-module-impact:rule:live-readme-sdk",
+            "urn:gooo:direct-module-impact:rule:live-scalar-source-sdk",
+            "urn:gooo:direct-module-impact:rule:live-scalar-criteria-sdk"},
     }
 }
 return ActiveVersionRules{paths: []string{}, prefixes: []string{}, rule_ids: []string{}}
+`
+
+// A preserved link can mention today's pin without becoming an upgrade target.
+// Its version is fixed to the release it describes, so later upgrades do not
+// need to rewrite the historical rule.
+entity PreservedVersionSpans id "urn:gooo:direct-module-impact:preserved-spans" fields {
+    field paths id "urn:gooo:direct-module-impact:preserved-spans:paths" type string required many
+    field prefixes id "urn:gooo:direct-module-impact:preserved-spans:prefixes" type string required many
+    field versions id "urn:gooo:direct-module-impact:preserved-spans:versions" type string required many
+    field rule_ids id "urn:gooo:direct-module-impact:preserved-spans:ids" type string required many
+}
+
+activity RequiredPreservedVersionSpans(ModuleIdentity) -> PreservedVersionSpans
+    id "urn:gooo:direct-module-impact:required-preserved-spans" computes `
+if input.module_path == "github.com/kimjooyoon/gooo-decision-runtime" {
+    return PreservedVersionSpans{
+        paths: []string{"README.md"},
+        prefixes: []string{"https://github.com/kimjooyoon/gooo-decision-runtime/tree/"},
+        versions: []string{"v0.2.51-experimental"},
+        rule_ids: []string{"urn:gooo:direct-module-impact:rule:preserved-sdk-study"},
+    }
+}
+return PreservedVersionSpans{paths: []string{}, prefixes: []string{},
+    versions: []string{}, rule_ids: []string{}}
 `
 
 // These committed trees preserve observations from earlier executions. A
@@ -59,6 +85,55 @@ entity ArchiveRoots id "urn:gooo:direct-module-impact:archive-roots" fields {
 activity HistoricalRoots(ModuleIdentity) -> ArchiveRoots
     id "urn:gooo:direct-module-impact:historical-roots" computes `
 return ArchiveRoots{releases: "docs/releases/", observations: "docs/observations/"}
+`
+
+// These exact files preserve a particular producer or release. Their declared
+// byte digests must still match both the working tree and Git HEAD; an edit
+// revokes the historical classification until its origin is reviewed again.
+entity HistoricalFiles id "urn:gooo:direct-module-impact:historical-files" fields {
+    field paths id "urn:gooo:direct-module-impact:historical-files:paths" type string required many
+    field sha256 id "urn:gooo:direct-module-impact:historical-files:sha256" type string required many
+    field rule_ids id "urn:gooo:direct-module-impact:historical-files:ids" type string required many
+}
+
+activity HistoricalReferenceFiles(ModuleIdentity) -> HistoricalFiles
+    id "urn:gooo:direct-module-impact:historical-reference-files" computes `
+if input.module_path == "github.com/kimjooyoon/gooo-decision-runtime" {
+    return HistoricalFiles{
+        paths: []string{
+            "docs/ontology-language-comparison.ko.md", "docs/getting-started.md",
+            "examples/everyday-program/README.md", "examples/everyday-program/observations/version.json",
+            "examples/scalar-source-model-native/observation.json",
+            "examples/scalar-source-model-fee-shared-inputs/observation.json",
+            "examples/scalar-source-model-multichoice/observation.json",
+            "examples/workspace-activity-rename/observation.json",
+            "examples/scalar-source-model/observation.json",
+        },
+        sha256: []string{
+            "sha256:5a9fa5033cc01faded2df7ea27c987a6ccc070375074b55875712d72a2384799",
+            "sha256:ab15626d50037aa013afb33c3dcf084ea55e9ad4e540e9a33b6281c5f42a7201",
+            "sha256:f177f64cffdc6b8f8b7de7002a0848dbb7ea407ba84da558986fec13a811999f",
+            "sha256:3e6bf16a1599951340ac80d55414ba966a999f52a5c94660e633e67f7b2c6803",
+            "sha256:1e6787ae69a03c7498f6eadcfe00a610799058661622e185c775b3a5ab2727b4",
+            "sha256:d13929799fe2cc6b549ffb70ff17f68b641cd8130bf6876d540304858ce9cb3b",
+            "sha256:aa07570c2821d0faa49c1d1a569e25ecbdd6f7077742a22de9feeee89a65828e",
+            "sha256:852f008cb145bafefb50e907add797814ea76f66af372e6986bfde8fa310ad8f",
+            "sha256:7b4e02d1ffb2800530b7dd052896ffac9baea729a4b988d076f18038b58e66a3",
+        },
+        rule_ids: []string{
+            "urn:gooo:direct-module-impact:historical:ontology-comparison",
+            "urn:gooo:direct-module-impact:historical:getting-started-release",
+            "urn:gooo:direct-module-impact:historical:everyday-program-description",
+            "urn:gooo:direct-module-impact:historical:everyday-program-version",
+            "urn:gooo:direct-module-impact:historical:scalar-native-observation",
+            "urn:gooo:direct-module-impact:historical:scalar-fee-observation",
+            "urn:gooo:direct-module-impact:historical:scalar-multichoice-observation",
+            "urn:gooo:direct-module-impact:historical:workspace-rename-observation",
+            "urn:gooo:direct-module-impact:historical:scalar-observation",
+        },
+    }
+}
+return HistoricalFiles{paths: []string{}, sha256: []string{}, rule_ids: []string{}}
 `
 
 entity ModuleProposal id "urn:gooo:direct-module-impact:proposal" fields {
@@ -140,6 +215,47 @@ return ModuleDecision{
     tracked_reference_files: input.tracked_reference_files,
     outside_reference_files: input.outside_reference_files,
     historical_reference_files: input.historical_reference_files,
+    status: status,
+}
+`
+
+// A verified detached candidate may become one Git tree/commit on a new agent
+// branch. The observer supplies checkout and branch facts; this activity owns
+// whether that write-bearing transition is allowed.
+entity BranchCommitProposal id "urn:gooo:direct-module-impact:branch-proposal" fields {
+    field plan_sha256 id "urn:gooo:direct-module-impact:branch-proposal:plan" type string required one
+    field branch_name id "urn:gooo:direct-module-impact:branch-proposal:branch" type string required one
+    field projected_outputs id "urn:gooo:direct-module-impact:branch-proposal:projected" type integer required one
+    field verified_outputs id "urn:gooo:direct-module-impact:branch-proposal:verified" type integer required one
+    field changed_outputs id "urn:gooo:direct-module-impact:branch-proposal:changed" type integer required one
+    field clean_checkout id "urn:gooo:direct-module-impact:branch-proposal:clean" type boolean required one
+    field base_bound id "urn:gooo:direct-module-impact:branch-proposal:base" type boolean required one
+    field branch_available id "urn:gooo:direct-module-impact:branch-proposal:available" type boolean required one
+    field agent_branch id "urn:gooo:direct-module-impact:branch-proposal:agent" type boolean required one
+}
+
+entity BranchCommitDecision id "urn:gooo:direct-module-impact:branch-decision" fields {
+    field plan_sha256 id "urn:gooo:direct-module-impact:branch-decision:plan" type string required one
+    field branch_name id "urn:gooo:direct-module-impact:branch-decision:branch" type string required one
+    field status id "urn:gooo:direct-module-impact:branch-decision:status" type string required one
+}
+
+activity AssessBranchCommit(BranchCommitProposal) -> BranchCommitDecision
+    id "urn:gooo:direct-module-impact:assess-branch-commit" computes `
+let status = "READY_FOR_BRANCH_COMMIT"
+if input.plan_sha256 == "" || input.branch_name == "" ||
+   input.projected_outputs < 1 || input.verified_outputs < 0 ||
+   input.changed_outputs < 1 || input.changed_outputs > input.projected_outputs ||
+   input.verified_outputs > input.projected_outputs {
+    status = "INVALID_BRANCH_PROPOSAL"
+} else if !input.clean_checkout || !input.base_bound ||
+        !input.branch_available || !input.agent_branch ||
+        input.verified_outputs != input.projected_outputs {
+    status = "BRANCH_COMMIT_UNRESOLVED"
+}
+return BranchCommitDecision{
+    plan_sha256: input.plan_sha256,
+    branch_name: input.branch_name,
     status: status,
 }
 `

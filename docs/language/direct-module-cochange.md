@@ -7,7 +7,7 @@ same source. Editing one without the others gives a plausible-looking build
 with an incomplete origin story.
 
 [`plan.gooo`](../../examples/direct-module-impact/plan.gooo) names five shared
-surfaces, plus a live README version rule for the decision runtime, and decides
+surfaces, plus three live documentation version rules for the decision runtime, and decides
 whether a proposed version has enough observed
 origin data to enter detached projection. The Go observer reads the exact
 checkout preimages and uses `go mod download -json` for the proposed module.
@@ -45,13 +45,29 @@ tracked path stops observation rather than producing a readiness decision.
 PROV-O relation values use JSON-LD `@id` node references, so consumers follow
 graph edges rather than string labels.
 
-The active rule names one path, one exact prefix and one stable rule ID in
+The source also names nine exact historical files whose recorded release or
+execution identity must stay fixed. Each has its own stable rule ID and SHA-256
+in Gooo. A matching current-version mention counts as historical only when the
+working-tree bytes equal both the declared digest and Git `HEAD`. Editing one
+file revokes that classification until its origin is reviewed and the source
+rule is updated. The report links the historical file to both its rule and its
+committed preimage.
+
+Each active rule names one path, one exact prefix and one stable rule ID in
 Gooo. The byte projector replaces only `prefix + current version` with
 `prefix + proposed version` after checking a unique match and unchanged file
-preimage. The README's older SDK study link stays as it was. Its candidate
-output derives from both the original README bytes and the Gooo rule entity.
-The rule columns can express further unique current-version spans without a
-new Go replacement function for each document.
+preimage. The README's older SDK study link stays as it was. Each candidate
+output derives from its original bytes and the Gooo rule entity.
+The rule columns can express further unique current-version spans, including
+several in one document, without a new Go replacement function for each span.
+The observer closes all declared roles for that document together, while the
+candidate writes the document once after applying its rules in source order.
+The README also has a preserved SDK study link. Gooo declares that link's
+prefix, fixed release version and stable rule ID separately from the live pin.
+For every document with a live rule, the observer checks each occurrence of the
+current version against one declared live or preserved span. An extra occurrence
+has no source-owned role and blocks projection. The fixed historical link stays
+valid when a later upgrade changes the current pin.
 
 In a local scan, the `gooo-jev` version appeared in four tracked files, all
 inside the five declared outputs. A proposed Jev
@@ -61,13 +77,17 @@ The archive role can exclude committed historical records from the write
 obligation, while current documentation and other unclassified matches still
 block projection. An outside byte match is an obligation to classify or model,
 not a reason to rewrite it.
-The new live rule brings README into the runtime co-change scope. Two existing
-document checks now read the runtime version from the Gooo payload rather than
-pinning its old value. In the current working tree, the runtime version occurs
-in 26 tracked files: five of the six declared outputs, ten committed historical
-records, and eleven still-unclassified outside files. The runtime proposal
-therefore remains `UNRESOLVED_OUTPUTS`. This is an observation, not a measured
-saving on a completed upgrade.
+The README and two current model documents now have live rules. The nine
+digest-bound files add to the two archival trees; mixed documents retain their
+original bytes rather than being rewritten wholesale. Before these rules, the
+runtime version occurred in 26 tracked files: five of six declared outputs,
+ten archive records and eleven unclassified files. A read-only observation of
+the unchanged current pin found 27 reference files: seven of eight declared
+outputs, 19 historical files and the Gooo rule source, with zero outside
+references. Its Gooo decision was
+`NO_VERSION_CHANGE`, as expected for the same proposed version. This confirms
+reference classification for that checkout; it does not establish upgrade
+compatibility. A new version still needs a verified origin and fresh observation.
 Without `-materialize-dir`, the command only observes and writes no repository
 file.
 
@@ -84,14 +104,31 @@ elapsed microseconds through byte verification (including module download),
 `gooo-jev` commit
 `678e5bc3eb6f714ebfec79f9ba3e05e9312bf920`, the local candidate wrote
 five coherent outputs; four changed and the license text stayed identical.
-The current decision-runtime plan declares six files and still blocks an
-incomplete candidate because eleven references remain outside its scope.
+The decision-runtime plan now declares eight candidate files. A stale file
+digest, missing unique active span or new outside reference still blocks an
+incomplete candidate.
 The release archive's `NOTICE` is generated from the projected payload at
 release time; it is a downstream artifact rather than a sixth committed file.
 
-The writer does not apply the candidate to a branch or claim a passing build.
+The detached writer does not apply the candidate to a branch or claim a passing build.
 It refuses a proposed module whose own `go.mod` adds graph directives such as
 `require` or `replace`: those would need more than the declared outputs.
+
+After reviewing a detached candidate, `-commit-branch agent/<name>` can create
+a **local** branch with its verified outputs in one Git commit. This mode needs
+a clean tracked checkout and a branch name that does not already exist. It
+replays the observation, checks the current `HEAD` against the candidate's
+origin, and asks Gooo's `AssessBranchCommit` activity to accept the exact
+proposal. A temporary Git index builds the tree without changing the current
+checkout. The adapter verifies the commit's tree, every output digest and the
+complete changed-path set before creating the branch ref atomically. The JSON
+receipt records the base and new commit, tree IDs, Gooo decision and PROV-O
+origin edges. It reports `build_status: not_run`; normal branch CI remains the
+independent check. This command does not push the branch or open a PR. The
+current runtime pin has no unresolved exact-version references in the observed
+checkout. A new version can still be refused for a changed preimage, incomplete
+module origin or unmodeled module graph. Versionless API compatibility remains
+outside this decision and needs independent checks.
 
 PROV-O records the origin of each input and output occurrence. The Gooo
 activity owns the affected paths and the decision; the Go adapter only observes
