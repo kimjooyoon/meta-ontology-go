@@ -13,30 +13,18 @@ entity AffectedSurfaces id "urn:gooo:direct-module-impact:surfaces" fields {
     field policy id "urn:gooo:direct-module-impact:surfaces:policy" type string required one
     field license id "urn:gooo:direct-module-impact:surfaces:license" type string required one
     field document id "urn:gooo:direct-module-impact:surfaces:document" type string required one
-    field outside_readme id "urn:gooo:direct-module-impact:surfaces:outside-readme" type string required one
-    field outside_scalar_source id "urn:gooo:direct-module-impact:surfaces:outside-scalar-source" type string required one
-    field outside_scalar_model id "urn:gooo:direct-module-impact:surfaces:outside-scalar-model" type string required one
 }
 
 activity RequiredSurfaces(ModuleIdentity) -> AffectedSurfaces
     id "urn:gooo:direct-module-impact:required-surfaces" computes `
 let license = "licenses/gooo-decision-runtime/LICENSE"
-let outsideReadme = "README.md"
-let outsideScalarSource = "docs/source-scalar-criteria.md"
-let outsideScalarModel = "docs/scalar-source-model.ko.md"
 if input.module_path == "github.com/kimjooyoon/gooo-jev" {
     license = "licenses/gooo-jev/LICENSE"
-    outsideReadme = ""
-    outsideScalarSource = ""
-    outsideScalarModel = ""
 }
 return AffectedSurfaces{
     go_mod: "go.mod", go_sum: "go.sum",
     policy: "internal/meta/languagereadiness/toolchainrelease/payload.gooo",
     license: license, document: "docs/language/release-payload-origins.md",
-    outside_readme: outsideReadme,
-    outside_scalar_source: outsideScalarSource,
-    outside_scalar_model: outsideScalarModel,
 }
 `
 
@@ -59,6 +47,11 @@ entity ModuleProposal id "urn:gooo:direct-module-impact:proposal" fields {
     field license_bound id "urn:gooo:direct-module-impact:proposal:license-bound" type boolean required one
     field observed_outputs id "urn:gooo:direct-module-impact:proposal:outputs" type integer required one
     field unresolved_outputs id "urn:gooo:direct-module-impact:proposal:unresolved" type integer required one
+    field scan_scope id "urn:gooo:direct-module-impact:proposal:scan-scope" type string required one
+    field tracked_paths_sha256 id "urn:gooo:direct-module-impact:proposal:tracked-paths" type string required one
+    field tracked_files_scanned id "urn:gooo:direct-module-impact:proposal:tracked-files" type integer required one
+    field tracked_reference_files id "urn:gooo:direct-module-impact:proposal:reference-files" type integer required one
+    field outside_reference_files id "urn:gooo:direct-module-impact:proposal:outside-files" type integer required one
     field historical_writes id "urn:gooo:direct-module-impact:proposal:historical" type integer required one
 }
 
@@ -68,6 +61,8 @@ entity ModuleDecision id "urn:gooo:direct-module-impact:decision" fields {
     field plan_sha256 id "urn:gooo:direct-module-impact:decision:plan" type string required one
     field download_ref id "urn:gooo:direct-module-impact:decision:ref" type string required one
     field observed_outputs id "urn:gooo:direct-module-impact:decision:outputs" type integer required one
+    field tracked_reference_files id "urn:gooo:direct-module-impact:decision:reference-files" type integer required one
+    field outside_reference_files id "urn:gooo:direct-module-impact:decision:outside-files" type integer required one
     field status id "urn:gooo:direct-module-impact:decision:status" type string required one
 }
 
@@ -78,7 +73,12 @@ if (input.module_path != "github.com/kimjooyoon/gooo-jev" &&
     input.module_path != "github.com/kimjooyoon/gooo-decision-runtime") ||
    input.current_version == "" || input.proposed_version == "" ||
    input.go_mod_sha256 == "" || input.policy_sha256 == "" || input.plan_sha256 == "" ||
-   input.observed_outputs < 1 || input.unresolved_outputs < 0 || input.historical_writes < 0 {
+   input.observed_outputs < 1 || input.unresolved_outputs < 0 || input.historical_writes < 0 ||
+   input.scan_scope != "git-tracked-working-tree-regular-files/v1" ||
+   input.tracked_paths_sha256 == "" || input.tracked_files_scanned < 1 ||
+   input.tracked_reference_files < 0 || input.outside_reference_files < 0 ||
+   input.tracked_reference_files > input.tracked_files_scanned ||
+   input.outside_reference_files > input.tracked_reference_files {
     status = "INVALID_OBSERVATION"
 } else if !input.current_pin_consistent {
     status = "CURRENT_SOURCE_CONFLICT"
@@ -90,7 +90,7 @@ if (input.module_path != "github.com/kimjooyoon/gooo-jev" &&
     status = "UPSTREAM_ORIGIN_UNRESOLVED"
 } else if input.historical_writes > 0 {
     status = "HISTORICAL_WRITE_CONFLICT"
-} else if input.unresolved_outputs > 0 {
+} else if input.unresolved_outputs > 0 || input.outside_reference_files > 0 {
     status = "UNRESOLVED_OUTPUTS"
 } else if input.current_version == input.proposed_version {
     status = "NO_VERSION_CHANGE"
@@ -101,6 +101,8 @@ return ModuleDecision{
     plan_sha256: input.plan_sha256,
     download_ref: input.download_ref,
     observed_outputs: input.observed_outputs,
+    tracked_reference_files: input.tracked_reference_files,
+    outside_reference_files: input.outside_reference_files,
     status: status,
 }
 `

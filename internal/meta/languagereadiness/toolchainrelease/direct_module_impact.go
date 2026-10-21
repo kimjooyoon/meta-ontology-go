@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,20 +21,26 @@ const directModuleSourcePath = "examples/direct-module-impact/plan.gooo"
 const directModuleActivityID = "urn:gooo:direct-module-impact:assess"
 
 type DirectModuleImpact struct {
-	Schema           string            `json:"schema"`
-	Module           string            `json:"module"`
-	CurrentVersion   string            `json:"current_version"`
-	ProposedVersion  string            `json:"proposed_version"`
-	Inputs           map[string]string `json:"input_sha256"`
-	Outputs          []string          `json:"cochange_outputs"`
-	OutsideScope     []string          `json:"outside_scope_current_references"`
-	ObservedOutputs  int               `json:"observed_outputs"`
-	ProjectedOutputs int               `json:"projected_outputs"`
-	Unresolved       []string          `json:"unresolved"`
-	Download         moduleDownload    `json:"download"`
-	PlanSHA256       string            `json:"plan_sha256"`
-	Decision         moduleDecision    `json:"gooo_decision"`
-	Provenance       map[string]any    `json:"provenance"`
+	Schema            string            `json:"schema"`
+	Module            string            `json:"module"`
+	CurrentVersion    string            `json:"current_version"`
+	ProposedVersion   string            `json:"proposed_version"`
+	Inputs            map[string]string `json:"input_sha256"`
+	Outputs           []string          `json:"cochange_outputs"`
+	OutsideScope      []string          `json:"outside_scope_current_references"`
+	ScanScope         string            `json:"reference_scan_scope"`
+	TrackedPathsSHA   string            `json:"tracked_paths_sha256"`
+	TrackedFiles      int               `json:"tracked_files_scanned"`
+	ReferenceFiles    int               `json:"tracked_reference_files"`
+	ScanElapsedUS     int64             `json:"reference_scan_elapsed_microseconds"`
+	ObservedElapsedUS int64             `json:"observation_elapsed_microseconds"`
+	ObservedOutputs   int               `json:"observed_outputs"`
+	ProjectedOutputs  int               `json:"projected_outputs"`
+	Unresolved        []string          `json:"unresolved"`
+	Download          moduleDownload    `json:"download"`
+	PlanSHA256        string            `json:"plan_sha256"`
+	Decision          moduleDecision    `json:"gooo_decision"`
+	Provenance        map[string]any    `json:"provenance"`
 }
 
 type moduleDownload struct {
@@ -54,23 +61,23 @@ type moduleDecision struct {
 	PlanSHA256      string `json:"plan_sha256"`
 	DownloadRef     string `json:"download_ref"`
 	ObservedOutputs int    `json:"observed_outputs"`
+	ReferenceFiles  int    `json:"tracked_reference_files"`
+	OutsideFiles    int    `json:"outside_reference_files"`
 	Status          string `json:"status"`
 }
 
 type affectedSurfaces struct {
-	GoMod               string `json:"go_mod"`
-	GoSum               string `json:"go_sum"`
-	Policy              string `json:"policy"`
-	License             string `json:"license"`
-	Document            string `json:"document"`
-	OutsideReadme       string `json:"outside_readme"`
-	OutsideScalarSource string `json:"outside_scalar_source"`
-	OutsideScalarModel  string `json:"outside_scalar_model"`
+	GoMod    string `json:"go_mod"`
+	GoSum    string `json:"go_sum"`
+	Policy   string `json:"policy"`
+	License  string `json:"license"`
+	Document string `json:"document"`
 }
 
 // ObserveDirectModuleImpact makes a read-only co-change plan. The Go adapter
 // observes source and module bytes; the checked Gooo activity owns admission.
 func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpact, error) {
+	started := time.Now()
 	if proposed == "" || strings.ContainsAny(proposed, "@/") ||
 		len(strings.Fields(proposed)) != 1 || strings.Fields(proposed)[0] != proposed {
 		return DirectModuleImpact{}, fmt.Errorf("provide one exact module version")
@@ -91,18 +98,21 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	source, paths, outside, err := readAffectedSurfaces(ctx, root, module, licensePath)
+	source, paths, err := readAffectedSurfaces(ctx, root, module, licensePath)
 	if err != nil {
 		return DirectModuleImpact{}, err
 	}
-	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v1", Module: module,
+	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v2", Module: module,
 		CurrentVersion: current, ProposedVersion: proposed, Inputs: map[string]string{},
-		Outputs: paths[:5], OutsideScope: outside, Unresolved: []string{}}
-	if err := readImpactPreimages(root, append(paths, outside...), &result); err != nil {
+		Outputs: paths[:5], OutsideScope: []string{}, Unresolved: []string{}}
+	if err := readImpactPreimages(root, paths, &result); err != nil {
 		return DirectModuleImpact{}, err
 	}
-	for _, name := range outside {
-		result.Unresolved = append(result.Unresolved, "active current reference outside candidate: "+name)
+	if err := observeTrackedModuleReferences(ctx, root, current, &result); err != nil {
+		return DirectModuleImpact{}, err
+	}
+	for _, name := range result.OutsideScope {
+		result.Unresolved = append(result.Unresolved, "current version mention outside candidate: "+name)
 	}
 	currentBound, currentDownload := observeCurrentModule(root, module, current, currentRef,
 		licensePath, m, &result)
@@ -113,43 +123,33 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 		return DirectModuleImpact{}, err
 	}
 	result.Provenance = directModuleProvenance(result)
+	result.ObservedElapsedUS = time.Since(started).Microseconds()
 	return result, nil
 }
 
-func readAffectedSurfaces(ctx context.Context, root, module, licensePath string) ([]byte, []string, []string, error) {
+func readAffectedSurfaces(ctx context.Context, root, module, licensePath string) ([]byte, []string, error) {
 	source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(directModuleSourcePath)))
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	input, _ := json.Marshal([]any{map[string]any{"module_path": module}})
 	value, err := bodycodegen.EvaluateFixedValue(ctx, directModuleSourcePath, source,
 		"RequiredSurfaces", input)
 	if err != nil || value.ActivityID != "urn:gooo:direct-module-impact:required-surfaces" ||
 		value.SourceSHA256 != payloadDigest(source) {
-		return nil, nil, nil, fmt.Errorf("Gooo affected surfaces cannot be replayed: %v", err)
+		return nil, nil, fmt.Errorf("Gooo affected surfaces cannot be replayed: %v", err)
 	}
 	var surfaces affectedSurfaces
 	if err := json.Unmarshal(value.Value, &surfaces); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	if surfaces.GoMod != "go.mod" || surfaces.GoSum != "go.sum" ||
 		surfaces.Policy != payloadSourcePath || surfaces.License != licensePath ||
 		surfaces.Document != payloadDocumentPath {
-		return nil, nil, nil, fmt.Errorf("Gooo affected surfaces do not match release payload structure")
-	}
-	outside := []string{}
-	if module == "github.com/kimjooyoon/gooo-decision-runtime" {
-		if surfaces.OutsideReadme != "README.md" ||
-			surfaces.OutsideScalarSource != "docs/source-scalar-criteria.md" ||
-			surfaces.OutsideScalarModel != "docs/scalar-source-model.ko.md" {
-			return nil, nil, nil, fmt.Errorf("Gooo active runtime references differ from observed structure")
-		}
-		outside = []string{surfaces.OutsideReadme, surfaces.OutsideScalarSource, surfaces.OutsideScalarModel}
-	} else if surfaces.OutsideReadme != "" || surfaces.OutsideScalarSource != "" || surfaces.OutsideScalarModel != "" {
-		return nil, nil, nil, fmt.Errorf("Gooo Jev scope contains unexpected active references")
+		return nil, nil, fmt.Errorf("Gooo affected surfaces do not match release payload structure")
 	}
 	return source, []string{surfaces.GoMod, surfaces.GoSum, surfaces.Policy,
-		surfaces.License, surfaces.Document, directModuleSourcePath}, outside, nil
+		surfaces.License, surfaces.Document, directModuleSourcePath}, nil
 }
 
 func readImpactPreimages(root string, paths []string, result *DirectModuleImpact) error {
@@ -231,12 +231,15 @@ func observeProposedModule(module, proposed, current string, currentDownload mod
 func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy,
 	currentBound, originBound, sumsBound, licenseBound bool, result *DirectModuleImpact) error {
 	core, err := json.Marshal(struct {
-		Module, Current, Proposed string
-		Inputs                    map[string]string
-		OutsideScope              []string
-		Download                  moduleDownload
+		Module, Current, Proposed    string
+		Inputs                       map[string]string
+		OutsideScope                 []string
+		ScanScope, TrackedPathsSHA   string
+		TrackedFiles, ReferenceFiles int
+		Download                     moduleDownload
 	}{result.Module, result.CurrentVersion, result.ProposedVersion,
-		result.Inputs, result.OutsideScope, result.Download})
+		result.Inputs, result.OutsideScope, result.ScanScope, result.TrackedPathsSHA,
+		result.TrackedFiles, result.ReferenceFiles, result.Download})
 	if err != nil {
 		return err
 	}
@@ -251,7 +254,11 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 		"current_pin_consistent": currentBound, "origin_bound": originBound,
 		"sums_bound": sumsBound, "license_bound": licenseBound,
 		"observed_outputs": result.ObservedOutputs, "unresolved_outputs": unresolvedOutputs(result),
-		"historical_writes": 0}
+		"scan_scope": result.ScanScope, "tracked_paths_sha256": result.TrackedPathsSHA,
+		"tracked_files_scanned":   result.TrackedFiles,
+		"tracked_reference_files": result.ReferenceFiles,
+		"outside_reference_files": len(result.OutsideScope),
+		"historical_writes":       0}
 	encoded, err := json.Marshal([]any{input})
 	if err != nil {
 		return err
@@ -266,14 +273,16 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 		return err
 	}
 	if result.Decision.ModulePath != result.Module || result.Decision.ProposedVersion != result.ProposedVersion ||
-		result.Decision.PlanSHA256 != result.PlanSHA256 || result.Decision.ObservedOutputs != result.ObservedOutputs {
+		result.Decision.PlanSHA256 != result.PlanSHA256 || result.Decision.ObservedOutputs != result.ObservedOutputs ||
+		result.Decision.ReferenceFiles != result.ReferenceFiles ||
+		result.Decision.OutsideFiles != len(result.OutsideScope) {
 		return fmt.Errorf("Gooo module decision differs from observed proposal")
 	}
 	return nil
 }
 
 func unresolvedOutputs(result *DirectModuleImpact) int {
-	n := missingDeclaredOutputs(result) + len(result.OutsideScope)
+	n := missingDeclaredOutputs(result)
 	for _, reason := range result.Unresolved {
 		if reason == "release document projection differs from Gooo payload" {
 			n++
@@ -390,7 +399,7 @@ func directModuleProvenance(result DirectModuleImpact) map[string]any {
 	sort.Strings(paths)
 	for _, name := range paths {
 		digest := result.Inputs[name]
-		id := "urn:gooo:repository-file:" + name + ":" + digest
+		id := repositoryFileID(name, digest)
 		graph = append(graph, map[string]any{"@id": id, "@type": "prov:Entity",
 			"gooo:path": name, "gooo:sha256": digest})
 		used = append(used, id)
@@ -406,7 +415,10 @@ func directModuleProvenance(result DirectModuleImpact) map[string]any {
 	}
 	activity := "urn:gooo:direct-module-impact:observation:" + result.PlanSHA256
 	graph = append(graph, map[string]any{"@id": activity, "@type": "prov:Activity",
-		"prov:used": provReferences(used)})
+		"prov:used": provReferences(used), "gooo:referenceScanScope": result.ScanScope,
+		"gooo:trackedPathsSHA256":    result.TrackedPathsSHA,
+		"gooo:trackedFilesScanned":   result.TrackedFiles,
+		"gooo:trackedReferenceFiles": result.ReferenceFiles})
 	graph = append(graph, map[string]any{"@id": "urn:gooo:direct-module-impact:decision:" + result.PlanSHA256,
 		"@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activity},
 		"gooo:status": result.Decision.Status, "gooo:cochangeScope": result.Outputs,
@@ -421,4 +433,8 @@ func provReferences(ids []string) []any {
 		references = append(references, map[string]string{"@id": id})
 	}
 	return references
+}
+
+func repositoryFileID(name, digest string) string {
+	return "urn:gooo:repository-file:" + url.PathEscape(name) + ":" + digest
 }
