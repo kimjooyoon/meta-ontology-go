@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -187,8 +188,7 @@ func materializeCandidate(root, destination string, plan projectionPlan, decisio
 		}
 		edits := groups[path]
 		candidate := bytes.Clone(original)
-		for i := len(edits) - 1; i >= 0; i-- {
-			edit := edits[i]
+		for _, edit := range slices.Backward(edits) {
 			if edit.PreimageSHA256 != digest(original) || edit.StartByte < 0 || edit.EndByte > len(original) ||
 				edit.StartByte >= edit.EndByte || string(original[edit.StartByte:edit.EndByte]) != edit.Before ||
 				edit.After != plan.NextVersion {
