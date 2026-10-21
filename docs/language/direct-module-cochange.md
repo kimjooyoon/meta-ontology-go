@@ -122,8 +122,11 @@ checkout. The adapter verifies the commit's tree, every output digest and the
 complete changed-path set before creating the branch ref atomically. The JSON
 receipt records the base and new commit, tree IDs, Gooo decision and PROV-O
 origin edges. It reports `build_status: not_run`; normal branch CI remains the
-independent check. This command does not push the branch or open a PR. Current
-runtime proposals remain blocked by their unresolved references.
+independent check. This command does not push the branch or open a PR. The
+current runtime pin has no unresolved exact-version references in the observed
+checkout. A new version can still be refused for a changed preimage, incomplete
+module origin or unmodeled module graph. Versionless API compatibility remains
+outside this decision and needs independent checks.
 
 PROV-O records the origin of each input and output occurrence. The Gooo
 activity owns the affected paths and the decision; the Go adapter only observes
