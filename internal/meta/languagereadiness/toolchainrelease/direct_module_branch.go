@@ -206,8 +206,8 @@ func moduleBranchAvailable(ctx context.Context, root, branch string) (bool, erro
 	if err == nil {
 		return false, nil
 	}
-	var exit *exec.ExitError
-	if !errors.As(err, &exit) || exit.ExitCode() != 1 {
+	exit, ok := errors.AsType[*exec.ExitError](err)
+	if !ok || exit.ExitCode() != 1 {
 		return false, err
 	}
 	return true, nil
@@ -260,7 +260,7 @@ func verifyCandidateCommit(ctx context.Context, root, commit, tree string, candi
 			want[file.Path] = true
 		}
 	}
-	for _, raw := range bytes.Split(bytes.TrimSuffix(changed, []byte{0}), []byte{0}) {
+	for raw := range bytes.SplitSeq(bytes.TrimSuffix(changed, []byte{0}), []byte{0}) {
 		name := string(raw)
 		if name == "" || !want[name] {
 			return fmt.Errorf("Git commit changed an undeclared path: %s", name)
@@ -282,8 +282,7 @@ func moduleGit(ctx context.Context, root string, env []string, args ...string) (
 	command.Env = env
 	output, err := command.Output()
 	if err != nil {
-		var exit *exec.ExitError
-		if errors.As(err, &exit) {
+		if exit, ok := errors.AsType[*exec.ExitError](err); ok {
 			return nil, fmt.Errorf("Git %s failed: %w: %s", args[0], err, strings.TrimSpace(string(exit.Stderr)))
 		}
 		return nil, fmt.Errorf("Git %s failed: %w", args[0], err)
