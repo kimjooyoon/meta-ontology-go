@@ -1386,6 +1386,7 @@
     "internal/meta/languagereadiness/toolchainrelease/payload.gooo",
     "examples/agent-tool-inventory/main.gooo",
     "examples/recorded-use-origins/retention.gooo",
-    "examples/toolchain-version-impact/impact.gooo"
+    "examples/toolchain-version-impact/impact.gooo",
+    "examples/toolchain-version-impact/plan.gooo"
   ]
 }

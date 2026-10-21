@@ -1,0 +1,60 @@
+package toolchainimpact
+namespace toolchainimpact
+
+// The adapter observes candidate spans. Gooo owns whether the proposed change
+// is closed enough to become a simultaneous projection.
+entity ProjectionRequest id "urn:gooo:toolchain-projection:request" fields {
+    field module_sha256 id "urn:gooo:toolchain-projection:request:module" type string required one
+    field plan_core_sha256 id "urn:gooo:toolchain-projection:request:plan-core" type string required one
+    field current_version id "urn:gooo:toolchain-projection:request:current" type string required one
+    field next_version id "urn:gooo:toolchain-projection:request:next" type string required one
+    field active_occurrences id "urn:gooo:toolchain-projection:request:active" type integer required one
+    field classified_occurrences id "urn:gooo:toolchain-projection:request:classified" type integer required one
+    field unresolved_occurrences id "urn:gooo:toolchain-projection:request:unresolved" type integer required one
+    field stale_selectors id "urn:gooo:toolchain-projection:request:stale" type integer required one
+    field candidate_edits id "urn:gooo:toolchain-projection:request:candidates" type integer required one
+    field overlapping_edits id "urn:gooo:toolchain-projection:request:overlaps" type integer required one
+    field historical_writes id "urn:gooo:toolchain-projection:request:historical-writes" type integer required one
+    field outside_scope_writes id "urn:gooo:toolchain-projection:request:outside-writes" type integer required one
+}
+
+entity ProjectionDecision id "urn:gooo:toolchain-projection:decision" fields {
+    field module_sha256 id "urn:gooo:toolchain-projection:decision:module" type string required one
+    field plan_core_sha256 id "urn:gooo:toolchain-projection:decision:plan-core" type string required one
+    field current_version id "urn:gooo:toolchain-projection:decision:current" type string required one
+    field next_version id "urn:gooo:toolchain-projection:decision:next" type string required one
+    field candidate_edits id "urn:gooo:toolchain-projection:decision:candidates" type integer required one
+    field status id "urn:gooo:toolchain-projection:decision:status" type string required one
+}
+
+activity AssessProjection(ProjectionRequest) -> ProjectionDecision id "urn:gooo:toolchain-projection:assess" computes `
+let status = "READY_FOR_DETACHED_PROJECTION"
+if input.module_sha256 == "" || input.plan_core_sha256 == "" ||
+   input.current_version == "" || input.next_version == "" ||
+   input.active_occurrences < 1 || input.classified_occurrences < 0 ||
+   input.unresolved_occurrences < 0 || input.stale_selectors < 0 ||
+   input.candidate_edits < 0 || input.overlapping_edits < 0 ||
+   input.historical_writes < 0 || input.outside_scope_writes < 0 ||
+   input.classified_occurrences > input.active_occurrences ||
+   input.unresolved_occurrences != input.active_occurrences - input.classified_occurrences ||
+   input.stale_selectors > input.unresolved_occurrences ||
+   input.candidate_edits > input.classified_occurrences {
+    status = "INVALID_PROJECTION_OBSERVATION"
+} else if input.current_version == input.next_version {
+    status = "NO_VERSION_CHANGE"
+} else if input.overlapping_edits > 0 || input.historical_writes > 0 ||
+        input.outside_scope_writes > 0 {
+    status = "PROJECTION_CONFLICT"
+} else if input.unresolved_occurrences > 0 || input.stale_selectors > 0 ||
+        input.candidate_edits != input.classified_occurrences {
+    status = "UNRESOLVED_CONSUMERS"
+}
+return ProjectionDecision{
+    module_sha256: input.module_sha256,
+    plan_core_sha256: input.plan_core_sha256,
+    current_version: input.current_version,
+    next_version: input.next_version,
+    candidate_edits: input.candidate_edits,
+    status: status,
+}
+`
