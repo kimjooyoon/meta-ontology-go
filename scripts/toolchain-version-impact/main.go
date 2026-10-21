@@ -1,5 +1,5 @@
 // Command toolchain-version-impact inventories current Go version references.
-// It observes files and never edits them. The Gooo source makes the decision.
+// It never edits source files. The Gooo source authorizes detached projection.
 package main
 
 import (
@@ -76,8 +76,9 @@ type report struct {
 
 func main() {
 	root := flag.String("root", ".", "repository root")
-	inputs := flag.Bool("gooo-inputs", false, "emit inputs for AssessImpact")
+	inputs := flag.Bool("gooo-inputs", false, "emit inputs for the Gooo impact or projection activity")
 	planVersion := flag.String("plan-version", "", "propose an exact next Go patch version without writing files")
+	materializeDir := flag.String("materialize-dir", "", "write a Gooo-authorized candidate into a new detached directory")
 	flag.Parse()
 	if flag.NArg() != 0 {
 		fail("unexpected positional argument")
@@ -87,13 +88,26 @@ func main() {
 		fail(err.Error())
 	}
 	var value any = result
+	if *materializeDir != "" && (*planVersion == "" || *inputs) {
+		fail("--materialize-dir requires --plan-version without --gooo-inputs")
+	}
 	if *planVersion != "" {
 		plan, err := buildProjectionPlan(result, *planVersion)
 		if err != nil {
 			fail(err.Error())
 		}
 		value = plan
-		if *inputs {
+		if *materializeDir != "" {
+			decision, err := executeProjectionDecision(projectionInputs(plan))
+			if err != nil {
+				fail(err.Error())
+			}
+			receipt, err := materializeCandidate(*root, *materializeDir, plan, decision)
+			if err != nil {
+				fail(err.Error())
+			}
+			value = receipt
+		} else if *inputs {
 			value = projectionInputs(plan)
 		}
 	} else if *inputs {

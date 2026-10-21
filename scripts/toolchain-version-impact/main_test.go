@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -22,6 +23,115 @@ func TestClassifyOnlyExactSelectors(t *testing.T) {
 		if got != test.classified {
 			t.Fatalf("line %q: classified=%t, want %t", test.line, got, test.classified)
 		}
+	}
+}
+
+func TestDetachedProjectionRequiresClosedSourceAndExactPreimages(t *testing.T) {
+	root := t.TempDir()
+	write := func(path, value string) {
+		t.Helper()
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(value), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	module := "module example.org/impact\n\ngo 1.27.3\n"
+	workflow := "name: CI\nsteps:\n  - uses: actions/setup-go@v7\n    with:\n      go-version: '1.27.3'\n"
+	write("go.mod", module)
+	write(".github/workflows/ci.yml", workflow)
+	for _, args := range [][]string{{"init", "-q"}, {"add", "go.mod", ".github/workflows/ci.yml"}} {
+		command := exec.Command("git", args...)
+		command.Dir = root
+		if output, err := command.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, output)
+		}
+	}
+	observed, err := scan(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := buildProjectionPlan(observed, "1.27.4")
+	if err != nil {
+		t.Fatal(err)
+	}
+	decision := projectionDecision{ModuleSHA256: plan.ModuleSHA256, PlanCoreSHA256: plan.PlanCoreSHA256,
+		CurrentVersion: plan.CurrentVersion, NextVersion: plan.NextVersion,
+		CandidateEdits: len(plan.CandidateEdits), Status: "READY_FOR_DETACHED_PROJECTION"}
+	previousDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(filepath.Join("..", "..")); err != nil {
+		t.Fatal(err)
+	}
+	actualDecision, actualErr := executeProjectionDecision(projectionInputs(plan))
+	if err := os.Chdir(previousDir); err != nil {
+		t.Fatal(err)
+	}
+	if actualErr != nil || actualDecision != decision {
+		t.Fatalf("Gooo decision disagrees with closed plan: %+v, %v", actualDecision, actualErr)
+	}
+	dest := filepath.Join(t.TempDir(), "candidate")
+	if _, err := materializeCandidate(root, filepath.Join(root, "candidate"), plan, decision); err == nil {
+		t.Fatal("source-tree destination accepted")
+	}
+	linkedParent := filepath.Join(t.TempDir(), "source-link")
+	if err := os.Symlink(root, linkedParent); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := materializeCandidate(root, filepath.Join(linkedParent, "candidate"), plan, decision); err == nil {
+		t.Fatal("symlinked source-tree destination accepted")
+	}
+	forged := decision
+	forged.PlanCoreSHA256 = "sha256:forged"
+	if _, err := materializeCandidate(root, dest, plan, forged); err == nil {
+		t.Fatal("unbound Gooo decision accepted")
+	}
+	if _, err := os.Stat(dest); !os.IsNotExist(err) {
+		t.Fatal("rejected decision created candidate directory")
+	}
+	write(".github/workflows/ci.yml", workflow+"# concurrent edit\n")
+	if _, err := materializeCandidate(root, dest, plan, decision); err == nil {
+		t.Fatal("changed source accepted")
+	}
+	write(".github/workflows/ci.yml", workflow)
+	receipt, err := materializeCandidate(root, dest, plan, decision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(receipt.Files) != 2 || receipt.Provenance["@graph"] == nil {
+		t.Fatalf("missing projected files or actual provenance: %+v", receipt)
+	}
+	for _, path := range []string{"go.mod", ".github/workflows/ci.yml"} {
+		candidate, err := os.ReadFile(filepath.Join(dest, path))
+		if err != nil || !strings.Contains(string(candidate), "1.27.4") {
+			t.Fatalf("no candidate at %s: %v", path, err)
+		}
+		original, err := os.ReadFile(filepath.Join(root, path))
+		if err != nil || !strings.Contains(string(original), "1.27.3") {
+			t.Fatalf("source changed at %s: %v", path, err)
+		}
+	}
+	if _, err := materializeCandidate(root, dest, plan, decision); err == nil {
+		t.Fatal("existing candidate directory overwritten")
+	}
+	write(".github/workflows/ci.yml", workflow+"run: echo go1.27.3\n")
+	openObserved, err := scan(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	openPlan, err := buildProjectionPlan(openObserved, "1.27.4")
+	if err != nil {
+		t.Fatal(err)
+	}
+	openDecision := decision
+	openDecision.PlanCoreSHA256 = openPlan.PlanCoreSHA256
+	openDecision.CandidateEdits = len(openPlan.CandidateEdits)
+	if _, err := materializeCandidate(root, filepath.Join(t.TempDir(), "open"), openPlan, openDecision); err == nil {
+		t.Fatal("unresolved consumer accepted despite ready-looking decision")
 	}
 }
 
