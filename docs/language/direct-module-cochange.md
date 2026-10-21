@@ -74,7 +74,7 @@ digest-bound files add to the two archival trees; mixed documents retain their
 original bytes rather than being rewritten wholesale. Before these rules, the
 runtime version occurred in 26 tracked files: five of six declared outputs,
 ten archive records and eleven unclassified files. A read-only observation of
-the unchanged `v0.2.51-experimental` pin found 26 reference files, eight declared
+the unchanged current pin found 26 reference files, eight declared
 outputs, 19 historical files and zero outside references. Its Gooo decision was
 `NO_VERSION_CHANGE`, as expected for the same proposed version. This confirms
 reference classification for that checkout; it does not establish upgrade

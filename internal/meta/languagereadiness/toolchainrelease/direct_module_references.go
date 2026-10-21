@@ -84,6 +84,12 @@ func observeTrackedModuleReferences(ctx context.Context, root, current string,
 			return err
 		}
 	}
+	for _, rule := range rules {
+		if !seen[rule.Path] {
+			result.Unresolved = append(result.Unresolved,
+				"Gooo historical file is not tracked: "+rule.ID)
+		}
+	}
 	sort.Strings(result.OutsideScope)
 	sort.Strings(result.HistoricalScope)
 	result.ScanElapsedUS = time.Since(started).Microseconds()
@@ -109,17 +115,31 @@ func observeTrackedReferenceFile(ctx context.Context, root, name, current string
 	if before, exists := result.Inputs[name]; exists && before != payloadDigest(raw) {
 		return fmt.Errorf("tracked preimage changed during observation: %s", name)
 	}
+	exactHistorical := false
+	if rule, declared := byPath[name]; declared {
+		if payloadDigest(raw) != rule.SHA256 {
+			result.Unresolved = append(result.Unresolved, "Gooo historical file digest changed: "+rule.ID)
+		} else {
+			committed, err := exec.CommandContext(ctx, "git", "-C", root, "show",
+				result.ArchiveHead+":"+name).Output()
+			if err != nil || !bytes.Equal(committed, raw) {
+				result.Unresolved = append(result.Unresolved, "Gooo historical file differs from HEAD: "+rule.ID)
+			} else {
+				exactHistorical = true
+			}
+		}
+	}
 	if !bytes.Contains(raw, []byte(current)) {
 		return nil
 	}
 	result.ReferenceFiles++
 	if !declared[name] {
 		result.Inputs[name] = payloadDigest(raw)
-		_, exactHistorical := byPath[name]
-		if exactHistorical && result.Inputs[name] != byPath[name].SHA256 {
-			exactHistorical = false
+		if exactHistorical {
+			result.HistoricalScope = append(result.HistoricalScope, name)
+			return nil
 		}
-		if exactHistorical || strings.HasPrefix(name, roots.Releases) || strings.HasPrefix(name, roots.Observations) {
+		if strings.HasPrefix(name, roots.Releases) || strings.HasPrefix(name, roots.Observations) {
 			committed, err := exec.CommandContext(ctx, "git", "-C", root, "show",
 				result.ArchiveHead+":"+name).Output()
 			if err == nil && bytes.Equal(committed, raw) {
