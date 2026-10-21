@@ -8,7 +8,7 @@ This repository contains its Go compiler. Source files use the `.gooo` extension
 
 **Start here:** the [pinned first program](docs/getting-started.md) works without a
 model. Agents and CI consumers should read the [JSON result and exit-code guide](docs/getting-started.md#use-results-from-an-agent-or-ci).
-The walkthrough pins 0.6.35-dev; each example records its own source and limits.
+The walkthrough pins 0.6.38-dev; each example records its own source and limits.
 
 [![Go / Gooo physical lines: 565,085 / 5,564](https://img.shields.io/badge/Go%20%2F%20Gooo%20lines-565%2C085%20%2F%205%2C564-546e7a)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
 [![Gooo share of Go and Gooo physical lines: 0.98%](https://img.shields.io/badge/Gooo%20share-0.98%25-8e44ad)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
@@ -111,12 +111,12 @@ archives and a Gooo reader consuming a fresh execution record.
 ## Try a working Gooo program
 
 Build a small diagnostic tool, then reuse its selected program on new inputs.
-This pinned 0.6.35 example needs **Go 1.27.2** and no model or API key. In a new working
+This pinned 0.6.38 example needs **Go 1.27.3** and no model or API key. In a new working
 directory on macOS or Linux:
 
 ```sh
-GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.2 \
-  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.35-dev
+GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.3 \
+  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.38-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo init --template diagnostic my-diagnostic
 cd my-diagnostic
@@ -124,9 +124,10 @@ gooo package execute --json --cases cases.json gooo.workspace.json > execution.j
 gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace.json
 ```
 
-This walkthrough pins the published 0.6.35 compiler. The
-[0.6.35 guide](docs/releases/0.6.35-dev.md) links its source and installation
-observations. The earlier [0.6.34 guide](docs/releases/0.6.34-dev.md) retains
+This walkthrough pins the published 0.6.38 compiler. The
+[0.6.38 guide](docs/releases/0.6.38-dev.md) links its source and installation
+observations. The earlier [0.6.35 guide](docs/releases/0.6.35-dev.md) retains
+its source and language observations. The [0.6.34 guide](docs/releases/0.6.34-dev.md) retains
 its source, platform archives and V2/V3 model observations. The earlier
 [0.6.33 guide](docs/releases/0.6.33-dev.md) connects the V2 return layout
 to source inspection, body construction and saved replay. Source-owned
@@ -614,7 +615,7 @@ representation and training wording.
 
 | Component | Available now | Current development step |
 | --- | --- | --- |
-| [Compiler 0.6.35](docs/releases/0.6.35-dev.md) | SDK0.2.51; named inputs, bounded Text fields, Gooo origin readers and saved replay | More retained value/call links and source-owned metaprogramming |
+| [Compiler 0.6.38](docs/releases/0.6.38-dev.md) | Go 1.27.3; SDK0.2.51; named inputs, bounded Text fields, collection mapping, origin readers and saved replay | More source-owned construction and independently checked behavior |
 | [SDK0.2.51 source](https://github.com/kimjooyoon/gooo-decision-runtime/tree/v0.2.51-experimental) | Separate return-branch output relations, explicit neutral input policy and numerical compatibility checks | [First V4 study regressed](docs/source-branch-output-v4.md#the-first-fitted-comparison-regressed); decision-head learning and broader behavior coverage need work |
 | [Canonical and relation models](https://huggingface.co/asketeddy/gooo-canonical-decision-tiny-v1) | Freshly initialized small models, complete authored study records and failed candidates | Expected-output relations and new-task evaluation |
 | [Earlier shared judgment models](https://huggingface.co/asketeddy/gooo-shared-judgment-tiny-v1) | Original models, twelve full-input exports and dated evidence | Historical wording and operation-order results |
