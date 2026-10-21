@@ -1,0 +1,75 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-a", "plan_core_sha256": "sha256:plan-a",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "active_occurrences": 2, "classified_occurrences": 2, "unresolved_occurrences": 0,
+        "stale_selectors": 0, "candidate_edits": 2, "derived_outputs": 3, "unresolved_derived_outputs": 0, "overlapping_edits": 0,
+        "historical_writes": 0, "outside_scope_writes": 0
+      }},
+      "expected": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-a", "plan_core_sha256": "sha256:plan-a",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "candidate_edits": 2, "derived_outputs": 3, "status": "READY_FOR_DETACHED_PROJECTION"
+      }}
+    },
+    {
+      "inputs": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-b", "plan_core_sha256": "sha256:plan-b",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "active_occurrences": 3, "classified_occurrences": 2, "unresolved_occurrences": 1,
+        "stale_selectors": 0, "candidate_edits": 2, "derived_outputs": 0, "unresolved_derived_outputs": 0, "overlapping_edits": 0,
+        "historical_writes": 0, "outside_scope_writes": 0
+      }},
+      "expected": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-b", "plan_core_sha256": "sha256:plan-b",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "candidate_edits": 2, "derived_outputs": 0, "status": "UNRESOLVED_CONSUMERS"
+      }}
+    },
+    {
+      "inputs": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-c", "plan_core_sha256": "sha256:plan-c",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "active_occurrences": 2, "classified_occurrences": 3, "unresolved_occurrences": 0,
+        "stale_selectors": 0, "candidate_edits": 2, "derived_outputs": 0, "unresolved_derived_outputs": 0, "overlapping_edits": 0,
+        "historical_writes": 0, "outside_scope_writes": 0
+      }},
+      "expected": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-c", "plan_core_sha256": "sha256:plan-c",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "candidate_edits": 2, "derived_outputs": 0, "status": "INVALID_PROJECTION_OBSERVATION"
+      }}
+    },
+    {
+      "inputs": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-d", "plan_core_sha256": "sha256:plan-d",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "active_occurrences": 2, "classified_occurrences": 2, "unresolved_occurrences": 0,
+        "stale_selectors": 0, "candidate_edits": 2, "derived_outputs": 0, "unresolved_derived_outputs": 0, "overlapping_edits": 0,
+        "historical_writes": 1, "outside_scope_writes": 0
+      }},
+      "expected": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-d", "plan_core_sha256": "sha256:plan-d",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "candidate_edits": 2, "derived_outputs": 0, "status": "PROJECTION_CONFLICT"
+      }}
+    },
+    {
+      "inputs": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-e", "plan_core_sha256": "sha256:plan-e",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "active_occurrences": 2, "classified_occurrences": 2, "unresolved_occurrences": 0,
+        "stale_selectors": 0, "candidate_edits": 2, "derived_outputs": 1, "unresolved_derived_outputs": 1, "overlapping_edits": 0,
+        "historical_writes": 0, "outside_scope_writes": 0
+      }},
+      "expected": {"examples/toolchainimpact:AssessProjection": {
+        "module_sha256": "sha256:module-e", "plan_core_sha256": "sha256:plan-e",
+        "current_version": "1.27.3", "next_version": "1.27.4",
+        "candidate_edits": 2, "derived_outputs": 1, "status": "UNRESOLVED_CONSUMERS"
+      }}
+    }
+  ]
+}

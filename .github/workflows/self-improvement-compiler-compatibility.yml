@@ -67,10 +67,10 @@ jobs:
           git worktree add --detach "$predecessor" "$PREDECESSOR_SHA"
           test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
 
-      - name: Install exact Go 1.27.3
+      - name: Install the successor module toolchain
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
 
       - name: Require exact heads, toolchain, and clean source trees
@@ -78,7 +78,9 @@ jobs:
         run: |
           set -euo pipefail
           predecessor="$RUNNER_TEMP/compiler-compatibility/predecessor"
-          test "$(go env GOVERSION)" = "go1.27.3"
+          required_go="$(awk '$1 == "go" {language="go" $2} $1 == "toolchain" {toolchain=$2} END {if (toolchain != "") print toolchain; else print language}' go.mod)"
+          test -n "$required_go"
+          test "$(go env GOVERSION)" = "$required_go"
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
           test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
           test "$(git status --porcelain)" = ""
@@ -93,7 +95,8 @@ jobs:
           before="$(awk '$1 == "go" {print $2}' "$work/predecessor/go.mod")"
           after="$(awk '$1 == "go" {print $2}' go.mod)"
           test -n "$before"
-          test "$after" = 1.27.3
+          test -n "$after"
+          test "$(go env GOVERSION)" = "go$after"
           same=true
           if [ "$before" != "$after" ]; then same=false; fi
           echo "same=$same" >> "$GITHUB_OUTPUT"

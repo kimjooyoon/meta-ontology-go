@@ -24,7 +24,7 @@ const (
 	TransitionCount       = 8
 	ContinuityEdgeCount   = 7
 	EvidenceArtifactCount = 24
-	TestContract          = "go1.27.3|go test ./...|go test -race ./..."
+	TestContract          = generatedpolicy.TestContract
 	DefaultMode           = "strict-default"
 	OptInMode             = "caller-owned-immutable-successor-certificate"
 
@@ -285,6 +285,7 @@ func render(filename string, policy Policy) ([]byte, error) {
 	fmt.Fprintf(&builder, "\tPolicySourcePath = %q\n", filename)
 	fmt.Fprintf(&builder, "\tPolicySourceDigest = %q\n", policy.SourceDigest)
 	fmt.Fprintf(&builder, "\tEvaluatorDigest = %q\n", policy.EvaluatorDigest)
+	fmt.Fprintf(&builder, "\tTestContract = %q\n", policy.TestContract)
 	fmt.Fprintln(&builder, ")")
 	fmt.Fprintln(&builder)
 	fmt.Fprintln(&builder, "type DecisionCase struct {")

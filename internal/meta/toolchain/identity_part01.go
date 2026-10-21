@@ -2,6 +2,7 @@ package toolchain
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,13 +18,18 @@ type Requirement struct {
 // ReadRequirement reads the go and optional toolchain directives without
 // invoking a Go command, keeping the declared foundation independent.
 func ReadRequirement(root string) (Requirement, error) {
-	file, err := os.Open(filepath.Join(root, "go.mod"))
+	raw, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
 		return Requirement{}, err
 	}
-	defer file.Close()
+	return ParseRequirement(raw)
+}
+
+// ParseRequirement interprets the same bytes that a caller can bind to a
+// recorded go.mod digest, avoiding a second read between identity and parsing.
+func ParseRequirement(raw []byte) (Requirement, error) {
 	requirement := Requirement{}
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(bytes.NewReader(raw))
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 		if len(fields) != 2 {
@@ -39,7 +45,7 @@ func ReadRequirement(root string) (Requirement, error) {
 	if err := scanner.Err(); err != nil {
 		return Requirement{}, err
 	}
-	if requirement.Language == "go" {
+	if requirement.Language == "" {
 		return Requirement{}, fmt.Errorf("go.mod has no go directive")
 	}
 	if requirement.Toolchain == "" {

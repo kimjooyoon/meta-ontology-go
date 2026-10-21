@@ -1,0 +1,57 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"examples/toolchainimpact:AssessImpact": {
+        "module_sha256": "sha256:module-a", "version": "1.27.3",
+        "active_occurrences": 10, "classified_occurrences": 10,
+        "unresolved_occurrences": 0, "stale_selectors": 0, "historical_occurrences": 3
+      }},
+      "expected": {"examples/toolchainimpact:AssessImpact": {
+        "module_sha256": "sha256:module-a", "version": "1.27.3",
+        "active_occurrences": 10, "classified_occurrences": 10,
+        "unresolved_occurrences": 0, "stale_selectors": 0, "historical_occurrences": 3,
+        "classification_basis_points": 10000, "status": "ACTIVE_SCOPE_CLASSIFIED"
+      }}
+    },
+    {
+      "inputs": {"examples/toolchainimpact:AssessImpact": {
+        "module_sha256": "sha256:module-b", "version": "1.27.3",
+        "active_occurrences": 10, "classified_occurrences": 8,
+        "unresolved_occurrences": 2, "stale_selectors": 0, "historical_occurrences": 3
+      }},
+      "expected": {"examples/toolchainimpact:AssessImpact": {
+        "module_sha256": "sha256:module-b", "version": "1.27.3",
+        "active_occurrences": 10, "classified_occurrences": 8,
+        "unresolved_occurrences": 2, "stale_selectors": 0, "historical_occurrences": 3,
+        "classification_basis_points": 8000, "status": "ACTIVE_SCOPE_UNRESOLVED"
+      }}
+    },
+    {
+      "inputs": {"examples/toolchainimpact:AssessImpact": {
+        "module_sha256": "sha256:module-c", "version": "1.27.3",
+        "active_occurrences": 10, "classified_occurrences": 11,
+        "unresolved_occurrences": 0, "stale_selectors": 0, "historical_occurrences": 3
+      }},
+      "expected": {"examples/toolchainimpact:AssessImpact": {
+        "module_sha256": "sha256:module-c", "version": "1.27.3",
+        "active_occurrences": 10, "classified_occurrences": 11,
+        "unresolved_occurrences": 0, "stale_selectors": 0, "historical_occurrences": 3,
+        "classification_basis_points": -1, "status": "INVALID_OBSERVATION"
+      }}
+    },
+    {
+      "inputs": {"examples/toolchainimpact:AssessImpact": {
+        "module_sha256": "sha256:module-d", "version": "1.27.3",
+        "active_occurrences": 10, "classified_occurrences": 9,
+        "unresolved_occurrences": 1, "stale_selectors": 1, "historical_occurrences": 3
+      }},
+      "expected": {"examples/toolchainimpact:AssessImpact": {
+        "module_sha256": "sha256:module-d", "version": "1.27.3",
+        "active_occurrences": 10, "classified_occurrences": 9,
+        "unresolved_occurrences": 1, "stale_selectors": 1, "historical_occurrences": 3,
+        "classification_basis_points": 9000, "status": "ACTIVE_SCOPE_STALE"
+      }}
+    }
+  ]
+}

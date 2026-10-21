@@ -1,0 +1,71 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"examples/directmoduleimpact:AssessModuleProposal": {
+        "module_path": "github.com/kimjooyoon/gooo-jev", "current_version": "v0.1.0", "proposed_version": "v0.2.0",
+        "go_mod_sha256": "sha256:module", "policy_sha256": "sha256:policy", "plan_sha256": "sha256:plan-a",
+        "download_module_path": "github.com/kimjooyoon/gooo-jev", "download_version": "v0.2.0",
+        "download_ref": "0123456789012345678901234567890123456789", "module_sum": "h1:module",
+        "mod_sum": "h1:mod", "license_sha256": "sha256:license",
+        "current_pin_consistent": true, "origin_bound": true, "sums_bound": true, "license_bound": true,
+        "observed_outputs": 5, "unresolved_outputs": 0,
+        "scan_scope": "git-tracked-working-tree-regular-files/v1", "tracked_paths_sha256": "sha256:paths-a",
+        "tracked_files_scanned": 10, "tracked_reference_files": 4, "outside_reference_files": 0,
+        "historical_reference_files": 0,
+        "historical_writes": 0
+      }},
+      "expected": {"examples/directmoduleimpact:AssessModuleProposal": {
+        "module_path": "github.com/kimjooyoon/gooo-jev", "proposed_version": "v0.2.0",
+        "plan_sha256": "sha256:plan-a", "download_ref": "0123456789012345678901234567890123456789",
+        "observed_outputs": 5, "tracked_reference_files": 4, "outside_reference_files": 0,
+        "historical_reference_files": 0,
+        "status": "READY_FOR_DETACHED_PROJECTION"
+      }}
+    },
+    {
+      "inputs": {"examples/directmoduleimpact:AssessModuleProposal": {
+        "module_path": "github.com/kimjooyoon/gooo-jev", "current_version": "v0.1.0", "proposed_version": "v0.2.0",
+        "go_mod_sha256": "sha256:module", "policy_sha256": "sha256:policy", "plan_sha256": "sha256:plan-b",
+        "download_module_path": "github.com/kimjooyoon/gooo-jev", "download_version": "v0.2.0",
+        "download_ref": "0123456789012345678901234567890123456789", "module_sum": "h1:module",
+        "mod_sum": "h1:mod", "license_sha256": "sha256:license",
+        "current_pin_consistent": true, "origin_bound": false, "sums_bound": true, "license_bound": true,
+        "observed_outputs": 5, "unresolved_outputs": 0,
+        "scan_scope": "git-tracked-working-tree-regular-files/v1", "tracked_paths_sha256": "sha256:paths-b",
+        "tracked_files_scanned": 10, "tracked_reference_files": 4, "outside_reference_files": 0,
+        "historical_reference_files": 0,
+        "historical_writes": 0
+      }},
+      "expected": {"examples/directmoduleimpact:AssessModuleProposal": {
+        "module_path": "github.com/kimjooyoon/gooo-jev", "proposed_version": "v0.2.0",
+        "plan_sha256": "sha256:plan-b", "download_ref": "0123456789012345678901234567890123456789",
+        "observed_outputs": 5, "tracked_reference_files": 4, "outside_reference_files": 0,
+        "historical_reference_files": 0,
+        "status": "UPSTREAM_ORIGIN_UNRESOLVED"
+      }}
+    },
+    {
+      "inputs": {"examples/directmoduleimpact:AssessModuleProposal": {
+        "module_path": "github.com/kimjooyoon/gooo-decision-runtime", "current_version": "v0.1.0", "proposed_version": "v0.2.0",
+        "go_mod_sha256": "sha256:module", "policy_sha256": "sha256:policy", "plan_sha256": "sha256:plan-c",
+        "download_module_path": "github.com/kimjooyoon/gooo-decision-runtime", "download_version": "v0.2.0",
+        "download_ref": "0123456789012345678901234567890123456789", "module_sum": "h1:module",
+        "mod_sum": "h1:mod", "license_sha256": "sha256:license",
+        "current_pin_consistent": true, "origin_bound": true, "sums_bound": true, "license_bound": true,
+        "observed_outputs": 5, "unresolved_outputs": 0,
+        "scan_scope": "git-tracked-working-tree-regular-files/v1", "tracked_paths_sha256": "sha256:paths-c",
+        "tracked_files_scanned": 10, "tracked_reference_files": 5, "outside_reference_files": 1,
+        "historical_reference_files": 0,
+        "historical_writes": 0
+      }},
+      "expected": {"examples/directmoduleimpact:AssessModuleProposal": {
+        "module_path": "github.com/kimjooyoon/gooo-decision-runtime", "proposed_version": "v0.2.0",
+        "plan_sha256": "sha256:plan-c", "download_ref": "0123456789012345678901234567890123456789",
+        "observed_outputs": 5, "tracked_reference_files": 5, "outside_reference_files": 1,
+        "historical_reference_files": 0,
+        "status": "UNRESOLVED_OUTPUTS"
+      }}
+    }
+  ]
+}

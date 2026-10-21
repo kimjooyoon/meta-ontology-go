@@ -17,10 +17,16 @@ and source. The four platform archive checksums still enter the release bundle's
 
 The direct modules in this source revision are:
 
+<!-- RELEASE-PAYLOAD-MODULES:BEGIN -->
 | Module | Pinned source | License text SHA-256 |
 | --- | --- | --- |
 | `gooo-decision-runtime` | `v0.2.51-experimental` / `a1e755ba422faefda757d61c2fcd45e1d56453a9` | `3ad2cd8fe84a937a0005a2934e377432f2f86fe10ff86c4242cc48f49ebf4947` |
 | `gooo-jev` | `v0.0.0-20261019011127-aa4cc4ed706a` / `aa4cc4ed706a1ba4866fc5e6a8177b76bd9a7927` | `7e6da5f9095a021486d2c867ce56160223b414c31c5bf7c3f29212c429b4ac05` |
+<!-- RELEASE-PAYLOAD-MODULES:END -->
+
+The table is projected from `payload.gooo` with
+`go run ./scripts/release-payload-document -mode write`. The corresponding
+`-mode check` verifies that the committed table still matches the Gooo source.
 
 The release builder compares the policy with the checkout's direct `go.mod`
 requirements and the versions linked into the actual compiler binary. It reads

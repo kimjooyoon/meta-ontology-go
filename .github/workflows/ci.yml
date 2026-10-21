@@ -112,7 +112,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -123,9 +123,11 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Bind the declared Go 1.27 toolchain
+      - name: Bind the module-declared Go toolchain
         run: |
-          test "$(go env GOVERSION)" = "go1.27.3"
+          required_go="$(awk '$1 == "go" {language="go" $2} $1 == "toolchain" {toolchain=$2} END {if (toolchain != "") print toolchain; else print language}' go.mod)"
+          test -n "$required_go"
+          test "$(go env GOVERSION)" = "$required_go"
           go version
       - name: Require Go modernizers and module graph at a fixed point
         run: |
@@ -142,6 +144,9 @@ jobs:
           EXACT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
+          required_go="$(awk '$1 == "go" {language="go" $2} $1 == "toolchain" {toolchain=$2} END {if (toolchain != "") print toolchain; else print language}' go.mod)"
+          test -n "$required_go"
+          test "$(go env GOVERSION)" = "$required_go"
           remediation_root="$RUNNER_TEMP/go-format-remediation"
           paths="$remediation_root/gofmt-paths.txt"
           patch_a="$remediation_root/gofmt.patch"
@@ -227,7 +232,7 @@ jobs:
           jq -n \
             --arg schema gooo/go-format-remediation/v1 \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            --arg toolchain go1.27.3 \
+            --arg toolchain "$required_go" \
             --arg go_version "$(go version)" \
             --arg go_env_goversion "$(go env GOVERSION)" \
             --argjson paths "$paths_json" \
@@ -257,7 +262,7 @@ jobs:
           jq -e \
             --arg schema gooo/go-format-remediation/v1 \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            --arg toolchain go1.27.3 \
+            --arg toolchain "$required_go" \
             --argjson paths "$paths_json" \
             --arg path_count "$path_count" \
             --arg patch_sha256 "$patch_sha256" \
@@ -284,6 +289,9 @@ jobs:
           EXACT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
+          required_go="$(awk '$1 == "go" {language="go" $2} $1 == "toolchain" {toolchain=$2} END {if (toolchain != "") print toolchain; else print language}' go.mod)"
+          test -n "$required_go"
+          test "$(go env GOVERSION)" = "$required_go"
           remediation_root="$RUNNER_TEMP/go-format-remediation"
           paths="$remediation_root/gofmt-paths.txt"
           patch_a="$remediation_root/gofmt.patch"
@@ -295,7 +303,8 @@ jobs:
           test "$path_count" -ge 0
           jq -e \
             --arg head_sha "$EXACT_HEAD_SHA" \
-            '.head_sha == $head_sha and .toolchain == "go1.27.3" and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
+            --arg required_go "$required_go" \
+            '.head_sha == $head_sha and .toolchain == $required_go and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
             "$receipt" > /dev/null
           cmp -s "$patch_a" "$patch_b"
           cmp -s "$patch_a" "$patch_a_fixed"
@@ -331,7 +340,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -371,7 +380,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -411,7 +420,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -451,7 +460,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -498,7 +507,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -871,7 +880,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1031,7 +1040,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1394,7 +1403,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1740,7 +1749,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1874,7 +1883,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: true
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1919,7 +1928,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
