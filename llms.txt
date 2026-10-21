@@ -1,0 +1,23 @@
+# Gooo
+
+Gooo is an experimental source-owned ontology language. Its compiler reads
+`.gooo` declarations, builds a semantic representation, generates Go, and can
+execute finite examples. Begin with the pinned tutorial before using commands
+from a changing development branch.
+
+## Start and syntax
+
+- [First program, pinned compiler, install and execution](https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/getting-started.md): a complete local walkthrough with the matching Go toolchain.
+- [Language syntax and round-trip scope](https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/language/language-syntax-roundtrip.md): what the syntax corpus actually covers.
+- [Current released compiler notes](https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/releases/0.6.38-dev.md): release-specific scope and limits.
+
+## Agent and CI use
+
+- [JSON decisions and exit codes](https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/getting-started.md#use-results-from-an-agent-or-ci): keep process status and the receipt decision separate.
+- [Semantic context](https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/semantic-context.md): read a bounded source neighborhood for an agent.
+- [Diagnostic provenance](https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/language/language-diagnostic-provenance.md): connect diagnostics to their source origins.
+- [Go ecosystem observation and optional ADK bridge](https://github.com/kimjooyoon/meta-ontology-go/blob/main/docs/go-ecosystem-observation.md): use existing CI and Go signals without treating them as semantic proof.
+
+The links above target `main`. A development branch may contain newer examples;
+check `gooo version --build --json` and the source commit before applying a guide
+to another compiler build. A passing finite case describes only its stated scope.
