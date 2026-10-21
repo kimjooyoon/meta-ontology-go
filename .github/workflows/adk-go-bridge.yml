@@ -1,0 +1,30 @@
+name: ADK Go bridge
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - integrations/adk-go/**
+      - .github/workflows/adk-go-bridge.yml
+  push:
+    branches: [dev, main]
+    paths:
+      - integrations/adk-go/**
+      - .github/workflows/adk-go-bridge.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: integrations/adk-go/go.mod
+          cache-dependency-path: integrations/adk-go/go.sum
+      - name: Build optional ADK bridge
+        working-directory: integrations/adk-go
+        run: go build ./...
