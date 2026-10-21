@@ -44,6 +44,7 @@ type moduleDownload struct {
 	Sum        string `json:"sum"`
 	GoModSum   string `json:"go_mod_sum"`
 	LicenseSHA string `json:"license_sha256"`
+	dir        string
 }
 
 type moduleDecision struct {
@@ -84,32 +85,56 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 	default:
 		return DirectModuleImpact{}, fmt.Errorf("module is outside the Gooo release payload")
 	}
-	source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(directModuleSourcePath)))
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	source, paths, err := readAffectedSurfaces(ctx, root, module, licensePath)
 	if err != nil {
 		return DirectModuleImpact{}, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	surfacesInput, _ := json.Marshal([]any{map[string]any{"module_path": module}})
-	surfacesValue, err := bodycodegen.EvaluateFixedValue(ctx, directModuleSourcePath, source,
-		"RequiredSurfaces", surfacesInput)
-	if err != nil || surfacesValue.ActivityID != "urn:gooo:direct-module-impact:required-surfaces" {
-		return DirectModuleImpact{}, fmt.Errorf("Gooo affected surfaces cannot be replayed: %v", err)
+	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v1", Module: module,
+		CurrentVersion: current, ProposedVersion: proposed, Inputs: map[string]string{},
+		Outputs: paths[:5], Unresolved: []string{}}
+	if err := readImpactPreimages(root, paths, &result); err != nil {
+		return DirectModuleImpact{}, err
+	}
+	currentBound, currentDownload := observeCurrentModule(root, module, current, currentRef,
+		licensePath, m, &result)
+	originBound, sumsBound, licenseBound := observeProposedModule(module, proposed,
+		current, currentDownload, &result)
+	if err := assessDirectModule(ctx, source, policy, currentBound, originBound,
+		sumsBound, licenseBound, &result); err != nil {
+		return DirectModuleImpact{}, err
+	}
+	result.Provenance = directModuleProvenance(result)
+	return result, nil
+}
+
+func readAffectedSurfaces(ctx context.Context, root, module, licensePath string) ([]byte, []string, error) {
+	source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(directModuleSourcePath)))
+	if err != nil {
+		return nil, nil, err
+	}
+	input, _ := json.Marshal([]any{map[string]any{"module_path": module}})
+	value, err := bodycodegen.EvaluateFixedValue(ctx, directModuleSourcePath, source,
+		"RequiredSurfaces", input)
+	if err != nil || value.ActivityID != "urn:gooo:direct-module-impact:required-surfaces" ||
+		value.SourceSHA256 != payloadDigest(source) {
+		return nil, nil, fmt.Errorf("Gooo affected surfaces cannot be replayed: %v", err)
 	}
 	var surfaces affectedSurfaces
-	if err := json.Unmarshal(surfacesValue.Value, &surfaces); err != nil {
-		return DirectModuleImpact{}, err
+	if err := json.Unmarshal(value.Value, &surfaces); err != nil {
+		return nil, nil, err
 	}
 	if surfaces.GoMod != "go.mod" || surfaces.GoSum != "go.sum" ||
 		surfaces.Policy != payloadSourcePath || surfaces.License != licensePath ||
 		surfaces.Document != payloadDocumentPath {
-		return DirectModuleImpact{}, fmt.Errorf("Gooo affected surfaces do not match release payload structure")
+		return nil, nil, fmt.Errorf("Gooo affected surfaces do not match release payload structure")
 	}
-	paths := []string{surfaces.GoMod, surfaces.GoSum, surfaces.Policy,
-		surfaces.License, surfaces.Document, directModuleSourcePath}
-	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v1", Module: module,
-		CurrentVersion: current, ProposedVersion: proposed, Inputs: map[string]string{},
-		Outputs: paths[:5], Unresolved: []string{}}
+	return source, []string{surfaces.GoMod, surfaces.GoSum, surfaces.Policy,
+		surfaces.License, surfaces.Document, directModuleSourcePath}, nil
+}
+
+func readImpactPreimages(root string, paths []string, result *DirectModuleImpact) error {
 	for _, name := range paths {
 		info, statErr := os.Lstat(filepath.Join(root, filepath.FromSlash(name)))
 		if statErr != nil || !info.Mode().IsRegular() {
@@ -118,10 +143,15 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 		}
 		raw, readErr := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
 		if readErr != nil {
-			return DirectModuleImpact{}, readErr
+			return readErr
 		}
 		result.Inputs[name] = payloadDigest(raw)
 	}
+	return nil
+}
+
+func observeCurrentModule(root, module, current, currentRef, licensePath string,
+	m requiredMembers, result *DirectModuleImpact) (bool, moduleDownload) {
 	currentBound := verifyPayloadModules(root, m) == nil
 	currentBound = currentBound && currentRef != "" && result.Inputs[licensePath] != ""
 	currentDownload, currentErr := downloadModule(module, current)
@@ -152,13 +182,19 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 			result.Unresolved = append(result.Unresolved, "release document projection differs from Gooo payload")
 		}
 	}
+	return currentBound, currentDownload
+}
+
+func observeProposedModule(module, proposed, current string, currentDownload moduleDownload,
+	result *DirectModuleImpact) (bool, bool, bool) {
 	if proposed == current {
 		result.Download = currentDownload
 	} else {
-		result.Download, err = downloadModule(module, proposed)
+		download, err := downloadModule(module, proposed)
 		if err != nil {
 			result.Unresolved = append(result.Unresolved, "proposed module download: "+err.Error())
 		}
+		result.Download = download
 	}
 	originBound := result.Download.VCS == "git" && result.Download.SourceURL == "https://"+module &&
 		len(result.Download.Ref) == 40 && isHex(result.Download.Ref)
@@ -171,18 +207,23 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 	if !originBound || !sumsBound || !licenseBound {
 		result.Unresolved = append(result.Unresolved, "proposed origin, sums or license remains unbound")
 	}
+	return originBound, sumsBound, licenseBound
+}
+
+func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy,
+	currentBound, originBound, sumsBound, licenseBound bool, result *DirectModuleImpact) error {
 	core, err := json.Marshal(struct {
 		Module, Current, Proposed string
 		Inputs                    map[string]string
 		Download                  moduleDownload
-	}{module, current, proposed, result.Inputs, result.Download})
+	}{result.Module, result.CurrentVersion, result.ProposedVersion, result.Inputs, result.Download})
 	if err != nil {
-		return DirectModuleImpact{}, err
+		return err
 	}
 	result.PlanSHA256 = payloadDigest(core)
 	result.ObservedOutputs = len(result.Outputs) - unresolvedOutputs(result)
-	input := map[string]any{"module_path": module, "current_version": current,
-		"proposed_version": proposed, "go_mod_sha256": result.Inputs["go.mod"],
+	input := map[string]any{"module_path": result.Module, "current_version": result.CurrentVersion,
+		"proposed_version": result.ProposedVersion, "go_mod_sha256": result.Inputs["go.mod"],
 		"policy_sha256": policy.SourceSHA256, "plan_sha256": result.PlanSHA256,
 		"download_module_path": result.Download.Path, "download_version": result.Download.Version,
 		"download_ref": result.Download.Ref, "module_sum": result.Download.Sum,
@@ -193,26 +234,25 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 		"historical_writes": 0}
 	encoded, err := json.Marshal([]any{input})
 	if err != nil {
-		return DirectModuleImpact{}, err
+		return err
 	}
 	value, err := bodycodegen.EvaluateFixedValue(ctx, directModuleSourcePath, source,
 		"AssessModuleProposal", encoded)
 	if err != nil || value.ActivityID != directModuleActivityID ||
 		value.SourceSHA256 != result.Inputs[directModuleSourcePath] {
-		return DirectModuleImpact{}, fmt.Errorf("Gooo module decision source cannot be replayed: %v", err)
+		return fmt.Errorf("Gooo module decision source cannot be replayed: %v", err)
 	}
 	if err := json.Unmarshal(value.Value, &result.Decision); err != nil {
-		return DirectModuleImpact{}, err
+		return err
 	}
-	if result.Decision.ModulePath != module || result.Decision.ProposedVersion != proposed ||
+	if result.Decision.ModulePath != result.Module || result.Decision.ProposedVersion != result.ProposedVersion ||
 		result.Decision.PlanSHA256 != result.PlanSHA256 || result.Decision.ObservedOutputs != result.ObservedOutputs {
-		return DirectModuleImpact{}, fmt.Errorf("Gooo module decision differs from observed proposal")
+		return fmt.Errorf("Gooo module decision differs from observed proposal")
 	}
-	result.Provenance = directModuleProvenance(result)
-	return result, nil
+	return nil
 }
 
-func unresolvedOutputs(result DirectModuleImpact) int {
+func unresolvedOutputs(result *DirectModuleImpact) int {
 	n := 0
 	for _, name := range result.Outputs {
 		if result.Inputs[name] == "" {
@@ -286,7 +326,7 @@ func downloadModule(module, version string) (moduleDownload, error) {
 	}
 	result := moduleDownload{Path: observed.Path, Version: observed.Version,
 		VCS: observed.Origin.VCS, SourceURL: observed.Origin.URL,
-		Ref: observed.Origin.Hash, Sum: observed.Sum, GoModSum: observed.GoModSum}
+		Ref: observed.Origin.Hash, Sum: observed.Sum, GoModSum: observed.GoModSum, dir: observed.Dir}
 	licensePath := filepath.Join(observed.Dir, "LICENSE")
 	info, err := os.Lstat(licensePath)
 	if observed.Dir != "" && filepath.IsAbs(observed.Dir) && err == nil && info.Mode().IsRegular() {
