@@ -19,7 +19,7 @@ For example:
 ```sh
 go run ./scripts/direct-module-impact \
   -module github.com/kimjooyoon/gooo-jev \
-  -version v0.0.0-20261019011127-aa4cc4ed706a
+  -version '<exact-proposed-version>'
 ```
 
 The JSON includes `cochange_outputs`, their current SHA-256 preimages,
