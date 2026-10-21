@@ -24,6 +24,9 @@ go run ./cmd/gooo package execute --inputs /tmp/gooo-version-plan-inputs.json \
 go run ./cmd/gooo package execute --json --cases \
   examples/toolchain-version-impact/plan.cases.json \
   examples/toolchain-version-impact/plan.workspace.json
+# 미분류 소비 지점이 0인 별도 저장소나 이후 revision에서만 성공합니다.
+go run ./scripts/toolchain-version-impact --plan-version 1.27.4 \
+  --materialize-dir /tmp/gooo-version-candidate
 ```
 
 `go.mod`의 `go` 지시문이 관찰 버전의 기준입니다. 어댑터는 Git에 등록된 파일만
@@ -40,24 +43,31 @@ go run ./cmd/gooo package execute --json --cases \
 파일 원본 SHA-256, 관찰에 쓰인 구문 분류기 ID와 버전을 한 계획에 묶습니다. 나머지 표기는
 `unresolved`에 남습니다. [plan.gooo](plan.gooo)의 `AssessProjection`은
 후보 수와 관찰 수가 일치하고 미분류·중복 구간·과거 기록 수정이 없을 때만
-`READY_FOR_DETACHED_PROJECTION`을 반환합니다. 이 도구는 후보 파일을 아직
-만들거나 원본을 수정하지 않습니다. 따라서 현재 저장소의 12개 미분류 항목을
-해결하기 전에는 동시 수정이 허가되지 않습니다. 새 버전 문자열은 조사용
+`READY_FOR_DETACHED_PROJECTION`을 반환합니다. `--plan-version`만으로는 후보 파일을
+만들거나 원본을 수정하지 않습니다. `--materialize-dir`은 Gooo 소스를 실행해
+정확히 이 계획에 대한 `READY_FOR_DETACHED_PROJECTION`을 받았을 때만
+이미 존재하는 부모 아래의 새 디렉터리에 변경 파일과 영수증을 만듭니다.
+쓰기 직전에 전체 관찰과 각 파일 원본 해시를 다시 확인하고 원본 트리는 수정하지
+않습니다. 실패하면 생성 중인 후보 디렉터리를 지웁니다. 현재 저장소의 12개
+미분류 항목을 해결하기 전에는 이 동시 후보 생성이 거부됩니다. 새 버전 문자열은 조사용
 입력일 뿐 실제 릴리스 존재 여부를 검증하지 않습니다.
 `observation_sha256`은 직렬화된 관찰 기록의 해시입니다. `plan_core_sha256`은
 그 값을 포함하되 자기 자신의 해시 필드는 빈 문자열이고 `provenance`가 없는
 계획 본문의 해시입니다. Gooo 판단 입출력이 이 값을 그대로 전달합니다.
 구문 분류기 ID는 Go 어댑터의 관찰 방법을 식별하며, 아직 자동 수정 규칙의
 의미 ID가 아닙니다. 계획의 JSON-LD에는 실제 계획 생성 활동이 관찰 기록을 `prov:used`했고,
-계획을 `prov:wasGeneratedBy` 했다는 관계만 둡니다. 파일을 실제로 고치지
-않았으므로 후보 파일의 생성 관계는 주장하지 않습니다.
+계획을 `prov:wasGeneratedBy` 했다는 관계만 둡니다. 분리된 후보가 실제로
+만들어진 경우에만 그 영수증은 각 파일 입력·출력에 다른 ID를 부여하고,
+후보 생성 활동의 `prov:used`에 입력 파일·계획·Gooo 결정을 기록합니다.
+파일을 실제로 고치지 않았으면 후보 파일의 생성 관계를 주장하지 않습니다.
 
 초기 관찰(#1737)에서는 활성 표기 184건 중 분류 172건, 미분류 12건이었습니다.
 직전 체크아웃의 루트 `go.mod`를 참조하도록 `setup-go` 106곳을 바꾼 뒤에는
 활성 표기 78건 중 분류 66건, 미분류 12건입니다. Gooo는 현재
 `ACTIVE_SCOPE_UNRESOLVED`와 8,461/10,000을 반환합니다. 분모에서 106건이
 사라졌으므로 이 비율의 하락은 분류기 퇴보를 뜻하지 않습니다. 과거 Go 버전
-36건과 범위 밖의 현 버전 313건은 분모에 들어가지 않습니다. 숫자는 이 커밋의
+36건과 범위 밖의 현 버전 316건(이 변경에서 추가한 회귀 사례 4건 포함)은 분모에
+들어가지 않습니다. 숫자는 이 커밋의
 분류기와 저장소 상태에 대한 관찰이며, 모든 파일이 자동 수정 가능하다는 뜻이
 아닙니다. 네 개의 독립 입력 사례가
 완전·미분류·버전 불일치·모순 수치를 판정합니다.
