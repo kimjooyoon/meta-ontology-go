@@ -27,6 +27,19 @@ func TestClassifyOnlyExactSelectors(t *testing.T) {
 }
 
 func TestDetachedProjectionRequiresClosedSourceAndExactPreimages(t *testing.T) {
+	for _, key := range []string{"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"} {
+		previous, existed := os.LookupEnv(key)
+		if err := os.Unsetenv(key); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if existed {
+				_ = os.Setenv(key, previous)
+			} else {
+				_ = os.Unsetenv(key)
+			}
+		})
+	}
 	root := t.TempDir()
 	write := func(path, value string) {
 		t.Helper()
