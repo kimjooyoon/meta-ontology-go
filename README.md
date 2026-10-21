@@ -9,6 +9,7 @@ This repository contains its Go compiler. Source files use the `.gooo` extension
 **Start here:** the [pinned first program](docs/getting-started.md) works without a
 model. Agents and CI consumers should read the [JSON result and exit-code guide](docs/getting-started.md#use-results-from-an-agent-or-ci).
 The walkthrough pins 0.6.38-dev; each example records its own source and limits.
+For CI timing and optional ADK use, see [Go ecosystem observation](docs/go-ecosystem-observation.md).
 
 [![Go / Gooo physical lines: 565,085 / 5,564](https://img.shields.io/badge/Go%20%2F%20Gooo%20lines-565%2C085%20%2F%205%2C564-546e7a)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
 [![Gooo share of Go and Gooo physical lines: 0.98%](https://img.shields.io/badge/Gooo%20share-0.98%25-8e44ad)](docs/research/extension-cost-20261016.ko.md#소스-구성-배지)
