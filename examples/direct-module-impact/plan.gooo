@@ -1,0 +1,106 @@
+package directmoduleimpact
+namespace directmoduleimpact
+
+// Go observes the downloaded module and exact source preimages. Gooo decides
+// whether those observations close a detached direct-module change proposal.
+entity ModuleIdentity id "urn:gooo:direct-module-impact:identity" fields {
+    field module_path id "urn:gooo:direct-module-impact:identity:path" type string required one
+}
+
+entity AffectedSurfaces id "urn:gooo:direct-module-impact:surfaces" fields {
+    field go_mod id "urn:gooo:direct-module-impact:surfaces:go-mod" type string required one
+    field go_sum id "urn:gooo:direct-module-impact:surfaces:go-sum" type string required one
+    field policy id "urn:gooo:direct-module-impact:surfaces:policy" type string required one
+    field license id "urn:gooo:direct-module-impact:surfaces:license" type string required one
+    field document id "urn:gooo:direct-module-impact:surfaces:document" type string required one
+    field outside_readme id "urn:gooo:direct-module-impact:surfaces:outside-readme" type string required one
+    field outside_scalar_source id "urn:gooo:direct-module-impact:surfaces:outside-scalar-source" type string required one
+    field outside_scalar_model id "urn:gooo:direct-module-impact:surfaces:outside-scalar-model" type string required one
+}
+
+activity RequiredSurfaces(ModuleIdentity) -> AffectedSurfaces
+    id "urn:gooo:direct-module-impact:required-surfaces" computes `
+let license = "licenses/gooo-decision-runtime/LICENSE"
+let outsideReadme = "README.md"
+let outsideScalarSource = "docs/source-scalar-criteria.md"
+let outsideScalarModel = "docs/scalar-source-model.ko.md"
+if input.module_path == "github.com/kimjooyoon/gooo-jev" {
+    license = "licenses/gooo-jev/LICENSE"
+    outsideReadme = ""
+    outsideScalarSource = ""
+    outsideScalarModel = ""
+}
+return AffectedSurfaces{
+    go_mod: "go.mod", go_sum: "go.sum",
+    policy: "internal/meta/languagereadiness/toolchainrelease/payload.gooo",
+    license: license, document: "docs/language/release-payload-origins.md",
+    outside_readme: outsideReadme,
+    outside_scalar_source: outsideScalarSource,
+    outside_scalar_model: outsideScalarModel,
+}
+`
+
+entity ModuleProposal id "urn:gooo:direct-module-impact:proposal" fields {
+    field module_path id "urn:gooo:direct-module-impact:proposal:module" type string required one
+    field current_version id "urn:gooo:direct-module-impact:proposal:current" type string required one
+    field proposed_version id "urn:gooo:direct-module-impact:proposal:proposed" type string required one
+    field go_mod_sha256 id "urn:gooo:direct-module-impact:proposal:go-mod" type string required one
+    field policy_sha256 id "urn:gooo:direct-module-impact:proposal:policy" type string required one
+    field plan_sha256 id "urn:gooo:direct-module-impact:proposal:plan" type string required one
+    field download_module_path id "urn:gooo:direct-module-impact:proposal:download-path" type string required one
+    field download_version id "urn:gooo:direct-module-impact:proposal:download-version" type string required one
+    field download_ref id "urn:gooo:direct-module-impact:proposal:download-ref" type string required one
+    field module_sum id "urn:gooo:direct-module-impact:proposal:module-sum" type string required one
+    field mod_sum id "urn:gooo:direct-module-impact:proposal:mod-sum" type string required one
+    field license_sha256 id "urn:gooo:direct-module-impact:proposal:license" type string required one
+    field current_pin_consistent id "urn:gooo:direct-module-impact:proposal:current-pin" type boolean required one
+    field origin_bound id "urn:gooo:direct-module-impact:proposal:origin-bound" type boolean required one
+    field sums_bound id "urn:gooo:direct-module-impact:proposal:sums-bound" type boolean required one
+    field license_bound id "urn:gooo:direct-module-impact:proposal:license-bound" type boolean required one
+    field observed_outputs id "urn:gooo:direct-module-impact:proposal:outputs" type integer required one
+    field unresolved_outputs id "urn:gooo:direct-module-impact:proposal:unresolved" type integer required one
+    field historical_writes id "urn:gooo:direct-module-impact:proposal:historical" type integer required one
+}
+
+entity ModuleDecision id "urn:gooo:direct-module-impact:decision" fields {
+    field module_path id "urn:gooo:direct-module-impact:decision:module" type string required one
+    field proposed_version id "urn:gooo:direct-module-impact:decision:proposed" type string required one
+    field plan_sha256 id "urn:gooo:direct-module-impact:decision:plan" type string required one
+    field download_ref id "urn:gooo:direct-module-impact:decision:ref" type string required one
+    field observed_outputs id "urn:gooo:direct-module-impact:decision:outputs" type integer required one
+    field status id "urn:gooo:direct-module-impact:decision:status" type string required one
+}
+
+activity AssessModuleProposal(ModuleProposal) -> ModuleDecision
+    id "urn:gooo:direct-module-impact:assess" computes `
+let status = "READY_FOR_DETACHED_PROJECTION"
+if (input.module_path != "github.com/kimjooyoon/gooo-jev" &&
+    input.module_path != "github.com/kimjooyoon/gooo-decision-runtime") ||
+   input.current_version == "" || input.proposed_version == "" ||
+   input.go_mod_sha256 == "" || input.policy_sha256 == "" || input.plan_sha256 == "" ||
+   input.observed_outputs < 1 || input.unresolved_outputs < 0 || input.historical_writes < 0 {
+    status = "INVALID_OBSERVATION"
+} else if !input.current_pin_consistent {
+    status = "CURRENT_SOURCE_CONFLICT"
+} else if input.download_module_path != input.module_path ||
+        input.download_version != input.proposed_version ||
+        input.download_ref == "" || input.module_sum == "" || input.mod_sum == "" ||
+        input.license_sha256 == "" || !input.origin_bound || !input.sums_bound ||
+        !input.license_bound {
+    status = "UPSTREAM_ORIGIN_UNRESOLVED"
+} else if input.historical_writes > 0 {
+    status = "HISTORICAL_WRITE_CONFLICT"
+} else if input.unresolved_outputs > 0 {
+    status = "UNRESOLVED_OUTPUTS"
+} else if input.current_version == input.proposed_version {
+    status = "NO_VERSION_CHANGE"
+}
+return ModuleDecision{
+    module_path: input.module_path,
+    proposed_version: input.proposed_version,
+    plan_sha256: input.plan_sha256,
+    download_ref: input.download_ref,
+    observed_outputs: input.observed_outputs,
+    status: status,
+}
+`
