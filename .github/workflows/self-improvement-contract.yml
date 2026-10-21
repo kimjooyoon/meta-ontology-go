@@ -23,7 +23,7 @@ jobs:
 
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
 
       - name: Require exact Go toolchain
@@ -65,7 +65,7 @@ jobs:
 
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
 
       - name: Require exact Go toolchain
@@ -204,7 +204,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -273,7 +273,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -350,7 +350,7 @@ jobs:
 
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
 
       - name: Require exact Go toolchain
@@ -420,7 +420,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
       - name: Check generated assurance bindings
         run: go run ./cmd/language-assurance-witness/assurance-generator --check
       - name: Produce exact, changed, and mismatch receipts
@@ -464,7 +464,7 @@ jobs:
       - name: Install Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
 
       - name: Materialize and activate the logical workspace
@@ -546,7 +546,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -609,7 +609,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -683,7 +683,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -746,7 +746,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -813,7 +813,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -880,7 +880,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -944,7 +944,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -1013,7 +1013,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -1081,7 +1081,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize
@@ -1149,7 +1149,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         uses: ./.github/actions/materialize

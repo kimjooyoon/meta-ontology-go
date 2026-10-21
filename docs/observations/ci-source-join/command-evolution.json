@@ -9,8 +9,8 @@
       {
         "original_index": 0,
         "before_sha256": "1af7fc8c4e955b531a86201675cf50b8198d4a9ce97e72e254a73fc81f4add88",
-        "after_sha256": "55b1b9906fe30ff3ac0f18171ec7a2679645cc79f40266cb1337b5cc7f842988",
-        "operation": "bind_go_1_27_3_toolchain"
+        "after_sha256": "c4862fb74f9723bcf4ddb51774062c9dd6217e9ac89069b36b176e71e688cd2b",
+        "operation": "bind_module_declared_toolchain"
       },
       {
         "original_index": 1,
@@ -27,14 +27,14 @@
       {
         "original_index": 3,
         "before_sha256": "e78fa189671f42a895601b9caedae4d2e6e774930ec73294a361d6929f68cfa5",
-        "after_sha256": "c1f15162a7cf88a9808acf91cdd05a3ba8e6cf902528bd1d48f3c2c135fc0d1a",
-        "operation": "rebind_format_remediation_receipt_to_go_1_27_3"
+        "after_sha256": "29e162e7a44180e4e33774f2fc0fb87e8eb4a1ddabb8c6e0c4d412131820c724",
+        "operation": "rebind_format_remediation_receipt_to_module_toolchain"
       },
       {
         "original_index": 4,
         "before_sha256": "5a8e3debf706e36a457b7a319a1e8761cd6921670ef4faa12bbf81671765d054",
-        "after_sha256": "b6c3e70fd1cb823fc82975dd23c1f379e6d26fe1a87e64261641e7beec6cfb67",
-        "operation": "rebind_format_remediation_validation_to_go_1_27_3"
+        "after_sha256": "15c1b279a23ab3c2e4f71edcdfea630e918e8aee2180f03eefe9cbf382bb960c",
+        "operation": "rebind_format_remediation_validation_to_module_toolchain"
       }
     ],
     "evidence": [

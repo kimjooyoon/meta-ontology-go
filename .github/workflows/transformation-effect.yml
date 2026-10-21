@@ -52,7 +52,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
       - name: Check native Windows workspace sharing semantics
         if: matrix.goos == 'windows'
@@ -151,7 +151,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
 
       - name: Build isolated SplitGo subject
@@ -162,11 +162,9 @@ jobs:
           fixture="$work/fixture"
           output="$work/output"
           mkdir -p "$fixture" "$output"
-          cat > "$fixture/go.mod" <<'EOF'
-          module fixture
-
-          go 1.27.3
-          EOF
+          fixture_go="$(awk '$1 == "go" {print $2}' go.mod)"
+          test -n "$fixture_go"
+          printf 'module fixture\n\ngo %s\n' "$fixture_go" > "$fixture/go.mod"
           {
             echo 'package fixture'
             echo
@@ -239,7 +237,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
 
       - name: Select expected boundary decision
@@ -320,7 +318,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
       - uses: actions/download-artifact@v8
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
@@ -373,7 +371,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
       - name: Download exact meta artifacts
         uses: actions/download-artifact@v8
         with:
@@ -441,7 +439,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
       - name: Materialize exact logical workspace
         id: materialize
@@ -725,7 +723,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
       - name: Build and observe language syntax scope partition
         id: observe
         continue-on-error: true
@@ -951,7 +949,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
       - name: Assert causal workflows use the selected setup-go release
         shell: bash
         run: |
@@ -2450,7 +2448,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
       - name: Download exact functional CLI receipt
         uses: actions/download-artifact@v8
@@ -2544,7 +2542,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
       - name: Download exact guarded promotion receipt
         uses: actions/download-artifact@v8
         with:
@@ -2597,7 +2595,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
       - name: Generate fixed eligibility receipts
         shell: bash
@@ -2662,7 +2660,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
       - name: Fetch immutable external reference documents
         shell: bash
@@ -3011,7 +3009,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
       - name: Reduce fixed language delivery contract
         shell: bash
@@ -3054,7 +3052,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
       - name: Execute Gooo source and reduce fixed receipts
         shell: bash
@@ -3083,7 +3081,7 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
       - name: Download exact source execution artifact
         uses: actions/download-artifact@v8

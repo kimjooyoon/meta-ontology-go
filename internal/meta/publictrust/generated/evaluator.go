@@ -7,6 +7,7 @@ const (
 	PolicySourcePath   = "examples/public-trust-surface/main.gooo"
 	PolicySourceDigest = "0bb60582547d84a6528543d93f1af528502b90ce674d134a92d7548cd498182c"
 	EvaluatorDigest    = "6c2038d1d67d05cc9ffa5be737cc971a5389ece871bdd3532931f4d285628f36"
+	GoVersion          = "1.27.3"
 )
 
 type Badge struct {

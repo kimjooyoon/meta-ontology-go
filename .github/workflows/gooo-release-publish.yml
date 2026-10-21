@@ -67,7 +67,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
       - name: Bind and check the Gooo publication authority
         shell: bash
@@ -252,7 +252,7 @@ jobs:
       - name: Set up Go 1.27
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           # Downloaded release candidates must not populate reusable caches.
           cache: false
       - name: Build trusted witness before downloading release inputs

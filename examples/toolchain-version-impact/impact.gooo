@@ -1,0 +1,57 @@
+package toolchainimpact
+namespace toolchainimpact
+
+// The scanner supplies observations; this source owns the completeness decision.
+entity VersionImpact id "urn:gooo:toolchain-impact:observation" fields {
+    field module_sha256 id "urn:gooo:toolchain-impact:module-sha256" type string required one
+    field version id "urn:gooo:toolchain-impact:version" type string required one
+    field active_occurrences id "urn:gooo:toolchain-impact:active-occurrences" type integer required one
+    field classified_occurrences id "urn:gooo:toolchain-impact:classified-occurrences" type integer required one
+    field unresolved_occurrences id "urn:gooo:toolchain-impact:unresolved-occurrences" type integer required one
+    field stale_selectors id "urn:gooo:toolchain-impact:stale-selectors" type integer required one
+    field historical_occurrences id "urn:gooo:toolchain-impact:historical-occurrences" type integer required one
+}
+
+entity ImpactStatus id "urn:gooo:toolchain-impact:status" fields {
+    field module_sha256 id "urn:gooo:toolchain-impact:status:module-sha256" type string required one
+    field version id "urn:gooo:toolchain-impact:status:version" type string required one
+    field active_occurrences id "urn:gooo:toolchain-impact:status:active-occurrences" type integer required one
+    field classified_occurrences id "urn:gooo:toolchain-impact:status:classified-occurrences" type integer required one
+    field unresolved_occurrences id "urn:gooo:toolchain-impact:status:unresolved-occurrences" type integer required one
+    field stale_selectors id "urn:gooo:toolchain-impact:status:stale-selectors" type integer required one
+    field historical_occurrences id "urn:gooo:toolchain-impact:status:historical-occurrences" type integer required one
+    field classification_basis_points id "urn:gooo:toolchain-impact:status:basis-points" type integer required one
+    field status id "urn:gooo:toolchain-impact:status:decision" type string required one
+}
+
+// A complete inventory of the selected active scope is necessary before an edit
+// plan can be trusted. These counts do not authorize writes or CI omission.
+activity AssessImpact(VersionImpact) -> ImpactStatus id "urn:gooo:toolchain-impact:assess" computes `
+let status = "ACTIVE_SCOPE_CLASSIFIED"
+let basis = -1
+if input.module_sha256 == "" || input.version == "" ||
+   input.active_occurrences < 1 || input.classified_occurrences < 0 ||
+   input.unresolved_occurrences < 0 || input.stale_selectors < 0 ||
+   input.historical_occurrences < 0 ||
+   input.classified_occurrences > input.active_occurrences ||
+   input.unresolved_occurrences != input.active_occurrences - input.classified_occurrences ||
+   input.stale_selectors > input.unresolved_occurrences ||
+   input.classified_occurrences > 922337203685477 {
+    status = "INVALID_OBSERVATION"
+} else {
+    basis = input.classified_occurrences * 10000 / input.active_occurrences
+    if input.unresolved_occurrences > 0 { status = "ACTIVE_SCOPE_UNRESOLVED" }
+    if input.stale_selectors > 0 { status = "ACTIVE_SCOPE_STALE" }
+}
+return ImpactStatus{
+    module_sha256: input.module_sha256,
+    version: input.version,
+    active_occurrences: input.active_occurrences,
+    classified_occurrences: input.classified_occurrences,
+    unresolved_occurrences: input.unresolved_occurrences,
+    stale_selectors: input.stale_selectors,
+    historical_occurrences: input.historical_occurrences,
+    classification_basis_points: basis,
+    status: status,
+}
+`

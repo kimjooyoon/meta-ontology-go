@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/format"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -27,7 +28,7 @@ const (
 	ExpectedMetaRows         = 16
 	ExpectedActiveBadges     = 11
 	ExpectedCategoryCount    = 5
-	ExpectedGoVersion        = "1.27.3"
+	ExpectedGoVersion        = generatedpolicy.GoVersion
 	ExpectedRepositoryWrites = 0
 	ExpectedLocalTestRuns    = 0
 )
@@ -156,7 +157,8 @@ func Load(filename string, source []byte) (Policy, error) {
 	if err != nil {
 		return Policy{}, err
 	}
-	if policy.SourceDigest != generatedpolicy.PolicySourceDigest || policy.EvaluatorDigest != generatedpolicy.EvaluatorDigest {
+	if policy.SourceDigest != generatedpolicy.PolicySourceDigest || policy.EvaluatorDigest != generatedpolicy.EvaluatorDigest ||
+		policy.GoVersion != generatedpolicy.GoVersion {
 		return Policy{}, errors.New("public trust policy and generated evaluator digest differ")
 	}
 	rows := generatedpolicy.Rows()
@@ -372,8 +374,12 @@ func validatePolicy(policy Policy) error {
 	if len(policy.Rows) != ExpectedMetaRows {
 		return fmt.Errorf("public trust meta row count = %d, want %d", len(policy.Rows), ExpectedMetaRows)
 	}
-	if policy.GoVersion != ExpectedGoVersion || policy.RepositoryWrites != ExpectedRepositoryWrites || policy.LocalTestExecutions != ExpectedLocalTestRuns || policy.RootReadmeVisualPolicy != "preserve" {
+	if !regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`).MatchString(policy.GoVersion) ||
+		policy.RepositoryWrites != ExpectedRepositoryWrites || policy.LocalTestExecutions != ExpectedLocalTestRuns || policy.RootReadmeVisualPolicy != "preserve" {
 		return errors.New("public trust policy execution or root README boundary is not canonical")
+	}
+	if err := validateToolchainBadge(policy.Rows, policy.GoVersion); err != nil {
+		return err
 	}
 	if len(policy.CategoryDenominators) != ExpectedCategoryCount {
 		return fmt.Errorf("public trust category count = %d, want %d", len(policy.CategoryDenominators), ExpectedCategoryCount)
@@ -420,6 +426,27 @@ func validatePolicy(policy Policy) error {
 	return nil
 }
 
+func validateToolchainBadge(rows []Badge, version string) error {
+	goVersion := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`)
+	toolchainBadges := 0
+	for _, row := range rows {
+		if row.ID != "go-toolchain" {
+			continue
+		}
+		toolchainBadges++
+		for _, value := range []string{row.Claim, row.Semantics, row.ImageURL} {
+			versions := goVersion.FindAllString(value, -1)
+			if len(versions) != 1 || versions[0] != version {
+				return errors.New("public trust toolchain badge differs from Gooo version")
+			}
+		}
+	}
+	if toolchainBadges != 1 {
+		return errors.New("public trust toolchain badge is missing or duplicated")
+	}
+	return nil
+}
+
 func evaluatorDigest(rows []Badge) string {
 	var builder strings.Builder
 	builder.WriteString(Schema)
@@ -442,6 +469,7 @@ func renderGenerated(filename string, policy Policy) ([]byte, error) {
 	fmt.Fprintf(&builder, "\tPolicySourcePath = %q\n", filename)
 	fmt.Fprintf(&builder, "\tPolicySourceDigest = %q\n", policy.SourceDigest)
 	fmt.Fprintf(&builder, "\tEvaluatorDigest = %q\n", policy.EvaluatorDigest)
+	fmt.Fprintf(&builder, "\tGoVersion = %q\n", policy.GoVersion)
 	fmt.Fprintln(&builder, ")")
 	fmt.Fprintln(&builder)
 	fmt.Fprintln(&builder, "type Badge struct {")
