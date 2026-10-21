@@ -27,6 +27,8 @@ The JSON includes `cochange_outputs`, their current SHA-256 preimages,
 observation to source entities and the downloaded module. The decision's
 `gooo:cochangeScope` lists the paths that must move together. These are
 **planned** outputs; the graph does not claim that new files were generated.
+PROV-O relation values use JSON-LD `@id` node references, so consumers follow
+graph edges rather than string labels.
 
 The first measurable coverage is five observed surfaces out of five declared
 for each current direct module, with zero unresolved paths. Automatic

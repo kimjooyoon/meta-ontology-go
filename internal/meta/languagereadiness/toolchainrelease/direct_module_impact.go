@@ -380,10 +380,19 @@ func directModuleProvenance(result DirectModuleImpact) map[string]any {
 		used = append(used, moduleID)
 	}
 	activity := "urn:gooo:direct-module-impact:observation:" + result.PlanSHA256
-	graph = append(graph, map[string]any{"@id": activity, "@type": "prov:Activity", "prov:used": used})
+	graph = append(graph, map[string]any{"@id": activity, "@type": "prov:Activity",
+		"prov:used": provReferences(used)})
 	graph = append(graph, map[string]any{"@id": "urn:gooo:direct-module-impact:decision:" + result.PlanSHA256,
-		"@type": "prov:Entity", "prov:wasGeneratedBy": activity,
+		"@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activity},
 		"gooo:status": result.Decision.Status, "gooo:cochangeScope": result.Outputs})
 	return map[string]any{"@context": map[string]string{"prov": "http://www.w3.org/ns/prov#",
 		"gooo": "https://github.com/kimjooyoon/meta-ontology-go/ns#"}, "@graph": graph}
+}
+
+func provReferences(ids []string) []any {
+	references := make([]any, 0, len(ids))
+	for _, id := range ids {
+		references = append(references, map[string]string{"@id": id})
+	}
+	return references
 }
