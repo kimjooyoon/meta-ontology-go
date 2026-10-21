@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -271,8 +272,8 @@ func projectPayloadModuleFields(source []byte, before requiredMembers, module, v
 	projected := source
 	for _, item := range fields {
 		var err error
-		projected, err = replaceOne(projected, item.key+": \""+item.old+"\"",
-			item.key+": \""+item.next+"\"")
+		projected, err = replaceOne(projected, item.key+": "+strconv.Quote(item.old),
+			item.key+": "+strconv.Quote(item.next))
 		if err != nil {
 			return nil, requiredMembers{}, err
 		}
