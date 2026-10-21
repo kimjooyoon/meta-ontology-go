@@ -60,12 +60,15 @@ Gooo의 `compatibility-test-contract`, `workflow-go-version`, `go-toolchain` 배
 새 후보로 만들며,
 README에서는 배지 블록 밖의 내용을 보존합니다. 새 버전 문자열은 조사용
 입력일 뿐 실제 릴리스 존재 여부를 검증하지 않습니다.
+생성 대상 파일이 남아 있는데 원본 Gooo 선언의 현 버전 표기를 찾지 못한 경우에도
+규칙을 조용히 생략하지 않고 미해결 파생 대상으로 남겨 후보 생성을 거부합니다.
 `observation_sha256`은 직렬화된 관찰 기록의 해시입니다. `plan_core_sha256`은
 그 값을 포함하되 자기 자신의 해시 필드는 빈 문자열이고 `provenance`가 없는
 계획 본문의 해시입니다. Gooo 판단 입출력이 이 값을 그대로 전달합니다.
 구문 분류기 ID는 Go 어댑터의 관찰 방법을 식별하며, 아직 자동 수정 규칙의
 의미 ID가 아닙니다. 계획의 JSON-LD에는 실제 계획 생성 활동이 관찰 기록과
-해시로 식별한 `go.mod`를 `prov:used`했고, 계획을 `prov:wasGeneratedBy` 했다는
+해시로 식별한 `go.mod` 및 파생 대상의 변경 전 파일을 `prov:used`했고,
+계획을 `prov:wasGeneratedBy` 했다는
 관계를 둡니다. 분리된 후보가 실제로
 만들어진 경우에만 그 영수증은 각 파일 입력·출력에 다른 ID를 부여하고,
 후보 생성 활동의 `prov:used`에 입력 파일·계획·Gooo 결정을 기록합니다.

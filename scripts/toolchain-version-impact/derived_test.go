@@ -97,6 +97,73 @@ func TestMissingDerivedTargetHashKeepsPlanOpen(t *testing.T) {
 	}
 }
 
+func TestMissingDerivedSourceKeepsPlanOpen(t *testing.T) {
+	root := t.TempDir()
+	for path, data := range map[string]string{
+		"go.mod":                "module example.org/impact\n\ngo 1.27.3\n",
+		compatibilitySourcePath: "package observation\nnamespace observation\n",
+		compatibilityTargetPath: "// generated evaluator still exists\n",
+	} {
+		output := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(output), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(output, []byte(data), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	observed, err := scanPaths(root, []string{"go.mod", compatibilitySourcePath, compatibilityTargetPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := buildProjectionPlan(observed, "1.27.4")
+	if err != nil || len(plan.DerivedOutputs) != 1 || plan.UnresolvedDerivedOutputs != 1 {
+		t.Fatalf("orphaned derived output was not left unresolved: %+v, %v", plan, err)
+	}
+	rule := plan.DerivedOutputs[0]
+	if rule.SourcePath != compatibilitySourcePath || rule.SourceSHA256 != "" ||
+		rule.TargetPath != compatibilityTargetPath || rule.TargetSHA256 == "" {
+		t.Fatalf("orphaned output lost its source or target identity: %+v", rule)
+	}
+	var targetID string
+	for _, node := range plan.Provenance["@graph"].([]any) {
+		entity := node.(map[string]any)
+		if entity["gooo:path"] == compatibilitySourcePath {
+			t.Fatal("missing source was recorded as an observed PROV-O entity")
+		}
+		if entity["gooo:path"] == compatibilityTargetPath && entity["gooo:content_sha256"] == rule.TargetSHA256 {
+			targetID, _ = entity["@id"].(string)
+		}
+	}
+	if targetID == "" {
+		t.Fatal("observed target preimage was omitted from PROV-O")
+	}
+	usedTarget := false
+	for _, node := range plan.Provenance["@graph"].([]any) {
+		entity := node.(map[string]any)
+		for _, used := range asReferences(entity["prov:used"]) {
+			usedTarget = usedTarget || used == targetID
+		}
+	}
+	if !usedTarget {
+		t.Fatal("plan activity did not use the observed target preimage")
+	}
+}
+
+func asReferences(value any) []string {
+	items, ok := value.([]any)
+	if !ok {
+		return nil
+	}
+	references := make([]string, 0, len(items))
+	for _, item := range items {
+		if ref, ok := item.(map[string]string); ok {
+			references = append(references, ref["@id"])
+		}
+	}
+	return references
+}
+
 func derivedFixture(t *testing.T) (string, map[string][]byte, []derivedOutputRule) {
 	t.Helper()
 	root := t.TempDir()
