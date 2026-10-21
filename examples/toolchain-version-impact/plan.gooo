@@ -13,6 +13,8 @@ entity ProjectionRequest id "urn:gooo:toolchain-projection:request" fields {
     field unresolved_occurrences id "urn:gooo:toolchain-projection:request:unresolved" type integer required one
     field stale_selectors id "urn:gooo:toolchain-projection:request:stale" type integer required one
     field candidate_edits id "urn:gooo:toolchain-projection:request:candidates" type integer required one
+    field derived_outputs id "urn:gooo:toolchain-projection:request:derived-outputs" type integer required one
+    field unresolved_derived_outputs id "urn:gooo:toolchain-projection:request:unresolved-derived-outputs" type integer required one
     field overlapping_edits id "urn:gooo:toolchain-projection:request:overlaps" type integer required one
     field historical_writes id "urn:gooo:toolchain-projection:request:historical-writes" type integer required one
     field outside_scope_writes id "urn:gooo:toolchain-projection:request:outside-writes" type integer required one
@@ -24,6 +26,7 @@ entity ProjectionDecision id "urn:gooo:toolchain-projection:decision" fields {
     field current_version id "urn:gooo:toolchain-projection:decision:current" type string required one
     field next_version id "urn:gooo:toolchain-projection:decision:next" type string required one
     field candidate_edits id "urn:gooo:toolchain-projection:decision:candidates" type integer required one
+    field derived_outputs id "urn:gooo:toolchain-projection:decision:derived-outputs" type integer required one
     field status id "urn:gooo:toolchain-projection:decision:status" type string required one
 }
 
@@ -33,7 +36,8 @@ if input.module_sha256 == "" || input.plan_core_sha256 == "" ||
    input.current_version == "" || input.next_version == "" ||
    input.active_occurrences < 1 || input.classified_occurrences < 0 ||
    input.unresolved_occurrences < 0 || input.stale_selectors < 0 ||
-   input.candidate_edits < 0 || input.overlapping_edits < 0 ||
+   input.candidate_edits < 0 || input.derived_outputs < 0 || input.unresolved_derived_outputs < 0 ||
+   input.overlapping_edits < 0 ||
    input.historical_writes < 0 || input.outside_scope_writes < 0 ||
    input.classified_occurrences > input.active_occurrences ||
    input.unresolved_occurrences != input.active_occurrences - input.classified_occurrences ||
@@ -45,7 +49,8 @@ if input.module_sha256 == "" || input.plan_core_sha256 == "" ||
 } else if input.overlapping_edits > 0 || input.historical_writes > 0 ||
         input.outside_scope_writes > 0 {
     status = "PROJECTION_CONFLICT"
-} else if input.unresolved_occurrences > 0 || input.stale_selectors > 0 ||
+} else if input.unresolved_occurrences > 0 || input.unresolved_derived_outputs > 0 ||
+        input.stale_selectors > 0 ||
         input.candidate_edits != input.classified_occurrences {
     status = "UNRESOLVED_CONSUMERS"
 }
@@ -55,6 +60,7 @@ return ProjectionDecision{
     current_version: input.current_version,
     next_version: input.next_version,
     candidate_edits: input.candidate_edits,
+    derived_outputs: input.derived_outputs,
     status: status,
 }
 `

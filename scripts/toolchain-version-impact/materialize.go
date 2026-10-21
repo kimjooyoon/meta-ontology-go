@@ -22,6 +22,7 @@ type projectionDecision struct {
 	CurrentVersion string `json:"current_version"`
 	NextVersion    string `json:"next_version"`
 	CandidateEdits int    `json:"candidate_edits"`
+	DerivedOutputs int    `json:"derived_outputs"`
 	Status         string `json:"status"`
 }
 
@@ -36,10 +37,19 @@ type projectionReceipt struct {
 }
 
 type projectedFile struct {
-	Path         string `json:"path"`
-	InputSHA256  string `json:"input_sha256"`
-	OutputSHA256 string `json:"output_sha256"`
-	Edits        int    `json:"edits"`
+	Path               string `json:"path"`
+	InputSHA256        string `json:"input_sha256"`
+	OutputSHA256       string `json:"output_sha256"`
+	Edits              int    `json:"edits"`
+	DerivationRule     string `json:"derivation_rule,omitempty"`
+	SourcePath         string `json:"source_path,omitempty"`
+	SourceOutputSHA256 string `json:"source_output_sha256,omitempty"`
+}
+
+type candidateImage struct {
+	path string
+	data []byte
+	mode os.FileMode
 }
 
 // executeProjectionDecision runs the source-owned Gooo decision with the exact
@@ -104,11 +114,11 @@ func materializeCandidate(root, destination string, plan projectionPlan, decisio
 	if decision.Status != "READY_FOR_DETACHED_PROJECTION" ||
 		decision.ModuleSHA256 != plan.ModuleSHA256 || decision.PlanCoreSHA256 != plan.PlanCoreSHA256 ||
 		decision.CurrentVersion != plan.CurrentVersion || decision.NextVersion != plan.NextVersion ||
-		decision.CandidateEdits != len(plan.CandidateEdits) {
+		decision.CandidateEdits != len(plan.CandidateEdits) || decision.DerivedOutputs != len(plan.DerivedOutputs) {
 		return projectionReceipt{}, fmt.Errorf("Gooo did not authorize this exact projection: %s", decision.Status)
 	}
 	if plan.UnresolvedOccurrences != 0 || plan.StaleSelectors != 0 || plan.OverlappingEdits != 0 ||
-		plan.HistoricalWrites != 0 || plan.OutsideScopeWrites != 0 ||
+		plan.HistoricalWrites != 0 || plan.OutsideScopeWrites != 0 || plan.UnresolvedDerivedOutputs != 0 ||
 		len(plan.CandidateEdits) != plan.ActiveOccurrences || len(plan.CandidateEdits) == 0 {
 		return projectionReceipt{}, fmt.Errorf("projection has an open active scope")
 	}
@@ -150,14 +160,9 @@ func materializeCandidate(root, destination string, plan projectionPlan, decisio
 		paths = append(paths, path)
 	}
 	sort.Strings(paths)
-	type image struct {
-		path string
-		data []byte
-		mode os.FileMode
-	}
-	images := make([]image, 0, len(paths))
+	images := make([]candidateImage, 0, len(paths)+len(plan.DerivedOutputs))
 	receipt := projectionReceipt{Schema: "gooo/toolchain-detached-projection/v1",
-		Scope: "go.mod, tracked workflow YAML, and tracked Gooo source", OutsideScopeOccurrences: plan.OutsideScope,
+		Scope: "direct module/workflow/Gooo spans and declared Gooo-derived evaluator/badge outputs", OutsideScopeOccurrences: plan.OutsideScope,
 		PlanCoreSHA256: plan.PlanCoreSHA256, Decision: decision, Files: make([]projectedFile, 0, len(paths))}
 	decisionJSON, err := json.Marshal(decision)
 	if err != nil {
@@ -169,6 +174,7 @@ func materializeCandidate(root, destination string, plan projectionPlan, decisio
 		map[string]any{"@id": planID, "@type": "prov:Entity", "gooo:core_sha256": plan.PlanCoreSHA256},
 		map[string]any{"@id": decisionID, "@type": "prov:Entity", "gooo:content_sha256": digest(decisionJSON)},
 	}
+	projected := make(map[string][]byte, len(paths))
 	for _, path := range paths {
 		if !activePath(path) || filepath.Clean(path) != path || filepath.IsAbs(path) || strings.HasPrefix(path, "..") {
 			return projectionReceipt{}, fmt.Errorf("invalid projection path %q", path)
@@ -200,7 +206,8 @@ func materializeCandidate(root, destination string, plan projectionPlan, decisio
 			}
 			candidate = append(append(bytes.Clone(candidate[:edit.StartByte]), edit.After...), candidate[edit.EndByte:]...)
 		}
-		images = append(images, image{path, candidate, info.Mode().Perm()})
+		images = append(images, candidateImage{path, candidate, info.Mode().Perm()})
+		projected[path] = candidate
 		file := projectedFile{Path: path, InputSHA256: digest(original), OutputSHA256: digest(candidate), Edits: len(edits)}
 		receipt.Files = append(receipt.Files, file)
 		pathID := strings.TrimPrefix(digest([]byte(path)), "sha256:")
@@ -214,6 +221,11 @@ func materializeCandidate(root, destination string, plan projectionPlan, decisio
 			map[string]any{"@id": outputID, "@type": "prov:Entity", "gooo:path": path, "gooo:content_sha256": file.OutputSHA256,
 				"prov:wasGeneratedBy": map[string]string{"@id": activityID}, "prov:wasDerivedFrom": map[string]string{"@id": inputID}})
 	}
+	derivedImages, err := appendDerivedCandidates(rootAbs, plan, projected, planID, decisionID, &receipt, &graph)
+	if err != nil {
+		return projectionReceipt{}, err
+	}
+	images = append(images, derivedImages...)
 	receipt.Provenance = map[string]any{"@context": map[string]string{"prov": "http://www.w3.org/ns/prov#",
 		"gooo": "urn:gooo:toolchain-projection:vocab:"}, "@graph": graph}
 	if err := os.Mkdir(destAbs, 0o755); err != nil {
@@ -241,4 +253,9 @@ func materializeCandidate(root, destination string, plan projectionPlan, decisio
 		return projectionReceipt{}, err
 	}
 	return receipt, nil
+}
+
+func projectionOutputID(path, sha string) string {
+	return "urn:gooo:toolchain-projection:output:" + strings.TrimPrefix(digest([]byte(path)), "sha256:") +
+		":" + strings.TrimPrefix(sha, "sha256:")
 }
