@@ -30,12 +30,14 @@ observation to source entities and the downloaded module. The decision's
 PROV-O relation values use JSON-LD `@id` node references, so consumers follow
 graph edges rather than string labels.
 
-The first measurable coverage is five observed surfaces out of five declared
-for each current direct module, with zero unresolved paths. Automatic
-projection remains zero out of five. `NO_VERSION_CHANGE` is therefore the
-expected current-version result, not an upgrade success. A changed version
-can be `READY_FOR_DETACHED_PROJECTION` only after its origin is bound; the
-present command still writes no repository file.
+For the current `gooo-jev` pin, the first measurable coverage is five observed
+surfaces out of five declared, with zero unresolved paths. Its current-version
+decision is `NO_VERSION_CHANGE`. The decision runtime also has three active
+version references in the root README and scalar-source guides outside this
+five-file candidate. Their preimages are observed, and Gooo returns
+`UNRESOLVED_OUTPUTS` for a proposed runtime version. Historical release and
+observation records remain outside the write scope. Automatic projection is
+zero at this read-only stage; the command writes no repository file.
 
 The next step is a detached writer that consumes this exact plan, rechecks
 preimages, projects all five outputs, and records their new digests. Its

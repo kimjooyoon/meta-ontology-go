@@ -26,6 +26,7 @@ type DirectModuleImpact struct {
 	ProposedVersion  string            `json:"proposed_version"`
 	Inputs           map[string]string `json:"input_sha256"`
 	Outputs          []string          `json:"cochange_outputs"`
+	OutsideScope     []string          `json:"outside_scope_current_references"`
 	ObservedOutputs  int               `json:"observed_outputs"`
 	ProjectedOutputs int               `json:"projected_outputs"`
 	Unresolved       []string          `json:"unresolved"`
@@ -57,11 +58,14 @@ type moduleDecision struct {
 }
 
 type affectedSurfaces struct {
-	GoMod    string `json:"go_mod"`
-	GoSum    string `json:"go_sum"`
-	Policy   string `json:"policy"`
-	License  string `json:"license"`
-	Document string `json:"document"`
+	GoMod               string `json:"go_mod"`
+	GoSum               string `json:"go_sum"`
+	Policy              string `json:"policy"`
+	License             string `json:"license"`
+	Document            string `json:"document"`
+	OutsideReadme       string `json:"outside_readme"`
+	OutsideScalarSource string `json:"outside_scalar_source"`
+	OutsideScalarModel  string `json:"outside_scalar_model"`
 }
 
 // ObserveDirectModuleImpact makes a read-only co-change plan. The Go adapter
@@ -87,15 +91,18 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	source, paths, err := readAffectedSurfaces(ctx, root, module, licensePath)
+	source, paths, outside, err := readAffectedSurfaces(ctx, root, module, licensePath)
 	if err != nil {
 		return DirectModuleImpact{}, err
 	}
 	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v1", Module: module,
 		CurrentVersion: current, ProposedVersion: proposed, Inputs: map[string]string{},
-		Outputs: paths[:5], Unresolved: []string{}}
-	if err := readImpactPreimages(root, paths, &result); err != nil {
+		Outputs: paths[:5], OutsideScope: outside, Unresolved: []string{}}
+	if err := readImpactPreimages(root, append(paths, outside...), &result); err != nil {
 		return DirectModuleImpact{}, err
+	}
+	for _, name := range outside {
+		result.Unresolved = append(result.Unresolved, "active current reference outside candidate: "+name)
 	}
 	currentBound, currentDownload := observeCurrentModule(root, module, current, currentRef,
 		licensePath, m, &result)
@@ -109,29 +116,40 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 	return result, nil
 }
 
-func readAffectedSurfaces(ctx context.Context, root, module, licensePath string) ([]byte, []string, error) {
+func readAffectedSurfaces(ctx context.Context, root, module, licensePath string) ([]byte, []string, []string, error) {
 	source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(directModuleSourcePath)))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	input, _ := json.Marshal([]any{map[string]any{"module_path": module}})
 	value, err := bodycodegen.EvaluateFixedValue(ctx, directModuleSourcePath, source,
 		"RequiredSurfaces", input)
 	if err != nil || value.ActivityID != "urn:gooo:direct-module-impact:required-surfaces" ||
 		value.SourceSHA256 != payloadDigest(source) {
-		return nil, nil, fmt.Errorf("Gooo affected surfaces cannot be replayed: %v", err)
+		return nil, nil, nil, fmt.Errorf("Gooo affected surfaces cannot be replayed: %v", err)
 	}
 	var surfaces affectedSurfaces
 	if err := json.Unmarshal(value.Value, &surfaces); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	if surfaces.GoMod != "go.mod" || surfaces.GoSum != "go.sum" ||
 		surfaces.Policy != payloadSourcePath || surfaces.License != licensePath ||
 		surfaces.Document != payloadDocumentPath {
-		return nil, nil, fmt.Errorf("Gooo affected surfaces do not match release payload structure")
+		return nil, nil, nil, fmt.Errorf("Gooo affected surfaces do not match release payload structure")
+	}
+	outside := []string{}
+	if module == "github.com/kimjooyoon/gooo-decision-runtime" {
+		if surfaces.OutsideReadme != "README.md" ||
+			surfaces.OutsideScalarSource != "docs/source-scalar-criteria.md" ||
+			surfaces.OutsideScalarModel != "docs/scalar-source-model.ko.md" {
+			return nil, nil, nil, fmt.Errorf("Gooo active runtime references differ from observed structure")
+		}
+		outside = []string{surfaces.OutsideReadme, surfaces.OutsideScalarSource, surfaces.OutsideScalarModel}
+	} else if surfaces.OutsideReadme != "" || surfaces.OutsideScalarSource != "" || surfaces.OutsideScalarModel != "" {
+		return nil, nil, nil, fmt.Errorf("Gooo Jev scope contains unexpected active references")
 	}
 	return source, []string{surfaces.GoMod, surfaces.GoSum, surfaces.Policy,
-		surfaces.License, surfaces.Document, directModuleSourcePath}, nil
+		surfaces.License, surfaces.Document, directModuleSourcePath}, outside, nil
 }
 
 func readImpactPreimages(root string, paths []string, result *DirectModuleImpact) error {
@@ -215,13 +233,15 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 	core, err := json.Marshal(struct {
 		Module, Current, Proposed string
 		Inputs                    map[string]string
+		OutsideScope              []string
 		Download                  moduleDownload
-	}{result.Module, result.CurrentVersion, result.ProposedVersion, result.Inputs, result.Download})
+	}{result.Module, result.CurrentVersion, result.ProposedVersion,
+		result.Inputs, result.OutsideScope, result.Download})
 	if err != nil {
 		return err
 	}
 	result.PlanSHA256 = payloadDigest(core)
-	result.ObservedOutputs = len(result.Outputs) - unresolvedOutputs(result)
+	result.ObservedOutputs = len(result.Outputs) - missingDeclaredOutputs(result)
 	input := map[string]any{"module_path": result.Module, "current_version": result.CurrentVersion,
 		"proposed_version": result.ProposedVersion, "go_mod_sha256": result.Inputs["go.mod"],
 		"policy_sha256": policy.SourceSHA256, "plan_sha256": result.PlanSHA256,
@@ -253,14 +273,19 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 }
 
 func unresolvedOutputs(result *DirectModuleImpact) int {
-	n := 0
-	for _, name := range result.Outputs {
-		if result.Inputs[name] == "" {
+	n := missingDeclaredOutputs(result) + len(result.OutsideScope)
+	for _, reason := range result.Unresolved {
+		if reason == "release document projection differs from Gooo payload" {
 			n++
 		}
 	}
-	for _, reason := range result.Unresolved {
-		if reason == "release document projection differs from Gooo payload" {
+	return n
+}
+
+func missingDeclaredOutputs(result *DirectModuleImpact) int {
+	n := 0
+	for _, name := range result.Outputs {
+		if result.Inputs[name] == "" {
 			n++
 		}
 	}
@@ -384,7 +409,8 @@ func directModuleProvenance(result DirectModuleImpact) map[string]any {
 		"prov:used": provReferences(used)})
 	graph = append(graph, map[string]any{"@id": "urn:gooo:direct-module-impact:decision:" + result.PlanSHA256,
 		"@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activity},
-		"gooo:status": result.Decision.Status, "gooo:cochangeScope": result.Outputs})
+		"gooo:status": result.Decision.Status, "gooo:cochangeScope": result.Outputs,
+		"gooo:outsideScope": result.OutsideScope})
 	return map[string]any{"@context": map[string]string{"prov": "http://www.w3.org/ns/prov#",
 		"gooo": "https://github.com/kimjooyoon/meta-ontology-go/ns#"}, "@graph": graph}
 }
