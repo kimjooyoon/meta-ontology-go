@@ -127,7 +127,7 @@ func writeDirectModuleCandidate(root, destination string, impact DirectModuleImp
 			os.RemoveAll(dest)
 		}
 	}()
-	result := DirectModuleCandidate{Schema: "gooo/direct-module-detached-projection/v2",
+	result := DirectModuleCandidate{Schema: "gooo/direct-module-detached-projection/v3",
 		PlanSHA256: impact.PlanSHA256, Decision: impact.Decision,
 		ProjectedOutputs: len(impact.Outputs), Files: []DirectModuleProjectedFile{},
 		Verification: "candidate_file_bytes", BuildStatus: "not_run", Application: "not_applied"}

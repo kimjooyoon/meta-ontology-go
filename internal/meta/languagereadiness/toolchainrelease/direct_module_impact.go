@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -28,6 +29,9 @@ type DirectModuleImpact struct {
 	Inputs            map[string]string `json:"input_sha256"`
 	Outputs           []string          `json:"cochange_outputs"`
 	OutsideScope      []string          `json:"outside_scope_current_references"`
+	HistoricalScope   []string          `json:"historical_current_references"`
+	ArchiveHead       string            `json:"archive_head_commit"`
+	ArchiveRoots      []string          `json:"historical_roots"`
 	ScanScope         string            `json:"reference_scan_scope"`
 	TrackedPathsSHA   string            `json:"tracked_paths_sha256"`
 	TrackedFiles      int               `json:"tracked_files_scanned"`
@@ -63,6 +67,7 @@ type moduleDecision struct {
 	ObservedOutputs int    `json:"observed_outputs"`
 	ReferenceFiles  int    `json:"tracked_reference_files"`
 	OutsideFiles    int    `json:"outside_reference_files"`
+	HistoricalFiles int    `json:"historical_reference_files"`
 	Status          string `json:"status"`
 }
 
@@ -102,9 +107,9 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 	if err != nil {
 		return DirectModuleImpact{}, err
 	}
-	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v2", Module: module,
+	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v3", Module: module,
 		CurrentVersion: current, ProposedVersion: proposed, Inputs: map[string]string{},
-		Outputs: paths[:5], OutsideScope: []string{}, Unresolved: []string{}}
+		Outputs: paths[:5], OutsideScope: []string{}, HistoricalScope: []string{}, Unresolved: []string{}}
 	if err := readImpactPreimages(root, paths, &result); err != nil {
 		return DirectModuleImpact{}, err
 	}
@@ -231,14 +236,17 @@ func observeProposedModule(module, proposed, current string, currentDownload mod
 func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy,
 	currentBound, originBound, sumsBound, licenseBound bool, result *DirectModuleImpact) error {
 	core, err := json.Marshal(struct {
-		Module, Current, Proposed    string
-		Inputs                       map[string]string
-		OutsideScope                 []string
-		ScanScope, TrackedPathsSHA   string
-		TrackedFiles, ReferenceFiles int
-		Download                     moduleDownload
+		Module, Current, Proposed     string
+		Inputs                        map[string]string
+		OutsideScope, HistoricalScope []string
+		ArchiveHead                   string
+		ArchiveRoots                  []string
+		ScanScope, TrackedPathsSHA    string
+		TrackedFiles, ReferenceFiles  int
+		Download                      moduleDownload
 	}{result.Module, result.CurrentVersion, result.ProposedVersion,
-		result.Inputs, result.OutsideScope, result.ScanScope, result.TrackedPathsSHA,
+		result.Inputs, result.OutsideScope, result.HistoricalScope,
+		result.ArchiveHead, result.ArchiveRoots, result.ScanScope, result.TrackedPathsSHA,
 		result.TrackedFiles, result.ReferenceFiles, result.Download})
 	if err != nil {
 		return err
@@ -255,10 +263,11 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 		"sums_bound": sumsBound, "license_bound": licenseBound,
 		"observed_outputs": result.ObservedOutputs, "unresolved_outputs": unresolvedOutputs(result),
 		"scan_scope": result.ScanScope, "tracked_paths_sha256": result.TrackedPathsSHA,
-		"tracked_files_scanned":   result.TrackedFiles,
-		"tracked_reference_files": result.ReferenceFiles,
-		"outside_reference_files": len(result.OutsideScope),
-		"historical_writes":       0}
+		"tracked_files_scanned":      result.TrackedFiles,
+		"tracked_reference_files":    result.ReferenceFiles,
+		"outside_reference_files":    len(result.OutsideScope),
+		"historical_reference_files": len(result.HistoricalScope),
+		"historical_writes":          0}
 	encoded, err := json.Marshal([]any{input})
 	if err != nil {
 		return err
@@ -276,6 +285,9 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 		result.Decision.PlanSHA256 != result.PlanSHA256 || result.Decision.ObservedOutputs != result.ObservedOutputs ||
 		result.Decision.ReferenceFiles != result.ReferenceFiles ||
 		result.Decision.OutsideFiles != len(result.OutsideScope) {
+		return fmt.Errorf("Gooo module decision differs from observed proposal")
+	}
+	if result.Decision.HistoricalFiles != len(result.HistoricalScope) {
 		return fmt.Errorf("Gooo module decision differs from observed proposal")
 	}
 	return nil
@@ -400,8 +412,16 @@ func directModuleProvenance(result DirectModuleImpact) map[string]any {
 	for _, name := range paths {
 		digest := result.Inputs[name]
 		id := repositoryFileID(name, digest)
-		graph = append(graph, map[string]any{"@id": id, "@type": "prov:Entity",
-			"gooo:path": name, "gooo:sha256": digest})
+		file := map[string]any{"@id": id, "@type": "prov:Entity",
+			"gooo:path": name, "gooo:sha256": digest}
+		if slices.Contains(result.HistoricalScope, name) {
+			headID := "urn:gooo:committed-file:" + result.ArchiveHead + ":" + url.PathEscape(name)
+			graph = append(graph, map[string]any{"@id": headID, "@type": "prov:Entity",
+				"gooo:commit": result.ArchiveHead, "gooo:path": name, "gooo:sha256": digest})
+			file["prov:wasDerivedFrom"] = map[string]string{"@id": headID}
+			file["gooo:referenceRole"] = "historical"
+		}
+		graph = append(graph, file)
 		used = append(used, id)
 	}
 	if result.Download.Path != "" {
@@ -422,7 +442,10 @@ func directModuleProvenance(result DirectModuleImpact) map[string]any {
 	graph = append(graph, map[string]any{"@id": "urn:gooo:direct-module-impact:decision:" + result.PlanSHA256,
 		"@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activity},
 		"gooo:status": result.Decision.Status, "gooo:cochangeScope": result.Outputs,
-		"gooo:outsideScope": result.OutsideScope})
+		"gooo:outsideScope":      result.OutsideScope,
+		"gooo:historicalScope":   result.HistoricalScope,
+		"gooo:archiveHeadCommit": result.ArchiveHead,
+		"gooo:archiveRoots":      result.ArchiveRoots})
 	return map[string]any{"@context": map[string]string{"prov": "http://www.w3.org/ns/prov#",
 		"gooo": "https://github.com/kimjooyoon/meta-ontology-go/ns#"}, "@graph": graph}
 }
