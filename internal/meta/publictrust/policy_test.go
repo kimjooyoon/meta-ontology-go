@@ -3,6 +3,7 @@ package publictrust
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -30,5 +31,23 @@ func TestCanonicalPolicyBindsGeneratedRows(t *testing.T) {
 	block := RenderBadgeBlock(policy)
 	if !strings.Contains(block, "#### Security / Supply Chain") || strings.Contains(block, "Scorecard") || strings.Contains(block, "Branch protection") {
 		t.Fatalf("rendered block contains an unavailable or refuted badge: %s", block)
+	}
+}
+
+func TestNewGoooToolchainBadgeCanRegenerateEvaluator(t *testing.T) {
+	source, err := os.ReadFile(filepath.Join("..", "..", "..", CanonicalPolicyPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := strings.ReplaceAll(string(source), ExpectedGoVersion, "1.99.1")
+	if changed == string(source) {
+		t.Fatal("Gooo toolchain badge version was not found")
+	}
+	policy, generated, err := GenerateNamed(CanonicalPolicyPath, []byte(changed))
+	if err != nil || policy.GoVersion != "1.99.1" || !regexp.MustCompile(`(?m)^\s*GoVersion\s*=\s*"1\.99\.1"$`).Match(generated) {
+		t.Fatalf("new Gooo badge did not project into Go: %v", err)
+	}
+	if _, err := Load(CanonicalPolicyPath, []byte(changed)); err == nil {
+		t.Fatal("new source bypassed committed evaluator regeneration")
 	}
 }

@@ -157,7 +157,7 @@ func materializeCandidate(root, destination string, plan projectionPlan, decisio
 	}
 	images := make([]image, 0, len(paths))
 	receipt := projectionReceipt{Schema: "gooo/toolchain-detached-projection/v1",
-		Scope: "go.mod and tracked .github/workflows YAML only", OutsideScopeOccurrences: plan.OutsideScope,
+		Scope: "go.mod, tracked workflow YAML, and tracked Gooo source", OutsideScopeOccurrences: plan.OutsideScope,
 		PlanCoreSHA256: plan.PlanCoreSHA256, Decision: decision, Files: make([]projectedFile, 0, len(paths))}
 	decisionJSON, err := json.Marshal(decision)
 	if err != nil {
