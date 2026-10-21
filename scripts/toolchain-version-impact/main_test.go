@@ -212,6 +212,23 @@ func TestProjectionPlanBindsExactSpansAndLeavesUnknownOpen(t *testing.T) {
 	if plan.ObservationSHA256 == "" || plan.PlanCoreSHA256 == "" || plan.Provenance["@graph"] == nil {
 		t.Fatalf("plan lacks bound observation and provenance: %+v", plan)
 	}
+	graph := plan.Provenance["@graph"].([]any)
+	moduleID := "urn:gooo:toolchain-projection:module:" + plan.ModuleSHA256
+	moduleFound, moduleUsed := false, false
+	for _, node := range graph {
+		entity := node.(map[string]any)
+		if entity["@id"] == moduleID {
+			moduleFound = entity["gooo:path"] == "go.mod" && entity["gooo:content_sha256"] == plan.ModuleSHA256
+		}
+		if used, ok := entity["prov:used"].([]any); ok {
+			for _, ref := range used {
+				moduleUsed = moduleUsed || ref.(map[string]string)["@id"] == moduleID
+			}
+		}
+	}
+	if !moduleFound || !moduleUsed {
+		t.Fatal("plan did not identify and use the exact module source")
+	}
 	for _, edit := range plan.CandidateEdits {
 		data, err := os.ReadFile(filepath.Join(root, edit.Path))
 		if err != nil {
