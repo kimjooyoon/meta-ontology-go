@@ -24,6 +24,10 @@ func checkTypesWithStandard(root, logical string, fset *token.FileSet, file *ast
 	if err != nil {
 		return typeEvidence{}, err
 	}
+	owner, err := sourceModuleRoot(root, logical)
+	if err != nil {
+		return typeEvidence{}, fail("derive-recipe", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
+	}
 	info := &types.Info{
 		Defs:       map[*ast.Ident]types.Object{},
 		Uses:       map[*ast.Ident]types.Object{},
@@ -32,7 +36,7 @@ func checkTypesWithStandard(root, logical string, fset *token.FileSet, file *ast
 		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
 	typeErrors := make([]error, 0)
-	configuration := types.Config{Importer: newModuleImporterWithStandard(root, standard), Error: func(err error) {
+	configuration := types.Config{Importer: newModuleImporterWithStandard(owner, standard), Error: func(err error) {
 		if err != nil {
 			typeErrors = append(typeErrors, err)
 		}

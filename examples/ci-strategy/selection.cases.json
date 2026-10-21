@@ -1,0 +1,42 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"examples/cistrategy:SelectPlan": {
+        "goal_id": "gooo://ci-strategy/example/goal", "baseline_run": "example-baseline-run",
+        "baseline_ms": 180000, "minimum_gain_ms": 3000,
+        "required_checks_sha256": "sha256:example-six-checks",
+        "plan_ids": ["gooo://ci-strategy/example/plan/one", "gooo://ci-strategy/example/plan/two"],
+        "assumption_ids": ["gooo://ci-strategy/example/assumption/one", "gooo://ci-strategy/example/assumption/two"],
+        "expected_ms": [160000, 150000],
+        "checks_sha256": ["sha256:example-six-checks", "sha256:example-six-checks"],
+        "scope_closed": [true, true]
+      }},
+      "expected": {"examples/cistrategy:SelectPlan": {
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "selected_plan_id": "gooo://ci-strategy/example/plan/two",
+        "state": "PROPOSED_FOR_EXPERIMENT", "expected_gain_ms": 30000,
+        "option_count": 2, "eligible_count": 2,
+        "execution_authorized": false
+      }}
+    },
+    {
+      "inputs": {"examples/cistrategy:SelectPlan": {
+        "goal_id": "gooo://ci-strategy/example/goal", "baseline_run": "example-baseline-run",
+        "baseline_ms": 180000, "minimum_gain_ms": 3000,
+        "required_checks_sha256": "sha256:example-six-checks",
+        "plan_ids": ["gooo://ci-strategy/example/plan/one", "gooo://ci-strategy/example/plan/two"],
+        "assumption_ids": ["gooo://ci-strategy/example/assumption/one", "gooo://ci-strategy/example/assumption/two"],
+        "expected_ms": [179000, 178000],
+        "checks_sha256": ["sha256:example-six-checks", "sha256:example-six-checks"],
+        "scope_closed": [true, true]
+      }},
+      "expected": {"examples/cistrategy:SelectPlan": {
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "selected_plan_id": "", "state": "REJECTED_LOW_VALUE_OR_OPEN_SCOPE",
+        "expected_gain_ms": 0, "option_count": 2, "eligible_count": 0,
+        "execution_authorized": false
+      }}
+    }
+  ]
+}
