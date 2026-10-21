@@ -1100,17 +1100,6 @@
       "ordered_collections": true
     },
     {
-      "id": "recorded-local-use-retention",
-      "path": "examples/recorded-use-origins/retention.gooo",
-      "context_sources": ["examples/recorded-use-origins/inspect.gooo"],
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax",
-      "scope": "LANGUAGE_CAPABILITY",
-      "ordered_collections": true
-    },
-    {
       "id": "source-control-source",
       "path": "examples/source-control-reader/source.gooo",
       "kind": "VALID",

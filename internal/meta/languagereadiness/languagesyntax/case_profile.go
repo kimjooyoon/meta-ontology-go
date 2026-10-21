@@ -9,9 +9,6 @@ import (
 // ValidProfileSelection keeps explicit profile identities separate from legacy
 // flag routes. A request cannot silently combine two parser configurations.
 func ValidProfileSelection(definition CaseDefinition) bool {
-	if len(definition.ContextSources) > 0 && (!definition.OrderedCollections || definition.EntityFields || definition.ImplicitActivityPorts || definition.EntityFieldsProfile != "") {
-		return false
-	}
 	if definition.EntityFieldsProfile == "" {
 		return true
 	}
@@ -28,9 +25,6 @@ func ReplayCase(repository fs.FS, definition CaseDefinition) replay.Result {
 			definition.ExpectedDiagnostic, definition.EntityFieldsProfile)
 	}
 	if definition.OrderedCollections {
-		if len(definition.ContextSources) > 0 {
-			return replay.ExecuteWithOrderedCollectionsAndContext(repository, definition.Path, definition.ContextSources, definition.Kind, definition.ExpectedDiagnostic)
-		}
 		return replay.ExecuteWithOrderedCollections(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
 	}
 	if definition.ImplicitActivityPorts {
