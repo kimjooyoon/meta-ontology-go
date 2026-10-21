@@ -1,0 +1,185 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 32,
+          "dropped_uses": 0,
+          "frames_dropped": 0,
+          "writes_dropped": 0,
+          "selected_offset": 15,
+          "selected_rows": 1
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 32,
+          "dropped_uses": 0,
+          "attempted_uses": 32,
+          "retention_basis_points": 10000,
+          "selected_offset": 15,
+          "page_complete": false,
+          "other_origins_dropped": false,
+          "status": "RECORDED_USE_RETENTION"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 32,
+          "dropped_uses": 8,
+          "frames_dropped": 2,
+          "writes_dropped": 0,
+          "selected_offset": 15,
+          "selected_rows": 1
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 32,
+          "dropped_uses": 8,
+          "attempted_uses": 40,
+          "retention_basis_points": 8000,
+          "selected_offset": 15,
+          "page_complete": false,
+          "other_origins_dropped": true,
+          "status": "PARTIAL_USE_RETENTION"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 32,
+          "dropped_uses": 0,
+          "frames_dropped": 0,
+          "writes_dropped": 0,
+          "selected_offset": 33,
+          "selected_rows": 1
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": -1,
+          "dropped_uses": -1,
+          "attempted_uses": -1,
+          "retention_basis_points": -1,
+          "selected_offset": 33,
+          "page_complete": false,
+          "other_origins_dropped": false,
+          "status": "INVALID_INPUT"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 32,
+          "dropped_uses": 9223372036854775807,
+          "frames_dropped": 0,
+          "writes_dropped": 0,
+          "selected_offset": 15,
+          "selected_rows": 1
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": -1,
+          "dropped_uses": -1,
+          "attempted_uses": -1,
+          "retention_basis_points": -1,
+          "selected_offset": 15,
+          "page_complete": false,
+          "other_origins_dropped": false,
+          "status": "INVALID_INPUT"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 1,
+          "dropped_uses": 0,
+          "frames_dropped": 0,
+          "writes_dropped": 0,
+          "selected_offset": 0,
+          "selected_rows": 1
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 1,
+          "dropped_uses": 0,
+          "attempted_uses": 1,
+          "retention_basis_points": 10000,
+          "selected_offset": 0,
+          "page_complete": true,
+          "other_origins_dropped": false,
+          "status": "RECORDED_USE_RETENTION"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 65536,
+          "dropped_uses": 110064,
+          "frames_dropped": 0,
+          "writes_dropped": 1,
+          "selected_offset": 0,
+          "selected_rows": 1
+        }
+      },
+      "expected": {
+        "origin/recordeduse:ComputeRetention": {
+          "receipt_sha256": "sha256:a15f33ca09f99265aa9b838dcd4628a9dd74a8b77dcff93e1156241738a5441a",
+          "source_sha256": "sha256:7d629ed28da4b6f755e929fc9eaafddff89e40c42f51973f2c31cc47dabbc325",
+          "journal_sha256": "sha256:817d322b3fbc537a3f08d4523ff8eb1a25743bb5295f72c7acbdabba0b6bb060",
+          "retained_uses": 65536,
+          "dropped_uses": 110064,
+          "attempted_uses": 175600,
+          "retention_basis_points": 3732,
+          "selected_offset": 0,
+          "page_complete": false,
+          "other_origins_dropped": true,
+          "status": "PARTIAL_USE_RETENTION"
+        }
+      }
+    }
+  ]
+}
