@@ -41,7 +41,7 @@ activity RequiredActiveVersionRules(ModuleIdentity) -> ActiveVersionRules
 if input.module_path == "github.com/kimjooyoon/gooo-decision-runtime" {
     return ActiveVersionRules{
         paths: []string{"README.md", "docs/scalar-source-model.ko.md", "docs/source-scalar-criteria.md"},
-        prefixes: []string{"The development source pins **Go SDK ", "이 변경을 포함한 개발 소스는 SDK `", "artifact from SDK\n`"},
+        prefixes: []string{"The development source pins **Go SDK ", "이 변경을 포함한 개발 소스는 SDK ", "artifact from SDK "},
         rule_ids: []string{"urn:gooo:direct-module-impact:rule:live-readme-sdk",
             "urn:gooo:direct-module-impact:rule:live-scalar-source-sdk",
             "urn:gooo:direct-module-impact:rule:live-scalar-criteria-sdk"},
