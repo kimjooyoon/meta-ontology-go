@@ -34,7 +34,7 @@ func observeTrackedModuleReferences(ctx context.Context, root, current string,
 		declared[name] = true
 	}
 	seen := make(map[string]bool)
-	for _, item := range bytes.Split(listing[:len(listing)-1], []byte{0}) {
+	for item := range bytes.SplitSeq(listing[:len(listing)-1], []byte{0}) {
 		name := string(item)
 		if name == "" || seen[name] || path.IsAbs(name) || path.Clean(name) != name ||
 			name == ".." || strings.HasPrefix(name, "../") || strings.Contains(name, "\\") {
