@@ -268,16 +268,26 @@ func unresolvedOutputs(result *DirectModuleImpact) int {
 }
 
 func hasModuleSumPair(raw []byte, module, version string, download moduleDownload) bool {
-	full, mod := false, false
+	full, mod := 0, 0
 	for line := range strings.SplitSeq(string(raw), "\n") {
 		fields := strings.Fields(line)
 		if len(fields) != 3 || fields[0] != module {
 			continue
 		}
-		full = full || fields[1] == version && fields[2] == download.Sum
-		mod = mod || fields[1] == version+"/go.mod" && fields[2] == download.GoModSum
+		if fields[1] == version {
+			if fields[2] != download.Sum {
+				return false
+			}
+			full++
+		}
+		if fields[1] == version+"/go.mod" {
+			if fields[2] != download.GoModSum {
+				return false
+			}
+			mod++
+		}
 	}
-	return full && mod
+	return full == 1 && mod == 1
 }
 
 func isHex(value string) bool {
@@ -312,6 +322,13 @@ func downloadModule(module, version string) (moduleDownload, error) {
 	command.Dir = dir
 	raw, err := command.Output()
 	if err != nil {
+		if failed, ok := err.(*exec.ExitError); ok && len(failed.Stderr) != 0 {
+			detail := strings.TrimSpace(string(failed.Stderr))
+			if len(detail) > 300 {
+				detail = detail[:300]
+			}
+			return moduleDownload{}, fmt.Errorf("go mod download failed: %s", detail)
+		}
 		return moduleDownload{}, fmt.Errorf("go mod download failed: %w", err)
 	}
 	var observed struct {
