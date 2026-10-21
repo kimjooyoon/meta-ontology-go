@@ -107,7 +107,7 @@ func projectDirectModuleImages(before map[string][]byte, members requiredMembers
 		payloadSourcePath: policyAfter, impact.Outputs[3]: newLicense,
 		payloadDocumentPath: docAfter}
 	for _, rule := range impact.ActiveRules {
-		projected, err := replaceOne(before[rule.Path], rule.Prefix+impact.CurrentVersion,
+		projected, err := replaceOne(after[rule.Path], rule.Prefix+impact.CurrentVersion,
 			rule.Prefix+impact.ProposedVersion)
 		if err != nil {
 			return nil, fmt.Errorf("active Gooo rule %s: %w", rule.ID, err)

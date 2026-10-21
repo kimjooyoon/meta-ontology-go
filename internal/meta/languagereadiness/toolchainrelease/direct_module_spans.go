@@ -87,10 +87,18 @@ func observePlanVersionMentions(root string, result *DirectModuleImpact) error {
 // An output document is closed only when every current-version occurrence has
 // one source-owned role. A preserved span remains fixed across future upgrades.
 func observeDocumentSpans(root string, result *DirectModuleImpact) error {
+	byPath := map[string][]activeVersionRule{}
 	for _, active := range result.ActiveRules {
-		raw, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(active.Path)))
-		if err != nil || payloadDigest(raw) != result.Inputs[active.Path] {
-			return fmt.Errorf("active document preimage changed: %s", active.Path)
+		byPath[active.Path] = append(byPath[active.Path], active)
+	}
+	for _, name := range result.Outputs {
+		activeRules := byPath[name]
+		if len(activeRules) == 0 {
+			continue
+		}
+		raw, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
+		if err != nil || payloadDigest(raw) != result.Inputs[name] {
+			return fmt.Errorf("active document preimage changed: %s", name)
 		}
 		owned := map[int]bool{}
 		claim := func(prefix, version, id string) {
@@ -108,9 +116,11 @@ func observeDocumentSpans(root string, result *DirectModuleImpact) error {
 			}
 			owned[offset] = true
 		}
-		claim(active.Prefix, result.CurrentVersion, active.ID)
+		for _, active := range activeRules {
+			claim(active.Prefix, result.CurrentVersion, active.ID)
+		}
 		for _, preserved := range result.PreservedSpans {
-			if preserved.Path == active.Path {
+			if preserved.Path == name {
 				claim(preserved.Prefix, preserved.Version, preserved.ID)
 			}
 		}
@@ -123,7 +133,7 @@ func observeDocumentSpans(root string, result *DirectModuleImpact) error {
 			offset += index
 			if !owned[offset] {
 				result.Unresolved = append(result.Unresolved,
-					fmt.Sprintf("current version span has no Gooo role: %s:%d", active.Path, offset))
+					fmt.Sprintf("current version span has no Gooo role: %s:%d", name, offset))
 			}
 			offset += len(version)
 		}

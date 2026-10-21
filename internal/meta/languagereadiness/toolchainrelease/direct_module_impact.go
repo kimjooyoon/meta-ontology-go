@@ -183,8 +183,15 @@ func readAffectedSurfaces(ctx context.Context, root, module, licensePath string)
 		return nil, nil, nil, err
 	}
 	paths := pathsForRules(surfaces)
+	seenPaths := map[string]bool{}
+	for _, name := range paths {
+		seenPaths[name] = true
+	}
 	for _, rule := range rules {
-		paths = append(paths, rule.Path)
+		if !seenPaths[rule.Path] {
+			paths = append(paths, rule.Path)
+			seenPaths[rule.Path] = true
+		}
 	}
 	return source, append(paths, directModuleSourcePath), rules, nil
 }
@@ -210,7 +217,7 @@ func readActiveVersionRules(ctx context.Context, source []byte, module string,
 		len(declared.Paths) > 16 {
 		return nil, fmt.Errorf("Gooo active version rule columns are inconsistent")
 	}
-	seenPaths, seenIDs := map[string]bool{}, map[string]bool{}
+	seenPaths, seenSpans, seenIDs := map[string]bool{}, map[string]bool{}, map[string]bool{}
 	for _, name := range basePaths {
 		seenPaths[name] = true
 	}
@@ -221,11 +228,12 @@ func readActiveVersionRules(ctx context.Context, source []byte, module string,
 			path.IsAbs(name) || path.Clean(name) != name ||
 			strings.HasPrefix(name, "../") || strings.Contains(name, "\\") ||
 			seenPaths[name] || prefix == "" || len(prefix) > 256 ||
+			seenSpans[name+"\x00"+prefix] ||
 			!strings.HasPrefix(id, "urn:gooo:direct-module-impact:rule:") ||
 			strings.ContainsAny(id, " \t\r\n") || seenIDs[id] {
 			return nil, fmt.Errorf("Gooo active version rule has an invalid or repeated source identity")
 		}
-		seenPaths[name], seenIDs[id] = true, true
+		seenSpans[name+"\x00"+prefix], seenIDs[id] = true, true
 		rules = append(rules, activeVersionRule{Path: name, Prefix: prefix, ID: id})
 	}
 	return rules, nil

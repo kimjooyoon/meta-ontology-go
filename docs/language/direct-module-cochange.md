@@ -58,8 +58,10 @@ Gooo. The byte projector replaces only `prefix + current version` with
 `prefix + proposed version` after checking a unique match and unchanged file
 preimage. The README's older SDK study link stays as it was. Each candidate
 output derives from its original bytes and the Gooo rule entity.
-The rule columns can express further unique current-version spans without a
-new Go replacement function for each document.
+The rule columns can express further unique current-version spans, including
+several in one document, without a new Go replacement function for each span.
+The observer closes all declared roles for that document together, while the
+candidate writes the document once after applying its rules in source order.
 The README also has a preserved SDK study link. Gooo declares that link's
 prefix, fixed release version and stable rule ID separately from the live pin.
 For every document with a live rule, the observer checks each occurrence of the
