@@ -181,6 +181,22 @@ func scanPaths(root string, paths []string) (report, error) {
 		fileHash := digest(data)
 		lineStart := 0
 		for lineNumber, line := range strings.Split(string(data), "\n") {
+			var goooSites []goooVersionSite
+			if strings.HasSuffix(path, ".gooo") {
+				goooSites = declaredGoooVersions(line)
+				for _, site := range goooSites {
+					if site.Version == version {
+						continue
+					}
+					result.StaleSelectors++
+					result.ActiveOccurrences++
+					result.UnresolvedOccurrences++
+					result.Occurrences = append(result.Occurrences, occurrence{
+						Path: path, Line: lineNumber + 1, Role: "stale_gooo_consumer", SHA256: fileHash,
+						StartByte: lineStart + site.Start, EndByte: lineStart + site.End,
+					})
+				}
+			}
 			if activePath(path) {
 				if selected, ok := selectorVersion(path, line); ok && selected != version {
 					result.StaleSelectors++
@@ -214,7 +230,17 @@ func scanPaths(root string, paths []string) (report, error) {
 			}
 			role, classified := classify(path, line, version, len(matches))
 			for _, match := range matches {
-				start := lineStart + match[0] + strings.Index(line[match[0]:match[1]], version)
+				localStart := match[0] + strings.Index(line[match[0]:match[1]], version)
+				start := lineStart + localStart
+				if strings.HasSuffix(path, ".gooo") {
+					role, classified = "gooo_unclassified", false
+					for _, site := range goooSites {
+						if site.Start == localStart && site.Valid {
+							role, classified = site.Role, true
+							break
+						}
+					}
+				}
 				result.ActiveOccurrences++
 				if classified {
 					result.ClassifiedOccurrences++
@@ -351,7 +377,7 @@ func trackedPaths(root string) ([]string, error) {
 }
 
 func activePath(path string) bool {
-	return path == "go.mod" || strings.HasPrefix(path, ".github/workflows/") &&
+	return path == "go.mod" || strings.HasSuffix(path, ".gooo") || strings.HasPrefix(path, ".github/workflows/") &&
 		(strings.HasSuffix(path, ".yml") || strings.HasSuffix(path, ".yaml"))
 }
 

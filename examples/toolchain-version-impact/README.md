@@ -24,19 +24,23 @@ go run ./cmd/gooo package execute --inputs /tmp/gooo-version-plan-inputs.json \
 go run ./cmd/gooo package execute --json --cases \
   examples/toolchain-version-impact/plan.cases.json \
   examples/toolchain-version-impact/plan.workspace.json
-# 미분류 소비 지점이 0인 별도 저장소나 이후 revision에서만 성공합니다.
+# 활성 범위의 미분류 소비 지점이 0일 때만 성공합니다.
 go run ./scripts/toolchain-version-impact --plan-version 1.27.4 \
   --materialize-dir /tmp/gooo-version-candidate
 ```
 
 `go.mod`의 `go` 지시문이 관찰 버전의 기준입니다. 어댑터는 Git에 등록된 파일만
-읽고 파일 해시, 경로, 줄과 분류를 출력합니다. 현재 첫 범위는 `go.mod`와
-`.github/workflows/*.yml|*.yaml`입니다. `go-version` 또는 `GOTOOLCHAIN`의 값으로
+읽고 파일 해시, 경로, 줄과 분류를 출력합니다. 현재 활성 범위는 `go.mod`,
+`.github/workflows/*.yml|*.yaml`, 추적 중인 `.gooo` 소스입니다.
+`go-version` 또는 `GOTOOLCHAIN`의 값으로
 정확히 표기된 한 건, 모듈 지시문과 정확한 Go 버전 검사식을 **분류됨**으로 봅니다.
-그 밖의 실행 명령·검사식·설명 문구는 **unresolved**로 남깁니다. 예제·스크립트·문서의
-현 버전 표기는 **outside scope**로 따로 셉니다. `docs/releases/`의 다른 Go 버전은
+Gooo의 `compatibility-test-contract`, `workflow-go-version`, `go-toolchain` 배지 행도
+필드 구조와 버전 일치 여부를 확인한 뒤 분류합니다. 그 밖의 실행 명령·검사식·설명 문구는
+**unresolved**로 남깁니다. Go 코드·테스트·문서의 현 버전 표기는 **outside scope**로
+따로 셉니다. `docs/releases/`의 다른 Go 버전은
 과거 기록으로 세되 현재 변경 대상으로 간주하지 않습니다.
-현행 모듈과 다른 버전을 선택하는 워크플로 값은 **stale selector**로 별도 표시합니다.
+현행 모듈과 다른 버전을 선택하는 워크플로 값과 Gooo 필드 값은 **stale selector**로
+별도 표시합니다.
 분류됨은 구문을 식별했다는 뜻이며, 생성이나 출처 관계가 입증됐다는 뜻은 아닙니다.
 
 `--plan-version`은 분류된 표기의 정확한 바이트 구간, 변경 전후 값,
@@ -66,9 +70,11 @@ go run ./scripts/toolchain-version-impact --plan-version 1.27.4 \
 직전 체크아웃의 루트 `go.mod`를 참조하도록 `setup-go` 106곳을 바꾼 뒤에는
 활성 표기 78건 중 분류 66건, 미분류 12건이었습니다. 현재는 실행 기대값·영수증·
 테스트용 모듈도 `go.mod`에서 읽도록 바꾸어 활성 표기 62건 중 분류 62건,
-미분류 0건입니다. Gooo의 활성 범위 분류율은 10,000/10,000입니다.
+미분류 0건이었습니다. Gooo 소스의 현행 도구체인 선언을 편입한 뒤에는 활성 표기
+66건 중 분류 66건, 미분류 0건입니다. 활성 범위 분류율은 10,000/10,000입니다.
 이는 구문 발견률이며 자동 수정의 전역 완전성을 뜻하지 않습니다. 과거 Go 버전
-36건과 범위 밖의 현 버전 316건은 분모에 들어가지 않습니다. 숫자는 이 커밋의
+36건과 범위 밖의 현 버전 표기는 분모에 들어가지 않습니다. 해당 수는 테스트·문서
+변경에도 움직이므로 보고서의 `outside_scope_occurrences`로 확인합니다. 숫자는 이 커밋의
 분류기와 저장소 상태에 대한 관찰이며, 모든 파일이 자동 수정 가능하다는 뜻이
 아닙니다. 네 개의 독립 입력 사례가
 완전·미분류·버전 불일치·모순 수치를 판정합니다.
@@ -89,9 +95,13 @@ go run ./scripts/toolchain-version-impact --plan-version 1.27.4 \
    관찰된 읽기와 실제 쓰기에 대한 PROV-O 관계만 기록합니다.
 
 현재 `1.27.4`라는 가상 다음 버전의 분리 후보를 생성하면, Gooo가 승인한 계획에서
-29개 파일의 62개 정확한 구간이 한 번에 투영됩니다. 이 수는 실제 버전 출시나
+30개 파일의 66개 정확한 구간이 한 번에 투영됩니다. 두 Gooo 소스도 같은 후보에
+포함되며, 후보의 Gooo 구문 검사는 통과했습니다. 이 수는 실제 버전 출시나
 업그레이드 성공을 의미하지 않습니다. CI·스크립트·외부 설정까지 닫힌 영향 범위를
 증명한 것도 아닙니다. 뒤이어 후보 빌드·검사와 범위 밖 영향 확인이 필요합니다.
+두 Gooo 정책의 Go 상수는 생성된 평가기의 값에서 읽도록 바뀌었으므로 실제 전환 시
+후보 소스에서 평가기를 다시 생성해야 합니다. 공개 배지의 README 표현도 같은
+소스에서 다시 투영하고 검증해야 합니다.
 
 미래 비용을 미리 지불할 가치가 있는지는 다음 전환부터 실측합니다. 한 전환에 대해
 `발견된 대상/실제 영향 대상`, `미분류 건수`, `원본 해시 충돌`, `후보 생성 시간`,

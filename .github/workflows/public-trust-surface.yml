@@ -47,7 +47,9 @@ jobs:
         env:
           SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          test "$(go env GOVERSION)" = "go1.27.3"
+          required_go="$(awk '$1 == "go" {language="go" $2} $1 == "toolchain" {toolchain=$2} END {if (toolchain != "") print toolchain; else print language}' go.mod)"
+          test -n "$required_go"
+          test "$(go env GOVERSION)" = "$required_go"
           test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
           test "$(git status --porcelain)" = ""
       - name: Execute lowered policy and emit evidence
@@ -56,7 +58,10 @@ jobs:
           output="$RUNNER_TEMP/public-trust-surface"
           go test ./internal/meta/publictrust
           go run ./scripts/public-trust-surface -mode verify -readme README.md -output-dir "$output"
-          jq -e '
+          required_go="$(awk '$1 == "go" {language="go" $2} $1 == "toolchain" {toolchain=$2} END {if (toolchain != "") print toolchain; else print language}' go.mod)"
+          test -n "$required_go"
+          jq -e --arg required_go "${required_go#go}" '
+            .policy.go_version == $required_go and
             .summary.badge_category_count == 5 and
             .summary.total_active_badges == 11 and
             .summary.meta_rows_bound == 16 and

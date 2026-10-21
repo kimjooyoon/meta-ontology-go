@@ -7,6 +7,7 @@ const (
 	PolicySourcePath   = "examples/self-improvement-observation/observation.gooo"
 	PolicySourceDigest = "c3b9c550ca19d6ce1099b2de2d956d1992389e8aa54110ae55c60715f7154588"
 	EvaluatorDigest    = "4fd8ed8b5f497030be3006c9ad6519d25cf7bfbb90a6234932d091c56a62497f"
+	TestContract       = "go1.27.3|go test ./...|go test -race ./..."
 )
 
 type DecisionCase struct {

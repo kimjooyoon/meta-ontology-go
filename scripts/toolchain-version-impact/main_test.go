@@ -26,20 +26,70 @@ func TestClassifyOnlyExactSelectors(t *testing.T) {
 	}
 }
 
-func TestDetachedProjectionRequiresClosedSourceAndExactPreimages(t *testing.T) {
-	for _, key := range []string{"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"} {
-		previous, existed := os.LookupEnv(key)
-		if err := os.Unsetenv(key); err != nil {
+func TestGoooToolchainDeclarationsJoinDetachedProjection(t *testing.T) {
+	clearGitTestEnvironment(t)
+	root := t.TempDir()
+	write := func(path, source string) {
+		t.Helper()
+		full := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() {
-			if existed {
-				_ = os.Setenv(key, previous)
-			} else {
-				_ = os.Unsetenv(key)
-			}
-		})
+		if err := os.WriteFile(full, []byte(source), 0o644); err != nil {
+			t.Fatal(err)
+		}
 	}
+	contract := `activity Receipt computes "role=compatibility;compatibility-test-contract=go1.27.3|go test ./...|go test -race ./..."`
+	badge := `activity Badge computes "role=public;workflow-go-version=1.27.3;badge-row=go-toolchain|Language|Go 1.27.3 toolchain|Uses Go 1.27.3|https://example.org/Go-1.27.3-blue|CLOSED"`
+	write("go.mod", "module example.org/impact\n\ngo 1.27.3\n")
+	write("contract.gooo", contract)
+	write("badge.gooo", badge)
+	paths := []string{"badge.gooo", "contract.gooo", "go.mod"}
+	for _, args := range [][]string{{"init", "-q"}, {"add", "go.mod", "contract.gooo", "badge.gooo"}} {
+		command := exec.Command("git", args...)
+		command.Dir = root
+		if output, err := command.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, output)
+		}
+	}
+	observed, err := scanPaths(root, paths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if observed.ActiveOccurrences != 6 || observed.ClassifiedOccurrences != 6 || observed.UnresolvedOccurrences != 0 {
+		t.Fatalf("Gooo declarations did not join the source-bound set: %+v", observed)
+	}
+	plan, err := buildProjectionPlan(observed, "1.27.4")
+	if err != nil || len(plan.CandidateEdits) != 6 {
+		t.Fatalf("missing Gooo projection edits: %+v, %v", plan, err)
+	}
+	decision := projectionDecision{ModuleSHA256: plan.ModuleSHA256, PlanCoreSHA256: plan.PlanCoreSHA256,
+		CurrentVersion: plan.CurrentVersion, NextVersion: plan.NextVersion,
+		CandidateEdits: len(plan.CandidateEdits), Status: "READY_FOR_DETACHED_PROJECTION"}
+	parent := t.TempDir()
+	receipt, err := materializeCandidate(root, filepath.Join(parent, "candidate"), plan, decision)
+	if err != nil || len(receipt.Files) != 3 {
+		t.Fatalf("Gooo sources were not projected together: %+v, %v", receipt, err)
+	}
+	for _, path := range paths {
+		data, err := os.ReadFile(filepath.Join(parent, "candidate", path))
+		if err != nil || strings.Contains(string(data), "1.27.3") || !strings.Contains(string(data), "1.27.4") {
+			t.Fatalf("candidate did not update %s: %v", path, err)
+		}
+		original, err := os.ReadFile(filepath.Join(root, path))
+		if err != nil || !strings.Contains(string(original), "1.27.3") {
+			t.Fatalf("source was changed at %s: %v", path, err)
+		}
+	}
+	write("badge.gooo", strings.Replace(badge, "Go-1.27.3-blue", "Go-1.27.2-blue", 1))
+	stale, err := scanPaths(root, paths)
+	if err != nil || stale.StaleSelectors != 1 || stale.UnresolvedOccurrences == 0 {
+		t.Fatalf("mixed Gooo versions were not left unresolved: %+v, %v", stale, err)
+	}
+}
+
+func TestDetachedProjectionRequiresClosedSourceAndExactPreimages(t *testing.T) {
+	clearGitTestEnvironment(t)
 	root := t.TempDir()
 	write := func(path, value string) {
 		t.Helper()
@@ -146,6 +196,23 @@ func TestDetachedProjectionRequiresClosedSourceAndExactPreimages(t *testing.T) {
 	openDecision.CandidateEdits = len(openPlan.CandidateEdits)
 	if _, err := materializeCandidate(root, filepath.Join(t.TempDir(), "open"), openPlan, openDecision); err == nil {
 		t.Fatal("unresolved consumer accepted despite ready-looking decision")
+	}
+}
+
+func clearGitTestEnvironment(t *testing.T) {
+	t.Helper()
+	for _, key := range []string{"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"} {
+		previous, existed := os.LookupEnv(key)
+		if err := os.Unsetenv(key); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if existed {
+				_ = os.Setenv(key, previous)
+			} else {
+				_ = os.Unsetenv(key)
+			}
+		})
 	}
 }
 
