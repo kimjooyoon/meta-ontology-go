@@ -112,7 +112,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -331,7 +331,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -371,7 +371,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -411,7 +411,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -451,7 +451,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -498,7 +498,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -871,7 +871,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1031,7 +1031,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1394,7 +1394,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1740,7 +1740,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1874,7 +1874,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: true
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain
@@ -1919,7 +1919,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: 1.27.3
+          go-version-file: go.mod
           cache: false
       - name: Bind shared clock, tool and command origins
         uses: ./.github/actions/work-domain

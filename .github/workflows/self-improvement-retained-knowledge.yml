@@ -63,7 +63,7 @@ jobs:
       - name: Install exact toolchain
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
 
       - name: Require exact toolchain and clean source worktree
@@ -90,6 +90,10 @@ jobs:
           cmp "$policy/evaluator.go" internal/meta/retentionpolicy/generated/evaluator.go
           cp examples/self-improvement-observation/observation.gooo "$policy/counterfactual.gooo"
           sed -i 's/retention-case=MISSING_CERTIFICATE:UNKNOWN/retention-case=MISSING_CERTIFICATE:CLOSED/' "$policy/counterfactual.gooo"
+          if cmp -s examples/self-improvement-observation/observation.gooo "$policy/counterfactual.gooo"; then
+            echo 'counterfactual mutation did not change the source' >&2
+            exit 1
+          fi
           go run ./scripts/self-improvement-retention-policy \
             -contract "$policy/counterfactual.gooo" \
             -output "$policy/counterfactual-evaluator.go" -report "$policy/counterfactual-report.json"

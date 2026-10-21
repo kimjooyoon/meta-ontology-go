@@ -51,7 +51,7 @@ jobs:
       - name: Set up Go 1.27 observer
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: false
 
       - name: Build and verify canonical workflow-lineage conformance
