@@ -318,7 +318,7 @@ func buildProjectionPlan(observed report, next string) (projectionPlan, error) {
 	}
 	plan.DerivedOutputs = derivedOutputRules(observed.Occurrences, observed.DerivedTargetSHA256)
 	for _, rule := range plan.DerivedOutputs {
-		if rule.TargetSHA256 == "" {
+		if rule.SourceSHA256 == "" || rule.TargetSHA256 == "" {
 			plan.UnresolvedDerivedOutputs++
 		}
 	}
@@ -359,12 +359,15 @@ func buildProjectionPlan(observed report, next string) (projectionPlan, error) {
 	activityID := "urn:gooo:toolchain-projection:activity:" + plan.PlanCoreSHA256
 	planID := "urn:gooo:toolchain-projection:plan:" + plan.PlanCoreSHA256
 	sourceNodes, sourceRefs := derivedSourceOrigins(plan.DerivedOutputs)
+	targetNodes, targetRefs := derivedTargetOrigins(plan.DerivedOutputs)
 	used := append([]any{map[string]string{"@id": observationID}, map[string]string{"@id": moduleID}}, sourceRefs...)
+	used = append(used, targetRefs...)
 	graph := []any{
 		map[string]any{"@id": observationID, "@type": "prov:Entity", "gooo:content_sha256": plan.ObservationSHA256},
 		map[string]any{"@id": moduleID, "@type": "prov:Entity", "gooo:path": "go.mod", "gooo:content_sha256": plan.ModuleSHA256},
 	}
 	graph = append(graph, sourceNodes...)
+	graph = append(graph, targetNodes...)
 	graph = append(graph,
 		map[string]any{"@id": activityID, "@type": "prov:Activity", "prov:used": used},
 		map[string]any{"@id": planID, "@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activityID},
