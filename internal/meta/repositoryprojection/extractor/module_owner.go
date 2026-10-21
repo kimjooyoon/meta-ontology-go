@@ -14,11 +14,22 @@ func sourceModuleRoot(root, logical string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resolved, err := filepath.EvalSymlinks(path)
+	owner, err := directoryModuleRoot(root, filepath.Dir(path))
 	if err != nil {
 		return "", err
 	}
-	return directoryModuleRoot(root, filepath.Dir(resolved))
+	resolved, err := filepath.EvalSymlinks(path)
+	if os.IsNotExist(err) {
+		return owner, nil // Parsed sources may be virtual during type evidence construction.
+	}
+	if err != nil {
+		return "", err
+	}
+	targetOwner, err := directoryModuleRoot(root, filepath.Dir(resolved))
+	if err != nil || targetOwner != owner {
+		return "", fmt.Errorf("source crosses module boundary: %s", logical)
+	}
+	return owner, nil
 }
 
 func directoryModuleRoot(root, directory string) (string, error) {
