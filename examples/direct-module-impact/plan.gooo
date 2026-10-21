@@ -28,6 +28,19 @@ return AffectedSurfaces{
 }
 `
 
+// These committed trees preserve observations from earlier executions. A
+// current-version mention there is historical only while its bytes still
+// equal the file at HEAD; Go observes that equality, not the archive role.
+entity ArchiveRoots id "urn:gooo:direct-module-impact:archive-roots" fields {
+    field releases id "urn:gooo:direct-module-impact:archive-roots:releases" type string required one
+    field observations id "urn:gooo:direct-module-impact:archive-roots:observations" type string required one
+}
+
+activity HistoricalRoots(ModuleIdentity) -> ArchiveRoots
+    id "urn:gooo:direct-module-impact:historical-roots" computes `
+return ArchiveRoots{releases: "docs/releases/", observations: "docs/observations/"}
+`
+
 entity ModuleProposal id "urn:gooo:direct-module-impact:proposal" fields {
     field module_path id "urn:gooo:direct-module-impact:proposal:module" type string required one
     field current_version id "urn:gooo:direct-module-impact:proposal:current" type string required one
@@ -52,6 +65,7 @@ entity ModuleProposal id "urn:gooo:direct-module-impact:proposal" fields {
     field tracked_files_scanned id "urn:gooo:direct-module-impact:proposal:tracked-files" type integer required one
     field tracked_reference_files id "urn:gooo:direct-module-impact:proposal:reference-files" type integer required one
     field outside_reference_files id "urn:gooo:direct-module-impact:proposal:outside-files" type integer required one
+    field historical_reference_files id "urn:gooo:direct-module-impact:proposal:historical-files" type integer required one
     field historical_writes id "urn:gooo:direct-module-impact:proposal:historical" type integer required one
 }
 
@@ -63,6 +77,7 @@ entity ModuleDecision id "urn:gooo:direct-module-impact:decision" fields {
     field observed_outputs id "urn:gooo:direct-module-impact:decision:outputs" type integer required one
     field tracked_reference_files id "urn:gooo:direct-module-impact:decision:reference-files" type integer required one
     field outside_reference_files id "urn:gooo:direct-module-impact:decision:outside-files" type integer required one
+    field historical_reference_files id "urn:gooo:direct-module-impact:decision:historical-files" type integer required one
     field status id "urn:gooo:direct-module-impact:decision:status" type string required one
 }
 
@@ -77,8 +92,9 @@ if (input.module_path != "github.com/kimjooyoon/gooo-jev" &&
    input.scan_scope != "git-tracked-working-tree-regular-files/v1" ||
    input.tracked_paths_sha256 == "" || input.tracked_files_scanned < 1 ||
    input.tracked_reference_files < 0 || input.outside_reference_files < 0 ||
+   input.historical_reference_files < 0 ||
    input.tracked_reference_files > input.tracked_files_scanned ||
-   input.outside_reference_files > input.tracked_reference_files {
+   input.outside_reference_files + input.historical_reference_files > input.tracked_reference_files {
     status = "INVALID_OBSERVATION"
 } else if !input.current_pin_consistent {
     status = "CURRENT_SOURCE_CONFLICT"
@@ -103,6 +119,7 @@ return ModuleDecision{
     observed_outputs: input.observed_outputs,
     tracked_reference_files: input.tracked_reference_files,
     outside_reference_files: input.outside_reference_files,
+    historical_reference_files: input.historical_reference_files,
     status: status,
 }
 `

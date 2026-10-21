@@ -30,7 +30,15 @@ observation to source entities and the downloaded module. The decision's
 generated. The observer also scans every regular file listed by the Git index
 for the exact current-version byte sequence. It records the tracked path-list
 digest, scanned file count, matching file count, outside paths and scan time.
-The Gooo decision treats every outside match as unresolved. Untracked files
+Gooo source declares two archival trees, `docs/releases/` and
+`docs/observations/`. A match in either is classified as historical only when
+its working-tree bytes exactly equal that file at Git `HEAD`. The report records
+the `HEAD` commit, those paths, and their SHA-256 preimages. These records stay
+unchanged when a new candidate is projected. Edited archive files and every
+other outside match remain unresolved. The Gooo decision receives separate
+historical and unresolved counts; PROV-O retains the source rule, `HEAD` origin,
+observed paths and file hashes. This is a path-and-byte role declaration, not a
+semantic proof that every historical-looking sentence is inactive. Untracked files
 and nonregular tracked paths are not part of this scan; a nonregular or missing
 tracked path stops observation rather than producing a readiness decision.
 PROV-O relation values use JSON-LD `@id` node references, so consumers follow
@@ -39,10 +47,16 @@ graph edges rather than string labels.
 In a local scan, the `gooo-jev` version appeared in four tracked files, all
 inside the five declared outputs. A proposed Jev
 upgrade remains `READY_FOR_DETACHED_PROJECTION`. The decision-runtime version
-appeared in 28 files; 24 are outside the declared outputs, including three
-known active documents and historical records. Gooo returns
-`UNRESOLVED_OUTPUTS` for its proposed upgrade. An outside byte match is a
-review obligation, not a claim that a historical record should be rewritten.
+appeared in 28 files in the earlier scan; 24 were outside the declared outputs.
+The archive role can exclude committed historical records from the write
+obligation, while current documentation and other unclassified matches still
+block projection. An outside byte match is an obligation to classify or model,
+not a reason to rewrite it.
+In the current `dev` checkout, ten of the 24 outside runtime references are
+byte-identical committed records in those two trees. Fourteen remain outside
+the candidate, so the runtime upgrade still returns `UNRESOLVED_OUTPUTS`.
+The observed reference scan took about 1.43 seconds with a warm cache;
+this is an observation time, not a measured saving on a completed upgrade.
 Without `-materialize-dir`, the command only observes and writes no repository
 file.
 
@@ -71,9 +85,10 @@ It refuses a proposed module whose own `go.mod` adds graph directives such as
 PROV-O records the origin of each input and output occurrence. The Gooo
 activity owns the affected paths and the decision; the Go adapter only observes
 and projects exact bytes. A provenance edge alone never changes a file. The
-scan covers Git-tracked working-tree bytes, not a semantic classification of
-every mention. The next step is source-owned classification of active consumers
-and immutable historical mentions, with independent review of that boundary.
+scan covers Git-tracked working-tree bytes. Active references outside the
+five outputs, aliases, constructed versions and versionless API dependencies
+remain unmodeled. Subsequent work should give those active consumers explicit
+source-owned projection rules and verify their resulting bytes together.
 
 For each subsequent upgrade, record declared, observed, projected and verified
 output counts separately, plus unresolved references, independent manual edits,
