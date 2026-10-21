@@ -14,12 +14,19 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	module := flag.String("module", "", "direct module path in payload.gooo")
 	version := flag.String("version", "", "exact proposed version")
+	destination := flag.String("materialize-dir", "", "write a complete candidate outside the repository")
 	flag.Parse()
 	if flag.NArg() != 0 || *module == "" {
 		fmt.Fprintln(os.Stderr, "provide -module and -version")
 		os.Exit(2)
 	}
-	result, err := toolchainrelease.ObserveDirectModuleImpact(*root, *module, *version)
+	var result any
+	var err error
+	if *destination == "" {
+		result, err = toolchainrelease.ObserveDirectModuleImpact(*root, *module, *version)
+	} else {
+		result, err = toolchainrelease.ProjectDirectModuleCandidate(*root, *destination, *module, *version)
+	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
