@@ -79,11 +79,12 @@ func TestDetachedProjectionRequiresClosedSourceAndExactPreimages(t *testing.T) {
 		t.Fatal("source-tree destination accepted")
 	}
 	linkedParent := filepath.Join(t.TempDir(), "source-link")
-	if err := os.Symlink(root, linkedParent); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := materializeCandidate(root, filepath.Join(linkedParent, "candidate"), plan, decision); err == nil {
-		t.Fatal("symlinked source-tree destination accepted")
+	if err := os.Symlink(root, linkedParent); err == nil {
+		if _, err := materializeCandidate(root, filepath.Join(linkedParent, "candidate"), plan, decision); err == nil {
+			t.Fatal("symlinked source-tree destination accepted")
+		}
+	} else {
+		t.Logf("symlink unavailable on this host: %v", err)
 	}
 	forged := decision
 	forged.PlanCoreSHA256 = "sha256:forged"
