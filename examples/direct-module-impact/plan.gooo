@@ -143,3 +143,44 @@ return ModuleDecision{
     status: status,
 }
 `
+
+// A verified detached candidate may become one Git tree/commit on a new agent
+// branch. The observer supplies checkout and branch facts; this activity owns
+// whether that write-bearing transition is allowed.
+entity BranchCommitProposal id "urn:gooo:direct-module-impact:branch-proposal" fields {
+    field plan_sha256 id "urn:gooo:direct-module-impact:branch-proposal:plan" type string required one
+    field branch_name id "urn:gooo:direct-module-impact:branch-proposal:branch" type string required one
+    field projected_outputs id "urn:gooo:direct-module-impact:branch-proposal:projected" type integer required one
+    field verified_outputs id "urn:gooo:direct-module-impact:branch-proposal:verified" type integer required one
+    field changed_outputs id "urn:gooo:direct-module-impact:branch-proposal:changed" type integer required one
+    field clean_checkout id "urn:gooo:direct-module-impact:branch-proposal:clean" type boolean required one
+    field base_bound id "urn:gooo:direct-module-impact:branch-proposal:base" type boolean required one
+    field branch_available id "urn:gooo:direct-module-impact:branch-proposal:available" type boolean required one
+    field agent_branch id "urn:gooo:direct-module-impact:branch-proposal:agent" type boolean required one
+}
+
+entity BranchCommitDecision id "urn:gooo:direct-module-impact:branch-decision" fields {
+    field plan_sha256 id "urn:gooo:direct-module-impact:branch-decision:plan" type string required one
+    field branch_name id "urn:gooo:direct-module-impact:branch-decision:branch" type string required one
+    field status id "urn:gooo:direct-module-impact:branch-decision:status" type string required one
+}
+
+activity AssessBranchCommit(BranchCommitProposal) -> BranchCommitDecision
+    id "urn:gooo:direct-module-impact:assess-branch-commit" computes `
+let status = "READY_FOR_BRANCH_COMMIT"
+if input.plan_sha256 == "" || input.branch_name == "" ||
+   input.projected_outputs < 1 || input.verified_outputs < 0 ||
+   input.changed_outputs < 1 || input.changed_outputs > input.projected_outputs ||
+   input.verified_outputs > input.projected_outputs {
+    status = "INVALID_BRANCH_PROPOSAL"
+} else if !input.clean_checkout || !input.base_bound ||
+        !input.branch_available || !input.agent_branch ||
+        input.verified_outputs != input.projected_outputs {
+    status = "BRANCH_COMMIT_UNRESOLVED"
+}
+return BranchCommitDecision{
+    plan_sha256: input.plan_sha256,
+    branch_name: input.branch_name,
+    status: status,
+}
+`
