@@ -19,6 +19,15 @@ func ExecuteWithOrderedCollections(repository fs.FS, path, kind, expectedDiagnos
 	return executeWithSupport(repository, path, kind, expectedDiagnostic, syntax.EntityFieldsV5Support())
 }
 
+// ExecuteWithOrderedCollectionsAndContext replays one source's syntax while
+// resolving its semantic declarations against the named package companions.
+func ExecuteWithOrderedCollectionsAndContext(repository fs.FS, path string, contextSources []string, kind, expectedDiagnostic string) Result {
+	if kind != "VALID" || len(contextSources) == 0 {
+		return Result{ObservedDecision: DecisionClosed, Diagnostics: []string{"registry.context-kind-mismatch"}}
+	}
+	return executeValidWithContext(repository, path, contextSources, syntax.EntityFieldsV5Support())
+}
+
 func ExecuteWithImplicitActivityPorts(repository fs.FS, path, kind, expectedDiagnostic string) Result {
 	return executeWithSupportAndImplicitActivityPorts(repository, path, kind, expectedDiagnostic, syntax.CurrentEntityFieldsSupport(), true)
 }
@@ -47,6 +56,14 @@ func executeValidWithSupport(repository fs.FS, path string, support syntax.Entit
 }
 
 func executeValidWithSupportAndImplicitActivityPorts(repository fs.FS, path string, support syntax.EntityFieldsSupport, allowImplicitActivityPorts bool) Result {
+	return executeValidWithContextAndImplicitActivityPorts(repository, path, nil, support, allowImplicitActivityPorts)
+}
+
+func executeValidWithContext(repository fs.FS, path string, contextSources []string, support syntax.EntityFieldsSupport) Result {
+	return executeValidWithContextAndImplicitActivityPorts(repository, path, contextSources, support, false)
+}
+
+func executeValidWithContextAndImplicitActivityPorts(repository fs.FS, path string, contextSources []string, support syntax.EntityFieldsSupport, allowImplicitActivityPorts bool) Result {
 	result := Result{ObservedDecision: DecisionClosed}
 	raw, err := fs.ReadFile(repository, path)
 	if err != nil {
@@ -80,6 +97,13 @@ func executeValidWithSupportAndImplicitActivityPorts(repository fs.FS, path stri
 	}
 	result.ASTDigest, result.CanonicalDigest = digestBytes([]byte(leftShape)), digestBytes([]byte(canonical))
 	result.ASTReplayed, result.ByteReplayed = leftShape == rightShape, canonical == replayCanonical
+	if len(contextSources) > 0 {
+		var err error
+		file, replayed, err = bindContext(repository, path, contextSources, file, replayed, support)
+		if err != nil {
+			return reject(result, "context: "+err.Error())
+		}
+	}
 	return executeSemanticWithImplicitActivityPorts(result, file, replayed, support, allowImplicitActivityPorts)
 }
 

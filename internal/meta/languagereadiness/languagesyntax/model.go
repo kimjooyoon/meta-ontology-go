@@ -13,11 +13,11 @@ const (
 	KindInvalid                = "INVALID"
 	ScopeLanguageCapability    = "LANGUAGE_CAPABILITY"
 	ScopeGovernanceObservation = "GOVERNANCE_OBSERVATION"
-	totalCases                 = 137
-	validCases                 = 134
+	totalCases                 = 138
+	validCases                 = 135
 	invalidCases               = 3
 	FixedTotal                 = totalCases
-	FixedCapabilityTotal       = 135
+	FixedCapabilityTotal       = 136
 	FixedGovernanceTotal       = 2
 	invalidDigest              = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )
@@ -31,18 +31,19 @@ type Registry struct {
 }
 
 type CaseDefinition struct {
-	ID                    string `json:"id"`
-	Path                  string `json:"path"`
-	Kind                  string `json:"kind"`
-	ExpectedDecision      string `json:"expected_decision"`
-	ExpectedDiagnostic    string `json:"expected_diagnostic,omitempty"`
-	ProofChoice           string `json:"proof_choice"`
-	MetaOperation         string `json:"meta_operation"`
-	Scope                 string `json:"scope"`
-	OrderedCollections    bool   `json:"ordered_collections,omitempty"`
-	EntityFields          bool   `json:"entity_fields,omitempty"`
-	ImplicitActivityPorts bool   `json:"implicit_activity_ports,omitempty"`
-	EntityFieldsProfile   string `json:"entity_fields_profile,omitempty"`
+	ID                    string   `json:"id"`
+	Path                  string   `json:"path"`
+	ContextSources        []string `json:"context_sources,omitempty"`
+	Kind                  string   `json:"kind"`
+	ExpectedDecision      string   `json:"expected_decision"`
+	ExpectedDiagnostic    string   `json:"expected_diagnostic,omitempty"`
+	ProofChoice           string   `json:"proof_choice"`
+	MetaOperation         string   `json:"meta_operation"`
+	Scope                 string   `json:"scope"`
+	OrderedCollections    bool     `json:"ordered_collections,omitempty"`
+	EntityFields          bool     `json:"entity_fields,omitempty"`
+	ImplicitActivityPorts bool     `json:"implicit_activity_ports,omitempty"`
+	EntityFieldsProfile   string   `json:"entity_fields_profile,omitempty"`
 }
 
 type PackageDefinition struct {
