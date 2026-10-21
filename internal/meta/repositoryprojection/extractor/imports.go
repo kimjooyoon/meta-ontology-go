@@ -36,23 +36,41 @@ func imports(file *ast.File) ([]importSpec, error) {
 	return out, nil
 }
 
-func validateImports(root string, list []importSpec) error {
-	module := moduleName(root)
+func validateImports(root, logical string, list []importSpec) error {
+	owner, err := sourceModuleRoot(root, logical)
+	if err != nil {
+		return fail("validate-ast-imports", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
+	}
+	module := moduleName(owner)
+	resolver := newModuleImporter(owner)
 	for _, item := range list {
 		if item.name == "." {
 			return fail("validate-ast-imports", "resolve-import", "UNSUPPORTED_DOT_IMPORT", "KNOWN_CONTRADICTION", "report-contradiction", []string{item.path})
 		}
 		if module != "" && (item.path == module || strings.HasPrefix(item.path, module+"/")) {
-			local := root
+			local := owner
 			if item.path != module {
-				local = filepath.Join(root, filepath.FromSlash(strings.TrimPrefix(item.path, module+"/")))
+				local = filepath.Join(owner, filepath.FromSlash(strings.TrimPrefix(item.path, module+"/")))
 			}
-			if !hasGoFile(local) {
-				return fail("validate-ast-imports", "resolve-import", "UNRESOLVED_IMPORT", "DIRECT_MISSING", "restore-import-package", nil)
+			if hasGoFile(local) {
+				localOwner, ownerErr := directoryModuleRoot(root, local)
+				if ownerErr != nil {
+					return fail("validate-ast-imports", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
+				}
+				if localOwner == owner {
+					continue
+				}
 			}
+		}
+		if imported, importErr := build.Default.Import(item.path, owner, build.FindOnly); importErr == nil && imported.Goroot {
 			continue
 		}
-		if _, err := build.Default.Import(item.path, root, build.FindOnly); err != nil {
+		if module == "" {
+			if _, importErr := build.Default.Import(item.path, owner, build.FindOnly); importErr == nil {
+				continue
+			}
+		}
+		if _, importErr := resolver.moduleFiles(item.path); importErr != nil {
 			return fail("validate-ast-imports", "resolve-import", "UNRESOLVED_IMPORT", "DIRECT_MISSING", "restore-import-package", nil)
 		}
 	}
