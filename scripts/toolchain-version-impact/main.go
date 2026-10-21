@@ -40,38 +40,50 @@ type projectionEdit struct {
 	ClassifierVersion int    `json:"classifier_version"`
 }
 
+type derivedOutputRule struct {
+	SourcePath   string `json:"source_path"`
+	SourceSHA256 string `json:"source_sha256"`
+	TargetPath   string `json:"target_path"`
+	TargetSHA256 string `json:"target_sha256"`
+	RuleID       string `json:"rule_id"`
+	RuleVersion  int    `json:"rule_version"`
+}
+
 type projectionPlan struct {
-	Schema                string           `json:"schema"`
-	ObservationSHA256     string           `json:"observation_sha256"`
-	PlanCoreSHA256        string           `json:"plan_core_sha256"`
-	CurrentVersion        string           `json:"current_version"`
-	NextVersion           string           `json:"next_version"`
-	ModuleSHA256          string           `json:"module_sha256"`
-	ActiveOccurrences     int              `json:"active_occurrences"`
-	ClassifiedOccurrences int              `json:"classified_occurrences"`
-	UnresolvedOccurrences int              `json:"unresolved_occurrences"`
-	StaleSelectors        int              `json:"stale_selectors"`
-	HistoricalOccurrences int              `json:"historical_occurrences"`
-	OutsideScope          int              `json:"outside_scope_occurrences"`
-	OverlappingEdits      int              `json:"overlapping_edits"`
-	HistoricalWrites      int              `json:"historical_writes"`
-	OutsideScopeWrites    int              `json:"outside_scope_writes"`
-	CandidateEdits        []projectionEdit `json:"candidate_edits"`
-	Unresolved            []occurrence     `json:"unresolved"`
-	Provenance            map[string]any   `json:"provenance,omitempty"`
+	Schema                   string              `json:"schema"`
+	ObservationSHA256        string              `json:"observation_sha256"`
+	PlanCoreSHA256           string              `json:"plan_core_sha256"`
+	CurrentVersion           string              `json:"current_version"`
+	NextVersion              string              `json:"next_version"`
+	ModuleSHA256             string              `json:"module_sha256"`
+	ActiveOccurrences        int                 `json:"active_occurrences"`
+	ClassifiedOccurrences    int                 `json:"classified_occurrences"`
+	UnresolvedOccurrences    int                 `json:"unresolved_occurrences"`
+	StaleSelectors           int                 `json:"stale_selectors"`
+	HistoricalOccurrences    int                 `json:"historical_occurrences"`
+	OutsideScope             int                 `json:"outside_scope_occurrences"`
+	OverlappingEdits         int                 `json:"overlapping_edits"`
+	HistoricalWrites         int                 `json:"historical_writes"`
+	OutsideScopeWrites       int                 `json:"outside_scope_writes"`
+	CandidateEdits           []projectionEdit    `json:"candidate_edits"`
+	DerivedOutputs           []derivedOutputRule `json:"derived_outputs"`
+	UnresolvedDerivedOutputs int                 `json:"unresolved_derived_outputs"`
+	Unresolved               []occurrence        `json:"unresolved"`
+	Provenance               map[string]any      `json:"provenance,omitempty"`
 }
 
 type report struct {
-	Schema                string       `json:"schema"`
-	Version               string       `json:"version"`
-	ModuleSHA256          string       `json:"module_sha256"`
-	ActiveOccurrences     int          `json:"active_occurrences"`
-	ClassifiedOccurrences int          `json:"classified_occurrences"`
-	UnresolvedOccurrences int          `json:"unresolved_occurrences"`
-	StaleSelectors        int          `json:"stale_selectors"`
-	HistoricalOccurrences int          `json:"historical_occurrences"`
-	OutsideScope          int          `json:"outside_scope_occurrences"`
-	Occurrences           []occurrence `json:"occurrences"`
+	Schema                string            `json:"schema"`
+	Version               string            `json:"version"`
+	ModuleSHA256          string            `json:"module_sha256"`
+	ActiveOccurrences     int               `json:"active_occurrences"`
+	ClassifiedOccurrences int               `json:"classified_occurrences"`
+	UnresolvedOccurrences int               `json:"unresolved_occurrences"`
+	StaleSelectors        int               `json:"stale_selectors"`
+	HistoricalOccurrences int               `json:"historical_occurrences"`
+	OutsideScope          int               `json:"outside_scope_occurrences"`
+	DerivedTargetSHA256   map[string]string `json:"derived_target_sha256"`
+	Occurrences           []occurrence      `json:"occurrences"`
 }
 
 func main() {
@@ -155,7 +167,8 @@ func scanPaths(root string, paths []string) (report, error) {
 	}
 	current := regexp.MustCompile(`(^|[^0-9.])` + regexp.QuoteMeta(version) + `([^0-9.]|$)`)
 	historicalGo := regexp.MustCompile(`\bGo\s+([0-9]+\.[0-9]+\.[0-9]+)|\bgo([0-9]+\.[0-9]+\.[0-9]+)`)
-	result := report{Schema: "gooo/toolchain-version-impact/v1", Version: version, Occurrences: []occurrence{}}
+	result := report{Schema: "gooo/toolchain-version-impact/v1", Version: version,
+		Occurrences: []occurrence{}, DerivedTargetSHA256: map[string]string{}}
 	for _, path := range paths {
 		full := filepath.Join(root, filepath.FromSlash(path))
 		info, err := os.Lstat(full)
@@ -175,10 +188,17 @@ func scanPaths(root string, paths []string) (report, error) {
 		if path == "go.mod" {
 			result.ModuleSHA256 = digest(data)
 		}
+		fileHash := ""
+		if path == compatibilityTargetPath || path == publicTrustTargetPath || path == readmeTargetPath {
+			fileHash = digest(data)
+			result.DerivedTargetSHA256[path] = fileHash
+		}
 		if !strings.Contains(string(data), version) && !strings.HasPrefix(path, "docs/releases/") && !activePath(path) {
 			continue
 		}
-		fileHash := digest(data)
+		if fileHash == "" {
+			fileHash = digest(data)
+		}
 		lineStart := 0
 		for lineNumber, line := range strings.Split(string(data), "\n") {
 			var goooSites []goooVersionSite
@@ -272,6 +292,7 @@ func buildProjectionPlan(observed report, next string) (projectionPlan, error) {
 		UnresolvedOccurrences: observed.UnresolvedOccurrences, StaleSelectors: observed.StaleSelectors,
 		HistoricalOccurrences: observed.HistoricalOccurrences, OutsideScope: observed.OutsideScope,
 		CandidateEdits: []projectionEdit{}, Unresolved: []occurrence{},
+		DerivedOutputs: []derivedOutputRule{},
 	}
 	observationJSON, err := json.Marshal(observed)
 	if err != nil {
@@ -294,6 +315,12 @@ func buildProjectionPlan(observed report, next string) (projectionPlan, error) {
 			Before: observed.Version, After: next, PreimageSHA256: site.SHA256,
 			ClassifierID: "urn:gooo:toolchain-impact:classifier:" + site.Role, ClassifierVersion: 1,
 		})
+	}
+	plan.DerivedOutputs = derivedOutputRules(observed.Occurrences, observed.DerivedTargetSHA256)
+	for _, rule := range plan.DerivedOutputs {
+		if rule.TargetSHA256 == "" {
+			plan.UnresolvedDerivedOutputs++
+		}
 	}
 	if len(plan.Unresolved) != observed.UnresolvedOccurrences ||
 		len(plan.CandidateEdits) != observed.ClassifiedOccurrences {
@@ -331,17 +358,20 @@ func buildProjectionPlan(observed report, next string) (projectionPlan, error) {
 	moduleID := "urn:gooo:toolchain-projection:module:" + plan.ModuleSHA256
 	activityID := "urn:gooo:toolchain-projection:activity:" + plan.PlanCoreSHA256
 	planID := "urn:gooo:toolchain-projection:plan:" + plan.PlanCoreSHA256
+	sourceNodes, sourceRefs := derivedSourceOrigins(plan.DerivedOutputs)
+	used := append([]any{map[string]string{"@id": observationID}, map[string]string{"@id": moduleID}}, sourceRefs...)
+	graph := []any{
+		map[string]any{"@id": observationID, "@type": "prov:Entity", "gooo:content_sha256": plan.ObservationSHA256},
+		map[string]any{"@id": moduleID, "@type": "prov:Entity", "gooo:path": "go.mod", "gooo:content_sha256": plan.ModuleSHA256},
+	}
+	graph = append(graph, sourceNodes...)
+	graph = append(graph,
+		map[string]any{"@id": activityID, "@type": "prov:Activity", "prov:used": used},
+		map[string]any{"@id": planID, "@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activityID},
+			"prov:wasDerivedFrom": used, "gooo:core_sha256": plan.PlanCoreSHA256})
 	plan.Provenance = map[string]any{
 		"@context": map[string]string{"prov": "http://www.w3.org/ns/prov#", "gooo": "urn:gooo:toolchain-projection:vocab:"},
-		"@graph": []any{
-			map[string]any{"@id": observationID, "@type": "prov:Entity", "gooo:content_sha256": plan.ObservationSHA256},
-			map[string]any{"@id": moduleID, "@type": "prov:Entity", "gooo:path": "go.mod", "gooo:content_sha256": plan.ModuleSHA256},
-			map[string]any{"@id": activityID, "@type": "prov:Activity", "prov:used": []any{
-				map[string]string{"@id": observationID}, map[string]string{"@id": moduleID}}},
-			map[string]any{"@id": planID, "@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activityID},
-				"prov:wasDerivedFrom": []any{map[string]string{"@id": observationID}, map[string]string{"@id": moduleID}},
-				"gooo:core_sha256":    plan.PlanCoreSHA256},
-		},
+		"@graph":   graph,
 	}
 	return plan, nil
 }
@@ -357,8 +387,10 @@ func projectionInputs(plan projectionPlan) map[string]any {
 				"classified_occurrences": plan.ClassifiedOccurrences,
 				"unresolved_occurrences": plan.UnresolvedOccurrences,
 				"stale_selectors":        plan.StaleSelectors, "candidate_edits": len(plan.CandidateEdits),
-				"overlapping_edits": plan.OverlappingEdits,
-				"historical_writes": plan.HistoricalWrites, "outside_scope_writes": plan.OutsideScopeWrites,
+				"derived_outputs":            len(plan.DerivedOutputs),
+				"unresolved_derived_outputs": plan.UnresolvedDerivedOutputs,
+				"overlapping_edits":          plan.OverlappingEdits,
+				"historical_writes":          plan.HistoricalWrites, "outside_scope_writes": plan.OutsideScopeWrites,
 			},
 		}},
 	}
