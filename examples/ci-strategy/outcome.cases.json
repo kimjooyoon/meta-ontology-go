@@ -1,0 +1,24 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"examples/cistrategy:AssessOutcome": {
+        "revision_id": "gooo://ci-strategy/example/revision/one",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "selected_plan_id": "gooo://ci-strategy/example/plan/two",
+        "baseline_run": "example-baseline-run", "observed_run": "example-followup-run",
+        "baseline_ms": 180000, "observed_ms": 145000, "minimum_gain_ms": 3000,
+        "same_workload": true, "same_toolchain": true, "same_runner_class": false,
+        "required_checks_passed": true
+      }},
+      "expected": {"examples/cistrategy:AssessOutcome": {
+        "revision_id": "gooo://ci-strategy/example/revision/one",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/two",
+        "observed_run": "example-followup-run",
+        "state": "INSUFFICIENT_EVIDENCE", "observed_gain_ms": 0,
+        "causal_improvement_claim": false
+      }}
+    }
+  ]
+}

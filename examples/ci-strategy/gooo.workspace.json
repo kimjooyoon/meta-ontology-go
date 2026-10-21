@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "examples/cistrategy", "activity": "SelectPlan"},
+  "packages": [
+    {"path": "examples/cistrategy", "sources": ["strategy.gooo"]}
+  ]
+}

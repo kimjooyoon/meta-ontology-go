@@ -1388,6 +1388,7 @@
     "examples/recorded-use-origins/retention.gooo",
     "examples/toolchain-version-impact/impact.gooo",
     "examples/toolchain-version-impact/plan.gooo",
-    "examples/direct-module-impact/plan.gooo"
+    "examples/direct-module-impact/plan.gooo",
+    "examples/ci-strategy/strategy.gooo"
   ]
 }
