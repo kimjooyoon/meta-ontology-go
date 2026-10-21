@@ -21,6 +21,18 @@ type historicalRoots struct {
 	Observations string `json:"observations"`
 }
 
+type historicalFileRule struct {
+	Path   string `json:"path"`
+	SHA256 string `json:"sha256"`
+	ID     string `json:"id"`
+}
+
+type historicalFileColumns struct {
+	Paths  []string `json:"paths"`
+	SHA256 []string `json:"sha256"`
+	IDs    []string `json:"rule_ids"`
+}
+
 // observeTrackedModuleReferences discovers exact current-version bytes in the
 // Git index's working-tree files. Unknown mentions stay unresolved; the scanner
 // does not infer that a release note or test fixture may safely be rewritten.
@@ -42,6 +54,15 @@ func observeTrackedModuleReferences(ctx context.Context, root, current string,
 		return err
 	}
 	result.ArchiveRoots = []string{roots.Releases, roots.Observations}
+	rules, err := readHistoricalFileRules(ctx, root, result)
+	if err != nil {
+		return err
+	}
+	result.HistoricalRules = rules
+	byPath := make(map[string]historicalFileRule, len(rules))
+	for _, rule := range rules {
+		byPath[rule.Path] = rule
+	}
 	head, err := exec.CommandContext(ctx, "git", "-C", root, "rev-parse", "HEAD").Output()
 	if err != nil || len(strings.TrimSpace(string(head))) != 40 || !isHex(strings.TrimSpace(string(head))) {
 		return fmt.Errorf("archive HEAD identity is unavailable: %v", err)
@@ -59,7 +80,7 @@ func observeTrackedModuleReferences(ctx context.Context, root, current string,
 			return fmt.Errorf("invalid or repeated tracked path: %q", name)
 		}
 		seen[name] = true
-		if err := observeTrackedReferenceFile(ctx, root, name, current, declared, roots, result); err != nil {
+		if err := observeTrackedReferenceFile(ctx, root, name, current, declared, roots, byPath, result); err != nil {
 			return err
 		}
 	}
@@ -70,7 +91,8 @@ func observeTrackedModuleReferences(ctx context.Context, root, current string,
 }
 
 func observeTrackedReferenceFile(ctx context.Context, root, name, current string,
-	declared map[string]bool, roots historicalRoots, result *DirectModuleImpact) error {
+	declared map[string]bool, roots historicalRoots, byPath map[string]historicalFileRule,
+	result *DirectModuleImpact) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -93,7 +115,11 @@ func observeTrackedReferenceFile(ctx context.Context, root, name, current string
 	result.ReferenceFiles++
 	if !declared[name] {
 		result.Inputs[name] = payloadDigest(raw)
-		if strings.HasPrefix(name, roots.Releases) || strings.HasPrefix(name, roots.Observations) {
+		_, exactHistorical := byPath[name]
+		if exactHistorical && result.Inputs[name] != byPath[name].SHA256 {
+			exactHistorical = false
+		}
+		if exactHistorical || strings.HasPrefix(name, roots.Releases) || strings.HasPrefix(name, roots.Observations) {
 			committed, err := exec.CommandContext(ctx, "git", "-C", root, "show",
 				result.ArchiveHead+":"+name).Output()
 			if err == nil && bytes.Equal(committed, raw) {
@@ -104,6 +130,48 @@ func observeTrackedReferenceFile(ctx context.Context, root, name, current string
 		result.OutsideScope = append(result.OutsideScope, name)
 	}
 	return nil
+}
+
+func readHistoricalFileRules(ctx context.Context, root string,
+	result *DirectModuleImpact) ([]historicalFileRule, error) {
+	source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(directModuleSourcePath)))
+	if err != nil || payloadDigest(source) != result.Inputs[directModuleSourcePath] {
+		return nil, fmt.Errorf("historical file rule source preimage changed")
+	}
+	input, _ := json.Marshal([]any{map[string]any{"module_path": result.Module}})
+	value, err := bodycodegen.EvaluateFixedValue(ctx, directModuleSourcePath, source,
+		"HistoricalReferenceFiles", input)
+	if err != nil || value.ActivityID != "urn:gooo:direct-module-impact:historical-reference-files" ||
+		value.SourceSHA256 != result.Inputs[directModuleSourcePath] {
+		return nil, fmt.Errorf("Gooo historical file rules cannot be replayed: %v", err)
+	}
+	var columns historicalFileColumns
+	if err := json.Unmarshal(value.Value, &columns); err != nil {
+		return nil, err
+	}
+	if len(columns.Paths) != len(columns.SHA256) || len(columns.Paths) != len(columns.IDs) ||
+		len(columns.Paths) > 32 {
+		return nil, fmt.Errorf("Gooo historical file rule columns are inconsistent")
+	}
+	seenPaths, seenIDs := map[string]bool{}, map[string]bool{}
+	for _, output := range result.Outputs {
+		seenPaths[output] = true
+	}
+	rules := make([]historicalFileRule, 0, len(columns.Paths))
+	for i, name := range columns.Paths {
+		digest, id := columns.SHA256[i], columns.IDs[i]
+		if (!strings.HasPrefix(name, "docs/") && !strings.HasPrefix(name, "examples/")) ||
+			path.Clean(name) != name || strings.Contains(name, "\\") || seenPaths[name] ||
+			len(digest) != len("sha256:")+64 || !strings.HasPrefix(digest, "sha256:") ||
+			!isHex(strings.TrimPrefix(digest, "sha256:")) ||
+			!strings.HasPrefix(id, "urn:gooo:direct-module-impact:historical:") ||
+			strings.ContainsAny(id, " \t\r\n") || seenIDs[id] {
+			return nil, fmt.Errorf("Gooo historical file rule has an invalid or repeated identity")
+		}
+		seenPaths[name], seenIDs[id] = true, true
+		rules = append(rules, historicalFileRule{Path: name, SHA256: digest, ID: id})
+	}
+	return rules, nil
 }
 
 func readHistoricalRoots(ctx context.Context, root string, result *DirectModuleImpact) (historicalRoots, error) {
