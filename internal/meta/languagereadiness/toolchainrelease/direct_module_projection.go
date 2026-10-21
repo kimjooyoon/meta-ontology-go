@@ -127,7 +127,7 @@ func writeDirectModuleCandidate(root, destination string, impact DirectModuleImp
 			os.RemoveAll(dest)
 		}
 	}()
-	result := DirectModuleCandidate{Schema: "gooo/direct-module-detached-projection/v1",
+	result := DirectModuleCandidate{Schema: "gooo/direct-module-detached-projection/v2",
 		PlanSHA256: impact.PlanSHA256, Decision: impact.Decision,
 		ProjectedOutputs: len(impact.Outputs), Files: []DirectModuleProjectedFile{},
 		Verification: "candidate_file_bytes", BuildStatus: "not_run", Application: "not_applied"}
@@ -172,7 +172,7 @@ func moduleProjectionGraph(impact DirectModuleImpact) ([]any, string, string) {
 	moduleID := "urn:gooo:module-download:" + impact.Module + "@" + impact.ProposedVersion
 	used := []string{"urn:gooo:direct-module-impact:decision:" + impact.PlanSHA256, moduleID}
 	for _, name := range impact.Outputs {
-		used = append(used, "urn:gooo:repository-file:"+name+":"+impact.Inputs[name])
+		used = append(used, repositoryFileID(name, impact.Inputs[name]))
 	}
 	graph = append(graph, map[string]any{"@id": activityID, "@type": "prov:Activity",
 		"prov:used": provReferences(used)})
@@ -181,7 +181,7 @@ func moduleProjectionGraph(impact DirectModuleImpact) ([]any, string, string) {
 
 func projectedModuleEntity(out DirectModuleProjectedFile, fromModule bool, moduleID,
 	activityID, projectedPolicyID string) map[string]any {
-	derived := []string{"urn:gooo:repository-file:" + out.Path + ":" + out.InputSHA256, moduleID}
+	derived := []string{repositoryFileID(out.Path, out.InputSHA256), moduleID}
 	if fromModule {
 		derived = []string{moduleID}
 	} else if out.Path == payloadDocumentPath {

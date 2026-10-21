@@ -27,18 +27,24 @@ The JSON includes `cochange_outputs`, their current SHA-256 preimages,
 observation to source entities and the downloaded module. The decision's
 `gooo:cochangeScope` lists the paths that must move together. These are
 **planned** outputs; the observation graph does not claim that new files were
-generated.
+generated. The observer also scans every regular file listed by the Git index
+for the exact current-version byte sequence. It records the tracked path-list
+digest, scanned file count, matching file count, outside paths and scan time.
+The Gooo decision treats every outside match as unresolved. Untracked files
+and nonregular tracked paths are not part of this scan; a nonregular or missing
+tracked path stops observation rather than producing a readiness decision.
 PROV-O relation values use JSON-LD `@id` node references, so consumers follow
 graph edges rather than string labels.
 
-For the current `gooo-jev` pin, the first measurable coverage is five observed
-surfaces out of five declared, with zero unresolved paths. Its current-version
-decision is `NO_VERSION_CHANGE`. The decision runtime also has three active
-version references in the root README and scalar-source guides outside this
-five-file candidate. Their preimages are observed, and Gooo returns
-`UNRESOLVED_OUTPUTS` for a proposed runtime version. Historical release and
-observation records remain outside the write scope. Without `-materialize-dir`,
-the command only observes and writes no repository file.
+In a local scan, the `gooo-jev` version appeared in four tracked files, all
+inside the five declared outputs. A proposed Jev
+upgrade remains `READY_FOR_DETACHED_PROJECTION`. The decision-runtime version
+appeared in 28 files; 24 are outside the declared outputs, including three
+known active documents and historical records. Gooo returns
+`UNRESOLVED_OUTPUTS` for its proposed upgrade. An outside byte match is a
+review obligation, not a claim that a historical record should be rewritten.
+Without `-materialize-dir`, the command only observes and writes no repository
+file.
 
 `-materialize-dir /tmp/gooo-module-candidate` asks the detached writer to
 replay the exact plan, recheck preimages and create all five files plus a
@@ -65,16 +71,16 @@ It refuses a proposed module whose own `go.mod` adds graph directives such as
 PROV-O records the origin of each input and output occurrence. The Gooo
 activity owns the affected paths and the decision; the Go adapter only observes
 and projects exact bytes. A provenance edge alone never changes a file. The
-known active references outside the declared write set are recorded as
-unresolved and block projection. The current runtime proposal demonstrates
-this with three active documents. New references are not discovered globally
-yet; the next closure step needs an independent search of tracked files.
+scan covers Git-tracked working-tree bytes, not a semantic classification of
+every mention. The next step is source-owned classification of active consumers
+and immutable historical mentions, with independent review of that boundary.
 
 For each subsequent upgrade, record declared, observed, projected and verified
 output counts separately, plus unresolved references, independent manual edits,
 candidate verification time, CI time and whether the candidate was accepted.
-The first local Jev candidate verified five files (four changed) in 54 ms with
-a warm module cache; that number excludes build, CI and human review and is not
+The scanned local Jev candidate verified five files (four changed) in 1.63 s
+with a warm module cache; that number includes two tracked-file scans and
+excludes build, CI and human review. It is not
 an end-to-end upgrade time. The prepayment only pays off when the accumulated
 time saved on later accepted upgrades exceeds the time spent defining and
 maintaining this plan. No repeated-upgrade series has established that point.
