@@ -378,22 +378,8 @@ func validatePolicy(policy Policy) error {
 		policy.RepositoryWrites != ExpectedRepositoryWrites || policy.LocalTestExecutions != ExpectedLocalTestRuns || policy.RootReadmeVisualPolicy != "preserve" {
 		return errors.New("public trust policy execution or root README boundary is not canonical")
 	}
-	goVersion := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`)
-	toolchainBadges := 0
-	for _, row := range policy.Rows {
-		if row.ID != "go-toolchain" {
-			continue
-		}
-		toolchainBadges++
-		for _, value := range []string{row.Claim, row.Semantics, row.ImageURL} {
-			versions := goVersion.FindAllString(value, -1)
-			if len(versions) != 1 || versions[0] != policy.GoVersion {
-				return errors.New("public trust toolchain badge differs from Gooo version")
-			}
-		}
-	}
-	if toolchainBadges != 1 {
-		return errors.New("public trust toolchain badge is missing or duplicated")
+	if err := validateToolchainBadge(policy.Rows, policy.GoVersion); err != nil {
+		return err
 	}
 	if len(policy.CategoryDenominators) != ExpectedCategoryCount {
 		return fmt.Errorf("public trust category count = %d, want %d", len(policy.CategoryDenominators), ExpectedCategoryCount)
@@ -436,6 +422,27 @@ func validatePolicy(policy Policy) error {
 	}
 	if policy.SecurityEvidenceLinks != 8 {
 		return fmt.Errorf("public trust security evidence link count = %d, want 8", policy.SecurityEvidenceLinks)
+	}
+	return nil
+}
+
+func validateToolchainBadge(rows []Badge, version string) error {
+	goVersion := regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`)
+	toolchainBadges := 0
+	for _, row := range rows {
+		if row.ID != "go-toolchain" {
+			continue
+		}
+		toolchainBadges++
+		for _, value := range []string{row.Claim, row.Semantics, row.ImageURL} {
+			versions := goVersion.FindAllString(value, -1)
+			if len(versions) != 1 || versions[0] != version {
+				return errors.New("public trust toolchain badge differs from Gooo version")
+			}
+		}
+	}
+	if toolchainBadges != 1 {
+		return errors.New("public trust toolchain badge is missing or duplicated")
 	}
 	return nil
 }
