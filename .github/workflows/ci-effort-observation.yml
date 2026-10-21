@@ -441,7 +441,10 @@ jobs:
           root="$RUNNER_TEMP/ci-effort-observation"
           source_event="$(jq -r .event "$root/source/run.json")"
           source_ref="$(jq -r 'if .ref == null then "" else .ref end' "$root/source/run.json")"
-          environment="repository=$GITHUB_REPOSITORY;event=$source_event;ref=$source_ref;head=$HEAD_SHA;toolchain=go1.27.3;permissions=contents:read,actions:read;workspace=<workspace>"
+          required_go="$(awk '$1 == "go" {language="go" $2} $1 == "toolchain" {toolchain=$2} END {if (toolchain != "") print toolchain; else print language}' go.mod)"
+          test -n "$required_go"
+          test "$(go env GOVERSION)" = "$required_go"
+          environment="repository=$GITHUB_REPOSITORY;event=$source_event;ref=$source_ref;head=$HEAD_SHA;toolchain=$required_go;permissions=contents:read,actions:read;workspace=<workspace>"
           args=(
             --run "$root/source/run.json"
             --jobs "$root/source/jobs.json"

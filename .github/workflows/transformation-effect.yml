@@ -162,11 +162,9 @@ jobs:
           fixture="$work/fixture"
           output="$work/output"
           mkdir -p "$fixture" "$output"
-          cat > "$fixture/go.mod" <<'EOF'
-          module fixture
-
-          go 1.27.3
-          EOF
+          fixture_go="$(awk '$1 == "go" {print $2}' go.mod)"
+          test -n "$fixture_go"
+          printf 'module fixture\n\ngo %s\n' "$fixture_go" > "$fixture/go.mod"
           {
             echo 'package fixture'
             echo

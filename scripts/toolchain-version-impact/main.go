@@ -252,6 +252,9 @@ func buildProjectionPlan(observed report, next string) (projectionPlan, error) {
 		return projectionPlan{}, fmt.Errorf("encode observed impact: %w", err)
 	}
 	plan.ObservationSHA256 = digest(observationJSON)
+	if plan.ModuleSHA256 == "" {
+		return projectionPlan{}, fmt.Errorf("projection has no source module digest")
+	}
 	for _, site := range observed.Occurrences {
 		if !site.Classified {
 			plan.Unresolved = append(plan.Unresolved, site)
@@ -299,15 +302,19 @@ func buildProjectionPlan(observed report, next string) (projectionPlan, error) {
 	}
 	plan.PlanCoreSHA256 = digest(coreJSON)
 	observationID := "urn:gooo:toolchain-projection:observation:" + plan.ObservationSHA256
+	moduleID := "urn:gooo:toolchain-projection:module:" + plan.ModuleSHA256
 	activityID := "urn:gooo:toolchain-projection:activity:" + plan.PlanCoreSHA256
 	planID := "urn:gooo:toolchain-projection:plan:" + plan.PlanCoreSHA256
 	plan.Provenance = map[string]any{
 		"@context": map[string]string{"prov": "http://www.w3.org/ns/prov#", "gooo": "urn:gooo:toolchain-projection:vocab:"},
 		"@graph": []any{
 			map[string]any{"@id": observationID, "@type": "prov:Entity", "gooo:content_sha256": plan.ObservationSHA256},
-			map[string]any{"@id": activityID, "@type": "prov:Activity", "prov:used": map[string]string{"@id": observationID}},
+			map[string]any{"@id": moduleID, "@type": "prov:Entity", "gooo:path": "go.mod", "gooo:content_sha256": plan.ModuleSHA256},
+			map[string]any{"@id": activityID, "@type": "prov:Activity", "prov:used": []any{
+				map[string]string{"@id": observationID}, map[string]string{"@id": moduleID}}},
 			map[string]any{"@id": planID, "@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activityID},
-				"prov:wasDerivedFrom": map[string]string{"@id": observationID}, "gooo:core_sha256": plan.PlanCoreSHA256},
+				"prov:wasDerivedFrom": []any{map[string]string{"@id": observationID}, map[string]string{"@id": moduleID}},
+				"gooo:core_sha256":    plan.PlanCoreSHA256},
 		},
 	}
 	return plan, nil
