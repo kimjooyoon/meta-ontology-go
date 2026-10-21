@@ -72,6 +72,7 @@ func observeTrackedModuleReferences(ctx context.Context, root, current string,
 	for _, name := range result.Outputs {
 		declared[name] = true
 	}
+	declared[directModuleSourcePath] = true
 	seen := make(map[string]bool)
 	for item := range bytes.SplitSeq(listing[:len(listing)-1], []byte{0}) {
 		name := string(item)

@@ -39,6 +39,15 @@ func directModuleProvenance(result DirectModuleImpact) map[string]any {
 	for _, rule := range result.ActiveRules {
 		graph = append(graph, map[string]any{"@id": rule.ID, "@type": "prov:Entity",
 			"gooo:path": rule.Path, "gooo:prefix": rule.Prefix,
+			"gooo:referenceRole": "active",
+			"prov:wasDerivedFrom": map[string]string{
+				"@id": repositoryFileID(directModuleSourcePath, result.Inputs[directModuleSourcePath])}})
+		used = append(used, rule.ID)
+	}
+	for _, rule := range result.PreservedSpans {
+		graph = append(graph, map[string]any{"@id": rule.ID, "@type": "prov:Entity",
+			"gooo:path": rule.Path, "gooo:prefix": rule.Prefix,
+			"gooo:version": rule.Version, "gooo:referenceRole": "historical",
 			"prov:wasDerivedFrom": map[string]string{
 				"@id": repositoryFileID(directModuleSourcePath, result.Inputs[directModuleSourcePath])}})
 		used = append(used, rule.ID)
@@ -68,12 +77,13 @@ func directModuleProvenance(result DirectModuleImpact) map[string]any {
 	graph = append(graph, map[string]any{"@id": "urn:gooo:direct-module-impact:decision:" + result.PlanSHA256,
 		"@type": "prov:Entity", "prov:wasGeneratedBy": map[string]string{"@id": activity},
 		"gooo:status": result.Decision.Status, "gooo:cochangeScope": result.Outputs,
-		"gooo:outsideScope":        result.OutsideScope,
-		"gooo:historicalScope":     result.HistoricalScope,
-		"gooo:archiveHeadCommit":   result.ArchiveHead,
-		"gooo:archiveRoots":        result.ArchiveRoots,
-		"gooo:activeVersionRules":  result.ActiveRules,
-		"gooo:historicalFileRules": result.HistoricalRules})
+		"gooo:outsideScope":          result.OutsideScope,
+		"gooo:historicalScope":       result.HistoricalScope,
+		"gooo:archiveHeadCommit":     result.ArchiveHead,
+		"gooo:archiveRoots":          result.ArchiveRoots,
+		"gooo:activeVersionRules":    result.ActiveRules,
+		"gooo:preservedVersionSpans": result.PreservedSpans,
+		"gooo:historicalFileRules":   result.HistoricalRules})
 	return map[string]any{"@context": map[string]string{"prov": "http://www.w3.org/ns/prov#",
 		"gooo": "https://github.com/kimjooyoon/meta-ontology-go/ns#"}, "@graph": graph}
 }

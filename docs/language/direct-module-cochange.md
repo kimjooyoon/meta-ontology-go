@@ -58,8 +58,16 @@ Gooo. The byte projector replaces only `prefix + current version` with
 `prefix + proposed version` after checking a unique match and unchanged file
 preimage. The README's older SDK study link stays as it was. Each candidate
 output derives from its original bytes and the Gooo rule entity.
-The rule columns can express further unique current-version spans without a
-new Go replacement function for each document.
+The rule columns can express further unique current-version spans, including
+several in one document, without a new Go replacement function for each span.
+The observer closes all declared roles for that document together, while the
+candidate writes the document once after applying its rules in source order.
+The README also has a preserved SDK study link. Gooo declares that link's
+prefix, fixed release version and stable rule ID separately from the live pin.
+For every document with a live rule, the observer checks each occurrence of the
+current version against one declared live or preserved span. An extra occurrence
+has no source-owned role and blocks projection. The fixed historical link stays
+valid when a later upgrade changes the current pin.
 
 In a local scan, the `gooo-jev` version appeared in four tracked files, all
 inside the five declared outputs. A proposed Jev
@@ -74,8 +82,9 @@ digest-bound files add to the two archival trees; mixed documents retain their
 original bytes rather than being rewritten wholesale. Before these rules, the
 runtime version occurred in 26 tracked files: five of six declared outputs,
 ten archive records and eleven unclassified files. A read-only observation of
-the unchanged current pin found 26 reference files, eight declared
-outputs, 19 historical files and zero outside references. Its Gooo decision was
+the unchanged current pin found 27 reference files: seven of eight declared
+outputs, 19 historical files and the Gooo rule source, with zero outside
+references. Its Gooo decision was
 `NO_VERSION_CHANGE`, as expected for the same proposed version. This confirms
 reference classification for that checkout; it does not establish upgrade
 compatibility. A new version still needs a verified origin and fresh observation.
@@ -115,8 +124,11 @@ checkout. The adapter verifies the commit's tree, every output digest and the
 complete changed-path set before creating the branch ref atomically. The JSON
 receipt records the base and new commit, tree IDs, Gooo decision and PROV-O
 origin edges. It reports `build_status: not_run`; normal branch CI remains the
-independent check. This command does not push the branch or open a PR. Current
-runtime proposals remain blocked by their unresolved references.
+independent check. This command does not push the branch or open a PR. The
+current runtime pin has no unresolved exact-version references in the observed
+checkout. A new version can still be refused for a changed preimage, incomplete
+module origin or unmodeled module graph. Versionless API compatibility remains
+outside this decision and needs independent checks.
 
 PROV-O records the origin of each input and output occurrence. The Gooo
 activity owns the affected paths and the decision; the Go adapter only observes
