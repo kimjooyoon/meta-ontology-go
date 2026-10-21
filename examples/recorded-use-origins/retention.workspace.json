@@ -7,7 +7,7 @@
   "packages": [
     {
       "path": "origin/recordeduse",
-      "sources": ["inspect.gooo"]
+      "sources": ["inspect.gooo", "retention.gooo"]
     }
   ]
 }

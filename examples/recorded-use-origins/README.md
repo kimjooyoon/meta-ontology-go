@@ -49,13 +49,14 @@ Gooo는 완료 여부와 프레임·활동 일치도 다시 확인해 두 관계
 
 ## 보관된 읽기 비율
 
-같은 Gooo 소스의 `MeasureRetention`은 저장 기록에서 **보관된 지역 읽기 수**와
+새 [Gooo 소스](retention.gooo)의 `MeasureRetention`은 저장 기록에서 **보관된 지역 읽기 수**와
 **한도 때문에 누락된 읽기 수**를 따로 받습니다. 분모는 두 수의 합이며 결과는
 만분율(`retention_basis_points`)입니다. 예를 들어 보관 32건·누락 8건이면
 `8000`입니다. 이 값은 관찰된 읽기의 **기록 보관 비율**이며 프로그램의 정답률,
 전체 의존성의 발견률 또는 CI 시간 지표가 아닙니다. 저장 기록이 주장한 수치를
 계산하며, 기록 생산자의 실행을 새로 증명하지 않습니다. 비율 계산 규칙은
 `ComputeRetention`에 있고, `MeasureRetention`이 기록의 열을 읽어 그 규칙에 전달합니다.
+읽기 관계의 판정은 기존 [Inspect](inspect.gooo)를 호출하며 그 원본 파일은 그대로 둡니다.
 
 ```sh
 go run ./cmd/gooo package execute --json \

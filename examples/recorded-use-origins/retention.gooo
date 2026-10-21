@@ -1,0 +1,94 @@
+package recordeduse
+namespace recordeduse
+
+// The source owns the measurement. Columns are only the saved-record transport;
+// the count contract can be checked without repeating every transport column.
+entity RetentionCounts id "urn:gooo:recorded-use:retention-counts" fields {
+    field receipt_sha256 id "urn:gooo:recorded-use:retention-counts:receipt" type string required one
+    field source_sha256 id "urn:gooo:recorded-use:retention-counts:source" type string required one
+    field journal_sha256 id "urn:gooo:recorded-use:retention-counts:journal" type string required one
+    field retained_uses id "urn:gooo:recorded-use:retention-counts:retained" type integer required one
+    field dropped_uses id "urn:gooo:recorded-use:retention-counts:dropped" type integer required one
+    field frames_dropped id "urn:gooo:recorded-use:retention-counts:frames-dropped" type integer required one
+    field writes_dropped id "urn:gooo:recorded-use:retention-counts:writes-dropped" type integer required one
+    field selected_offset id "urn:gooo:recorded-use:retention-counts:offset" type integer required one
+    field selected_rows id "urn:gooo:recorded-use:retention-counts:selected-rows" type integer required one
+}
+
+entity UseRetention id "urn:gooo:recorded-use:retention" fields {
+    field receipt_sha256 id "urn:gooo:recorded-use:retention:receipt" type string required one
+    field source_sha256 id "urn:gooo:recorded-use:retention:source" type string required one
+    field journal_sha256 id "urn:gooo:recorded-use:retention:journal" type string required one
+    field retained_uses id "urn:gooo:recorded-use:retention:retained" type integer required one
+    field dropped_uses id "urn:gooo:recorded-use:retention:dropped" type integer required one
+    field attempted_uses id "urn:gooo:recorded-use:retention:attempted" type integer required one
+    field retention_basis_points id "urn:gooo:recorded-use:retention:basis-points" type integer required one
+    field selected_offset id "urn:gooo:recorded-use:retention:offset" type integer required one
+    field page_complete id "urn:gooo:recorded-use:retention:page-complete" type boolean required one
+    field other_origins_dropped id "urn:gooo:recorded-use:retention:other-drops" type boolean required one
+    field status id "urn:gooo:recorded-use:retention:status" type string required one
+}
+
+activity InvalidRetention(RetentionCounts) -> UseRetention id "urn:gooo:recorded-use:invalid-retention" computes `
+return UseRetention{
+    receipt_sha256: input.receipt_sha256,
+    source_sha256: input.source_sha256,
+    journal_sha256: input.journal_sha256,
+    retained_uses: -1,
+    dropped_uses: -1,
+    attempted_uses: -1,
+    retention_basis_points: -1,
+    selected_offset: input.selected_offset,
+    page_complete: false,
+    other_origins_dropped: false,
+    status: "INVALID_INPUT",
+}
+`
+
+// The denominator counts retained plus explicitly dropped observed reads.
+// This is a saved-record claim, not a correctness or causal-completeness score.
+activity ComputeRetention(RetentionCounts) -> UseRetention id "urn:gooo:recorded-use:compute-retention" computes `
+if input.receipt_sha256 == "" || input.source_sha256 == "" || input.journal_sha256 == "" ||
+   input.retained_uses < 1 || input.dropped_uses < 0 || input.frames_dropped < 0 ||
+   input.writes_dropped < 0 || input.selected_rows != 1 || input.selected_offset < 0 ||
+   input.selected_offset >= input.retained_uses || input.retained_uses > 922337203685477 ||
+   input.dropped_uses > 9223372036854775807 - input.retained_uses {
+    return InvalidRetention(input)
+}
+let attempted = input.retained_uses + input.dropped_uses
+let status = "RECORDED_USE_RETENTION"
+if input.dropped_uses > 0 { status = "PARTIAL_USE_RETENTION" }
+return UseRetention{
+    receipt_sha256: input.receipt_sha256,
+    source_sha256: input.source_sha256,
+    journal_sha256: input.journal_sha256,
+    retained_uses: input.retained_uses,
+    dropped_uses: input.dropped_uses,
+    attempted_uses: attempted,
+    retention_basis_points: input.retained_uses * 10000 / attempted,
+    selected_offset: input.selected_offset,
+    page_complete: input.selected_offset == 0 && input.retained_uses == 1,
+    other_origins_dropped: input.frames_dropped > 0 || input.writes_dropped > 0,
+    status: status,
+}
+`
+
+// Inspect checks the selected relation before its aggregate claims are used.
+activity MeasureRetention(Columns) -> UseRetention id "urn:gooo:recorded-use:measure-retention" computes `
+let counts = RetentionCounts{
+    receipt_sha256: input.receipt_sha256,
+    source_sha256: input.source_sha256,
+    journal_sha256: input.journal_sha256,
+    retained_uses: input.total_rows,
+    dropped_uses: input.uses_dropped,
+    frames_dropped: input.frames_dropped,
+    writes_dropped: input.writes_dropped,
+    selected_offset: input.offset,
+    selected_rows: int64(len(input.cases)),
+}
+let claim = Inspect(input)
+if claim.status == "INVALID_INPUT" || claim.status == "SELECT_ONE_USE" {
+    return InvalidRetention(counts)
+}
+return ComputeRetention(counts)
+`
