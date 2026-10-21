@@ -50,6 +50,30 @@ if input.module_path == "github.com/kimjooyoon/gooo-decision-runtime" {
 return ActiveVersionRules{paths: []string{}, prefixes: []string{}, rule_ids: []string{}}
 `
 
+// A preserved link can mention today's pin without becoming an upgrade target.
+// Its version is fixed to the release it describes, so later upgrades do not
+// need to rewrite the historical rule.
+entity PreservedVersionSpans id "urn:gooo:direct-module-impact:preserved-spans" fields {
+    field paths id "urn:gooo:direct-module-impact:preserved-spans:paths" type string required many
+    field prefixes id "urn:gooo:direct-module-impact:preserved-spans:prefixes" type string required many
+    field versions id "urn:gooo:direct-module-impact:preserved-spans:versions" type string required many
+    field rule_ids id "urn:gooo:direct-module-impact:preserved-spans:ids" type string required many
+}
+
+activity RequiredPreservedVersionSpans(ModuleIdentity) -> PreservedVersionSpans
+    id "urn:gooo:direct-module-impact:required-preserved-spans" computes `
+if input.module_path == "github.com/kimjooyoon/gooo-decision-runtime" {
+    return PreservedVersionSpans{
+        paths: []string{"README.md"},
+        prefixes: []string{"https://github.com/kimjooyoon/gooo-decision-runtime/tree/"},
+        versions: []string{"v0.2.51-experimental"},
+        rule_ids: []string{"urn:gooo:direct-module-impact:rule:preserved-sdk-study"},
+    }
+}
+return PreservedVersionSpans{paths: []string{}, prefixes: []string{},
+    versions: []string{}, rule_ids: []string{}}
+`
+
 // These committed trees preserve observations from earlier executions. A
 // current-version mention there is historical only while its bytes still
 // equal the file at HEAD; Go observes that equality, not the archive role.

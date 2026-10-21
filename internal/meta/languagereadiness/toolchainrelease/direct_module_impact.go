@@ -20,31 +20,32 @@ const directModuleSourcePath = "examples/direct-module-impact/plan.gooo"
 const directModuleActivityID = "urn:gooo:direct-module-impact:assess"
 
 type DirectModuleImpact struct {
-	Schema            string               `json:"schema"`
-	Module            string               `json:"module"`
-	CurrentVersion    string               `json:"current_version"`
-	ProposedVersion   string               `json:"proposed_version"`
-	Inputs            map[string]string    `json:"input_sha256"`
-	Outputs           []string             `json:"cochange_outputs"`
-	ActiveRules       []activeVersionRule  `json:"active_version_rules"`
-	HistoricalRules   []historicalFileRule `json:"historical_file_rules"`
-	OutsideScope      []string             `json:"outside_scope_current_references"`
-	HistoricalScope   []string             `json:"historical_current_references"`
-	ArchiveHead       string               `json:"archive_head_commit"`
-	ArchiveRoots      []string             `json:"historical_roots"`
-	ScanScope         string               `json:"reference_scan_scope"`
-	TrackedPathsSHA   string               `json:"tracked_paths_sha256"`
-	TrackedFiles      int                  `json:"tracked_files_scanned"`
-	ReferenceFiles    int                  `json:"tracked_reference_files"`
-	ScanElapsedUS     int64                `json:"reference_scan_elapsed_microseconds"`
-	ObservedElapsedUS int64                `json:"observation_elapsed_microseconds"`
-	ObservedOutputs   int                  `json:"observed_outputs"`
-	ProjectedOutputs  int                  `json:"projected_outputs"`
-	Unresolved        []string             `json:"unresolved"`
-	Download          moduleDownload       `json:"download"`
-	PlanSHA256        string               `json:"plan_sha256"`
-	Decision          moduleDecision       `json:"gooo_decision"`
-	Provenance        map[string]any       `json:"provenance"`
+	Schema            string                     `json:"schema"`
+	Module            string                     `json:"module"`
+	CurrentVersion    string                     `json:"current_version"`
+	ProposedVersion   string                     `json:"proposed_version"`
+	Inputs            map[string]string          `json:"input_sha256"`
+	Outputs           []string                   `json:"cochange_outputs"`
+	ActiveRules       []activeVersionRule        `json:"active_version_rules"`
+	PreservedSpans    []preservedVersionSpanRule `json:"preserved_version_spans"`
+	HistoricalRules   []historicalFileRule       `json:"historical_file_rules"`
+	OutsideScope      []string                   `json:"outside_scope_current_references"`
+	HistoricalScope   []string                   `json:"historical_current_references"`
+	ArchiveHead       string                     `json:"archive_head_commit"`
+	ArchiveRoots      []string                   `json:"historical_roots"`
+	ScanScope         string                     `json:"reference_scan_scope"`
+	TrackedPathsSHA   string                     `json:"tracked_paths_sha256"`
+	TrackedFiles      int                        `json:"tracked_files_scanned"`
+	ReferenceFiles    int                        `json:"tracked_reference_files"`
+	ScanElapsedUS     int64                      `json:"reference_scan_elapsed_microseconds"`
+	ObservedElapsedUS int64                      `json:"observation_elapsed_microseconds"`
+	ObservedOutputs   int                        `json:"observed_outputs"`
+	ProjectedOutputs  int                        `json:"projected_outputs"`
+	Unresolved        []string                   `json:"unresolved"`
+	Download          moduleDownload             `json:"download"`
+	PlanSHA256        string                     `json:"plan_sha256"`
+	Decision          moduleDecision             `json:"gooo_decision"`
+	Provenance        map[string]any             `json:"provenance"`
 }
 
 type moduleDownload struct {
@@ -119,18 +120,22 @@ func ObserveDirectModuleImpact(root, module, proposed string) (DirectModuleImpac
 	if err != nil {
 		return DirectModuleImpact{}, err
 	}
-	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v4", Module: module,
+	result := DirectModuleImpact{Schema: "gooo/direct-module-impact/v5", Module: module,
 		CurrentVersion: current, ProposedVersion: proposed, Inputs: map[string]string{},
 		Outputs: paths[:len(paths)-1], ActiveRules: rules,
-		OutsideScope: []string{}, HistoricalScope: []string{}, Unresolved: []string{}}
+		PreservedSpans: []preservedVersionSpanRule{},
+		OutsideScope:   []string{}, HistoricalScope: []string{}, Unresolved: []string{}}
 	if err := readImpactPreimages(root, paths, &result); err != nil {
 		return DirectModuleImpact{}, err
 	}
-	for _, rule := range rules {
-		raw, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rule.Path)))
-		if err != nil || bytes.Count(raw, []byte(rule.Prefix+current)) != 1 {
-			result.Unresolved = append(result.Unresolved, "active version rule does not identify one source span: "+rule.ID)
-		}
+	if err := readPreservedVersionSpans(ctx, root, &result); err != nil {
+		return DirectModuleImpact{}, err
+	}
+	if err := observePlanVersionMentions(root, &result); err != nil {
+		return DirectModuleImpact{}, err
+	}
+	if err := observeDocumentSpans(root, &result); err != nil {
+		return DirectModuleImpact{}, err
 	}
 	if err := observeTrackedModuleReferences(ctx, root, current, &result); err != nil {
 		return DirectModuleImpact{}, err
@@ -309,6 +314,7 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 		Inputs                        map[string]string
 		OutsideScope, HistoricalScope []string
 		ActiveRules                   []activeVersionRule
+		PreservedSpans                []preservedVersionSpanRule
 		HistoricalRules               []historicalFileRule
 		ArchiveHead                   string
 		ArchiveRoots                  []string
@@ -316,7 +322,8 @@ func assessDirectModule(ctx context.Context, source []byte, policy payloadPolicy
 		TrackedFiles, ReferenceFiles  int
 		Download                      moduleDownload
 	}{result.Module, result.CurrentVersion, result.ProposedVersion,
-		result.Inputs, result.OutsideScope, result.HistoricalScope, result.ActiveRules, result.HistoricalRules,
+		result.Inputs, result.OutsideScope, result.HistoricalScope, result.ActiveRules,
+		result.PreservedSpans, result.HistoricalRules,
 		result.ArchiveHead, result.ArchiveRoots, result.ScanScope, result.TrackedPathsSHA,
 		result.TrackedFiles, result.ReferenceFiles, result.Download})
 	if err != nil {

@@ -135,7 +135,7 @@ func writeDirectModuleCandidate(root, destination string, impact DirectModuleImp
 			os.RemoveAll(dest)
 		}
 	}()
-	result := DirectModuleCandidate{Schema: "gooo/direct-module-detached-projection/v4",
+	result := DirectModuleCandidate{Schema: "gooo/direct-module-detached-projection/v5",
 		PlanSHA256: impact.PlanSHA256, Decision: impact.Decision,
 		ProjectedOutputs: len(impact.Outputs), Files: []DirectModuleProjectedFile{},
 		Verification: "candidate_file_bytes", BuildStatus: "not_run", Application: "not_applied"}
@@ -160,7 +160,7 @@ func writeDirectModuleCandidate(root, destination string, impact DirectModuleImp
 			result.ChangedOutputs++
 		}
 		graph = append(graph, projectedModuleEntity(out, name == impact.Outputs[3],
-			moduleID, activityID, projectedPolicyID, ruleIDForPath(impact.ActiveRules, name)))
+			moduleID, activityID, projectedPolicyID, sourceRuleIDsForPath(impact, name)))
 	}
 	result.Provenance = map[string]any{"@context": impact.Provenance["@context"], "@graph": graph}
 	result.VerifiedElapsedMicros = time.Since(started).Microseconds()
@@ -188,29 +188,33 @@ func moduleProjectionGraph(impact DirectModuleImpact) ([]any, string, string) {
 }
 
 func projectedModuleEntity(out DirectModuleProjectedFile, fromModule bool, moduleID,
-	activityID, projectedPolicyID, ruleID string) map[string]any {
+	activityID, projectedPolicyID string, ruleIDs []string) map[string]any {
 	derived := []string{repositoryFileID(out.Path, out.InputSHA256), moduleID}
 	if fromModule {
 		derived = []string{moduleID}
 	} else if out.Path == payloadDocumentPath {
 		derived = append(derived, projectedPolicyID)
 	}
-	if ruleID != "" {
-		derived = append(derived, ruleID)
-	}
+	derived = append(derived, ruleIDs...)
 	return map[string]any{"@id": "urn:gooo:candidate-file:" + out.Path + ":" + out.OutputSHA256,
 		"@type": "prov:Entity", "gooo:path": out.Path, "gooo:sha256": out.OutputSHA256,
 		"prov:wasDerivedFrom": provReferences(derived),
 		"prov:wasGeneratedBy": map[string]string{"@id": activityID}}
 }
 
-func ruleIDForPath(rules []activeVersionRule, name string) string {
-	for _, rule := range rules {
+func sourceRuleIDsForPath(impact DirectModuleImpact, name string) []string {
+	ids := []string{}
+	for _, rule := range impact.ActiveRules {
 		if rule.Path == name {
-			return rule.ID
+			ids = append(ids, rule.ID)
 		}
 	}
-	return ""
+	for _, rule := range impact.PreservedSpans {
+		if rule.Path == name {
+			ids = append(ids, rule.ID)
+		}
+	}
+	return ids
 }
 
 func replaceOne(data []byte, old, next string) ([]byte, error) {
