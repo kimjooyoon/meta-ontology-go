@@ -44,7 +44,10 @@ env:
   GOTOOLCHAIN: go1.27.3
   GOWORK: off
   GOMAXPROCS: 2
-  GOOO_CI_BUDGET_MS: 2400000
+  # The shared clock includes tool preparation, canonical checks, and proof
+  # materialization. The previous 40-minute ceiling killed a successful check
+  # set before its exact-head proof could be emitted (run 39624626578).
+  GOOO_CI_BUDGET_MS: 3000000
   GOOO_CI_DOMAIN_REVISION: d054a0fe012248c51725dd4a8e85ab0900a726cc
 
 jobs:

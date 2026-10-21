@@ -101,9 +101,22 @@ incomplete candidate.
 The release archive's `NOTICE` is generated from the projected payload at
 release time; it is a downstream artifact rather than a sixth committed file.
 
-The writer does not apply the candidate to a branch or claim a passing build.
+The detached writer does not apply the candidate to a branch or claim a passing build.
 It refuses a proposed module whose own `go.mod` adds graph directives such as
 `require` or `replace`: those would need more than the declared outputs.
+
+After reviewing a detached candidate, `-commit-branch agent/<name>` can create
+a **local** branch with its verified outputs in one Git commit. This mode needs
+a clean tracked checkout and a branch name that does not already exist. It
+replays the observation, checks the current `HEAD` against the candidate's
+origin, and asks Gooo's `AssessBranchCommit` activity to accept the exact
+proposal. A temporary Git index builds the tree without changing the current
+checkout. The adapter verifies the commit's tree, every output digest and the
+complete changed-path set before creating the branch ref atomically. The JSON
+receipt records the base and new commit, tree IDs, Gooo decision and PROV-O
+origin edges. It reports `build_status: not_run`; normal branch CI remains the
+independent check. This command does not push the branch or open a PR. Current
+runtime proposals remain blocked by their unresolved references.
 
 PROV-O records the origin of each input and output occurrence. The Gooo
 activity owns the affected paths and the decision; the Go adapter only observes
