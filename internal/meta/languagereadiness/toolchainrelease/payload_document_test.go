@@ -17,11 +17,16 @@ func TestPayloadDocumentMatchesGoooSource(t *testing.T) {
 
 func TestPayloadDocumentProjectsOnlyMarkedTable(t *testing.T) {
 	root := payloadTestRoot(t)
+	policy, err := readPayloadPolicy(root, Targets()[0])
+	if err != nil {
+		t.Fatal(err)
+	}
 	original, err := os.ReadFile(filepath.Join("../../../..", payloadDocumentPath))
 	if err != nil {
 		t.Fatal(err)
 	}
-	stale := []byte(strings.Replace(string(original), "v0.2.51-experimental` /", "v0.2.50-experimental` /", 1))
+	stale := []byte(strings.Replace(string(original), policy.Members.RuntimeVersion+"` /",
+		"v0.0.0-gooo-mismatch` /", 1))
 	if bytes.Equal(stale, original) {
 		t.Fatal("release module row fixture was not found")
 	}

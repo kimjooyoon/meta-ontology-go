@@ -25,7 +25,12 @@ func TestPayloadDocumentRejectsChangedModuleAndLicense(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	changedModule := bytes.Replace(module, []byte("v0.2.51-experimental"), []byte("v0.2.50-experimental"), 1)
+	policy, err := readPayloadPolicy(root, Targets()[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedModule := bytes.Replace(module, []byte(policy.Members.RuntimeVersion),
+		[]byte("v0.0.0-gooo-mismatch"), 1)
 	if bytes.Equal(changedModule, module) {
 		t.Fatal("direct module fixture was not found")
 	}

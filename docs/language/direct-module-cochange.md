@@ -6,8 +6,9 @@ digest, the committed license text, and the release document must describe the
 same source. Editing one without the others gives a plausible-looking build
 with an incomplete origin story.
 
-[`plan.gooo`](../../examples/direct-module-impact/plan.gooo) names the five
-affected surfaces and decides whether a proposed version has enough observed
+[`plan.gooo`](../../examples/direct-module-impact/plan.gooo) names five shared
+surfaces, plus a live README version rule for the decision runtime, and decides
+whether a proposed version has enough observed
 origin data to enter detached projection. The Go observer reads the exact
 checkout preimages and uses `go mod download -json` for the proposed module.
 It checks the current version against the Gooo payload, module origin, both
@@ -44,6 +45,14 @@ tracked path stops observation rather than producing a readiness decision.
 PROV-O relation values use JSON-LD `@id` node references, so consumers follow
 graph edges rather than string labels.
 
+The active rule names one path, one exact prefix and one stable rule ID in
+Gooo. The byte projector replaces only `prefix + current version` with
+`prefix + proposed version` after checking a unique match and unchanged file
+preimage. The README's older SDK study link stays as it was. Its candidate
+output derives from both the original README bytes and the Gooo rule entity.
+The rule columns can express further unique current-version spans without a
+new Go replacement function for each document.
+
 In a local scan, the `gooo-jev` version appeared in four tracked files, all
 inside the five declared outputs. A proposed Jev
 upgrade remains `READY_FOR_DETACHED_PROJECTION`. The decision-runtime version
@@ -52,41 +61,43 @@ The archive role can exclude committed historical records from the write
 obligation, while current documentation and other unclassified matches still
 block projection. An outside byte match is an obligation to classify or model,
 not a reason to rewrite it.
-In the current `dev` checkout, ten of the 24 outside runtime references are
-byte-identical committed records in those two trees. Fourteen remain outside
-the candidate, so the runtime upgrade still returns `UNRESOLVED_OUTPUTS`.
-The observed reference scan took about 1.43 seconds with a warm cache;
-this is an observation time, not a measured saving on a completed upgrade.
+The new live rule brings README into the runtime co-change scope. Two existing
+document checks now read the runtime version from the Gooo payload rather than
+pinning its old value. In the current working tree, the runtime version occurs
+in 26 tracked files: five of the six declared outputs, ten committed historical
+records, and eleven still-unclassified outside files. The runtime proposal
+therefore remains `UNRESOLVED_OUTPUTS`. This is an observation, not a measured
+saving on a completed upgrade.
 Without `-materialize-dir`, the command only observes and writes no repository
 file.
 
 `-materialize-dir /tmp/gooo-module-candidate` asks the detached writer to
-replay the exact plan, recheck preimages and create all five files plus a
+replay the exact plan, recheck preimages and create every declared output plus a
 `candidate-receipt.json` outside the checkout. The receipt binds every output
 to its old and new digest with `prov:wasDerivedFrom` and
 `prov:wasGeneratedBy`. The release document also names the projected Gooo
 payload as its origin. An unchanged license is copied and recorded rather
-than pretending its bytes changed. It separately reports five files written,
-five output bytes read back and verified, the number whose content changed,
+than pretending its bytes changed. It separately reports files written,
+output bytes read back and verified, the number whose content changed,
 elapsed microseconds through byte verification (including module download),
 `build_status: not_run`, and `application_status: not_applied`. For the
 `gooo-jev` commit
 `678e5bc3eb6f714ebfec79f9ba3e05e9312bf920`, the local candidate wrote
 five coherent outputs; four changed and the license text stayed identical.
-An earlier decision-runtime dry run covered only those five files; the current
-Gooo decision blocks that incomplete candidate.
+The current decision-runtime plan declares six files and still blocks an
+incomplete candidate because eleven references remain outside its scope.
 The release archive's `NOTICE` is generated from the projected payload at
 release time; it is a downstream artifact rather than a sixth committed file.
 
 The writer does not apply the candidate to a branch or claim a passing build.
 It refuses a proposed module whose own `go.mod` adds graph directives such as
-`require` or `replace`: those would need more than the five declared outputs.
+`require` or `replace`: those would need more than the declared outputs.
 
 PROV-O records the origin of each input and output occurrence. The Gooo
 activity owns the affected paths and the decision; the Go adapter only observes
 and projects exact bytes. A provenance edge alone never changes a file. The
 scan covers Git-tracked working-tree bytes. Active references outside the
-five outputs, aliases, constructed versions and versionless API dependencies
+declared outputs, aliases, constructed versions and versionless API dependencies
 remain unmodeled. Subsequent work should give those active consumers explicit
 source-owned projection rules and verify their resulting bytes together.
 
