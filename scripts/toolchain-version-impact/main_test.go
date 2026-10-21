@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -56,5 +57,50 @@ func TestScanKeepsHistoricalAndUnknownSeparate(t *testing.T) {
 	}
 	if _, err := scanPaths(root, paths); err == nil {
 		t.Fatal("missing tracked workflow was silently omitted")
+	}
+}
+
+func TestProjectionPlanBindsExactSpansAndLeavesUnknownOpen(t *testing.T) {
+	root := t.TempDir()
+	for name, data := range map[string]string{
+		"go.mod":                   "module example.org/impact\n\ngo 1.27.3\n",
+		".github/workflows/ci.yml": "go-version: '1.27.3'\nrun: echo go1.27.3\n",
+	} {
+		full := filepath.Join(root, name)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(data), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	observed, err := scanPaths(root, []string{"go.mod", ".github/workflows/ci.yml"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := buildProjectionPlan(observed, "1.27.4")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.CandidateEdits) != 2 || len(plan.Unresolved) != 1 || plan.HistoricalWrites != 0 {
+		t.Fatalf("unexpected plan coverage: %+v", plan)
+	}
+	if plan.ObservationSHA256 == "" || plan.PlanCoreSHA256 == "" || plan.Provenance["@graph"] == nil {
+		t.Fatalf("plan lacks bound observation and provenance: %+v", plan)
+	}
+	for _, edit := range plan.CandidateEdits {
+		data, err := os.ReadFile(filepath.Join(root, edit.Path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data[edit.StartByte:edit.EndByte]) != edit.Before || digest(data) != edit.PreimageSHA256 {
+			t.Fatalf("candidate lacks exact preimage: %+v", edit)
+		}
+		if !strings.HasPrefix(edit.ClassifierID, "urn:gooo:toolchain-impact:classifier:") {
+			t.Fatalf("candidate lacks classifier identity: %+v", edit)
+		}
+	}
+	if _, err := buildProjectionPlan(observed, "next"); err == nil {
+		t.Fatal("unsupported target version accepted")
 	}
 }
