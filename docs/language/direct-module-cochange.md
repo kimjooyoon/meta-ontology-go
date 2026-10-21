@@ -7,7 +7,7 @@ same source. Editing one without the others gives a plausible-looking build
 with an incomplete origin story.
 
 [`plan.gooo`](../../examples/direct-module-impact/plan.gooo) names five shared
-surfaces, plus a live README version rule for the decision runtime, and decides
+surfaces, plus three live documentation version rules for the decision runtime, and decides
 whether a proposed version has enough observed
 origin data to enter detached projection. The Go observer reads the exact
 checkout preimages and uses `go mod download -json` for the proposed module.
@@ -45,11 +45,19 @@ tracked path stops observation rather than producing a readiness decision.
 PROV-O relation values use JSON-LD `@id` node references, so consumers follow
 graph edges rather than string labels.
 
-The active rule names one path, one exact prefix and one stable rule ID in
+The source also names nine exact historical files whose recorded release or
+execution identity must stay fixed. Each has its own stable rule ID and SHA-256
+in Gooo. A matching current-version mention counts as historical only when the
+working-tree bytes equal both the declared digest and Git `HEAD`. Editing one
+file revokes that classification until its origin is reviewed and the source
+rule is updated. The report links the historical file to both its rule and its
+committed preimage.
+
+Each active rule names one path, one exact prefix and one stable rule ID in
 Gooo. The byte projector replaces only `prefix + current version` with
 `prefix + proposed version` after checking a unique match and unchanged file
-preimage. The README's older SDK study link stays as it was. Its candidate
-output derives from both the original README bytes and the Gooo rule entity.
+preimage. The README's older SDK study link stays as it was. Each candidate
+output derives from its original bytes and the Gooo rule entity.
 The rule columns can express further unique current-version spans without a
 new Go replacement function for each document.
 
@@ -61,13 +69,16 @@ The archive role can exclude committed historical records from the write
 obligation, while current documentation and other unclassified matches still
 block projection. An outside byte match is an obligation to classify or model,
 not a reason to rewrite it.
-The new live rule brings README into the runtime co-change scope. Two existing
-document checks now read the runtime version from the Gooo payload rather than
-pinning its old value. In the current working tree, the runtime version occurs
-in 26 tracked files: five of the six declared outputs, ten committed historical
-records, and eleven still-unclassified outside files. The runtime proposal
-therefore remains `UNRESOLVED_OUTPUTS`. This is an observation, not a measured
-saving on a completed upgrade.
+The README and two current model documents now have live rules. The nine
+digest-bound files add to the two archival trees; mixed documents retain their
+original bytes rather than being rewritten wholesale. Before these rules, the
+runtime version occurred in 26 tracked files: five of six declared outputs,
+ten archive records and eleven unclassified files. A read-only observation of
+the unchanged current pin found 26 reference files, eight declared
+outputs, 19 historical files and zero outside references. Its Gooo decision was
+`NO_VERSION_CHANGE`, as expected for the same proposed version. This confirms
+reference classification for that checkout; it does not establish upgrade
+compatibility. A new version still needs a verified origin and fresh observation.
 Without `-materialize-dir`, the command only observes and writes no repository
 file.
 
@@ -84,8 +95,9 @@ elapsed microseconds through byte verification (including module download),
 `gooo-jev` commit
 `678e5bc3eb6f714ebfec79f9ba3e05e9312bf920`, the local candidate wrote
 five coherent outputs; four changed and the license text stayed identical.
-The current decision-runtime plan declares six files and still blocks an
-incomplete candidate because eleven references remain outside its scope.
+The decision-runtime plan now declares eight candidate files. A stale file
+digest, missing unique active span or new outside reference still blocks an
+incomplete candidate.
 The release archive's `NOTICE` is generated from the projected payload at
 release time; it is a downstream artifact rather than a sixth committed file.
 
