@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 )
@@ -42,14 +41,8 @@ func TestScanKeepsHistoricalAndUnknownSeparate(t *testing.T) {
 	write(".github/workflows/stale.yml", "go-version: '1.27.2'\n")
 	write("docs/releases/old.md", "Built with Go 1.27.2; SDK 0.2.20.\n")
 	write("untracked.md", "Go 1.27.3\n")
-	for _, args := range [][]string{{"init", "-q"}, {"add", "go.mod", ".github/workflows/ci.yml", ".github/workflows/stale.yml", "docs/releases/old.md"}} {
-		command := exec.Command("git", args...)
-		command.Dir = root
-		if output, err := command.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v: %s", args, err, output)
-		}
-	}
-	result, err := scan(root)
+	paths := []string{"go.mod", ".github/workflows/ci.yml", ".github/workflows/stale.yml", "docs/releases/old.md"}
+	result, err := scanPaths(root, paths)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +54,7 @@ func TestScanKeepsHistoricalAndUnknownSeparate(t *testing.T) {
 	if err := os.Remove(filepath.Join(root, ".github/workflows/ci.yml")); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := scan(root); err == nil {
+	if _, err := scanPaths(root, paths); err == nil {
 		t.Fatal("missing tracked workflow was silently omitted")
 	}
 }

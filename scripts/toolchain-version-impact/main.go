@@ -78,6 +78,14 @@ func fail(message string) {
 }
 
 func scan(root string) (report, error) {
+	paths, err := trackedPaths(root)
+	if err != nil {
+		return report{}, err
+	}
+	return scanPaths(root, paths)
+}
+
+func scanPaths(root string, paths []string) (report, error) {
 	requirement, err := toolchain.ReadRequirement(root)
 	if err != nil {
 		return report{}, err
@@ -85,10 +93,6 @@ func scan(root string) (report, error) {
 	version := strings.TrimPrefix(requirement.Language, "go")
 	if !regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`).MatchString(version) {
 		return report{}, fmt.Errorf("unsupported Go version %q", version)
-	}
-	paths, err := trackedPaths(root)
-	if err != nil {
-		return report{}, err
 	}
 	current := regexp.MustCompile(`(^|[^0-9.])` + regexp.QuoteMeta(version) + `([^0-9.]|$)`)
 	historicalGo := regexp.MustCompile(`\bGo\s+([0-9]+\.[0-9]+\.[0-9]+)|\bgo([0-9]+\.[0-9]+\.[0-9]+)`)
