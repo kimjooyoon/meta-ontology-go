@@ -28,6 +28,26 @@ return AffectedSurfaces{
 }
 `
 
+// Each rule owns one live version occurrence inside a mixed document. The
+// prefix identifies that occurrence; older links in the same file remain.
+entity ActiveVersionRules id "urn:gooo:direct-module-impact:active-version-rules" fields {
+    field paths id "urn:gooo:direct-module-impact:active-version-rules:paths" type string required many
+    field prefixes id "urn:gooo:direct-module-impact:active-version-rules:prefixes" type string required many
+    field rule_ids id "urn:gooo:direct-module-impact:active-version-rules:ids" type string required many
+}
+
+activity RequiredActiveVersionRules(ModuleIdentity) -> ActiveVersionRules
+    id "urn:gooo:direct-module-impact:required-active-version-rules" computes `
+if input.module_path == "github.com/kimjooyoon/gooo-decision-runtime" {
+    return ActiveVersionRules{
+        paths: []string{"README.md"},
+        prefixes: []string{"The development source pins **Go SDK "},
+        rule_ids: []string{"urn:gooo:direct-module-impact:rule:live-readme-sdk"},
+    }
+}
+return ActiveVersionRules{paths: []string{}, prefixes: []string{}, rule_ids: []string{}}
+`
+
 // These committed trees preserve observations from earlier executions. A
 // current-version mention there is historical only while its bytes still
 // equal the file at HEAD; Go observes that equality, not the archive role.

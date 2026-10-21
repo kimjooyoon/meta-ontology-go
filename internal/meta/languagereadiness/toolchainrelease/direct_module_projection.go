@@ -35,7 +35,7 @@ type DirectModuleCandidate struct {
 	Provenance            map[string]any              `json:"provenance"`
 }
 
-// ProjectDirectModuleCandidate writes the five Gooo-declared outputs only to
+// ProjectDirectModuleCandidate writes the Gooo-declared outputs only to
 // a new directory outside the source tree, after a fresh exact-plan replay.
 func ProjectDirectModuleCandidate(root, destination, module, proposed string) (_ DirectModuleCandidate, err error) {
 	started := time.Now()
@@ -106,6 +106,14 @@ func projectDirectModuleImages(before map[string][]byte, members requiredMembers
 	after := map[string][]byte{"go.mod": moduleAfter, "go.sum": sumAfter,
 		payloadSourcePath: policyAfter, impact.Outputs[3]: newLicense,
 		payloadDocumentPath: docAfter}
+	for _, rule := range impact.ActiveRules {
+		projected, err := replaceOne(before[rule.Path], rule.Prefix+impact.CurrentVersion,
+			rule.Prefix+impact.ProposedVersion)
+		if err != nil {
+			return nil, fmt.Errorf("active Gooo rule %s: %w", rule.ID, err)
+		}
+		after[rule.Path] = projected
+	}
 	if bytes.Equal(before["go.mod"], moduleAfter) || bytes.Equal(before["go.sum"], sumAfter) ||
 		bytes.Equal(before[payloadSourcePath], policyAfter) || bytes.Equal(before[payloadDocumentPath], docAfter) {
 		return nil, fmt.Errorf("required version projections did not change")
@@ -127,7 +135,7 @@ func writeDirectModuleCandidate(root, destination string, impact DirectModuleImp
 			os.RemoveAll(dest)
 		}
 	}()
-	result := DirectModuleCandidate{Schema: "gooo/direct-module-detached-projection/v3",
+	result := DirectModuleCandidate{Schema: "gooo/direct-module-detached-projection/v4",
 		PlanSHA256: impact.PlanSHA256, Decision: impact.Decision,
 		ProjectedOutputs: len(impact.Outputs), Files: []DirectModuleProjectedFile{},
 		Verification: "candidate_file_bytes", BuildStatus: "not_run", Application: "not_applied"}
@@ -152,7 +160,7 @@ func writeDirectModuleCandidate(root, destination string, impact DirectModuleImp
 			result.ChangedOutputs++
 		}
 		graph = append(graph, projectedModuleEntity(out, name == impact.Outputs[3],
-			moduleID, activityID, projectedPolicyID))
+			moduleID, activityID, projectedPolicyID, ruleIDForPath(impact.ActiveRules, name)))
 	}
 	result.Provenance = map[string]any{"@context": impact.Provenance["@context"], "@graph": graph}
 	result.VerifiedElapsedMicros = time.Since(started).Microseconds()
@@ -180,17 +188,29 @@ func moduleProjectionGraph(impact DirectModuleImpact) ([]any, string, string) {
 }
 
 func projectedModuleEntity(out DirectModuleProjectedFile, fromModule bool, moduleID,
-	activityID, projectedPolicyID string) map[string]any {
+	activityID, projectedPolicyID, ruleID string) map[string]any {
 	derived := []string{repositoryFileID(out.Path, out.InputSHA256), moduleID}
 	if fromModule {
 		derived = []string{moduleID}
 	} else if out.Path == payloadDocumentPath {
 		derived = append(derived, projectedPolicyID)
 	}
+	if ruleID != "" {
+		derived = append(derived, ruleID)
+	}
 	return map[string]any{"@id": "urn:gooo:candidate-file:" + out.Path + ":" + out.OutputSHA256,
 		"@type": "prov:Entity", "gooo:path": out.Path, "gooo:sha256": out.OutputSHA256,
 		"prov:wasDerivedFrom": provReferences(derived),
 		"prov:wasGeneratedBy": map[string]string{"@id": activityID}}
+}
+
+func ruleIDForPath(rules []activeVersionRule, name string) string {
+	for _, rule := range rules {
+		if rule.Path == name {
+			return rule.ID
+		}
+	}
+	return ""
 }
 
 func replaceOne(data []byte, old, next string) ([]byte, error) {
