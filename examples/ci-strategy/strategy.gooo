@@ -1,0 +1,135 @@
+package cistrategy
+namespace cistrategy
+
+// The source owns the selection rule. Run IDs, timings and candidate values
+// are supplied observations or proposals, not facts inferred by the compiler.
+entity StrategyRequest id "gooo://ci-strategy/request" fields {
+    field goal_id id "gooo://ci-strategy/request/goal-id" type string required one
+    field baseline_run id "gooo://ci-strategy/request/baseline-run" type string required one
+    field baseline_ms id "gooo://ci-strategy/request/baseline-ms" type integer required one
+    field minimum_gain_ms id "gooo://ci-strategy/request/minimum-gain-ms" type integer required one
+    field required_checks_sha256 id "gooo://ci-strategy/request/checks-sha256" type string required one
+    field plan_ids id "gooo://ci-strategy/request/plan-ids" type string required many
+    field assumption_ids id "gooo://ci-strategy/request/assumption-ids" type string required many
+    field expected_ms id "gooo://ci-strategy/request/expected-ms" type integer required many
+    field checks_sha256 id "gooo://ci-strategy/request/plan-checks-sha256" type string required many
+    field scope_closed id "gooo://ci-strategy/request/scope-closed" type boolean required many
+}
+
+entity PlanChoice id "gooo://ci-strategy/choice" fields {
+    field goal_id id "gooo://ci-strategy/choice/goal-id" type string required one
+    field selected_plan_id id "gooo://ci-strategy/choice/selected-plan-id" type string required one
+    field state id "gooo://ci-strategy/choice/state" type string required one
+    field expected_gain_ms id "gooo://ci-strategy/choice/expected-gain-ms" type integer required one
+    field option_count id "gooo://ci-strategy/choice/option-count" type integer required one
+    field eligible_count id "gooo://ci-strategy/choice/eligible-count" type integer required one
+    field execution_authorized id "gooo://ci-strategy/choice/execution-authorized" type boolean required one
+}
+
+activity SelectPlan(StrategyRequest) -> PlanChoice id "gooo://ci-strategy/select" computes `
+let selected = ""
+let state = "REJECTED_LOW_VALUE_OR_OPEN_SCOPE"
+let gain = 0
+let eligible = 0
+let invalid = false
+let count = int64(len(input.plan_ids))
+if input.goal_id == "" || input.baseline_run == "" || input.required_checks_sha256 == "" ||
+   input.baseline_ms <= 0 || input.minimum_gain_ms < 0 ||
+   count < 2 || count > 32 || len(input.assumption_ids) != count ||
+   len(input.expected_ms) != count || len(input.checks_sha256) != count ||
+   len(input.scope_closed) != count {
+    invalid = true
+} else {
+    let index = 0
+    for plan_id in input.plan_ids {
+        if plan_id == "" || input.assumption_ids[index] == "" ||
+           input.expected_ms[index] <= 0 || input.checks_sha256[index] == "" {
+            invalid = true
+        }
+        let prior = 0
+        for prior_id in input.plan_ids {
+            if prior < index && prior_id == plan_id { invalid = true }
+            prior = prior + 1
+        }
+        let candidate_gain = input.baseline_ms - input.expected_ms[index]
+        if input.scope_closed[index] && input.checks_sha256[index] == input.required_checks_sha256 &&
+           candidate_gain >= input.minimum_gain_ms && candidate_gain > 0 {
+            eligible = eligible + 1
+            if selected == "" || candidate_gain > gain {
+                selected = plan_id
+                gain = candidate_gain
+            }
+        }
+        index = index + 1
+    }
+}
+if invalid {
+    selected = ""
+    gain = 0
+    eligible = 0
+    state = "INVALID_PROPOSAL"
+} else if selected != "" {
+    state = "PROPOSED_FOR_EXPERIMENT"
+}
+return PlanChoice{
+    goal_id: input.goal_id,
+    selected_plan_id: selected,
+    state: state,
+    expected_gain_ms: gain,
+    option_count: count,
+    eligible_count: eligible,
+    execution_authorized: false,
+}
+`
+
+entity OutcomeRequest id "gooo://ci-strategy/outcome-request" fields {
+    field revision_id id "gooo://ci-strategy/outcome-request/revision-id" type string required one
+    field goal_id id "gooo://ci-strategy/outcome-request/goal-id" type string required one
+    field selected_plan_id id "gooo://ci-strategy/outcome-request/selected-plan-id" type string required one
+    field baseline_run id "gooo://ci-strategy/outcome-request/baseline-run" type string required one
+    field observed_run id "gooo://ci-strategy/outcome-request/observed-run" type string required one
+    field baseline_ms id "gooo://ci-strategy/outcome-request/baseline-ms" type integer required one
+    field observed_ms id "gooo://ci-strategy/outcome-request/observed-ms" type integer required one
+    field minimum_gain_ms id "gooo://ci-strategy/outcome-request/minimum-gain-ms" type integer required one
+    field same_workload id "gooo://ci-strategy/outcome-request/same-workload" type boolean required one
+    field same_toolchain id "gooo://ci-strategy/outcome-request/same-toolchain" type boolean required one
+    field same_runner_class id "gooo://ci-strategy/outcome-request/same-runner-class" type boolean required one
+    field required_checks_passed id "gooo://ci-strategy/outcome-request/checks-passed" type boolean required one
+}
+
+entity PlanRevision id "gooo://ci-strategy/revision" fields {
+    field revision_id id "gooo://ci-strategy/revision/id" type string required one
+    field goal_id id "gooo://ci-strategy/revision/goal-id" type string required one
+    field prior_plan_id id "gooo://ci-strategy/revision/prior-plan-id" type string required one
+    field observed_run id "gooo://ci-strategy/revision/observed-run" type string required one
+    field state id "gooo://ci-strategy/revision/state" type string required one
+    field observed_gain_ms id "gooo://ci-strategy/revision/observed-gain-ms" type integer required one
+    field causal_improvement_claim id "gooo://ci-strategy/revision/causal-claim" type boolean required one
+}
+
+activity AssessOutcome(OutcomeRequest) -> PlanRevision id "gooo://ci-strategy/assess" computes `
+let state = "INSUFFICIENT_EVIDENCE"
+let gain = 0
+if input.revision_id != "" && input.goal_id != "" && input.selected_plan_id != "" &&
+   input.baseline_run != "" && input.observed_run != "" &&
+   input.observed_run != input.baseline_run &&
+   input.baseline_ms > 0 && input.observed_ms > 0 && input.minimum_gain_ms >= 0 &&
+   input.same_workload && input.same_toolchain &&
+   input.same_runner_class && input.required_checks_passed {
+    gain = input.baseline_ms - input.observed_ms
+    if gain >= input.minimum_gain_ms && gain > 0 {
+        state = "OBSERVED_GAIN"
+    } else {
+        state = "NO_MEANINGFUL_GAIN"
+    }
+}
+return PlanRevision{
+    revision_id: input.revision_id,
+    goal_id: input.goal_id,
+    prior_plan_id: input.selected_plan_id,
+    observed_run: input.observed_run,
+    state: state,
+    observed_gain_ms: gain,
+    causal_improvement_claim: false,
+}
+`

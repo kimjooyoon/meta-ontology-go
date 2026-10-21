@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"maps"
 	"os"
+	"path/filepath"
 )
 
 func Extract(root, logical string) (map[string][]byte, []string, error) {
@@ -26,7 +27,7 @@ func ExtractWithResult(root, logical string) (Result, error) {
 	if err != nil {
 		return Result{}, withCallbackExtractionProposal(root, logical, original, err)
 	}
-	list, all, err := extractionInputs(root, source, fset, file)
+	list, all, err := extractionInputs(root, logical, source, fset, file)
 	if err != nil {
 		return Result{}, err
 	}
@@ -50,7 +51,7 @@ func readParsedSource(root, logical string) ([]byte, *token.FileSet, *ast.File, 
 	return source, fset, file, nil
 }
 
-func extractionInputs(root string, source []byte, fset *token.FileSet, file *ast.File) ([]importSpec, []declaration, error) {
+func extractionInputs(root, logical string, source []byte, fset *token.FileSet, file *ast.File) ([]importSpec, []declaration, error) {
 	if err := validateBuildHeader(source[:fset.Position(file.Package).Offset]); err != nil {
 		return nil, nil, err
 	}
@@ -58,7 +59,7 @@ func extractionInputs(root string, source []byte, fset *token.FileSet, file *ast
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := validateImports(root, list); err != nil {
+	if err := validateImports(root, logical, list); err != nil {
 		return nil, nil, err
 	}
 	all, _, err := candidates(fset, file)
@@ -93,6 +94,10 @@ func buildExtractionResult(root, logical string, original, source []byte, fset *
 func renderHelperFiles(root, logical string, source []byte, fset *token.FileSet, file *ast.File, list []importSpec, partitions [][]declaration) (map[string][]byte, []string, error) {
 	generated := make(map[string][]byte, len(partitions))
 	paths := make([]string, 0, len(partitions))
+	owner, err := sourceModuleRoot(root, logical)
+	if err != nil {
+		return nil, nil, fail("generate-helpers", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
+	}
 	for index, partition := range partitions {
 		renderedHelper, renderErr := render(fset, file, source, partition, list)
 		if renderErr != nil {
@@ -102,6 +107,10 @@ func renderHelperFiles(root, logical string, source []byte, fset *token.FileSet,
 		helperName, pathErr := safePath(root, helper)
 		if pathErr != nil {
 			return nil, nil, fail("generate-helpers", "resolve-helper", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
+		}
+		helperOwner, ownerErr := directoryModuleRoot(root, filepath.Dir(helperName))
+		if ownerErr != nil || helperOwner != owner {
+			return nil, nil, fail("generate-helpers", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 		}
 		if _, statErr := os.Lstat(helperName); statErr == nil {
 			return nil, nil, fail("generate-helpers", "resolve-helper", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{helper})

@@ -142,7 +142,11 @@ func projectedFinalConformance(root, logical string, generated map[string][]byte
 		}
 		files = append(files, file)
 	}
-	configuration := types.Config{Importer: newModuleImporter(root), Error: func(error) {}}
+	owner, err := sourceModuleRoot(root, logical)
+	if err != nil {
+		return projectedConformanceFailure(root, "logical="+logical, "resolve-module-owner", err)
+	}
+	configuration := types.Config{Importer: newModuleImporter(owner), Error: func(error) {}}
 	if _, err := configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, nil); err != nil {
 		return projectedConformanceFailure(root, "logical="+logical, "typecheck", err)
 	}

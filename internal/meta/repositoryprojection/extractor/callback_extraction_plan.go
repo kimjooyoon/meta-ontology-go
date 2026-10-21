@@ -114,7 +114,7 @@ func renderCallbackExtractionPackage(root, logical string, source []byte) (map[s
 	if err != nil {
 		return nil, nil, err
 	}
-	list, declarations, err := extractionInputs(root, source, fset, file)
+	list, declarations, err := extractionInputs(root, logical, source, fset, file)
 	if err != nil {
 		return nil, nil, err
 	}
