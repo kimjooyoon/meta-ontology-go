@@ -7,7 +7,7 @@ import (
 
 const maxReportBytes = 1 << 20
 
-var errReportTooLarge = errors.New("Gooo check output exceeds 1 MiB")
+var errReportTooLarge = errors.New("Gooo tool output exceeds 1 MiB")
 
 type limitedBuffer struct {
 	buf bytes.Buffer

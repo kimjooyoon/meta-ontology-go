@@ -12,7 +12,7 @@ import (
 func check(ctx context.Context, binary, root string, timeout time.Duration, args CheckArgs) (CheckResult, error) {
 	rel, err := sourcePath(root, args)
 	if err != nil {
-		return CheckResult{}, err
+		return CheckResult{}, failure(StageInput, CodeInvalidPath, err)
 	}
 	return runJSONCommand(ctx, binary, root, timeout, "check", "--semantic", "--json", rel)
 }
@@ -27,21 +27,29 @@ func runJSONCommand(ctx context.Context, binary, root string, timeout time.Durat
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if callCtx.Err() != nil {
-		return CheckResult{}, callCtx.Err()
+		code := CodeDeadline
+		if errors.Is(callCtx.Err(), context.Canceled) {
+			code = CodeCancelled
+		}
+		return CheckResult{}, failure(StageExecution, code, callCtx.Err())
 	}
 	if errors.Is(stdout.err, errReportTooLarge) || errors.Is(stderr.err, errReportTooLarge) {
-		return CheckResult{}, errReportTooLarge
+		return CheckResult{}, failure(StageOutput, CodeOutputLimit, errReportTooLarge)
 	}
 	code := 0
 	if err != nil {
-		var exit *exec.ExitError
-		if !errors.As(err, &exit) {
-			return CheckResult{}, fmt.Errorf("run Gooo: %w", err)
+		exit, ok := errors.AsType[*exec.ExitError](err)
+		if !ok {
+			return CheckResult{}, failure(StageExecution, CodeStartFailed, fmt.Errorf("run Gooo: %w", err))
 		}
 		code = exit.ExitCode()
+		if code < 0 {
+			return CheckResult{}, failure(StageExecution, CodeTerminated, err)
+		}
 	}
 	if !json.Valid(stdout.Bytes()) {
-		return CheckResult{}, fmt.Errorf("Gooo returned invalid JSON (exit %d)", code)
+		return CheckResult{}, failure(StageOutput, CodeInvalidJSON,
+			fmt.Errorf("Gooo returned invalid JSON (exit %d)", code))
 	}
 	return CheckResult{ReportJSON: stdout.String(), ExitCode: code}, nil
 }
