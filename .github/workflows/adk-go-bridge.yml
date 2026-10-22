@@ -1,6 +1,7 @@
 name: ADK Go bridge
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [dev]
     paths:
@@ -42,3 +43,15 @@ jobs:
         run: |
           go test ./...
           go vet ./...
+      - name: Observe ADK boundary benchmarks
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: integrations/adk-go
+        run: |
+          go version > "$RUNNER_TEMP/adk-bench.txt"
+          go test -run '^$' -bench '^Benchmark(Bridge|Direct)' -benchmem -count=1 ./... >> "$RUNNER_TEMP/adk-bench.txt"
+      - name: Preserve raw benchmark output
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: adk-boundary-bench-${{ github.sha }}
+          path: ${{ runner.temp }}/adk-bench.txt
