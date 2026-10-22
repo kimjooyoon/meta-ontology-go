@@ -51,6 +51,28 @@ For both tools, a valid JSON report with a nonzero exit code is a Gooo result,
 not an ADK transport failure. A rejected path, invalid query, timeout,
 oversized output, or malformed compiler JSON is returned as a tool error.
 
+Boundary errors have a stable `gooo-adk/<stage>/<code>` string and an exported
+`adkcheck.Failure` type (`Stage`, `Code`, `Unwrap`). The bridge does not copy a
+source path, command output, or model prompt into that public error string.
+ADK returns tool errors separately from successful tool result maps, so a
+compiler diagnostic remains in `report_json` with its nonzero `exit_code`.
+
+| Stage | Codes | Next action |
+| --- | --- | --- |
+| `configuration` | `invalid_binary`, `invalid_source_root`, `unavailable_root` | Host fixes the fixed executable or root. |
+| `input` | `invalid_path`, `invalid_contract_path`, `invalid_query` | Agent checks the argument; host checks root availability if it changed. |
+| `execution` | `deadline`, `cancelled`, `start_failed`, `terminated` | Host checks cancellation, timeout, or executable availability. |
+| `output` | `output_limit`, `invalid_json` | Host inspects the compiler/protocol boundary. |
+
+Run `go test -run '^$' -bench 'Benchmark(Bridge|Direct)' -benchmem` in this
+module for native Go timing/allocation observations. The fixed shell fixture
+does not run the compiler or a model. The bridge and direct process benchmarks
+include process startup; `BenchmarkBridgeRejectedQuery` measures validation
+without starting a process. These observations do not establish compiler
+speed or a CI critical-path improvement.
+The timeout cancels the direct Gooo process; this bridge does not prove cleanup
+of processes that Gooo itself may spawn.
+
 These tools observe the compiler's decision. ADK tool-call traces and timing are
 execution observations, while the Gooo JSON report and PROV-O records retain
 their own semantic meaning. No telemetry export is enabled by this module.
