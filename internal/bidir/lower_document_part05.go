@@ -10,10 +10,10 @@ func resolveSemanticReference(reference Reference, namespace semantic.Namespace,
 	if reference.ID != "" {
 		id, err := semantic.ParseIdentity(string(reference.ID))
 		if err != nil {
-			return "", err
+			return "", referenceResolutionError(reference, err)
 		}
 		if _, exists := ids[reference.ID]; !exists {
-			return "", fmt.Errorf("unknown semantic ID %q", reference.ID)
+			return "", referenceResolutionError(reference, fmt.Errorf("unknown semantic ID %q", reference.ID))
 		}
 		return id, nil
 	}
@@ -23,7 +23,7 @@ func resolveSemanticReference(reference Reference, namespace semantic.Namespace,
 	}
 	id, exists := names[referenceKey(refNamespace, reference.Name)]
 	if !exists {
-		return "", fmt.Errorf("unknown declaration %q in namespace %q", reference.Name, refNamespace)
+		return "", referenceResolutionError(reference, fmt.Errorf("unknown declaration %q in namespace %q", reference.Name, refNamespace))
 	}
 	return id, nil
 }

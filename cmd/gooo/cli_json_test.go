@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -44,5 +45,52 @@ activity PayOrder(Missing) -> Order
 	}
 	if report.Status != "error" || len(report.Diagnostics) != 1 || report.Diagnostics[0].Code != "semantic.lowering" {
 		t.Fatalf("unexpected semantic report: %#v", report)
+	}
+	span := report.Diagnostics[0].Span
+	if span.File != "fixture.gooo" || span.Start.Line != 4 || span.Start.Column != 19 || span.End.Line != 4 || span.End.Column != 26 {
+		t.Fatalf("unresolved input span = %#v, want authored Missing reference", span)
+	}
+}
+
+func TestRunCheckSemanticOutputPointsToResultReference(t *testing.T) {
+	source := "package billing\nnamespace billing\nentity Order id \"billing://order\"\nactivity Pay(Order) -> Missing\n"
+	var stdout, stderr bytes.Buffer
+	code := runCheck([]string{"--semantic", "--json", "fixture.gooo"}, fixtureReader{source: source}, SyntaxSourceParser{}, &stdout, &stderr)
+	if code != exitFailure || stderr.Len() != 0 {
+		t.Fatalf("semantic output check = %d, stderr=%q", code, stderr.String())
+	}
+	var report jsonReport
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Diagnostics) != 1 {
+		t.Fatalf("diagnostics = %#v", report.Diagnostics)
+	}
+	span := report.Diagnostics[0].Span
+	if span.Start.Line != 4 || span.Start.Column != 24 || span.End.Line != 4 || span.End.Column != 31 {
+		t.Fatalf("unresolved output span = %#v, want authored Missing reference", span)
+	}
+}
+
+func TestSemanticReferenceSpanIsSharedByTextCheckAndJSONQuery(t *testing.T) {
+	source := "package billing\nnamespace billing\nentity Order id \"billing://order\"\nactivity Pay(Missing) -> Order\n"
+	reader := fixtureReader{source: source}
+	var checkOut, checkErr bytes.Buffer
+	if code := runCheck([]string{"--semantic", "fixture.gooo"}, reader, SyntaxSourceParser{}, &checkOut, &checkErr); code != exitFailure {
+		t.Fatalf("text check exit = %d", code)
+	}
+	if !strings.Contains(checkErr.String(), "fixture.gooo:4:14-4:21:") {
+		t.Fatalf("text check span = %q", checkErr.String())
+	}
+	var queryOut, queryErr bytes.Buffer
+	if code := runQuery([]string{"--json", "fixture.gooo"}, reader, SyntaxSourceParser{}, &queryOut, &queryErr); code != exitFailure || queryErr.Len() != 0 {
+		t.Fatalf("JSON query exit = %d, stderr = %q", code, queryErr.String())
+	}
+	var report jsonReport
+	if err := json.Unmarshal(queryOut.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Diagnostics) != 1 || report.Diagnostics[0].Span.Start.Line != 4 || report.Diagnostics[0].Span.Start.Column != 14 {
+		t.Fatalf("query diagnostics = %#v", report.Diagnostics)
 	}
 }

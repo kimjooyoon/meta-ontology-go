@@ -48,6 +48,7 @@ type ActivityDecl struct {
 	// An empty entry retains the positional name; its span locates only a name.
 	InputNames []NameRef `json:"InputNames,omitempty"`
 	Output     string
+	OutputSpan Span `json:"-"`
 	Parameters []NameRef
 	Result     NameRef
 }

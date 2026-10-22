@@ -43,9 +43,9 @@ func checkArguments(args []string) (semanticMode bool, filename string, ok bool)
 	return options.semantic, options.filename, true
 }
 func reportSemanticDiagnostic(filename string, file *syntax.File, err error, stderr io.Writer) bool {
-	span := syntax.Span{Filename: filename}
-	if file != nil {
-		span = file.Span
+	span := semanticFailureSpan(file, err)
+	if span.Filename == "" {
+		span.Filename = filename
 	}
 	output, formatErr := formatSemanticDiagnostics(span, err)
 	if formatErr != nil {
