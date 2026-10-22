@@ -7,6 +7,10 @@ import (
 	"fmt"
 	"os/exec"
 	"time"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 func check(ctx context.Context, binary, root string, timeout time.Duration, args CheckArgs) (CheckResult, error) {
@@ -17,7 +21,25 @@ func check(ctx context.Context, binary, root string, timeout time.Duration, args
 	return runJSONCommand(ctx, binary, root, timeout, "check", "--semantic", "--json", rel)
 }
 
-func runJSONCommand(ctx context.Context, binary, root string, timeout time.Duration, args ...string) (CheckResult, error) {
+func runJSONCommand(ctx context.Context, binary, root string, timeout time.Duration, args ...string) (result CheckResult, runErr error) {
+	operation := "unknown"
+	if len(args) > 0 && (args[0] == "check" || args[0] == "discover") {
+		operation = args[0]
+	}
+	ctx, span := otel.Tracer("github.com/kimjooyoon/meta-ontology-go/integrations/adk-go").Start(ctx, "gooo."+operation)
+	defer span.End()
+	defer func() {
+		if runErr != nil {
+			var boundary *Failure
+			if errors.As(runErr, &boundary) {
+				span.SetAttributes(attribute.String("gooo.failure.stage", boundary.Stage),
+					attribute.String("gooo.failure.code", boundary.Code))
+				span.SetStatus(codes.Error, boundary.Error())
+			}
+			return
+		}
+		span.SetAttributes(attribute.Int("gooo.exit_code", result.ExitCode))
+	}()
 	callCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	cmd := exec.CommandContext(callCtx, binary, args...)
