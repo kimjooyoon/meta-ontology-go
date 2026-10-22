@@ -42,8 +42,7 @@ func semanticDiagnosticCode(err error) string {
 	if errors.Is(err, errCommandDeadline) {
 		return "semantic.deadline"
 	}
-	var reference *bidir.ReferenceResolutionError
-	if errors.As(err, &reference) {
+	if _, ok := errors.AsType[*bidir.ReferenceResolutionError](err); ok {
 		return "semantic.invalid-endpoint"
 	}
 	if errors.Is(err, semantic.ErrUnknownRelation) {
