@@ -33,7 +33,8 @@ accepts a source-root-relative `.gooo` path. It returns `report_json` with the
 original Gooo JSON bytes and `exit_code` from the command; source diagnostics
 are returned even when Gooo exits nonzero. The agent cannot choose the binary
 or source root. Symlinks that escape the configured root are rejected. Output is
-limited to 1 MiB and execution has a 15-second default timeout. Gooo receives
+limited to 1 MiB per stream (stdout and stderr each) and execution has a
+15-second default timeout. Gooo receives
 the relative path, so the configured absolute source root is not written into
 the JSON report.
 

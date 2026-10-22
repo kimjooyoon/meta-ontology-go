@@ -15,7 +15,7 @@ type limitedBuffer struct {
 }
 
 func (b *limitedBuffer) Write(p []byte) (int, error) {
-	if b.buf.Len()+len(p) > maxReportBytes {
+	if len(p) > maxReportBytes-b.buf.Len() {
 		b.err = errReportTooLarge
 		return 0, b.err
 	}
