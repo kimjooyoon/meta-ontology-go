@@ -12,6 +12,12 @@ need the exact compiler source, module, and toolchain should query the same exec
 with `gooo version --build --json`; the LSP version is a display hint. The current
 LSP CLI remains experimental, so this handshake does not establish full editor compatibility.
 
+An unresolved activity input or output now carries its authored reference span
+through lowering. `gooo check --semantic --json`, text check, `gooo query
+--json`, and the LSP diagnostic point to that occurrence. The span comes from
+the syntax node, including the output token, rather than a search through the
+error message. Other semantic failures may still report a broader span.
+
 The meta-operation is `project-exact-language-state-to-editor-protocol`. Every one of the 37 indicators names `toolchainlsp.Evaluate` as producer and `self-improvement-cycle` as consumer. The indicators are split into 3 outcomes, 16 drivers, and 18 guardrails.
 
 The Munchhausen choices are explicit. FOUNDATION binds the fixed corpus, exact head, concept, and advertised capabilities. COHERENCE binds parser/semantic state and coupling evidence to standard LSP values. REGRESSION requires UNKNOWN, FAIL_CLOSED, stale, cancellation, and unsupported-method paths to expose no unauthorized navigation.
