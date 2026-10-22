@@ -133,3 +133,90 @@ return PlanRevision{
     causal_improvement_claim: false,
 }
 `
+
+// Recovery is a new plan version. Completed effects remain observations of the
+// prior plan; a proposed recovery may not ask to produce the same effect again.
+entity RecoveryRequest id "gooo://ci-strategy/recovery-request" fields {
+    field revision_id id "gooo://ci-strategy/recovery-request/revision-id" type string required one
+    field goal_id id "gooo://ci-strategy/recovery-request/goal-id" type string required one
+    field prior_plan_id id "gooo://ci-strategy/recovery-request/prior-plan-id" type string required one
+    field recovery_plan_id id "gooo://ci-strategy/recovery-request/recovery-plan-id" type string required one
+    field failed_activity_id id "gooo://ci-strategy/recovery-request/failed-activity-id" type string required one
+    field failure_observation_id id "gooo://ci-strategy/recovery-request/failure" type string required one
+    field completed_effect_ids id "gooo://ci-strategy/recovery-request/completed-effects" type string required many
+    field recovery_effect_ids id "gooo://ci-strategy/recovery-request/recovery-effects" type string required many
+    field failure_observed id "gooo://ci-strategy/recovery-request/failure-observed" type boolean required one
+    field completed_effects_observed id "gooo://ci-strategy/recovery-request/effects-observed" type boolean required one
+    field scope_closed id "gooo://ci-strategy/recovery-request/scope-closed" type boolean required one
+}
+
+entity RecoveryRevision id "gooo://ci-strategy/recovery-revision" fields {
+    field revision_id id "gooo://ci-strategy/recovery-revision/revision-id" type string required one
+    field goal_id id "gooo://ci-strategy/recovery-revision/goal-id" type string required one
+    field prior_plan_id id "gooo://ci-strategy/recovery-revision/prior-plan-id" type string required one
+    field recovery_plan_id id "gooo://ci-strategy/recovery-revision/recovery-plan-id" type string required one
+    field failed_activity_id id "gooo://ci-strategy/recovery-revision/failed-activity-id" type string required one
+    field failure_observation_id id "gooo://ci-strategy/recovery-revision/failure" type string required one
+    field completed_effect_ids id "gooo://ci-strategy/recovery-revision/completed-effects" type string required many
+    field recovery_effect_ids id "gooo://ci-strategy/recovery-revision/recovery-effects" type string required many
+    field state id "gooo://ci-strategy/recovery-revision/state" type string required one
+    field overlap_count id "gooo://ci-strategy/recovery-revision/overlap-count" type integer required one
+    field execution_authorized id "gooo://ci-strategy/recovery-revision/execution-authorized" type boolean required one
+}
+
+activity ProposeRecovery(RecoveryRequest) -> RecoveryRevision id "gooo://ci-strategy/propose-recovery" computes `
+let invalid = false
+let overlap = 0
+let state = "INSUFFICIENT_EVIDENCE"
+let completed_count = int64(len(input.completed_effect_ids))
+let recovery_count = int64(len(input.recovery_effect_ids))
+if input.revision_id == "" || input.goal_id == "" || input.prior_plan_id == "" ||
+   input.recovery_plan_id == "" || input.prior_plan_id == input.recovery_plan_id ||
+   input.failed_activity_id == "" || input.failure_observation_id == "" ||
+   completed_count < 1 || completed_count > 32 || recovery_count < 1 || recovery_count > 32 {
+    invalid = true
+}
+let completed_index = 0
+for completed in input.completed_effect_ids {
+    if completed == "" { invalid = true }
+    let prior = 0
+    for earlier in input.completed_effect_ids {
+        if prior < completed_index && earlier == completed { invalid = true }
+        prior = prior + 1
+    }
+    completed_index = completed_index + 1
+}
+let recovery_index = 0
+for proposed in input.recovery_effect_ids {
+    if proposed == "" { invalid = true }
+    let prior = 0
+    for earlier in input.recovery_effect_ids {
+        if prior < recovery_index && earlier == proposed { invalid = true }
+        prior = prior + 1
+    }
+    for completed in input.completed_effect_ids {
+        if proposed == completed { overlap = overlap + 1 }
+    }
+    recovery_index = recovery_index + 1
+}
+if invalid {
+    state = "INVALID_PROPOSAL"
+} else if overlap > 0 {
+    state = "REJECTED_REPLAY"
+} else if input.failure_observed && input.completed_effects_observed && input.scope_closed {
+    state = "PROPOSED_RECOVERY"
+}
+return RecoveryRevision{
+    revision_id: input.revision_id,
+    goal_id: input.goal_id,
+    prior_plan_id: input.prior_plan_id,
+    recovery_plan_id: input.recovery_plan_id,
+    failed_activity_id: input.failed_activity_id,
+    failure_observation_id: input.failure_observation_id,
+    completed_effect_ids: input.completed_effect_ids,
+    recovery_effect_ids: input.recovery_effect_ids,
+    state: state,
+    overlap_count: overlap,
+    execution_authorized: false,
+}
+`
