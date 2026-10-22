@@ -1,6 +1,9 @@
 package lsp
 
 import (
+	"errors"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -40,6 +43,14 @@ func semanticDiagnostic(uri, source string, file *syntax.File, err error) Diagno
 	}
 	if file != nil && !file.Span.IsEmpty() {
 		span = file.Span
+	}
+	var reference *bidir.ReferenceResolutionError
+	if errors.As(err, &reference) && reference.Span.Valid() {
+		span = syntax.Span{
+			Filename: reference.Span.File,
+			Start:    syntax.Position{Offset: reference.Span.Start, Line: reference.Span.StartLine, Column: reference.Span.StartColumn},
+			End:      syntax.Position{Offset: reference.Span.End, Line: reference.Span.EndLine, Column: reference.Span.EndColumn},
+		}
 	}
 	rangeValue, rangeErr := syntaxRange(source, span)
 	if rangeErr != nil {

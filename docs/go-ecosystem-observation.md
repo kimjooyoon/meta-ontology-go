@@ -62,3 +62,9 @@ its dependencies. The tools return Gooo's original JSON reports; the model's
 choice to call them is distinct from the compiler's deterministic result. A
 catalog match is not an implementation proof. Agent hosts may use ADK's own
 tool traces for invocation timing without making that timing a semantic fact.
+
+The [bridge CI](../.github/workflows/adk-go-bridge.yml) builds the Gooo CLI
+from the submitted revision and calls it through the Go adapter with valid
+source, a semantic error, and capability discovery. It runs when the adapter,
+CLI, internal compiler code, or root Go module changes. This is command
+compatibility evidence, not a model evaluation or runtime performance trend.
