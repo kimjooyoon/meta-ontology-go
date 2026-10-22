@@ -32,25 +32,33 @@ type CheckResult struct {
 
 // New returns a read-only ADK tool backed by the stable Gooo check command.
 func New(cfg Config) (tool.Tool, error) {
-	if cfg.Timeout <= 0 {
-		cfg.Timeout = 15 * time.Second
-	}
-	binary, err := filepath.Abs(cfg.GoooBinary)
-	if err != nil || cfg.GoooBinary == "" {
-		return nil, errors.New("Gooo binary must be an absolute or resolvable path")
-	}
-	root, err := filepath.Abs(cfg.SourceRoot)
-	if err != nil || cfg.SourceRoot == "" {
-		return nil, errors.New("source root must be an absolute or resolvable path")
-	}
-	root, err = filepath.EvalSymlinks(root)
+	binary, root, timeout, err := resolveConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("resolve source root: %w", err)
+		return nil, err
 	}
 	return functiontool.New(functiontool.Config{
 		Name:        "gooo_check_source",
 		Description: "Check one Gooo source file and return Gooo's unchanged JSON diagnostics.",
 	}, func(ctx agent.Context, args CheckArgs) (CheckResult, error) {
-		return check(ctx, binary, root, cfg.Timeout, args)
+		return check(ctx, binary, root, timeout, args)
 	})
+}
+
+func resolveConfig(cfg Config) (string, string, time.Duration, error) {
+	if cfg.Timeout <= 0 {
+		cfg.Timeout = 15 * time.Second
+	}
+	binary, err := filepath.Abs(cfg.GoooBinary)
+	if err != nil || cfg.GoooBinary == "" {
+		return "", "", 0, errors.New("Gooo binary must be an absolute or resolvable path")
+	}
+	root, err := filepath.Abs(cfg.SourceRoot)
+	if err != nil || cfg.SourceRoot == "" {
+		return "", "", 0, errors.New("source root must be an absolute or resolvable path")
+	}
+	root, err = filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", "", 0, fmt.Errorf("resolve source root: %w", err)
+	}
+	return binary, root, cfg.Timeout, nil
 }
