@@ -25,6 +25,6 @@ jobs:
         with:
           go-version-file: integrations/adk-go/go.mod
           cache-dependency-path: integrations/adk-go/go.sum
-      - name: Build optional ADK bridge
+      - name: Check optional ADK bridge
         working-directory: integrations/adk-go
-        run: go build ./...
+        run: go test ./...

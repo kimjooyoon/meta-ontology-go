@@ -55,7 +55,10 @@ should be explicitly configured by the host application, with bounded
 attributes and no source text or model prompts.
 
 The optional [Google ADK Go bridge](../integrations/adk-go/README.md) exposes
-the stable `gooo check --semantic --json` command as a function tool. It is a
-separate Go module, so the compiler and users who do not use ADK do not load
-its dependencies. The tool returns Gooo's original JSON report; the model's
-choice to call it is distinct from the compiler's deterministic result.
+the stable `gooo check --semantic --json` command and deterministic capability
+discovery as separate function tools. It is a separate Go module, so the
+compiler and users who do not use ADK do not load
+its dependencies. The tools return Gooo's original JSON reports; the model's
+choice to call them is distinct from the compiler's deterministic result. A
+catalog match is not an implementation proof. Agent hosts may use ADK's own
+tool traces for invocation timing without making that timing a semantic fact.
