@@ -5,11 +5,19 @@ on:
     branches: [dev]
     paths:
       - integrations/adk-go/**
+      - cmd/gooo/**
+      - internal/**
+      - go.mod
+      - go.sum
       - .github/workflows/adk-go-bridge.yml
   push:
     branches: [dev, main]
     paths:
       - integrations/adk-go/**
+      - cmd/gooo/**
+      - internal/**
+      - go.mod
+      - go.sum
       - .github/workflows/adk-go-bridge.yml
 
 permissions:
@@ -25,6 +33,10 @@ jobs:
         with:
           go-version-file: integrations/adk-go/go.mod
           cache-dependency-path: integrations/adk-go/go.sum
+      - name: Build current Gooo CLI for bridge parity
+        run: go build -o "$RUNNER_TEMP/gooo" ./cmd/gooo
       - name: Check optional ADK bridge
         working-directory: integrations/adk-go
+        env:
+          GOOO_ADK_TEST_BINARY: ${{ runner.temp }}/gooo
         run: go test ./...
