@@ -54,3 +54,8 @@ oversized output, or malformed compiler JSON is returned as a tool error.
 These tools observe the compiler's decision. ADK tool-call traces and timing are
 execution observations, while the Gooo JSON report and PROV-O records retain
 their own semantic meaning. No telemetry export is enabled by this module.
+
+The optional bridge CI builds the CLI from the same commit and exercises both
+tools without a model. Locally, build `gooo` and pass its absolute path as
+`GOOO_ADK_TEST_BINARY` to `go test ./...` in this module to run the same
+command compatibility checks.
