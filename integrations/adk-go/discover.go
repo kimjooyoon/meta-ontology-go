@@ -47,17 +47,18 @@ func NewDiscover(cfg Config) (tool.Tool, error) {
 func discover(ctx context.Context, binary, root string, timeout time.Duration, args DiscoverArgs) (CheckResult, error) {
 	query := strings.TrimSpace(args.Query)
 	if query == "" || len(query) > maxQueryBytes || strings.HasPrefix(query, "--") {
-		return CheckResult{}, errors.New("query must contain 1 to 512 bytes and cannot begin with a flag")
+		return CheckResult{}, failure(StageInput, CodeInvalidQuery,
+			errors.New("query must contain 1 to 512 bytes and cannot begin with a flag"))
 	}
 	rel, err := sourcePath(root, CheckArgs{Path: args.Path})
 	if err != nil {
-		return CheckResult{}, err
+		return CheckResult{}, failure(StageInput, CodeInvalidPath, err)
 	}
 	command := []string{"discover", "--json", "--query", query}
 	if args.DomainContract != "" {
 		contract, err := sourcePath(root, CheckArgs{Path: args.DomainContract})
 		if err != nil {
-			return CheckResult{}, err
+			return CheckResult{}, failure(StageInput, CodeInvalidContractPath, err)
 		}
 		command = append(command, "--domain-contract", contract)
 	}

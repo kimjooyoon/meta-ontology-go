@@ -50,15 +50,17 @@ func resolveConfig(cfg Config) (string, string, time.Duration, error) {
 	}
 	binary, err := filepath.Abs(cfg.GoooBinary)
 	if err != nil || cfg.GoooBinary == "" {
-		return "", "", 0, errors.New("Gooo binary must be an absolute or resolvable path")
+		return "", "", 0, failure(StageConfiguration, CodeInvalidBinary,
+			errors.New("Gooo binary must be an absolute or resolvable path"))
 	}
 	root, err := filepath.Abs(cfg.SourceRoot)
 	if err != nil || cfg.SourceRoot == "" {
-		return "", "", 0, errors.New("source root must be an absolute or resolvable path")
+		return "", "", 0, failure(StageConfiguration, CodeInvalidSourceRoot,
+			errors.New("source root must be an absolute or resolvable path"))
 	}
 	root, err = filepath.EvalSymlinks(root)
 	if err != nil {
-		return "", "", 0, fmt.Errorf("resolve source root: %w", err)
+		return "", "", 0, failure(StageConfiguration, CodeUnavailableRoot, fmt.Errorf("resolve source root: %w", err))
 	}
 	return binary, root, cfg.Timeout, nil
 }
