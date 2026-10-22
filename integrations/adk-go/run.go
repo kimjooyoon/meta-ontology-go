@@ -14,14 +14,18 @@ func check(ctx context.Context, binary, root string, timeout time.Duration, args
 	if err != nil {
 		return CheckResult{}, err
 	}
+	return runJSONCommand(ctx, binary, root, timeout, "check", "--semantic", "--json", rel)
+}
+
+func runJSONCommand(ctx context.Context, binary, root string, timeout time.Duration, args ...string) (CheckResult, error) {
 	callCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	cmd := exec.CommandContext(callCtx, binary, "check", "--semantic", "--json", rel)
+	cmd := exec.CommandContext(callCtx, binary, args...)
 	cmd.Dir = root
 	var stdout, stderr limitedBuffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	err = cmd.Run()
+	err := cmd.Run()
 	if callCtx.Err() != nil {
 		return CheckResult{}, callCtx.Err()
 	}
@@ -32,12 +36,12 @@ func check(ctx context.Context, binary, root string, timeout time.Duration, args
 	if err != nil {
 		var exit *exec.ExitError
 		if !errors.As(err, &exit) {
-			return CheckResult{}, fmt.Errorf("run Gooo check: %w", err)
+			return CheckResult{}, fmt.Errorf("run Gooo: %w", err)
 		}
 		code = exit.ExitCode()
 	}
 	if !json.Valid(stdout.Bytes()) {
-		return CheckResult{}, fmt.Errorf("Gooo check returned invalid JSON (exit %d)", code)
+		return CheckResult{}, fmt.Errorf("Gooo returned invalid JSON (exit %d)", code)
 	}
 	return CheckResult{ReportJSON: stdout.String(), ExitCode: code}, nil
 }
