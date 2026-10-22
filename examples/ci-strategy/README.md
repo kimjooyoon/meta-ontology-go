@@ -20,6 +20,16 @@ condition stays `INSUFFICIENT_EVIDENCE`. The separate `revision_id` identifies
 the new record; it does not rewrite an older plan. Even `OBSERVED_GAIN` does
 not claim that the plan caused the difference.
 
+`ProposeRecovery` expresses the next plan after a partial effect and a failed
+activity. It keeps the prior and new plan IDs, failed activity, failure
+observation, completed effects and proposed recovery effects in one result. A
+recovery that repeats a completed effect is `REJECTED_REPLAY`; duplicate or
+missing IDs are `INVALID_PROPOSAL`. With no declared overlap and complete
+caller assertions, the result is `PROPOSED_RECOVERY`, still with
+`execution_authorized=false`. An absent failure/effect observation or open
+operation scope remains `INSUFFICIENT_EVIDENCE`. Inputs are capped at 32 effects
+per side, so the comparison has bounded work.
+
 From the repository root:
 
 ```sh
@@ -30,17 +40,23 @@ go run ./cmd/gooo package execute --json --cases \
 go run ./cmd/gooo package execute --json --cases \
   examples/ci-strategy/outcome.cases.json \
   examples/ci-strategy/outcome.workspace.json | jq -r .decision
+go run ./cmd/gooo package execute --json --cases \
+  examples/ci-strategy/recovery.cases.json \
+  examples/ci-strategy/recovery.workspace.json | jq -r .decision
 ```
 
-The three commands currently report `ok`, `PASS`, and `PASS`. The first
+The four commands currently report `ok`, `PASS`, `PASS`, and `PASS`. The first
 selection case proposes the second plan. The other rejects a small predicted
 gain. The outcome case has a faster number but a different runner class, so it
 remains insufficient evidence. `PASS` means the finite expected cases matched
 the Gooo implementation; it is not a production performance result.
+The recovery cases cover a proof-upload retry after an image was published,
+an attempted replay of the image publication, an unobserved completed effect,
+and a duplicate recovery effect.
 
 | Owned by `.gooo` source | Supplied from outside |
 | --- | --- |
-| Stable field and activity IDs, eligibility, tie order, rejection and revision states | Run IDs, timings, checks digest, plan predictions, assumptions and comparison conditions |
+| IDs, selection and revision rules | Run data, proposals and effect observations |
 
 The execution receipt carries source and condition origins for this example.
 The syntax corpus inventories this existing-feature program as a meta source;
@@ -52,3 +68,7 @@ the caller, not verified by a CI adapter. Binding them to exact GitHub run
 records and to an execution-plan provenance record is the next step in
 [#1762](https://github.com/kimjooyoon/meta-ontology-go/issues/1762). An agent
 may suggest values, but this example cannot grant repository write authority.
+The recovery booleans and effect IDs are also caller assertions. Their presence
+does not prove that an external effect occurred or that a retry is idempotent.
+An execution adapter must bind those claims to independent receipts and check
+current scope before it can grant any effect authority.

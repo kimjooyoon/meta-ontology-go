@@ -1,0 +1,107 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {"examples/cistrategy:ProposeRecovery": {
+        "revision_id": "gooo://ci-strategy/example/revision/recover-one",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/publish",
+        "recovery_plan_id": "gooo://ci-strategy/example/plan/recover-proof",
+        "failed_activity_id": "gooo://ci-strategy/example/activity/upload-proof",
+        "failure_observation_id": "gooo://ci-strategy/example/observation/upload-failed",
+        "completed_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "recovery_effect_ids": ["gooo://ci-strategy/example/effect/proof-uploaded"],
+        "failure_observed": true, "completed_effects_observed": true, "scope_closed": true
+      }},
+      "expected": {"examples/cistrategy:ProposeRecovery": {
+        "revision_id": "gooo://ci-strategy/example/revision/recover-one",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/publish",
+        "recovery_plan_id": "gooo://ci-strategy/example/plan/recover-proof",
+        "failed_activity_id": "gooo://ci-strategy/example/activity/upload-proof",
+        "failure_observation_id": "gooo://ci-strategy/example/observation/upload-failed",
+        "completed_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "recovery_effect_ids": ["gooo://ci-strategy/example/effect/proof-uploaded"],
+        "state": "PROPOSED_RECOVERY", "overlap_count": 0, "execution_authorized": false
+      }}
+    },
+    {
+      "inputs": {"examples/cistrategy:ProposeRecovery": {
+        "revision_id": "gooo://ci-strategy/example/revision/replay",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/publish",
+        "recovery_plan_id": "gooo://ci-strategy/example/plan/replay-image",
+        "failed_activity_id": "gooo://ci-strategy/example/activity/upload-proof",
+        "failure_observation_id": "gooo://ci-strategy/example/observation/upload-failed",
+        "completed_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "recovery_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "failure_observed": true, "completed_effects_observed": true, "scope_closed": true
+      }},
+      "expected": {"examples/cistrategy:ProposeRecovery": {
+        "revision_id": "gooo://ci-strategy/example/revision/replay",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/publish",
+        "recovery_plan_id": "gooo://ci-strategy/example/plan/replay-image",
+        "failed_activity_id": "gooo://ci-strategy/example/activity/upload-proof",
+        "failure_observation_id": "gooo://ci-strategy/example/observation/upload-failed",
+        "completed_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "recovery_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "state": "REJECTED_REPLAY", "overlap_count": 1, "execution_authorized": false
+      }}
+    },
+    {
+      "inputs": {"examples/cistrategy:ProposeRecovery": {
+        "revision_id": "gooo://ci-strategy/example/revision/unobserved",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/publish",
+        "recovery_plan_id": "gooo://ci-strategy/example/plan/recover-proof",
+        "failed_activity_id": "gooo://ci-strategy/example/activity/upload-proof",
+        "failure_observation_id": "gooo://ci-strategy/example/observation/upload-failed",
+        "completed_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "recovery_effect_ids": ["gooo://ci-strategy/example/effect/proof-uploaded"],
+        "failure_observed": true, "completed_effects_observed": false, "scope_closed": true
+      }},
+      "expected": {"examples/cistrategy:ProposeRecovery": {
+        "revision_id": "gooo://ci-strategy/example/revision/unobserved",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/publish",
+        "recovery_plan_id": "gooo://ci-strategy/example/plan/recover-proof",
+        "failed_activity_id": "gooo://ci-strategy/example/activity/upload-proof",
+        "failure_observation_id": "gooo://ci-strategy/example/observation/upload-failed",
+        "completed_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "recovery_effect_ids": ["gooo://ci-strategy/example/effect/proof-uploaded"],
+        "state": "INSUFFICIENT_EVIDENCE", "overlap_count": 0, "execution_authorized": false
+      }}
+    },
+    {
+      "inputs": {"examples/cistrategy:ProposeRecovery": {
+        "revision_id": "gooo://ci-strategy/example/revision/duplicate",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/publish",
+        "recovery_plan_id": "gooo://ci-strategy/example/plan/recover-proof",
+        "failed_activity_id": "gooo://ci-strategy/example/activity/upload-proof",
+        "failure_observation_id": "gooo://ci-strategy/example/observation/upload-failed",
+        "completed_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "recovery_effect_ids": [
+          "gooo://ci-strategy/example/effect/proof-uploaded",
+          "gooo://ci-strategy/example/effect/proof-uploaded"
+        ],
+        "failure_observed": true, "completed_effects_observed": true, "scope_closed": true
+      }},
+      "expected": {"examples/cistrategy:ProposeRecovery": {
+        "revision_id": "gooo://ci-strategy/example/revision/duplicate",
+        "goal_id": "gooo://ci-strategy/example/goal",
+        "prior_plan_id": "gooo://ci-strategy/example/plan/publish",
+        "recovery_plan_id": "gooo://ci-strategy/example/plan/recover-proof",
+        "failed_activity_id": "gooo://ci-strategy/example/activity/upload-proof",
+        "failure_observation_id": "gooo://ci-strategy/example/observation/upload-failed",
+        "completed_effect_ids": ["gooo://ci-strategy/example/effect/image-published"],
+        "recovery_effect_ids": [
+          "gooo://ci-strategy/example/effect/proof-uploaded",
+          "gooo://ci-strategy/example/effect/proof-uploaded"
+        ],
+        "state": "INVALID_PROPOSAL", "overlap_count": 0, "execution_authorized": false
+      }}
+    }
+  ]
+}
