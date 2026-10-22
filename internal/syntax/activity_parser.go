@@ -19,6 +19,7 @@ func (p *Parser) parseActivity() *ActivityDecl {
 	activity.Result = result
 	activity.Parameters = append([]NameRef(nil), activity.Inputs...)
 	activity.Output = result.Name
+	activity.OutputSpan = result.Span
 	if !result.Span.IsEmpty() {
 		activity.Span.End = result.Span.End
 	}

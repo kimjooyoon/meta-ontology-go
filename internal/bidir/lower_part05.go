@@ -52,7 +52,11 @@ func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (De
 		return Declaration{}, fmt.Errorf("activity %q uses unsupported legacy-only Result; canonical Output is required", activity.Name)
 	}
 	if activity.Output != "" {
-		declaration.Outputs = append(declaration.Outputs, Reference{Name: activity.Output, Span: toSourceSpan(activity.Span)})
+		span := activity.OutputSpan
+		if span.IsEmpty() {
+			span = activity.Span
+		}
+		declaration.Outputs = append(declaration.Outputs, Reference{Name: activity.Output, Span: toSourceSpan(span)})
 	}
 	return declaration, nil
 }

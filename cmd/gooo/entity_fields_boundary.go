@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -41,7 +42,8 @@ func semanticDiagnosticCode(err error) string {
 	if errors.Is(err, errCommandDeadline) {
 		return "semantic.deadline"
 	}
-	if strings.Contains(err.Error(), "unknown declaration") {
+	var reference *bidir.ReferenceResolutionError
+	if errors.As(err, &reference) {
 		return "semantic.invalid-endpoint"
 	}
 	if errors.Is(err, semantic.ErrUnknownRelation) {
