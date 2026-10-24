@@ -92,7 +92,7 @@ boundary reason. The extractor independently rejects that write path.
 If the owning `go.mod` requires a newer Go version than the fixed local
 toolchain, the rewrite indicator is likewise `NOT_APPLICABLE`; the report
 still counts the file. Gooo does not download a toolchain during metric scan.
-The declaration splitter, assignment refactor, and repository extractor also
+The declaration splitter, density rewriter, assignment refactor, and repository extractor also
 check the local toolchain when called directly. Recipe edits and creations
 must stay in the source's module, and prospective imports resolve through that
 module's dependencies. File or directory aliases may not hide a cross-module
@@ -108,5 +108,7 @@ intent.
 The module boundary determines whether a rewrite is eligible; it does not
 implement an otherwise unsupported operation. In particular, duplicate groups
 retain their source-fragment subject kind and the planner's existing operation
-input checks. [#1761](https://github.com/kimjooyoon/meta-ontology-go/issues/1761)
-tracks exact-head observations of the hosted consumers.
+input checks. Package relocation uses a separate disposable-topology recipe;
+that recipe's cross-module moves still need an explicit module contract.
+[#1761](https://github.com/kimjooyoon/meta-ontology-go/issues/1761) tracks that
+remaining path and exact-head observations of the hosted consumers.
