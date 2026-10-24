@@ -12,6 +12,7 @@ import (
 
 func checkSplitPlans(cfg config, report metricevidence.Report, indicators []metricevidence.Indicator) error {
 	planned, blocked, matched := 0, 0, 0
+	var subjectError error
 	for _, indicator := range indicators {
 		if cfg.subject != "" && cfg.subject != indicator.Subject {
 			continue
@@ -27,6 +28,9 @@ func checkSplitPlans(cfg config, report metricevidence.Report, indicators []metr
 		}
 		if errors.Is(err, errSplitBlocked) {
 			blocked++
+			if cfg.subject != "" {
+				subjectError = fmt.Errorf("plan %s: %w", indicator.Subject, err)
+			}
 			continue
 		}
 		return fmt.Errorf("plan %s: %w", indicator.Subject, err)
@@ -35,7 +39,7 @@ func checkSplitPlans(cfg config, report metricevidence.Report, indicators []metr
 		return fmt.Errorf("subject %q is not an actionable split indicator", cfg.subject)
 	}
 	fmt.Printf("source-splitter: actionable=%d planned=%d blocked=%d write=false\n", matched, planned, blocked)
-	return nil
+	return subjectError
 }
 
 func validateTopology(report metricevidence.Report, plan splitPlan) error {

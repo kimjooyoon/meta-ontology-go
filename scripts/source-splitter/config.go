@@ -27,7 +27,7 @@ func parseConfig(args []string) (config, error) {
 	flags.StringVar(&cfg.subject, "subject", "", "single metric subject")
 	flags.StringVar(&cfg.plan, "plan", "", "logical split plan for batch write mode")
 	flags.StringVar(&cfg.output, "output", "", "batch split receipt JSON")
-	flags.BoolVar(&cfg.check, "check", false, "plan every actionable split without writing")
+	flags.BoolVar(&cfg.check, "check", false, "inspect splits without writing; a blocked explicit subject is an error")
 	flags.BoolVar(&cfg.evidenceJSON, "evidence-json", false, "emit raw write evidence as JSON")
 	if err := flags.Parse(args); err != nil {
 		return cfg, err
