@@ -31,7 +31,7 @@ func extractionSubjects(plans map[string]planSubject, residual []string, recipes
 		if len(performed) == 0 {
 			return nil, fmt.Errorf("transformation operation is unavailable for %s", logical)
 		}
-		result = append(result, extractionSubject{Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.data), Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor", Operation: performed[0], Operations: append([]string{}, performed...), Proof: proof, Evidence: append([]projectionextractor.StrategyEvidence{}, evidence[logical]...)})
+		result = append(result, extractionSubject{Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.Data), Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor", Operation: performed[0], Operations: append([]string{}, performed...), Proof: proof, Evidence: append([]projectionextractor.StrategyEvidence{}, evidence[logical]...)})
 	}
 	return result, nil
 }

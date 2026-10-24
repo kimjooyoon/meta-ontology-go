@@ -16,7 +16,7 @@ func TestNativeMetricsPreserveUnconnectedGoooCandidate(t *testing.T) {
 		fmt.Fprintf(&source, "entity Item%d\n", index)
 	}
 	root, head := observedRepository(t, map[string]string{
-		"large.go":      "package fixture\n" + observedFunction("Oversized", 85),
+		"large.go":      extractionFixture("Ready"),
 		"expression.go": "package fixture\nfunc Value() int {\n value := 1\n return value\n}\n",
 		"main.gooo":     source.String(),
 	})

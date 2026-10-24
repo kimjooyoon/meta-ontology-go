@@ -43,10 +43,10 @@ func TestSplitExecutionRechecksPrerequisiteOriginsBeforeWriting(t *testing.T) {
 		t.Fatal(err)
 	}
 	plan := generation.Plan{HeadSHA: head, Prerequisites: []generation.CandidatePrerequisite{observe(action)}}
-	if failure := checkSplitPrerequisite(root, metrics, plan, action); failure != nil {
+	if failure := checkSourcePrerequisite(root, metrics, plan, action); failure != nil {
 		t.Fatal("unchanged input was rejected", failure)
 	}
-	if !splitSourceMatchesPrerequisite(plan, action, source) || splitSourceMatchesPrerequisite(plan, action, append(source, '\n')) {
+	if !sourceMatchesPrerequisite(plan, action, source) || sourceMatchesPrerequisite(plan, action, append(source, '\n')) {
 		t.Fatal("execution source bytes were not bound to the preflight digest")
 	}
 	if err := os.WriteFile(path, append(source, '\n'), 0600); err != nil {

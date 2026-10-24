@@ -41,7 +41,7 @@ func validPlanPrerequisites(plan Plan) bool {
 		if NativeExecutionRoute(action.Operation) == "" {
 			return false
 		}
-		if action.Operation == sourcepolicy.OperationSplitGo && observations[action.IndicatorID].State != "READY" {
+		if requiresSourcePrerequisite(action.Operation) && observations[action.IndicatorID].State != "READY" {
 			return false
 		}
 	}

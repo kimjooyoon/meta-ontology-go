@@ -9,7 +9,7 @@ var nativeExecutors = map[generation.ExecutionRoute]nativeExecutor{
 	generation.RouteRegisterSyntax:  executeRegistrationRoute,
 	generation.RouteCollapseAssign:  executeCollapseRoute,
 	generation.RouteSplitGo:         executeSplitRoute,
-	generation.RouteExtractFunction: executeExtract,
+	generation.RouteExtractFunction: executeExtractRoute,
 }
 
 func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan,
@@ -37,8 +37,16 @@ func executeCollapseRoute(workspace, gitDir, metricsPath string, plan generation
 
 func executeSplitRoute(workspace, gitDir, metricsPath string, plan generation.Plan,
 	action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
-	if failure := checkSplitPrerequisite(workspace, metricsPath, plan, action); failure != nil {
+	if failure := checkSourcePrerequisite(workspace, metricsPath, plan, action); failure != nil {
 		return operationMaterialization{}, failure
 	}
 	return executeSplit(workspace, gitDir, metricsPath, plan, action, trace)
+}
+
+func executeExtractRoute(workspace, gitDir, metricsPath string, plan generation.Plan,
+	action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
+	if failure := checkSourcePrerequisite(workspace, metricsPath, plan, action); failure != nil {
+		return operationMaterialization{}, failure
+	}
+	return executeExtract(workspace, gitDir, metricsPath, plan, action, trace)
 }

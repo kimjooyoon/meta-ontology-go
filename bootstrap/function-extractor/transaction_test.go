@@ -21,7 +21,7 @@ func TestCommitStagedPreservesPreexistingTemp(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, err := commitStaged(map[string]stagedFile{
-		"source.go": {name: destination, data: []byte("package p\n"), mode: 0o644},
+		"source.go": {Name: destination, Data: []byte("package p\n"), Mode: 0o644},
 	})
 	if err == nil {
 		t.Fatal("pre-existing temporary path was accepted")
@@ -40,8 +40,8 @@ func TestTransactionFailurePreservesOriginalFiles(t *testing.T) {
 	}
 	created := filepath.Join(root, "helper.go")
 	transaction, err := commitStaged(map[string]stagedFile{
-		"source.go": {name: destination, data: []byte("package new\n"), mode: 0o644},
-		"helper.go": {name: created, data: []byte("package helper\n"), mode: 0o644, created: true},
+		"source.go": {Name: destination, Data: []byte("package new\n"), Mode: 0o644},
+		"helper.go": {Name: created, Data: []byte("package helper\n"), Mode: 0o644, Created: true},
 	})
 	if runtime.GOOS == "linux" {
 		if err != nil {
@@ -120,7 +120,7 @@ func TestRecipeWriteSetStaysInOwningModule(t *testing.T) {
 			staged, _, _, _, err := stageExtractions(root, map[string]planSubject{recipe.Subject: {}},
 				[]string{recipe.Subject}, []extractionRecipe{recipe})
 			if kind == "nested" {
-				if err != nil || len(staged) != 2 || staged["nested/helper.go"].data == nil {
+				if err != nil || len(staged) != 2 || staged["nested/helper.go"].Data == nil {
 					t.Fatalf("valid nested recipe did not stage: %v %v", staged, err)
 				}
 			} else if err == nil || len(staged) != 0 {

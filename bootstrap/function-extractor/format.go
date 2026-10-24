@@ -2,38 +2,10 @@ package main
 
 import (
 	"fmt"
-	"go/format"
 	"os"
 	"path/filepath"
 	"runtime"
 )
-
-func formatStaged(root string, buffers map[string][]byte, created map[string]bool) (map[string]stagedFile, error) {
-	staged := make(map[string]stagedFile, len(buffers))
-	for logical, data := range buffers {
-		name, err := extractionPath(root, logical)
-		if err != nil {
-			return nil, err
-		}
-		formatted, err := format.Source(data)
-		if err != nil {
-			return nil, fmt.Errorf("format extraction %s: %w", logical, err)
-		}
-		if extractionLines(formatted) > 75 {
-			return nil, fmt.Errorf("extraction target %s remains at %d lines", logical, extractionLines(formatted))
-		}
-		mode := uint32(0o644)
-		if !created[logical] {
-			info, err := os.Stat(name)
-			if err != nil {
-				return nil, err
-			}
-			mode = uint32(info.Mode().Perm())
-		}
-		staged[logical] = stagedFile{name: name, data: formatted, mode: mode, created: created[logical]}
-	}
-	return staged, nil
-}
 
 func installTransaction(file *transactionFile) (namespaceReplacementReceipt, error) {
 	if !sameDirectory(file.name, file.temp) {

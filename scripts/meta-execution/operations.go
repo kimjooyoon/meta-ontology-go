@@ -315,7 +315,7 @@ func materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath string, 
 	if err := decodeStrictBytes(result.Stdout, &evidence); err != nil || evidence.ExpectedHeadSHA != plan.HeadSHA || evidence.Source.Path != action.Subject || evidence.OperationID != operationconformance.OperationID {
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "decode-source-splitter-evidence", "INSTANCE_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-evidence")
 	}
-	if !splitSourceMatchesPrerequisite(plan, action, evidence.Source.Data) {
+	if !sourceMatchesPrerequisite(plan, action, evidence.Source.Data) {
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "bind-split-source", "PREREQUISITE_INPUT_CHANGED", "STALE", "observe-source-prerequisites")
 	}
 	contractPath := filepath.Join(temporary, "examples", "source-splitter-conformance", "contract.json")
@@ -390,6 +390,10 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 	before, err := os.ReadFile(sourcePath)
 	if err != nil {
 		return operationMaterialization{}, newOperationError("observe-plan", "read-function-source", "SOURCE_UNAVAILABLE", "DIRECT_MISSING", "restore-source")
+	}
+	if !sourceMatchesPrerequisite(plan, action, before) {
+		return operationMaterialization{}, newOperationError("observe-plan", "bind-function-source",
+			"PREREQUISITE_INPUT_CHANGED", "STALE", "observe-source-prerequisites")
 	}
 	planPath, densityPath, prepErr := writeExtractorInputs(temporary, plan, subject, physicalLineCount(before))
 	if prepErr != nil {

@@ -80,8 +80,19 @@ another independent operation; connecting the adapter remains explicit work.
 Tests require every advertised route to have a handler and every handler to
 have a canonical binding.
 
-Current coverage is declaration splitting. Other native operations retain their
-own existing checks. A separately projected workspace retains a
+Function extraction uses the same preparation stage as its committing command,
+including active recipe precedence, the generic extractor, import/module checks,
+and final formatting/capacity checks. Existing Gooo obligations such as
+`ProveCalleeEffects` and `ProveRenderedCapacity` retain their native failure
+stage, step, reason, classification, diagnostics and next operation. An unknown
+callee effect stays unknown while the planner considers the next candidate.
+Preparation builds proposed files in memory; it does not install them. Execution
+reobserves the candidate and checks the copied source bytes before writing.
+
+Current coverage is preparation for declaration splitting and function
+extraction. Readiness still requires normal writing, conformance and verification
+at execution; it does not establish a completed repair. A separately projected
+split workspace retains a
 `SUCCESSOR_PROJECTION_REQUIRED` obligation: logical directory counts cannot
 establish physical storage capacity. This change does not implement that
 successor consumer, reserve output paths, or make concurrent source edits atomic.

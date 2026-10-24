@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/exactsha"
+	recipeauthority "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
@@ -34,9 +36,14 @@ func NewObserver(root, head string, raw []byte) (generation.PrerequisiteObserver
 	for _, binding := range generation.DefaultRegistry() {
 		routes[binding.Operation] = binding.ExecutionRoute
 	}
+	loadRecipes := sync.OnceValues(recipeauthority.Load)
 	return func(action generation.Action) generation.CandidatePrerequisite {
 		if routes[action.Operation] == "" {
 			return generation.NewCandidatePrerequisite(action, head, "", metricsDigest, "EXECUTION_CONSUMER_UNAVAILABLE")
+		}
+		if action.Operation == sourcepolicy.OperationExtractFunction {
+			recipes, err := loadRecipes()
+			return observeExtraction(root, head, metricsDigest, action, recipes, err)
 		}
 		digest, reason := observe(root, action.Subject, report)
 		return generation.NewCandidatePrerequisite(action, head, digest, metricsDigest, reason)
