@@ -5,14 +5,25 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence"
 )
 
-func TestCurrentRecipeStagingRemainsDeclarationSplittable(t *testing.T) {
+func TestCurrentRecipeStagingReachesDeclarationCapacity(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan, err := planSource(root, "bootstrap/function-extractor/apply.go", 75)
+	subject := "bootstrap/function-extractor/apply.go"
+	source, err := os.ReadFile(filepath.Join(root, subject))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Repository projection also runs this test after the authorized split.
+	if physicalLines(source) <= 75 {
+		return
+	}
+	plan, err := planSource(root, subject, 75)
 	if err != nil {
 		t.Fatalf("current recipe staging cannot reach the split consumer: %v", err)
 	}
@@ -20,6 +31,23 @@ func TestCurrentRecipeStagingRemainsDeclarationSplittable(t *testing.T) {
 		if physicalLines(part.Data) > 75 {
 			t.Fatalf("part exceeds the consumer's declaration capacity: %s", part.Subject)
 		}
+	}
+	entries, err := os.ReadDir(filepath.Join(root, plan.Directory))
+	if err != nil {
+		t.Fatal(err)
+	}
+	directory := metricevidence.Directory{Path: plan.Directory}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			directory.DirectFolders++
+		} else {
+			directory.DirectFiles++
+		}
+	}
+	report := metricevidence.Report{Directories: []metricevidence.Directory{directory}}
+	report.Meta.Policy.MaxDirectEntries = 10
+	if err := validateTopology(report, plan); err != nil {
+		t.Fatalf("current recipe staging exceeds the split consumer's directory capacity: %v", err)
 	}
 }
 
