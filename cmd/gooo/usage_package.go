@@ -50,6 +50,13 @@ The JSON proposal includes source edits and an updated workspace manifest. It
 also inspects callers outside the entry closure and leaves source files intact.
 See docs/language/workspace-activity-refactoring.ko.md.
 
+Propose a source split at a stable declaration ID:
+  gooo package split-source --package named/inputs --source main.gooo --before urn:gooo:example:named-inputs:net --into net.gooo --json workspace.json
+
+The proposal includes both sources, their original byte ranges and the updated
+workspace source list. It preserves declaration identity and leaves files intact.
+See examples/named-inputs/README.md for execution checks and consumer scope.
+
 Export declaration shapes for documentation and API comparison tools:
   gooo package interface --json gooo.workspace.json
 
