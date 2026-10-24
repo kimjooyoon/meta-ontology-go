@@ -49,6 +49,10 @@ information for Go-team-maintained tools and selected dependencies. Its local
 mode can help inspect Go tooling; it is not a Gooo upload service. Gooo does
 not enable telemetry upload on behalf of users.
 
+Inspect the current Go setting with `go telemetry` and the local data location
+with `go env GOTELEMETRYDIR`. Choosing `go telemetry on` contributes the approved
+Go-tool counters to the Go team; it does not publish Gooo usage or benchmark data.
+
 For runtime traces or metrics, [OpenTelemetry Go](https://opentelemetry.io/docs/languages/go/)
 and OTLP provide a standard export path if an application needs one. Export
 should be explicitly configured by the host application, with bounded
@@ -71,3 +75,15 @@ CLI, internal compiler code, or root Go module changes. This is command
 compatibility evidence, not a model evaluation or runtime performance trend.
 A manual run of the same workflow retains raw native Go benchmark output and
 the Go toolchain version; normal PR runs do not add benchmark time.
+
+The optional module's `BenchmarkCompiler` compares the same compiled Gooo CLI
+and inputs through direct and bridge calls. Its valid-check, semantic-error,
+and discovery workloads reuse the command compatibility fixtures and compare
+the exact JSON and exit status on every call. The standard `ns/op` includes
+compiler process startup; allocation values cover the parent process only.
+Manual CI retains the actual runner image, architecture, compiler build settings,
+and setup-go cache result with five raw samples per route. These fields help
+separate environment changes from implementation changes when using
+[benchstat](https://pkg.go.dev/golang.org/x/perf/cmd/benchstat). A runner label
+such as `ubuntu-latest` alone does not identify the image used in a run;
+[GitHub documents the setup log as the source of image identity](https://github.com/actions/runner-images#what-image-version-is-used-in-my-build).
