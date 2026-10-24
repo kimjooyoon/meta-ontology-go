@@ -40,7 +40,7 @@ func run(opts options) error {
 		return fmt.Errorf("metrics SHA %q does not match expected %q", report.CommitSHA, opts.sha)
 	}
 	if opts.plan != "" {
-		if err := emitGenerationPlan(opts, report.Meta); err != nil {
+		if err := emitGenerationPlan(opts, report.Meta, payload); err != nil {
 			return err
 		}
 	}

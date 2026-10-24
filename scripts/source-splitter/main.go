@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,26 +17,6 @@ func main() {
 
 func verifyRepositorySHA(root, expected string) error {
 	return exactsha.Verify(root, expected)
-}
-
-var errSplitBlocked = errors.New("split blocked")
-
-type splitPart struct {
-	Path             string
-	Subject          string
-	Data             []byte
-	DeclarationOrder []declarationOrder
-}
-
-type declarationOrder struct {
-	Ordinal int    `json:"ordinal"`
-	Digest  string `json:"digest"`
-}
-
-type splitPlan struct {
-	Directory string
-	Mode      os.FileMode
-	Parts     []splitPart
 }
 
 func stagePart(part splitPart, mode os.FileMode) (string, error) {

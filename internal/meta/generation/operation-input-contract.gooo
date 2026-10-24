@@ -11,6 +11,9 @@ entity FreeBindingsObligation id "gooo://meta-operation-input-contract/entity/fr
 entity CalleeEffectsObligation id "gooo://meta-operation-input-contract/entity/callee-effects-obligation"
 entity RenderedCapacityObligation id "gooo://meta-operation-input-contract/entity/rendered-capacity-obligation"
 entity ProjectedConformanceObligation id "gooo://meta-operation-input-contract/entity/projected-conformance-obligation"
+entity SplitRenderingObservation id "gooo://meta-operation-input-contract/entity/split-rendering-observation"
+entity SplitTopologyObservation id "gooo://meta-operation-input-contract/entity/split-topology-observation"
+entity SplitProjectionObligation id "gooo://meta-operation-input-contract/entity/split-projection-obligation"
 
 activity CollapseAssignReturn(FunctionInput) -> OperationResult
 activity SplitGoDeclarations(FileInput) -> OperationResult
@@ -24,3 +27,10 @@ activity ProveFreeBindings(ControlFlowObligation) -> FreeBindingsObligation
 activity ProveCalleeEffects(FreeBindingsObligation) -> CalleeEffectsObligation
 activity ProveRenderedCapacity(CalleeEffectsObligation) -> RenderedCapacityObligation
 activity ProveProjectedConformance(RenderedCapacityObligation) -> ProjectedConformanceObligation
+
+activity InspectSplitRendering(FileInput) -> SplitRenderingObservation
+    id "gooo://meta-operation-input-contract/activity/inspect-split-rendering"
+activity InspectSplitTopology(SplitRenderingObservation) -> SplitTopologyObservation
+    id "gooo://meta-operation-input-contract/activity/inspect-split-topology"
+activity RequireSplitProjection(SplitTopologyObservation) -> SplitProjectionObligation
+    id "gooo://meta-operation-input-contract/activity/require-split-projection"

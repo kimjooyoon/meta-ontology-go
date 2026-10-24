@@ -69,7 +69,7 @@ func inputDomainCounterexample(indicator sourcepolicy.Indicator, binding Binding
 	}
 }
 
-func selectActions(plan Plan, indicators []sourcepolicy.Indicator, registry []Binding) Plan {
+func selectActionsWithPrerequisites(plan Plan, indicators []sourcepolicy.Indicator, registry []Binding, observe PrerequisiteObserver) Plan {
 	index, _ := registryIndex(registry)
 	candidates := make([]candidate, 0, len(indicators))
 	for _, indicator := range indicators {
@@ -101,8 +101,21 @@ func selectActions(plan Plan, indicators []sourcepolicy.Indicator, registry []Bi
 			plan.UnselectedIndicatorIDs = append(plan.UnselectedIndicatorIDs, id)
 			continue
 		}
+		action := actionFor(candidate, id)
+		if observe != nil && action.Operation == sourcepolicy.OperationSplitGo {
+			prerequisite := observe(action)
+			plan.Prerequisites = append(plan.Prerequisites, prerequisite)
+			if !validCandidatePrerequisite(prerequisite, action, plan.HeadSHA) {
+				plan.Decision, plan.Reason, plan.Selected = DecisionUnknown, ReasonInvalidInput, nil
+				return finish(plan)
+			}
+			if prerequisite.State != "READY" {
+				plan.UnselectedIndicatorIDs = append(plan.UnselectedIndicatorIDs, id)
+				continue
+			}
+		}
 		groups[candidate.binding.IndependenceGroupID] = struct{}{}
-		plan.Selected = append(plan.Selected, actionFor(candidate, id))
+		plan.Selected = append(plan.Selected, action)
 	}
 	if uint32(len(plan.Selected)) < minimumIndependent {
 		for _, action := range plan.Selected {

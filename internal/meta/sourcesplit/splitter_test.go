@@ -1,4 +1,4 @@
-package main
+package sourcesplit
 
 import (
 	"crypto/sha256"
@@ -48,7 +48,7 @@ func second() int {
 	if err := os.WriteFile(filepath.Join(root, subject), []byte(source), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	plan, err := planSource(root, subject, 10)
+	plan, err := PlanSource(root, subject, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func second() int {
 		t.Fatalf("unexpected parts: %#v", plan.Parts)
 	}
 	for _, part := range plan.Parts {
-		if physicalLines(part.Data) > 10 || !strings.Contains(string(part.Data), "//go:build linux") {
+		if PhysicalLines(part.Data) > 10 || !strings.Contains(string(part.Data), "//go:build linux") {
 			t.Fatalf("invalid split part %s:\n%s", part.Subject, part.Data)
 		}
 	}
@@ -69,7 +69,7 @@ func second() int {
 }
 
 func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
-	source, err := os.ReadFile(filepath.Join("testdata", "function-extractor-apply.go.txt"))
+	source, err := os.ReadFile(filepath.Join("..", "..", "..", "scripts", "source-splitter", "testdata", "function-extractor-apply.go.txt"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, subject), source, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	plan, err := planSource(root, subject, 75)
+	plan, err := PlanSource(root, subject, 75)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,8 +95,8 @@ func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
 				t.Fatal("stageExtractions was rendered into multiple split parts")
 			}
 			found = true
-			t.Logf("stageExtractions rendered physical_lines=%d", physicalLines(part.Data))
-			if physicalLines(part.Data) > 75 || strings.Contains(text, "import (\n") {
+			t.Logf("stageExtractions rendered physical_lines=%d", PhysicalLines(part.Data))
+			if PhysicalLines(part.Data) > 75 || strings.Contains(text, "import (\n") {
 				t.Fatalf("stageExtractions helper exceeded rendered capacity or retained grouped imports:\n%s", text)
 			}
 			imports := []string{
@@ -131,7 +131,7 @@ func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
 				t.Fatal("indexRecipes was rendered into multiple split parts")
 			}
 			indexRecipesFound = true
-			if physicalLines(part.Data) > 75 {
+			if PhysicalLines(part.Data) > 75 {
 				t.Fatalf("indexRecipes helper exceeded rendered capacity:\n%s", text)
 			}
 			partFile, err := parser.ParseFile(token.NewFileSet(), "indexRecipes.go", part.Data, parser.ParseComments)

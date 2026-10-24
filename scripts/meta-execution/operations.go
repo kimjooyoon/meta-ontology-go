@@ -276,6 +276,9 @@ func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, 
 		return executeCollapse(workspace, gitDir, metricsPath, plan, action, trace)
 	}
 	if action.Operation == sourcepolicy.OperationSplitGo {
+		if failure := checkSplitPrerequisite(workspace, metricsPath, plan, action); failure != nil {
+			return operationMaterialization{}, failure
+		}
 		return executeSplit(workspace, gitDir, metricsPath, plan, action, trace)
 	}
 	if action.Operation == sourcepolicy.OperationExtractFunction {
@@ -333,6 +336,9 @@ func materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath string, 
 	var evidence operationconformance.SplitGoEvidence
 	if err := decodeStrictBytes(result.Stdout, &evidence); err != nil || evidence.ExpectedHeadSHA != plan.HeadSHA || evidence.Source.Path != action.Subject || evidence.OperationID != operationconformance.OperationID {
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "decode-source-splitter-evidence", "INSTANCE_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-evidence")
+	}
+	if !splitSourceMatchesPrerequisite(plan, action, evidence.Source.Data) {
+		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "bind-split-source", "PREREQUISITE_INPUT_CHANGED", "STALE", "observe-source-prerequisites")
 	}
 	contractPath := filepath.Join(temporary, "examples", "source-splitter-conformance", "contract.json")
 	contractRaw, err := os.ReadFile(contractPath)

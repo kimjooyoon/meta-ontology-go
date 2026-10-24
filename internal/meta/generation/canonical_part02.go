@@ -47,6 +47,9 @@ func finish(plan Plan) Plan {
 	sort.Slice(plan.Counterexamples, func(left, right int) bool {
 		return plan.Counterexamples[left].ID < plan.Counterexamples[right].ID
 	})
+	sort.Slice(plan.Prerequisites, func(left, right int) bool {
+		return plan.Prerequisites[left].IndicatorID < plan.Prerequisites[right].IndicatorID
+	})
 	sort.Strings(plan.Shortfall)
 	unsigned := plan
 	unsigned.PlanDigest, unsigned.ReplayDigest = "", ""

@@ -17,7 +17,14 @@ func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 // Input digests are already part of the source indicators and canonical input.
 func BuildWithRegistrationInputs(baseSHA, headSHA string, report sourcepolicy.Report,
 	inputs map[string]syntaxregistration.Request) Plan {
-	plan := buildWithoutRegistrationInputs(baseSHA, headSHA, report)
+	return BuildWithPrerequisites(baseSHA, headSHA, report, inputs, nil)
+}
+
+// BuildWithPrerequisites preserves every indicator while checking candidate
+// prerequisites before choosing the next independent operation.
+func BuildWithPrerequisites(baseSHA, headSHA string, report sourcepolicy.Report,
+	inputs map[string]syntaxregistration.Request, observe PrerequisiteObserver) Plan {
+	plan := buildWithPrerequisites(baseSHA, headSHA, report, observe)
 	failures := registrationInputFailures(report.Indicators, inputs)
 	if len(failures) != 0 {
 		plan.Decision, plan.Reason = DecisionUnknown, ReasonRegistrationInput

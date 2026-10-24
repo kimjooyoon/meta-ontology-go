@@ -600,6 +600,19 @@ func assertExtractorReportMapAccepted(t *testing.T, value map[string]any) {
 // than a claim about a current native observation.
 func strategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
 	t.Helper()
+	evidence := historicalStrategyEvidenceFixture(t)
+	contract, err := generation.ExtractFunctionInputContractEvidence()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Specialize only the decoder's schema fixture to the current contract.
+	// The archived bytes stay unchanged and are separately tested as stale.
+	evidence.ContractSourceDigest, evidence.ContractSemanticDigest = contract.SourceDigest, contract.SemanticDigest
+	return evidence
+}
+
+func historicalStrategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
+	t.Helper()
 	payload, err := os.ReadFile(filepath.Join("testdata", "native-strategy-evidence-w2.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -609,6 +622,13 @@ func strategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence 
 		t.Fatalf("native strategy evidence fixture is malformed: %v", err)
 	}
 	return evidence[0]
+}
+
+func TestDecodeExtractorRejectsHistoricalContractAsCurrent(t *testing.T) {
+	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{historicalStrategyEvidenceFixture(t)})
+	if validStrategyEvidenceValues(report) {
+		t.Fatal("a historical contract was accepted as the current source observation")
+	}
 }
 
 func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {

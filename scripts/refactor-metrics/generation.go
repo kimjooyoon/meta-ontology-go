@@ -5,13 +5,18 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcesplit"
 )
 
-func emitGenerationPlan(opts options, report sourcepolicy.Report) error {
+func emitGenerationPlan(opts options, report sourcepolicy.Report, metrics []byte) error {
 	if opts.baseSHA == "" {
 		return fmt.Errorf("base-sha is required when plan is set")
 	}
-	plan := generation.Build(opts.baseSHA, opts.sha, report)
+	observe, err := sourcesplit.NewObserver(opts.root, opts.sha, metrics)
+	if err != nil {
+		return fmt.Errorf("prepare source prerequisites: %w", err)
+	}
+	plan := generation.BuildWithPrerequisites(opts.baseSHA, opts.sha, report, nil, observe)
 	payload, err := generation.Encode(plan)
 	if err != nil {
 		return fmt.Errorf("encode generation plan: %w", err)

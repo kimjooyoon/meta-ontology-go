@@ -27,6 +27,62 @@ Write mode rechecks the plan and still owns output collision and write errors.
 Keep the source and metrics fixed between planning and execution.
 
 This exposes an existing operation's read-only prerequisite check. Connecting
-such checks to Gooo's operation selection, preserving measured debt while
-selecting another ready candidate, remains tracked in
+such checks to Gooo's operation selection and successor verification is tracked in
 [#1782](https://github.com/kimjooyoon/meta-ontology-go/issues/1782).
+
+## Candidate selection and source origin
+
+The native planner lives in
+[`internal/meta/sourcesplit`](../../internal/meta/sourcesplit). The command and
+the self-improvement planner share its parsing, rendering, import normalization,
+declaration partitioning, and logical topology checks. Metric scanning does not
+run those checks. `refactor-metrics -plan ... -check` observes split candidates
+in the existing priority order until it has enough independent actions.
+A blocked candidate does not consume its independence group.
+
+The existing [Gooo operation contract](../../internal/meta/generation/operation-input-contract.gooo)
+declares the chain:
+
+```gooo
+activity InspectSplitRendering(FileInput) -> SplitRenderingObservation
+activity InspectSplitTopology(SplitRenderingObservation) -> SplitTopologyObservation
+activity RequireSplitProjection(SplitTopologyObservation) -> SplitProjectionObligation
+```
+
+Lowering supplies `used` and `wasGeneratedBy` facts. A candidate observation
+links its indicator, repository HEAD, inspected source-byte digest, complete
+metrics-payload digest, and contract source/semantic digests. The plan digest
+also includes the observations. These identify the inputs and declared
+relations; the read-only native inspector supplies the actual measured result.
+
+| State | Candidate treatment |
+| --- | --- |
+| `READY` | Eligible for selection; still requires normal write and conformance checks. |
+| `BLOCKED` | Retain the rendering/topology cause and prerequisite work; inspect the next candidate. |
+| `UNKNOWN` | Retain missing source or directory observations; inspect the next candidate. |
+| `DEFERRED` | Keep successor projection outstanding; inspect the next candidate. |
+
+All raw indicators and their original outcomes remain in the decision ledger.
+The two-independent-operation floor is unchanged. If too few candidates remain,
+the result is a shortfall with no selected writes, rather than a fixed point.
+The executor reobserves prerequisites before materialization, including for
+legacy plans, and compares recorded origins when present. Returned split source
+bytes must also match the recorded source digest before evidence is accepted.
+
+Current coverage is declaration splitting. Other native operations retain their
+own existing checks. A separately projected workspace retains a
+`SUCCESSOR_PROJECTION_REQUIRED` obligation: logical directory counts cannot
+establish physical storage capacity. This change does not implement that
+successor consumer, reserve output paths, or make concurrent source edits atomic.
+The follow-up must use the existing repository projector and its verifier before
+such a deferred candidate can be admitted.
+
+Native performance observations can be requested separately from CI:
+
+```sh
+go test ./internal/meta/sourcesplit -run '^$' \
+  -bench '^BenchmarkSplitPrerequisite$' -benchmem -count=5
+```
+
+The timed region is one candidate's read-only observation. Repository setup,
+metrics scanning, HEAD verification, code writes, and tests are outside it.

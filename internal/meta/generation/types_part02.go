@@ -96,6 +96,7 @@ type Plan struct {
 	ReplayDigest              string                   `json:"replay_digest"`
 
 	RegistrationInputFailures []RegistrationInputFailure `json:"registration_input_failures,omitempty"`
+	Prerequisites             []CandidatePrerequisite    `json:"prerequisites,omitempty"`
 }
 
 // PromotionAuthorizedByPlan is always false: CI remains the authority.

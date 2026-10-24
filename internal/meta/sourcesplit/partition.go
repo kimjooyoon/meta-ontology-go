@@ -1,4 +1,4 @@
-package main
+package sourcesplit
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ func partitionDeclarations(fset *token.FileSet, file *ast.File, declarations []a
 	if err != nil {
 		return nil, err
 	}
-	if physicalLines(all) <= limit {
+	if PhysicalLines(all) <= limit {
 		return [][]ast.Decl{declarations}, nil
 	}
 	if groups, ok := middleDeclarationPartition(fset, file, declarations, limit); ok {
@@ -29,13 +29,13 @@ func partitionDeclarations(fset *token.FileSet, file *ast.File, declarations []a
 	return nil, fmt.Errorf("declarations cannot preserve source order within %d lines", limit)
 }
 
-func declarationIdentity(fset *token.FileSet, declaration ast.Decl, ordinal int) (declarationOrder, error) {
+func declarationIdentity(fset *token.FileSet, declaration ast.Decl, ordinal int) (DeclarationOrder, error) {
 	var output bytes.Buffer
 	if err := format.Node(&output, fset, declaration); err != nil {
-		return declarationOrder{}, err
+		return DeclarationOrder{}, err
 	}
 	sum := sha256.Sum256(output.Bytes())
-	return declarationOrder{Ordinal: ordinal, Digest: fmt.Sprintf("%x", sum)}, nil
+	return DeclarationOrder{Ordinal: ordinal, Digest: fmt.Sprintf("%x", sum)}, nil
 }
 
 func orderedGreedyDeclarationPartition(fset *token.FileSet, file *ast.File, declarations []ast.Decl, limit int) ([][]ast.Decl, bool) {
@@ -52,7 +52,7 @@ func orderedDeclarationPartition(fset *token.FileSet, file *ast.File, declaratio
 		}
 		prefixData, prefixErr := renderPart(fset, file, prefix)
 		suffixData, suffixErr := renderPart(fset, file, suffix)
-		if prefixErr == nil && suffixErr == nil && physicalLines(prefixData) <= limit && physicalLines(suffixData) <= limit {
+		if prefixErr == nil && suffixErr == nil && PhysicalLines(prefixData) <= limit && PhysicalLines(suffixData) <= limit {
 			return [][]ast.Decl{prefix, suffix}, true
 		}
 	}
@@ -75,7 +75,7 @@ func middleDeclarationPartition(fset *token.FileSet, file *ast.File, declaration
 			moved := append([]ast.Decl{}, declarations[start:end]...)
 			remainingData, remainingErr := renderPart(fset, file, remaining)
 			movedData, movedErr := renderPart(fset, file, moved)
-			if remainingErr == nil && movedErr == nil && physicalLines(remainingData) <= limit && physicalLines(movedData) <= limit {
+			if remainingErr == nil && movedErr == nil && PhysicalLines(remainingData) <= limit && PhysicalLines(movedData) <= limit {
 				return [][]ast.Decl{remaining, moved}, true
 			}
 		}
@@ -92,7 +92,7 @@ func greedyDeclarationPartition(fset *token.FileSet, file *ast.File, declaration
 		if err != nil {
 			return nil, err
 		}
-		if physicalLines(data) <= limit {
+		if PhysicalLines(data) <= limit {
 			current = candidate
 			continue
 		}
@@ -102,7 +102,7 @@ func greedyDeclarationPartition(fset *token.FileSet, file *ast.File, declaration
 		groups = append(groups, current)
 		current = []ast.Decl{declaration}
 		data, err = renderPart(fset, file, current)
-		if err != nil || physicalLines(data) > limit {
+		if err != nil || PhysicalLines(data) > limit {
 			return nil, fmt.Errorf("declaration after line %d exceeds %d lines", positionLine(fset, declaration), limit)
 		}
 	}

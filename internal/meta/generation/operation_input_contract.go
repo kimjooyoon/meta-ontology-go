@@ -24,6 +24,7 @@ type nativeOperationInput struct {
 }
 
 type nativeOperationObligation struct {
+	Operation    sourcepolicy.Operation
 	Name         string
 	Activity     string
 	InputEntity  string
@@ -53,6 +54,9 @@ var nativeOperationObligations = []nativeOperationObligation{
 	{Name: "callee-effects", Activity: "ProveCalleeEffects", InputEntity: "FreeBindingsObligation", OutputEntity: "CalleeEffectsObligation"},
 	{Name: "rendered-capacity", Activity: "ProveRenderedCapacity", InputEntity: "CalleeEffectsObligation", OutputEntity: "RenderedCapacityObligation"},
 	{Name: "projected-conformance", Activity: "ProveProjectedConformance", InputEntity: "RenderedCapacityObligation", OutputEntity: "ProjectedConformanceObligation"},
+	{Operation: sourcepolicy.OperationSplitGo, Name: "split-rendering", Activity: "InspectSplitRendering", InputEntity: "FileInput", OutputEntity: "SplitRenderingObservation"},
+	{Operation: sourcepolicy.OperationSplitGo, Name: "split-topology", Activity: "InspectSplitTopology", InputEntity: "SplitRenderingObservation", OutputEntity: "SplitTopologyObservation"},
+	{Operation: sourcepolicy.OperationSplitGo, Name: "split-projection", Activity: "RequireSplitProjection", InputEntity: "SplitTopologyObservation", OutputEntity: "SplitProjectionObligation"},
 }
 
 var nativeContractPolicies = []nativeContractPolicy{
@@ -151,6 +155,9 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		"CalleeEffectsObligation":        "gooo://meta-operation-input-contract/entity/callee-effects-obligation",
 		"RenderedCapacityObligation":     "gooo://meta-operation-input-contract/entity/rendered-capacity-obligation",
 		"ProjectedConformanceObligation": "gooo://meta-operation-input-contract/entity/projected-conformance-obligation",
+		"SplitRenderingObservation":      "gooo://meta-operation-input-contract/entity/split-rendering-observation",
+		"SplitTopologyObservation":       "gooo://meta-operation-input-contract/entity/split-topology-observation",
+		"SplitProjectionObligation":      "gooo://meta-operation-input-contract/entity/split-projection-obligation",
 	}
 	inputKinds := map[string]sourcepolicy.SubjectKind{
 		"FunctionInput": sourcepolicy.SubjectKindFunction,
@@ -292,21 +299,36 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 // loadOperationInputContract, so admission remains bound to the source and
 // semantic digests as well as to the Used/WasGeneratedBy facts.
 func ExtractFunctionInputContractEvidence() (OperationInputContractEvidence, error) {
+	return operationInputEvidence(sourcepolicy.OperationExtractFunction)
+}
+
+func SplitGoInputContractEvidence() (OperationInputContractEvidence, error) {
+	return operationInputEvidence(sourcepolicy.OperationSplitGo)
+}
+
+func operationInputEvidence(operation sourcepolicy.Operation) (OperationInputContractEvidence, error) {
 	contract, err := loadOperationInputContract()
 	if err != nil {
 		return OperationInputContractEvidence{}, err
 	}
-	native := nativeOperationInputFor(sourcepolicy.OperationExtractFunction)
+	native := nativeOperationInputFor(operation)
 	binding, bindingOK := contract.Bindings[native.Operation]
 	facts, factsOK := contract.Facts[native.Operation]
 	if !bindingOK || !factsOK || !facts.UsedInput || !facts.GeneratedOutput {
-		return OperationInputContractEvidence{}, fmt.Errorf("ExtractFunction operation input contract facts are incomplete")
+		return OperationInputContractEvidence{}, fmt.Errorf("%s operation input contract facts are incomplete", operation)
 	}
 	obligations := make([]OperationInputContractObligationEvidence, 0, len(nativeOperationObligations))
 	for _, obligation := range nativeOperationObligations {
+		owner := obligation.Operation
+		if owner == "" {
+			owner = sourcepolicy.OperationExtractFunction
+		}
+		if owner != operation {
+			continue
+		}
 		facts, ok := contract.ObligationFacts[obligation.Activity]
 		if !ok || !facts.UsedInput || !facts.GeneratedOutput {
-			return OperationInputContractEvidence{}, fmt.Errorf("ExtractFunction proof obligation %q facts are incomplete", obligation.Name)
+			return OperationInputContractEvidence{}, fmt.Errorf("%s proof obligation %q facts are incomplete", operation, obligation.Name)
 		}
 		obligations = append(obligations, OperationInputContractObligationEvidence{
 			Name: obligation.Name, Activity: obligation.Activity, InputEntity: obligation.InputEntity, OutputEntity: obligation.OutputEntity,

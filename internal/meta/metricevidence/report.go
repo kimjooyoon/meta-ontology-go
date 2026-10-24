@@ -9,9 +9,11 @@ import (
 )
 
 type Report struct {
-	CommitSHA   string      `json:"commit_sha"`
-	Directories []Directory `json:"directories"`
-	Meta        struct {
+	CommitSHA          string      `json:"commit_sha"`
+	Directories        []Directory `json:"directories"`
+	StorageRoot        string      `json:"storage_root,omitempty"`
+	StorageDirectories []Directory `json:"storage_directories,omitempty"`
+	Meta               struct {
 		Schema string `json:"schema"`
 		Policy struct {
 			MaxFileLines     int `json:"max_file_lines"`
