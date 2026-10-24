@@ -11,7 +11,8 @@ import (
 
 // CI supplies a binary built from the same revision as the optional bridge.
 // A plain module test remains independent of the compiler checkout.
-func TestCurrentCLIParity(t *testing.T) {
+func compilerParityFixture(t testing.TB) (string, string) {
+	t.Helper()
 	binary := os.Getenv("GOOO_ADK_TEST_BINARY")
 	if binary == "" {
 		t.Skip("set GOOO_ADK_TEST_BINARY to a current Gooo binary")
@@ -27,6 +28,11 @@ func TestCurrentCLIParity(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	return binary, root
+}
+
+func TestCurrentCLIParity(t *testing.T) {
+	binary, root := compilerParityFixture(t)
 	for _, tc := range []struct {
 		name     string
 		path     string
