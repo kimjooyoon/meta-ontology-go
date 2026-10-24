@@ -55,6 +55,9 @@ Propose a source split at a stable declaration ID:
 
 The proposal includes both sources, their original byte ranges and the updated
 workspace source list. It preserves declaration identity and leaves files intact.
+Apply a saved proposal after checking the current package inputs:
+  gooo package split-source --apply split.json --json workspace.json
+Application rechecks inputs after staging and verifies the installed package.
 See examples/named-inputs/README.md for execution checks and consumer scope.
 
 Export declaration shapes for documentation and API comparison tools:

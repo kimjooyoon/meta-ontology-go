@@ -54,10 +54,39 @@ go run ./cmd/gooo package split-source --json \
 ```
 
 결과의 `result.files`에는 두 파일의 내용과 원본 바이트 구간이,
-`updated_workspace`에는 새 파일까지 등록한 목록이 담깁니다. 파일은 자동으로
-덮어쓰지 않습니다. 에이전트가 적용할 때 두 소스와 목록을 함께 반영하고,
-기존 `cases.json`으로 `package execute`를 다시 실행합니다. 적용 직전에는
-기존 소스와 목록의 해시가 제안의 입력 해시와 같은지도 확인해야 합니다.
+`updated_workspace`에는 새 파일까지 등록한 목록이 담깁니다. 제안 명령은
+파일을 그대로 둡니다. 변경하지 않는 소스의 본문은 JSON에 중복 저장하지 않으며,
+패키지 입력 이미지 식별자로 실제 workspace와의 관계를 보관합니다.
+
+에이전트가 저장된 제안을 적용하고 기존 사례를 다시 실행할 수 있습니다.
+
+```sh
+go run ./cmd/gooo package split-source --apply /tmp/named-inputs-split.json \
+  --json examples/named-inputs/workspace.json
+go run ./cmd/gooo package execute --json \
+  --cases examples/named-inputs/cases.json examples/named-inputs/workspace.json
+```
+
+적용은 현재 소스와 목록을 다시 읽어 제안을 재계산합니다. 새 경로가 이미
+존재하거나 원본·목록·다른 패키지 입력이 바뀌었으면 쓰기 전에 거부합니다.
+임시 파일 준비 후에도 패키지 전체를 다시 확인하고, 두 소스와 목록을 함께
+게시합니다. 원본 권한은 유지하고 새 파일은 원본 소스 권한을 따릅니다.
+게시·디렉터리 동기화 실패 시 기존 쓰기 기능으로 대상 세 파일을 복구합니다.
+`application.state`는 이 대상들의 이전 상태 유지 여부를 보고하며,
+현재 출력 전체를 다시 읽고 패키지 이미지까지 맞았을 때 `OUTPUT_VERIFIED`가 됩니다.
+
+이 쓰기 경로는 workspace를 단독으로 수정하는 작업을 전제로 합니다.
+여러 파일의 교체 사이를 읽는 외부 독자, 마지막 확인 이후의 외부 수정,
+프로세스 종료·전원 중단까지 원자적으로 처리하는 보장은 아직 없습니다.
+`STATE_DIFFERS`나 `VERIFICATION_FAILED`는 현재 파일을 조사해야 하는 결과이며,
+적용 성공으로 집계하지 않습니다. 실행 결과를 전송하지 못한 경우에도 같은
+제안을 다시 적용해 덮어쓰지 않으므로, 에이전트가 현재 출력과 저장 제안을
+비교한 뒤 후속 작업을 결정합니다.
+
+이전 형식의 전체 runtime manifest가 들어 있는 제안도 읽습니다. 그 복사본을
+쓰기 입력으로 삼지 않고 현재 패키지에서 다시 만든 두 결과를 사용합니다.
+기존 패키지 receipt 수신기의 plain JSON 32 MiB, gzip 2 MiB·복원 JSON 32 MiB
+제한을 사용하며, 입력 제안의 해시는 압축 전 JSON 바이트를 가리킵니다.
 
 본문·주석·줄바꿈은 그대로 옮기고 패키지·네임스페이스·import 헤더만 복사합니다.
 안정된 ID, 입력 이름·타입, 필드와 진입점은 분할 전후에 비교합니다. 같은 파일의
@@ -67,5 +96,5 @@ go run ./cmd/gooo package split-source --json \
 이 제안은 workspace 목록으로 읽는 V4 패키지를 대상으로 합니다. Go의
 `go:embed`나 단일 파일만 읽는 생성기를 자동 변경하지는 않습니다. 이름 충돌,
 잘못된 경계, 선언 뒤에 놓인 import는 적용 가능한 제안으로 내보내지 않습니다.
-별도 프로세스의 실행 결과는 이 명령 안에서 검사하지 않으며, 기존 사례와
+별도 프로세스의 프로그램 실행 결과는 적용 명령 안에서 검사하지 않으며, 기존 사례와
 독립된 예상 출력으로 확인하는 과정이 필요합니다.
