@@ -169,7 +169,7 @@
       "sequence": 9,
       "file": "09-bootstrap-oracle.gif",
       "title": "SELF-IMPROVEMENT GATE CASCADE",
-      "description": "An observed bug changes an evaluator, then exact-head CI, dev adoption, and post-adoption observation unlock eligibility in order.",
+      "description": "The diagram shows conditional eligibility after every gate closes. The current contract retains four implemented consumers out of five declarations, so its full coverage gate remains open.",
       "alt": "Animated engineering story moving from observed metric bug to meta-rule change, exact-head CI, dev adoption, post-adoption receipt, and main eligibility in causal lanes.",
       "source_refs": ["docs/deterministic-ci-evolution.md", "scripts/self-improvement-contract/README.md", ".github/conformance-plan.md"],
       "initial_relation": "observed.bug",
@@ -181,7 +181,7 @@
       "generated_or_changed_artifact": "scripts/self-improvement-contract/README.md",
       "terminal_decision": "ELIGIBLE AFTER OBSERVATION",
       "next_consumer": "promotion controller",
-      "evidence": [{"path": "docs/deterministic-ci-evolution.md", "digest": "sha256:f437f80bb35165eda9b40dd02bf570007dfb733ec3b7b67f244eb6f44c804a55", "receipt_path": "scripts/self-improvement-contract/README.md", "receipt_digest": "sha256:197f7e8035f6da622711e38588dc48ce15daf65505777fbf95456d98b232b7af"}],
+      "evidence": [{"path": "docs/deterministic-ci-evolution.md", "digest": "sha256:f437f80bb35165eda9b40dd02bf570007dfb733ec3b7b67f244eb6f44c804a55", "receipt_path": "scripts/self-improvement-contract/README.md", "receipt_digest": "sha256:b69fed12c7c26042ae8e047a2b380425e0b49ec233175f4f7b00fbd1b229b1ae"}],
       "binding": {"nodes": ["observation", "meta-rule", "exact-head-ci", "dev", "post-adoption", "main-eligibility"], "edges": ["observe", "change", "verify", "adopt", "promote"], "transitions": ["bug", "rule", "ci", "dev", "receipt", "eligible"]}
     },
     {
