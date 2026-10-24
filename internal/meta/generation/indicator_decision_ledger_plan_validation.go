@@ -9,15 +9,14 @@ import (
 )
 
 func validatePlanIndicatorDecisionLedger(plan Plan) error {
-	required := plan.Decision == DecisionFixedPoint || plan.Decision == DecisionPlan || len(plan.RefutedIndicatorIDs) != 0 || len(plan.Prerequisites) != 0
-	if !required {
+	if !requiresPlanIndicatorDecisionLedger(plan) {
 		if plan.IndicatorDecisionLedger != nil {
-			return fmt.Errorf("non-executable plan carries an indicator decision ledger")
+			return fmt.Errorf("plan without classified indicators carries an indicator decision ledger")
 		}
 		return nil
 	}
 	if plan.IndicatorDecisionLedger == nil {
-		return fmt.Errorf("executable plan has no indicator decision ledger")
+		return fmt.Errorf("plan has classified indicators but no indicator decision ledger")
 	}
 	if err := plan.IndicatorDecisionLedger.Validate(); err != nil {
 		return err

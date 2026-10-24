@@ -17,7 +17,8 @@ type config struct {
 	check   bool
 }
 
-// Run observes or applies plans selected by exact-source metrics.
+// Run observes or moves Go declarations between files selected by exact-source
+// metrics. It does not implement Gooo section splitting.
 func Run(args []string) error {
 	cfg, err := parseConfig(args)
 	if err != nil {

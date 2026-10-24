@@ -102,6 +102,12 @@ func selectActionsWithPrerequisites(plan Plan, indicators []sourcepolicy.Indicat
 			continue
 		}
 		action := actionFor(candidate, id)
+		// A declaration without an executor remains debt even when the caller
+		// does not request source prerequisite observations.
+		if observe == nil && candidate.binding.ExecutionRoute == "" {
+			plan.UnselectedIndicatorIDs = append(plan.UnselectedIndicatorIDs, id)
+			continue
+		}
 		if observe != nil && (requiresSourcePrerequisite(action.Operation) || candidate.binding.ExecutionRoute == "") {
 			prerequisite := observe(action)
 			plan.Prerequisites = append(plan.Prerequisites, prerequisite)

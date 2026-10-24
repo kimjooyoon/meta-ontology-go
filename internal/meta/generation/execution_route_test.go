@@ -1,6 +1,7 @@
 package generation
 
 import (
+	"encoding/json"
 	"reflect"
 	"slices"
 	"strings"
@@ -56,5 +57,41 @@ func TestNativeRouteCannotBeAddedByResealingAPlan(t *testing.T) {
 	plan.RegistryDigest = digestJSON(plan.Registry)
 	if receiptPlanKnown(finish(plan)) {
 		t.Fatal("caller-controlled native route was accepted")
+	}
+}
+
+func TestPlanWithoutSourceObserverRetainsUnimplementedOperation(t *testing.T) {
+	head := strings.Repeat("c", 40)
+	report := sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(),
+		Indicators: []sourcepolicy.Indicator{
+			metric("expression", sourcepolicy.OperationCollapseAssign, false, false),
+			metric("declared.gooo", sourcepolicy.OperationSplitGooo, false, false),
+			metric("later.go:3:Large", sourcepolicy.OperationExtractFunction, false, false),
+		}}
+	plan := Build(head, head, report)
+	declared, ok := BindingForOperation(plan.Registry, sourcepolicy.OperationSplitGooo)
+	if !ok || declared.Executor != "" || declared.Evaluator != "" || declared.ExecutionRoute != "" {
+		t.Fatal("Gooo declaration advertises a consumer from another language", declared)
+	}
+	if plan.Decision != DecisionPlan || len(plan.Selected) != 2 ||
+		plan.Selected[1].Operation != sourcepolicy.OperationExtractFunction || !receiptPlanKnown(plan) ||
+		plan.IndicatorDecisionLedger == nil ||
+		plan.IndicatorDecisionLedger.IndicatorCount != 3 || plan.IndicatorDecisionLedger.DeferredCount != 1 {
+		t.Fatal("unimplemented declaration consumed an independent slot or lost its debt", plan)
+	}
+	report.Indicators = report.Indicators[:2]
+	short := Build(head, head, report)
+	if short.Decision != DecisionUnknown || short.Reason != ReasonPressureShortfall || len(short.Selected) != 0 ||
+		short.IndicatorDecisionLedger == nil ||
+		short.IndicatorDecisionLedger.IndicatorCount != 2 || short.IndicatorDecisionLedger.DeferredCount != 2 {
+		t.Fatal("missing consumer became an executable plan or a fixed point", short)
+	}
+	raw, err := json.Marshal(short)
+	var replay Plan
+	if err != nil || json.Unmarshal(raw, &replay) != nil || !reflect.DeepEqual(short, replay) {
+		t.Fatal("shortfall lost its original indicators in transport", err)
+	}
+	if validPlanPrerequisites(Plan{Selected: []Action{{Operation: sourcepolicy.OperationSplitGooo}}}) {
+		t.Fatal("omitting prerequisite observations admitted an unavailable consumer")
 	}
 }

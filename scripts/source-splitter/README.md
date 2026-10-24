@@ -20,6 +20,16 @@ and blocked counts, and a blocked candidate alone does not fail that inventory.
 The existing repository-wide CI uses this form. Agents deciding whether to
 attempt one split should use the explicit-subject form and its exit status.
 
+The Go declaration-move command follows the same rule: a blocked explicit
+subject returns an error with its original reason, while a bulk check reports
+an inventory. It moves a declaration into an existing Go file in the same build
+domain; it does not split Gooo source.
+
+```sh
+go run ./bootstrap/source-repacker -root "$ROOT" -metrics "$METRICS" \
+  -sha "$SHA" -check -subject path/to/source.go
+```
+
 The check matches the repository HEAD with the metrics revision and reads the
 working source. It does not attest that the working tree is clean, reserve
 future output paths, test filesystem writes, or compile the resulting package.
@@ -74,9 +84,12 @@ implements it. The canonical native registry exposes `execution_route`, which
 the common executor uses to dispatch its handlers. Observed planning records
 `EXECUTION_CONSUMER_UNAVAILABLE` for a registered operation with no such route.
 It retains the metric and declared operation without pretending to inspect its
-source. For example, Gooo section splitting remains registered, but its
-source-repacker has no common-execution adapter yet. The planner can continue to
-another independent operation; connecting the adapter remains explicit work.
+source. For example, Gooo section splitting remains declared with no executor
+or evaluator. `bootstrap/source-repacker` moves Go declarations between Go
+files; it does not implement that Gooo operation. The planner can continue to
+another independent operation, including when source observations were not
+requested. Implementing Gooo splitting must preserve package loading, stable
+semantic identities and source origins before its native route can be bound.
 Tests require every advertised route to have a handler and every handler to
 have a canonical binding.
 

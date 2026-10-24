@@ -7,6 +7,11 @@ import (
 )
 
 func validPlanPrerequisites(plan Plan) bool {
+	for _, action := range plan.Selected {
+		if NativeExecutionRoute(action.Operation) == "" {
+			return false
+		}
+	}
 	if len(plan.Prerequisites) == 0 {
 		return true
 	}
@@ -38,9 +43,6 @@ func validPlanPrerequisites(plan Plan) bool {
 		observations[observation.IndicatorID] = observation
 	}
 	for _, action := range plan.Selected {
-		if NativeExecutionRoute(action.Operation) == "" {
-			return false
-		}
 		if requiresSourcePrerequisite(action.Operation) && observations[action.IndicatorID].State != "READY" {
 			return false
 		}
