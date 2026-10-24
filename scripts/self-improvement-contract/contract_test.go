@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestContractClosesLanguageSelfImprovementLoop(t *testing.T) {
+func TestContractRetainsUnimplementedOperationInCoverage(t *testing.T) {
 	path := filepath.Join(
 		"..", "..", "examples", "self-improvement", "main.gooo",
 	)
@@ -16,19 +16,38 @@ func TestContractClosesLanguageSelfImprovementLoop(t *testing.T) {
 		t.Fatal(err)
 	}
 	report := buildReport(path, source, strings.Repeat("a", 40))
-	if report.Status != "PASS" {
-		t.Fatalf("status = %s, errors = %v", report.Status, report.Errors)
+	if report.Status != "FAIL" || report.Reason != "SELF_IMPROVEMENT_CONTRACT_OPEN" || len(report.Errors) != 0 {
+		t.Fatalf("unimplemented consumer was covered: %+v", report)
 	}
 	if report.EntityCount != 20 || report.ActivityCount != 9 {
 		t.Fatalf("model = %d entities/%d activities",
 			report.EntityCount, report.ActivityCount)
 	}
-	if len(report.ExecutorCoverage) != 5 {
-		t.Fatalf("executor coverage = %d, want 5", len(report.ExecutorCoverage))
+	if len(report.ExecutorCoverage) != 5 || coveredCount(report.ExecutorCoverage) != 4 {
+		t.Fatalf("executor coverage = %+v, want 4/5", report.ExecutorCoverage)
 	}
 	for _, indicator := range report.Indicators {
+		if indicator.ID == "coherence.executor-registry-coverage" {
+			if indicator.Verdict != "FAIL" || indicator.Value != "4/5" || indicator.Limit != "5/5" {
+				t.Fatalf("unimplemented consumer left the denominator: %+v", indicator)
+			}
+			continue
+		}
 		if indicator.Verdict != "PASS" {
 			t.Fatalf("indicator %s = %s", indicator.ID, indicator.Verdict)
+		}
+	}
+}
+
+func TestMissingExecutorCannotBindAnEmptyEntityID(t *testing.T) {
+	model := contractModel{EntityByID: map[string]string{"": "Missing", "executor://": "Missing"},
+		Activities: map[string]activitySignature{"Execute": {Inputs: []string{"GenerationPlan", "Missing"}}}}
+	for _, entityID := range []string{"", "executor://"} {
+		coverage := coverExecutors(model, []RegistryBinding{{
+			Operation: "split-gooo-sections", ExecutorEntityID: entityID,
+		}})
+		if len(coverage) != 1 || coverage[0].Covered || completeCoverage(coverage) {
+			t.Fatalf("empty consumer became implemented: %+v", coverage)
 		}
 	}
 }

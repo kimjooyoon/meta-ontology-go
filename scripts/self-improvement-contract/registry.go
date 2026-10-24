@@ -29,10 +29,14 @@ func registrySnapshot() []RegistryBinding {
 	result := make([]RegistryBinding, 0)
 	for _, binding := range generation.DefaultRegistry() {
 		executor := binding.Executor
+		entityID := ""
+		if executor != "" && binding.ExecutionRoute != "" {
+			entityID = "executor://" + executor
+		}
 		result = append(result, RegistryBinding{
 			Operation: string(binding.Operation), Executor: executor,
 			ProofChoice:      string(binding.ProofChoice),
-			ExecutorEntityID: "executor://" + executor,
+			ExecutorEntityID: entityID,
 			ProofEntityID:    proofEntityID(binding.ProofChoice),
 		})
 	}

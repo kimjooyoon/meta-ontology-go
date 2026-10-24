@@ -14,7 +14,7 @@ func coverExecutors(
 		result = append(result, ExecutorCoverage{
 			Operation: binding.Operation, Executor: binding.Executor,
 			EntityID: binding.ExecutorEntityID, EntityName: name,
-			Covered: name != "" && inputs[name],
+			Covered: binding.Executor != "" && binding.ExecutorEntityID != "" && name != "" && inputs[name],
 		})
 	}
 	return result

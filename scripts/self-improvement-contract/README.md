@@ -15,3 +15,14 @@ observation activity, and replays the projection deterministically.
 
 The tool only observes and reports. It never authorizes promotion or edits
 the source contract.
+
+The current generation registry contains five declared operations and four
+implemented execution routes. `split-gooo-sections` has no native consumer;
+`bootstrap/source-repacker` moves Go declarations and cannot satisfy that Gooo
+operation. The report therefore retains all five coverage rows, reports `4/5`,
+and returns `FAIL / SELF_IMPROVEMENT_CONTRACT_OPEN`. The language loop itself
+can be structurally closed while its executor coverage remains incomplete.
+The contract CI and downstream consumers that require a complete contract remain
+unsatisfied until this implementation gap is resolved; their acceptance rules
+have not been lowered. Candidate planning can still select other implemented
+operations while preserving this unresolved declaration.

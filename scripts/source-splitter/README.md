@@ -93,6 +93,13 @@ semantic identities and source origins before its native route can be bound.
 Tests require every advertised route to have a handler and every handler to
 have a canonical binding.
 
+Actionability and source-rewrite artifact coverage use this same native registry.
+They keep the original requested operations in their denominators: a declaration
+without a consumer remains `EXECUTOR_MISSING`, and an upstream execution claim
+cannot supply the missing artifact binding merely by naming an artifact and its
+digests. The full [self-improvement contract](../self-improvement-contract/README.md)
+also retains this missing consumer rather than reporting complete coverage.
+
 Function extraction uses the same preparation stage as its committing command,
 including active recipe precedence, the generic extractor, import/module checks,
 and final formatting/capacity checks. Existing Gooo obligations such as

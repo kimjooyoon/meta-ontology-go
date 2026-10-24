@@ -9,8 +9,12 @@ import (
 )
 
 func canonicalExecutors() []Executor {
-	result := make([]Executor, 0, len(generation.DefaultRegistry())+2)
-	for _, binding := range generation.DefaultRegistry() {
+	bindings := generation.DefaultRegistry()
+	result := make([]Executor, 0, len(bindings)+5)
+	for _, binding := range bindings {
+		if binding.ExecutionRoute == "" {
+			continue
+		}
 		operation := string(binding.Operation)
 		result = append(result, Executor{Operation: operation, Activity: binding.Activity,
 			ProofChoice: normalizeProof(string(binding.ProofChoice)), Registry: "generation",
