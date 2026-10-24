@@ -31,16 +31,8 @@ func secureSourcePath(root, subject string) (string, error) {
 	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("subject escapes repository: %q", subject)
 	}
-	owner, err := moduleboundary.Directory(rootPath, filepath.Dir(filepath.Join(rootPath, clean)))
-	if err != nil {
+	if err := moduleboundary.CheckWriteSet(rootPath, filepath.Join(rootPath, clean)); err != nil {
 		return "", err
-	}
-	targetOwner, err := moduleboundary.Directory(rootPath, filepath.Dir(target))
-	if err != nil || targetOwner != owner {
-		return "", fmt.Errorf("subject crosses Go module boundary: %q", subject)
-	}
-	if supported, err := moduleboundary.LocalToolchainSupported(owner); err != nil || !supported {
-		return "", fmt.Errorf("local Go toolchain cannot rewrite module for %q", subject)
 	}
 	return target, nil
 }

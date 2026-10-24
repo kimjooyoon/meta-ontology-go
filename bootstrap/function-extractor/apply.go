@@ -48,6 +48,9 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 			evidenceBySubject[logical] = evidence
 			continue
 		}
+		if err := validateRecipeModule(root, logical, recipe); err != nil {
+			return nil, nil, nil, nil, err
+		}
 		for _, edit := range recipe.Edits {
 			name, err := extractionPath(root, edit.Path)
 			if err != nil {
@@ -74,6 +77,11 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 		for _, path := range paths {
 			changedBySubject[logical] = appendUnique(changedBySubject[logical], path)
 			createdBySubject[logical] = appendUnique(createdBySubject[logical], path)
+		}
+		for _, path := range changedBySubject[logical] {
+			if err := projectionextractor.ValidateSourceImports(root, path, buffers[path]); err != nil {
+				return nil, nil, nil, nil, err
+			}
 		}
 	}
 	staged, err := formatStaged(root, buffers, created)

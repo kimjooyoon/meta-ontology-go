@@ -5,6 +5,7 @@ type Observation struct {
 	Subject              string
 	ModuleRoot           string
 	ModuleBoundaryReason ApplicabilityReason
+	SourcePaths          []string // Physical origins of aggregate observations, before policy evaluation.
 	Dimension            Dimension
 	Value                int
 	Detail               string

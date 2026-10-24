@@ -36,10 +36,11 @@ func evaluateObservation(policy Policy, observation Observation) (Indicator, err
 		return Indicator{}, err
 	}
 	applicability, applicabilityRule, applicabilityReason := indicatorApplicability(definition)
-	if observation.Dimension == DimensionGoFileLines && observation.ModuleBoundaryReason != "" {
+	if isGoRewriteDimension(observation.Dimension) && observation.ModuleBoundaryReason != "" {
 		applicability = ApplicabilityNotApplicable
 		applicabilityRule = ApplicabilityRuleGoModuleBoundary
 		applicabilityReason = observation.ModuleBoundaryReason
+		definition.blocking = false
 	}
 	satisfied := true
 	switch definition.relation {

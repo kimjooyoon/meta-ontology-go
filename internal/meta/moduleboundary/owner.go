@@ -11,6 +11,14 @@ import (
 // Directory returns the nearest go.mod's directory. When no manifest exists
 // within the repository, the repository root remains the legacy fallback.
 func Directory(root, directory string) (string, error) {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return "", err
+	}
+	directory, err = filepath.Abs(directory)
+	if err != nil {
+		return "", err
+	}
 	resolvedRoot, err := filepath.EvalSymlinks(root)
 	if err != nil {
 		return "", err

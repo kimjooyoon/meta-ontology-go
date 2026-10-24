@@ -27,7 +27,8 @@ replace example.test/dep => ../dep
 import "example.test/dep"
 func Value() int { return dep.Value() }
 `)
-	result, err := ExtractWithResult(root, "nested/source.go")
+	t.Chdir(root)
+	result, err := ExtractWithResult(".", "nested/source.go")
 	if err != nil {
 		t.Fatalf("owning nested module dependency was rejected: %v", err)
 	}

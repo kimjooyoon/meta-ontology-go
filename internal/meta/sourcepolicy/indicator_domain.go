@@ -11,6 +11,32 @@ const (
 
 const SemanticRoleWorkflowDiscoveryRoot = "workflow-discovery-root"
 
+func isGoRewriteDimension(dimension Dimension) bool {
+	switch dimension {
+	case DimensionGoFileLines, DimensionFunctionLines, DimensionRefactorAssign, DimensionRefactorDuplicate:
+		return true
+	default:
+		return false
+	}
+}
+
+// ValidModuleBoundaryShape checks the original catalog meaning even when a
+// module boundary prevents selecting its rewrite operation.
+func ValidModuleBoundaryShape(indicator Indicator) bool {
+	if !isGoRewriteDimension(indicator.MetricID) {
+		return false
+	}
+	if indicator.Subject == "." {
+		return false
+	}
+	observation := Observation{Subject: indicator.Subject, Dimension: indicator.MetricID}
+	definition, err := definitionFor(Default(), observation)
+	return err == nil && indicator.SubjectKind == indicatorSubjectKind(observation) &&
+		indicator.Operation == definition.operation && indicator.Relation == definition.relation &&
+		indicator.Role == definition.role && indicator.Consumer == definition.consumer &&
+		indicator.Proof == definition.proof && indicator.Family == definition.family
+}
+
 func indicatorApplicability(definition definition) (Applicability, string, ApplicabilityReason) {
 	switch definition.operation {
 	case OperationExemptRoot:

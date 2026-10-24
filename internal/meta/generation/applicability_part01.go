@@ -86,11 +86,7 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 }
 
 func validModuleBoundaryIndicator(indicator sourcepolicy.Indicator) bool {
-	if indicator.MetricID != sourcepolicy.DimensionGoFileLines ||
-		indicator.SubjectKind != sourcepolicy.SubjectKindFile ||
-		indicator.Operation != sourcepolicy.OperationSplitGo ||
-		indicator.Role != sourcepolicy.IndicatorRoleDriver ||
-		indicator.Relation != sourcepolicy.RelationLessOrEqual {
+	if !sourcepolicy.ValidModuleBoundaryShape(indicator) {
 		return false
 	}
 	switch indicator.ApplicabilityReason {

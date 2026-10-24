@@ -18,6 +18,7 @@ const minimumDuplicateStatements = 3
 type member struct {
 	group   string
 	subject string
+	path    string
 }
 
 func fingerprintFunction(fset *token.FileSet, declaration *ast.FuncDecl, packageKey, path string) (member, bool, error) {
@@ -31,7 +32,7 @@ func fingerprintFunction(fset *token.FileSet, declaration *ast.FuncDecl, package
 	}
 	digest := sha256.Sum256(output.Bytes())
 	identity := sourcepolicy.SourceSubject{Path: path, Line: fset.Position(declaration.Pos()).Line, Name: declaration.Name.Name}
-	return member{group: packageKey + "#sha256:" + hex.EncodeToString(digest[:]), subject: identity.String()}, true, nil
+	return member{group: packageKey + "#sha256:" + hex.EncodeToString(digest[:]), subject: identity.String(), path: path}, true, nil
 }
 
 func sourceDomain(path string, file *ast.File) string {

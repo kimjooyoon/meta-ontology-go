@@ -80,9 +80,11 @@ the Go toolchain version; normal PR runs do not add benchmark time.
 ## Go module ownership in repository metrics
 
 `go run ./scripts/line-metrics -json` includes Go files from nested modules in the
-repository totals. Each nested Go file and its file-line indicator carry a
+repository totals. Nested Go files, function indicators, and duplicate groups carry a
 repository-relative `module_root` pointing to the nearest owning `go.mod`;
-the root module is implicit to keep the report compact. A Go meta operation
+the root module is implicit to keep the report compact. Aggregate observations
+retain structured source paths so ownership never depends on parsing display text.
+A Go meta operation
 resolves imports through that owning module rather than borrowing the root
 module's dependencies. A source symlink crossing module roots remains in the
 line totals, but its rewrite indicator is `NOT_APPLICABLE` with a module
@@ -90,9 +92,12 @@ boundary reason. The extractor independently rejects that write path.
 If the owning `go.mod` requires a newer Go version than the fixed local
 toolchain, the rewrite indicator is likewise `NOT_APPLICABLE`; the report
 still counts the file. Gooo does not download a toolchain during metric scan.
-The declaration splitter and repository extractor also check the local
-toolchain when called directly. A module-boundary exclusion remains visible
-in the plan and does not invalidate unrelated actionable file indicators.
+The declaration splitter, assignment refactor, and repository extractor also
+check the local toolchain when called directly. Recipe edits and creations
+must stay in the source's module, and prospective imports resolve through that
+module's dependencies. File or directory aliases may not hide a cross-module
+write; aliases within one module remain supported. A module-boundary exclusion
+remains visible in the plan and does not invalidate unrelated actionable indicators.
 
 The boundary checks have both directions: a dependency declared only in the
 nested module resolves, and a dependency declared only in the root module does
@@ -100,7 +105,8 @@ not resolve for the nested source. The measured lines, module identity, and
 rewrite applicability are separate observations; none changes Gooo source
 intent.
 
-This observation currently belongs to file-line rewrite indicators. Function
-and duplicate-fragment observations still use their existing contracts;
-propagating module ownership through those operations remains follow-up work
-in [#1761](https://github.com/kimjooyoon/meta-ontology-go/issues/1761).
+The module boundary determines whether a rewrite is eligible; it does not
+implement an otherwise unsupported operation. In particular, duplicate groups
+retain their source-fragment subject kind and the planner's existing operation
+input checks. [#1761](https://github.com/kimjooyoon/meta-ontology-go/issues/1761)
+tracks exact-head observations of the hosted consumers.

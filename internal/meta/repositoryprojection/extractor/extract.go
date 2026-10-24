@@ -45,6 +45,9 @@ func readParsedSource(root, logical string) ([]byte, *token.FileSet, *ast.File, 
 	if err != nil {
 		return nil, nil, nil, fail("observe-plan", "read-source", "SOURCE_UNAVAILABLE", "DIRECT_MISSING", "restore-source", nil)
 	}
+	if err := validateImports(root, logical, nil); err != nil {
+		return nil, nil, nil, err
+	}
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, logical, source, parser.ParseComments)
 	if err != nil {

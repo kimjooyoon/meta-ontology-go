@@ -3,6 +3,8 @@ package extractor
 import (
 	"go/ast"
 	"go/build"
+	"go/parser"
+	"go/token"
 	"os"
 	pathpkg "path"
 	"path/filepath"
@@ -11,6 +13,20 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
+
+// ValidateSourceImports checks prospective source bytes against their owning
+// module before a caller stages a recipe's write set.
+func ValidateSourceImports(root, logical string, source []byte) error {
+	file, err := parser.ParseFile(token.NewFileSet(), logical, source, parser.SkipObjectResolution)
+	if err != nil {
+		return err
+	}
+	list, err := imports(file)
+	if err != nil {
+		return err
+	}
+	return validateImports(root, logical, list)
+}
 
 func imports(file *ast.File) ([]importSpec, error) {
 	var out []importSpec
