@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	packageResolveUsage       = "usage: gooo package <resolve|interface|inspect|origins|rename-activity|execute|replay|resume|construct> ..."
+	packageResolveUsage       = "usage: gooo package <resolve|interface|inspect|origins|rename-activity|split-source|execute|replay|resume|construct> ..."
 	workspaceSchema           = "gooo/package-workspace-manifest/v1"
 	workspaceMaxSourceCount   = 512
 	workspaceMaxSourceBytes   = 1 << 20
@@ -44,6 +44,9 @@ type workspaceResolutionReceipt struct {
 }
 
 func runPackageCommand(args []string, reader SourceReader, stdout, stderr io.Writer) int {
+	if len(args) > 0 && args[0] == "split-source" {
+		return runWorkspaceSourceSplit(args[1:], reader, stdout, stderr)
+	}
 	if len(args) > 0 && args[0] == "origins" {
 		return runPackageOrigins(args[1:], stdout, stderr)
 	}

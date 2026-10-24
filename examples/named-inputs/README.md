@@ -40,3 +40,32 @@ gooo package interface --json examples/named-inputs/workspace.json
 바꾸는 작업이 활동의 안정된 ID나 연결 위치를 새로 만들지는 않습니다.
 
 [문법과 지원 범위](../../docs/language/named-inputs.ko.md)를 참고하세요.
+
+## 의미와 원문을 보존하며 파일 나누기
+
+개발 소스에서 빌드한 CLI는 `Net`의 안정된 ID를 경계로 파일 분할을 제안합니다.
+위의 공개 0.6.35 릴리스에는 이 명령이 포함되어 있지 않습니다.
+
+```sh
+go run ./cmd/gooo package split-source --json \
+  --package named/inputs --source main.gooo \
+  --before urn:gooo:example:named-inputs:net --into net.gooo \
+  examples/named-inputs/workspace.json > /tmp/named-inputs-split.json
+```
+
+결과의 `result.files`에는 두 파일의 내용과 원본 바이트 구간이,
+`updated_workspace`에는 새 파일까지 등록한 목록이 담깁니다. 파일은 자동으로
+덮어쓰지 않습니다. 에이전트가 적용할 때 두 소스와 목록을 함께 반영하고,
+기존 `cases.json`으로 `package execute`를 다시 실행합니다. 적용 직전에는
+기존 소스와 목록의 해시가 제안의 입력 해시와 같은지도 확인해야 합니다.
+
+본문·주석·줄바꿈은 그대로 옮기고 패키지·네임스페이스·import 헤더만 복사합니다.
+안정된 ID, 입력 이름·타입, 필드와 진입점은 분할 전후에 비교합니다. 같은 파일의
+`bind`가 파일 간 연결로 바뀌므로 파일 해시와 패키지 이미지 해시는 달라집니다.
+새 파일의 위치에서 원본 위치로 돌아가는 바이트 대응을 별도로 보관합니다.
+
+이 제안은 workspace 목록으로 읽는 V4 패키지를 대상으로 합니다. Go의
+`go:embed`나 단일 파일만 읽는 생성기를 자동 변경하지는 않습니다. 이름 충돌,
+잘못된 경계, 선언 뒤에 놓인 import는 적용 가능한 제안으로 내보내지 않습니다.
+별도 프로세스의 실행 결과는 이 명령 안에서 검사하지 않으며, 기존 사례와
+독립된 예상 출력으로 확인하는 과정이 필요합니다.
