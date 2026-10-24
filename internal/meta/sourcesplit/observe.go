@@ -12,6 +12,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/exactsha"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 // NewObserver binds one metrics payload to the repository HEAD. Each candidate
@@ -28,8 +29,13 @@ func NewObserver(root, head string, raw []byte) (generation.PrerequisiteObserver
 		return nil, fmt.Errorf("split prerequisite metrics revision or policy is missing")
 	}
 	metricsDigest := sourceDigest(raw)
+	// Bind compiled native capabilities once for this observation session.
+	routes := make(map[sourcepolicy.Operation]generation.ExecutionRoute)
+	for _, binding := range generation.DefaultRegistry() {
+		routes[binding.Operation] = binding.ExecutionRoute
+	}
 	return func(action generation.Action) generation.CandidatePrerequisite {
-		if generation.NativeExecutionRoute(action.Operation) == "" {
+		if routes[action.Operation] == "" {
 			return generation.NewCandidatePrerequisite(action, head, "", metricsDigest, "EXECUTION_CONSUMER_UNAVAILABLE")
 		}
 		digest, reason := observe(root, action.Subject, report)
