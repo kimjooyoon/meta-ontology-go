@@ -26,3 +26,10 @@ The contract CI and downstream consumers that require a complete contract remain
 unsatisfied until this implementation gap is resolved; their acceptance rules
 have not been lowered. Candidate planning can still select other implemented
 operations while preserving this unresolved declaration.
+
+`gooo package split-source` can now propose a declaration-boundary partition
+for a V4 package workspace, retaining byte origins and its updated source list.
+That read-only proposal does not implement the repository-wide execution route:
+single-file and embedded Go consumers, atomic installation and successor
+projection still need their own verified integration. It therefore does not
+change the five-operation denominator or the `4/5` result.
