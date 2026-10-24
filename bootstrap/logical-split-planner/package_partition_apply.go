@@ -8,6 +8,9 @@ import (
 )
 
 func applyPackageRecipe(root string, recipe packagePartitionRecipe, writes map[string]bool) error {
+	if _, err := validatePackageModule(root, recipe); err != nil {
+		return err
+	}
 	for _, move := range recipe.Moves {
 		source, err := sourcePath(root, move.Source)
 		if err != nil {

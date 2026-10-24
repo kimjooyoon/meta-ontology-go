@@ -108,7 +108,17 @@ intent.
 The module boundary determines whether a rewrite is eligible; it does not
 implement an otherwise unsupported operation. In particular, duplicate groups
 retain their source-fragment subject kind and the planner's existing operation
-input checks. Package relocation uses a separate disposable-topology recipe;
-that recipe's cross-module moves still need an explicit module contract.
-[#1761](https://github.com/kimjooyoon/meta-ontology-go/issues/1761) tracks that
-remaining path and exact-head observations of the hosted consumers.
+input checks. Package relocation uses a separate disposable-topology recipe.
+It checks all move, create, rewrite, and range paths against the subject's module
+before writing. New destination directories inherit their existing ancestor's
+module. Module and workspace declarations and lock files require a separate
+migration contract, including when reached through a file alias. This preserves
+the dependency graph used to plan an ordinary package partition.
+
+The partition receipt records `module_root` relative to its `source_sha` and
+rechecks that boundary before reporting a fixed point. It describes the observed
+topology change; callers still compile and test the result within its owning Go
+module. Boundary rejection occurs before any planned write. This preflight does
+not make later filesystem failures or invalid text replacements transactional.
+[#1761](https://github.com/kimjooyoon/meta-ontology-go/issues/1761) tracks the
+exact-head observations of the hosted consumers.

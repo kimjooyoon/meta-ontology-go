@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
 
 const packagePartitionSchema = "gooo.go-package-partition-recipe.v1"
@@ -17,6 +19,7 @@ type packagePartitionRecipe struct {
 	Rewrites      []packageRewrite `json:"rewrites"`
 	Ranges        []packageRange   `json:"ranges"`
 	ExpectedShape packageShape     `json:"expected_shape"`
+	moduleRoot    string
 }
 
 type packageMove struct {
@@ -59,6 +62,10 @@ func runPackagePartition(root, recipeName, expectedSHA, output string) error {
 	if recipe.Schema != packagePartitionSchema || recipe.Subject == "" {
 		return fmt.Errorf("unsupported package partition recipe")
 	}
+	recipe.moduleRoot, err = validatePackageModule(absolute, recipe)
+	if err != nil {
+		return err
+	}
 	writes := make(map[string]bool)
 	if packageShapeSatisfied(absolute, recipe) {
 		return writePackagePartitionReceipt(output, expectedSHA, recipe, writes, true)
@@ -70,4 +77,33 @@ func runPackagePartition(root, recipeName, expectedSHA, output string) error {
 		return err
 	}
 	return writePackagePartitionReceipt(output, expectedSHA, recipe, writes, false)
+}
+
+func validatePackageModule(root string, recipe packagePartitionRecipe) (string, error) {
+	subject, err := sourcePath(root, recipe.Subject)
+	if err != nil {
+		return "", err
+	}
+	logical := make([]string, 0, len(recipe.Moves)*2+len(recipe.Creates)+len(recipe.Rewrites)+len(recipe.Ranges))
+	for _, move := range recipe.Moves {
+		logical = append(logical, move.Source, move.Destination)
+	}
+	for _, create := range recipe.Creates {
+		logical = append(logical, create.Path)
+	}
+	for _, rewrite := range recipe.Rewrites {
+		logical = append(logical, rewrite.Path)
+	}
+	for _, edit := range recipe.Ranges {
+		logical = append(logical, edit.Path)
+	}
+	paths := make([]string, 0, len(logical))
+	for _, path := range logical {
+		name, err := sourcePath(root, path)
+		if err != nil {
+			return "", err
+		}
+		paths = append(paths, name)
+	}
+	return moduleboundary.CheckPackageWriteSet(root, subject, paths...)
 }

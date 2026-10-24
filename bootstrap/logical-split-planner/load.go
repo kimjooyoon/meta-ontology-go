@@ -97,6 +97,7 @@ func writePackagePartitionReceipt(name, sha string, recipe packagePartitionRecip
 		moved, created, rewrites = 0, 0, 0
 	}
 	receipt := map[string]any{"schema": "gooo.go-package-partition-receipt.v1", "decision": decision, "resolution": "EXACT", "reason": reason, "source_sha": sha, "subject": recipe.Subject, "meta_operation": "partition-go-package", "moved_files": moved, "created_files": created, "rewrites": rewrites, "write_set": paths, "expected_shape": recipe.ExpectedShape, "effects": map[string]any{"repository_writes": 0, "mutation_authority": false, "disposable_writes": len(paths)}}
+	receipt["module_root"] = recipe.moduleRoot
 	sealed, err := json.Marshal(receipt)
 	if err != nil {
 		return err
