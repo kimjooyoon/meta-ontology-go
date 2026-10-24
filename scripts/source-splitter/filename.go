@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
 
 var knownGOOS = wordSet("aix android darwin dragonfly freebsd illumos ios js linux netbsd openbsd plan9 solaris wasip1 windows")
@@ -28,6 +30,17 @@ func secureSourcePath(root, subject string) (string, error) {
 	relative, err := filepath.Rel(rootPath, target)
 	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("subject escapes repository: %q", subject)
+	}
+	owner, err := moduleboundary.Directory(rootPath, filepath.Dir(filepath.Join(rootPath, clean)))
+	if err != nil {
+		return "", err
+	}
+	targetOwner, err := moduleboundary.Directory(rootPath, filepath.Dir(target))
+	if err != nil || targetOwner != owner {
+		return "", fmt.Errorf("subject crosses Go module boundary: %q", subject)
+	}
+	if supported, err := moduleboundary.LocalToolchainSupported(owner); err != nil || !supported {
+		return "", fmt.Errorf("local Go toolchain cannot rewrite module for %q", subject)
 	}
 	return target, nil
 }

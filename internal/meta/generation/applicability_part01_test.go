@@ -62,3 +62,38 @@ func TestWorkflowDiscoveryRootApplicabilityIsAccepted(t *testing.T) {
 		t.Fatalf("workflow discovery root exemption was rejected: %+v", indicator)
 	}
 }
+
+func TestModuleBoundaryDoesNotInvalidateUnrelatedPlan(t *testing.T) {
+	for _, reason := range []sourcepolicy.ApplicabilityReason{
+		sourcepolicy.ApplicabilityReasonModuleOwnerUnavailable,
+		sourcepolicy.ApplicabilityReasonCrossModuleSource,
+		sourcepolicy.ApplicabilityReasonModuleToolchainUnavailable,
+	} {
+		t.Run(string(reason), func(t *testing.T) {
+			report, err := sourcepolicy.Evaluate(sourcepolicy.Default(), []sourcepolicy.Observation{
+				{Subject: "nested/source.go", Dimension: sourcepolicy.DimensionGoFileLines, Value: 99,
+					ModuleRoot: "nested", ModuleBoundaryReason: reason},
+				{Subject: "root.go", Dimension: sourcepolicy.DimensionGoFileLines, Value: 99},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			report.Indicators = append(report.Indicators,
+				metric("expression", sourcepolicy.OperationCollapseAssign, false, false))
+			plan := Build(strings.Repeat("7", 40), strings.Repeat("8", 40), report)
+			if plan.Decision != DecisionPlan || len(plan.Selected) != 2 ||
+				len(plan.NotApplicableIndicatorIDs) != 1 {
+				t.Fatalf("one unavailable module blocked unrelated actions: decision=%s reason=%s", plan.Decision, plan.Reason)
+			}
+			for _, indicator := range report.Indicators {
+				if indicator.Subject != "nested/source.go" {
+					continue
+				}
+				indicator.ApplicabilityReason = "UNRECOGNIZED_EXEMPTION"
+				if validIndicatorApplicability(indicator) {
+					t.Fatal("unknown module boundary reason was accepted")
+				}
+			}
+		})
+	}
+}

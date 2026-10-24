@@ -20,7 +20,12 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 		default:
 			continue
 		}
-		observations = append(observations, metricObservation(file.Path, dimension, file.Lines))
+		observation := metricObservation(file.Path, dimension, file.Lines)
+		if file.Language == FileLanguageGo {
+			observation.ModuleRoot = file.ModuleRoot
+			observation.ModuleBoundaryReason = file.ModuleBoundaryReason
+		}
+		observations = append(observations, observation)
 	}
 	producer := metricTopologyProducer(report)
 	for _, directory := range topology {

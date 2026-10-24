@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
 
 func imports(file *ast.File) ([]importSpec, error) {
@@ -41,6 +43,11 @@ func validateImports(root, logical string, list []importSpec) error {
 	if err != nil {
 		return fail("validate-ast-imports", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 	}
+	supported, err := moduleboundary.LocalToolchainSupported(owner)
+	if err != nil || !supported {
+		return fail("validate-ast-imports", "resolve-module-toolchain", "GO_MODULE_TOOLCHAIN_UNAVAILABLE",
+			"DIRECT_MISSING", "restore-module-toolchain", nil)
+	}
 	module := moduleName(owner)
 	resolver := newModuleImporter(owner)
 	for _, item := range list {
@@ -53,7 +60,7 @@ func validateImports(root, logical string, list []importSpec) error {
 				local = filepath.Join(owner, filepath.FromSlash(strings.TrimPrefix(item.path, module+"/")))
 			}
 			if hasGoFile(local) {
-				localOwner, ownerErr := directoryModuleRoot(root, local)
+				localOwner, ownerErr := moduleboundary.Directory(root, local)
 				if ownerErr != nil {
 					return fail("validate-ast-imports", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 				}

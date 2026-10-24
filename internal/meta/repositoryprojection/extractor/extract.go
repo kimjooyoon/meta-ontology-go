@@ -9,6 +9,8 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
 
 func Extract(root, logical string) (map[string][]byte, []string, error) {
@@ -108,7 +110,7 @@ func renderHelperFiles(root, logical string, source []byte, fset *token.FileSet,
 		if pathErr != nil {
 			return nil, nil, fail("generate-helpers", "resolve-helper", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 		}
-		helperOwner, ownerErr := directoryModuleRoot(root, filepath.Dir(helperName))
+		helperOwner, ownerErr := moduleboundary.Directory(root, filepath.Dir(helperName))
 		if ownerErr != nil || helperOwner != owner {
 			return nil, nil, fail("generate-helpers", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 		}

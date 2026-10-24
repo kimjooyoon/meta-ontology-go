@@ -36,6 +36,11 @@ func evaluateObservation(policy Policy, observation Observation) (Indicator, err
 		return Indicator{}, err
 	}
 	applicability, applicabilityRule, applicabilityReason := indicatorApplicability(definition)
+	if observation.Dimension == DimensionGoFileLines && observation.ModuleBoundaryReason != "" {
+		applicability = ApplicabilityNotApplicable
+		applicabilityRule = ApplicabilityRuleGoModuleBoundary
+		applicabilityReason = observation.ModuleBoundaryReason
+	}
 	satisfied := true
 	switch definition.relation {
 	case RelationLessOrEqual:
@@ -50,5 +55,25 @@ func evaluateObservation(policy Policy, observation Observation) (Indicator, err
 	if applicability == ApplicabilityNotApplicable {
 		satisfied = true
 	}
-	return Indicator{MetricID: observation.Dimension, Family: definition.family, Subject: observation.Subject, SubjectKind: indicatorSubjectKind(observation), Value: observation.Value, Limit: definition.limit, Relation: definition.relation, Applicability: applicability, ApplicabilityRule: applicabilityRule, ApplicabilityReason: applicabilityReason, Blocking: definition.blocking, Satisfied: satisfied, Role: definition.role, Proof: definition.proof, Producer: producer, Consumer: definition.consumer, Operation: definition.operation, Detail: observation.Detail}, nil
+	return Indicator{
+		MetricID:            observation.Dimension,
+		Family:              definition.family,
+		Subject:             observation.Subject,
+		ModuleRoot:          observation.ModuleRoot,
+		SubjectKind:         indicatorSubjectKind(observation),
+		Value:               observation.Value,
+		Limit:               definition.limit,
+		Relation:            definition.relation,
+		Applicability:       applicability,
+		ApplicabilityRule:   applicabilityRule,
+		ApplicabilityReason: applicabilityReason,
+		Blocking:            definition.blocking,
+		Satisfied:           satisfied,
+		Role:                definition.role,
+		Proof:               definition.proof,
+		Producer:            producer,
+		Consumer:            definition.consumer,
+		Operation:           definition.operation,
+		Detail:              observation.Detail,
+	}, nil
 }
