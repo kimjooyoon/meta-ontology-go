@@ -7,6 +7,22 @@ import (
 	"testing"
 )
 
+func TestCurrentRecipeStagingRemainsDeclarationSplittable(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := planSource(root, "bootstrap/function-extractor/apply.go", 75)
+	if err != nil {
+		t.Fatalf("current recipe staging cannot reach the split consumer: %v", err)
+	}
+	for _, part := range plan.Parts {
+		if physicalLines(part.Data) > 75 {
+			t.Fatalf("part exceeds the consumer's declaration capacity: %s", part.Subject)
+		}
+	}
+}
+
 func TestSplitPlanRespectsModuleBoundary(t *testing.T) {
 	for _, test := range []struct {
 		name, version, wantError string
