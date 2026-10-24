@@ -12,6 +12,16 @@ import (
 type Reader interface{ ReadFile(string) ([]byte, error) }
 
 func Load(reader Reader, manifestPath string, definition Definition) (packageruntime.Manifest, error) {
+	loaded, err := loadSources(reader, manifestPath, definition)
+	if err != nil {
+		// A prefix of the requested package graph may itself be executable.
+		// Keep a failed read from masquerading as that complete workspace.
+		return packageruntime.Manifest{}, err
+	}
+	return loaded, nil
+}
+
+func loadSources(reader Reader, manifestPath string, definition Definition) (packageruntime.Manifest, error) {
 	result := packageruntime.Manifest{Schema: packageruntime.ManifestSchema, Entry: definition.Entry}
 	if err := validate(definition); err != nil {
 		return result, err

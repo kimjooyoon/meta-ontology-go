@@ -32,6 +32,9 @@ func TestNativeConsumerLoadsSplitsAndExecutesWorkspaceWithoutCLI(t *testing.T) {
 	if loaded.Packages[1].Name != "app" || len(loaded.Packages[1].Imports) != 1 || loaded.Packages[1].Imports[0] != "shared/math" {
 		t.Fatal("source metadata was not derived for the native consumer")
 	}
+	if definition.Packages[1].Name != "" || definition.Packages[1].Imports != nil {
+		t.Fatal("derived metadata rewrote the authored external definition")
+	}
 	split, err := packageruntime.SplitSource(loaded, "shared/app", "app.gooo", "urn:shared:run", "run.gooo")
 	if err != nil {
 		t.Fatal(err)
