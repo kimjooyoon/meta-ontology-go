@@ -17,8 +17,7 @@ func (err *discoveryLocatedError) Error() string { return err.cause.Error() }
 func (err *discoveryLocatedError) Unwrap() error { return err.cause }
 
 func discoveryFailureSpan(err error) syntax.Span {
-	var located *discoveryLocatedError
-	if errors.As(err, &located) {
+	if located, ok := errors.AsType[*discoveryLocatedError](err); ok {
 		return located.span
 	}
 	return semanticFailureSpan(nil, err)
