@@ -42,6 +42,11 @@ These commands are an operator recipe, not an additional required CI gate.
 The existing CI effort receipt is the first place to look for CI cost; add a
 new measurement only when it answers a question that receipt cannot.
 
+Use the formatter shipped with the selected Go toolchain as well:
+`"$(go env GOROOT)/bin/gofmt" -w .`. Automatic toolchain selection by `go`
+does not replace a standalone `gofmt` on the shell's `PATH`; different
+formatter versions can produce different source bytes in local and CI runs.
+
 ## Telemetry and ADK boundaries
 
 [Go Telemetry](https://go.dev/doc/telemetry) collects usage and performance
