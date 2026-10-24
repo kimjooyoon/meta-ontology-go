@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
 
 var knownGOOS = wordSet("aix android darwin dragonfly freebsd illumos ios js linux netbsd openbsd plan9 solaris wasip1 windows")
@@ -28,6 +30,9 @@ func secureSourcePath(root, subject string) (string, error) {
 	relative, err := filepath.Rel(rootPath, target)
 	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("subject escapes repository: %q", subject)
+	}
+	if err := moduleboundary.CheckWriteSet(rootPath, filepath.Join(rootPath, clean)); err != nil {
+		return "", err
 	}
 	return target, nil
 }

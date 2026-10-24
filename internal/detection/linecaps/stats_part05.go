@@ -10,17 +10,24 @@ import (
 func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.Policy) (sourcepolicy.Report, error) {
 	topology := metricTopologyDirectories(report)
 	observations := make([]sourcepolicy.Observation, 0, len(report.Files)+len(topology)*6+5)
-	for _, file := range report.Files {
+	goFiles := make(map[string]int)
+	for index, file := range report.Files {
 		dimension := sourcepolicy.Dimension("")
 		switch file.Language {
 		case FileLanguageGo:
 			dimension = sourcepolicy.DimensionGoFileLines
+			goFiles[file.Path] = index
 		case FileLanguageGooo:
 			dimension = sourcepolicy.DimensionGoooFileLines
 		default:
 			continue
 		}
-		observations = append(observations, metricObservation(file.Path, dimension, file.Lines))
+		observation := metricObservation(file.Path, dimension, file.Lines)
+		if file.Language == FileLanguageGo {
+			observation.ModuleRoot = file.ModuleRoot
+			observation.ModuleBoundaryReason = file.ModuleBoundaryReason
+		}
+		observations = append(observations, observation)
 	}
 	producer := metricTopologyProducer(report)
 	for _, directory := range topology {
@@ -37,14 +44,18 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 	}
 	for _, finding := range analysis.Findings {
 		if observation, ok := analysisObservation(finding); ok {
-			observations = append(observations, observation)
+			observations = append(observations,
+				bindModuleObservation(observation, []string{finding.Path}, report.Files, goFiles))
 		}
 	}
 	duplicateObservations, err := duplicates.Analyze(report.Root)
 	if err != nil {
 		return sourcepolicy.Report{}, err
 	}
-	observations = append(observations, duplicateObservations...)
+	for _, observation := range duplicateObservations {
+		observations = append(observations,
+			bindModuleObservation(observation, observation.SourcePaths, report.Files, goFiles))
+	}
 	total := report.Total()
 	observations = append(observations, metricObservation(".", sourcepolicy.DimensionGoFiles, total.GoFiles), metricObservation(".", sourcepolicy.DimensionGoooFiles, total.GoooFiles), metricObservation(".", sourcepolicy.DimensionGoLines, total.GoLines), metricObservation(".", sourcepolicy.DimensionGoooLines, total.GoooLines), rootREADMEObservation(report.Files))
 	return sourcepolicy.Evaluate(policy, observations)

@@ -47,6 +47,9 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 		if !indicator.Satisfied || indicator.Blocking {
 			return false
 		}
+		if indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleGoModuleBoundary {
+			return validModuleBoundaryIndicator(indicator)
+		}
 		if indicator.Operation == sourcepolicy.OperationPreserveWorkflow {
 			return indicator.Subject == ".github/workflows" && indicator.SubjectKind == sourcepolicy.SubjectKindDirectory &&
 				indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleWorkflowDiscovery &&
@@ -77,6 +80,20 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 		default:
 			return false
 		}
+	default:
+		return false
+	}
+}
+
+func validModuleBoundaryIndicator(indicator sourcepolicy.Indicator) bool {
+	if !sourcepolicy.ValidModuleBoundaryShape(indicator) {
+		return false
+	}
+	switch indicator.ApplicabilityReason {
+	case sourcepolicy.ApplicabilityReasonModuleOwnerUnavailable,
+		sourcepolicy.ApplicabilityReasonCrossModuleSource,
+		sourcepolicy.ApplicabilityReasonModuleToolchainUnavailable:
+		return true
 	default:
 		return false
 	}

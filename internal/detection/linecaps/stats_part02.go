@@ -18,6 +18,12 @@ func AnalyzeLineMetrics(root string) (LineMetricsReport, error) {
 	if err != nil {
 		return LineMetricsReport{}, err
 	}
+	canonicalRoot, err := filepath.EvalSymlinks(absRoot)
+	if err != nil {
+		return LineMetricsReport{}, err
+	}
+	owners := metricModuleOwners{root: canonicalRoot, byDirectory: map[string]metricModuleOwner{},
+		byRoot: map[string]sourcepolicy.ApplicabilityReason{}}
 	directories := map[string]*directoryNode{}
 	ensureDirectoryNode(directories, ".")
 	files := make([]FileMetric, 0)
@@ -28,7 +34,7 @@ func AnalyzeLineMetrics(root string) (LineMetricsReport, error) {
 		if handled, visitErr := collectMetricDirectory(absRoot, path, entry, directories); handled || visitErr != nil {
 			return visitErr
 		}
-		return collectMetricFile(absRoot, path, directories, &files)
+		return collectMetricFile(absRoot, path, entry.Type()&fs.ModeSymlink != 0, directories, &files, &owners)
 	})
 	if err != nil {
 		return LineMetricsReport{}, err

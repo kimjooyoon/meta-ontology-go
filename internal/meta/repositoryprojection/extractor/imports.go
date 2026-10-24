@@ -3,12 +3,30 @@ package extractor
 import (
 	"go/ast"
 	"go/build"
+	"go/parser"
+	"go/token"
 	"os"
 	pathpkg "path"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
+
+// ValidateSourceImports checks prospective source bytes against their owning
+// module before a caller stages a recipe's write set.
+func ValidateSourceImports(root, logical string, source []byte) error {
+	file, err := parser.ParseFile(token.NewFileSet(), logical, source, parser.SkipObjectResolution)
+	if err != nil {
+		return err
+	}
+	list, err := imports(file)
+	if err != nil {
+		return err
+	}
+	return validateImports(root, logical, list)
+}
 
 func imports(file *ast.File) ([]importSpec, error) {
 	var out []importSpec
@@ -41,6 +59,11 @@ func validateImports(root, logical string, list []importSpec) error {
 	if err != nil {
 		return fail("validate-ast-imports", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 	}
+	supported, err := moduleboundary.LocalToolchainSupported(owner)
+	if err != nil || !supported {
+		return fail("validate-ast-imports", "resolve-module-toolchain", "GO_MODULE_TOOLCHAIN_UNAVAILABLE",
+			"DIRECT_MISSING", "restore-module-toolchain", nil)
+	}
 	module := moduleName(owner)
 	resolver := newModuleImporter(owner)
 	for _, item := range list {
@@ -53,7 +76,7 @@ func validateImports(root, logical string, list []importSpec) error {
 				local = filepath.Join(owner, filepath.FromSlash(strings.TrimPrefix(item.path, module+"/")))
 			}
 			if hasGoFile(local) {
-				localOwner, ownerErr := directoryModuleRoot(root, local)
+				localOwner, ownerErr := moduleboundary.Directory(root, local)
 				if ownerErr != nil {
 					return fail("validate-ast-imports", "resolve-module-owner", "WRITE_SET_ESCAPE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 				}

@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
 
 func rewriteSubjects(root string, inputs []splitSubject) ([]rewriteSubject, error) {
@@ -10,6 +12,9 @@ func rewriteSubjects(root string, inputs []splitSubject) ([]rewriteSubject, erro
 	for _, input := range inputs {
 		name, err := densitySourcePath(root, input.Logical)
 		if err != nil {
+			return nil, err
+		}
+		if err := moduleboundary.CheckWriteSet(root, name); err != nil {
 			return nil, err
 		}
 		data, err := os.ReadFile(name)
