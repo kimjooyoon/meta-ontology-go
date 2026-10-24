@@ -16,12 +16,13 @@ type CandidatePrerequisite struct {
 	NextOperation          string `json:"next_operation"`
 }
 
-// PrerequisiteObserver is called lazily for split candidates before their
-// independence group is claimed. It must not modify source or metrics.
+// PrerequisiteObserver is called lazily for split candidates and operations
+// without a native execution route, before their independence group is claimed.
+// It must not modify source or metrics.
 type PrerequisiteObserver func(Action) CandidatePrerequisite
 
-func NewSplitPrerequisite(action Action, head, sourceDigest, metricsDigest, reason string) CandidatePrerequisite {
-	state, next := splitPrerequisiteDisposition(reason)
+func NewCandidatePrerequisite(action Action, head, sourceDigest, metricsDigest, reason string) CandidatePrerequisite {
+	state, next := prerequisiteDisposition(reason)
 	return CandidatePrerequisite{IndicatorID: action.IndicatorID, HeadSHA: head,
 		SourceDigest: sourceDigest, MetricsDigest: metricsDigest,
 		ContractSourceDigest:   action.InputContractSourceDigest,
@@ -29,8 +30,10 @@ func NewSplitPrerequisite(action Action, head, sourceDigest, metricsDigest, reas
 		State:                  state, Reason: reason, NextOperation: next}
 }
 
-func splitPrerequisiteDisposition(reason string) (string, string) {
+func prerequisiteDisposition(reason string) (string, string) {
 	switch reason {
+	case "EXECUTION_CONSUMER_UNAVAILABLE":
+		return "UNKNOWN", "connect-native-execution-consumer"
 	case "SPLIT_PLAN_READY":
 		return "READY", "execute-observed-split"
 	case "RENDERED_DECLARATION_CAPACITY":
@@ -51,12 +54,19 @@ func splitPrerequisiteDisposition(reason string) (string, string) {
 }
 
 func validCandidatePrerequisite(observed CandidatePrerequisite, action Action, head string) bool {
-	state, next := splitPrerequisiteDisposition(observed.Reason)
-	return action.Operation == sourcepolicy.OperationSplitGo && state != "" &&
+	state, next := prerequisiteDisposition(observed.Reason)
+	return validPrerequisiteDomain(observed, action) && state != "" &&
 		observed.State == state && observed.NextOperation == next &&
 		observed.IndicatorID == action.IndicatorID && observed.HeadSHA == head &&
 		observed.ContractSourceDigest == action.InputContractSourceDigest &&
 		observed.ContractSemanticDigest == action.InputContractSemanticDigest &&
 		validDigest(observed.MetricsDigest) &&
 		(validDigest(observed.SourceDigest) || state == "UNKNOWN" && observed.SourceDigest == "")
+}
+
+func validPrerequisiteDomain(observed CandidatePrerequisite, action Action) bool {
+	if observed.Reason == "EXECUTION_CONSUMER_UNAVAILABLE" {
+		return NativeExecutionRoute(action.Operation) == "" && observed.SourceDigest == ""
+	}
+	return action.Operation == sourcepolicy.OperationSplitGo
 }

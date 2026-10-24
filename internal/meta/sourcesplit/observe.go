@@ -29,8 +29,11 @@ func NewObserver(root, head string, raw []byte) (generation.PrerequisiteObserver
 	}
 	metricsDigest := sourceDigest(raw)
 	return func(action generation.Action) generation.CandidatePrerequisite {
+		if generation.NativeExecutionRoute(action.Operation) == "" {
+			return generation.NewCandidatePrerequisite(action, head, "", metricsDigest, "EXECUTION_CONSUMER_UNAVAILABLE")
+		}
 		digest, reason := observe(root, action.Subject, report)
-		return generation.NewSplitPrerequisite(action, head, digest, metricsDigest, reason)
+		return generation.NewCandidatePrerequisite(action, head, digest, metricsDigest, reason)
 	}, nil
 }
 

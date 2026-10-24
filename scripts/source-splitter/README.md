@@ -59,7 +59,7 @@ relations; the read-only native inspector supplies the actual measured result.
 | --- | --- |
 | `READY` | Eligible for selection; still requires normal write and conformance checks. |
 | `BLOCKED` | Retain the rendering/topology cause and prerequisite work; inspect the next candidate. |
-| `UNKNOWN` | Retain missing source or directory observations; inspect the next candidate. |
+| `UNKNOWN` | Retain a missing native consumer, source, or directory observation; inspect the next candidate. |
 | `DEFERRED` | Keep successor projection outstanding; inspect the next candidate. |
 
 All raw indicators and their original outcomes remain in the decision ledger.
@@ -68,6 +68,17 @@ the result is a shortfall with no selected writes, rather than a fixed point.
 The executor reobserves prerequisites before materialization, including for
 legacy plans, and compares recorded origins when present. Returned split source
 bytes must also match the recorded source digest before evidence is accepted.
+
+An operation declaration does not establish that every execution consumer
+implements it. The canonical native registry exposes `execution_route`, which
+the common executor uses to dispatch its handlers. Observed planning records
+`EXECUTION_CONSUMER_UNAVAILABLE` for a registered operation with no such route.
+It retains the metric and declared operation without pretending to inspect its
+source. For example, Gooo section splitting remains registered, but its
+source-repacker has no common-execution adapter yet. The planner can continue to
+another independent operation; connecting the adapter remains explicit work.
+Tests require every advertised route to have a handler and every handler to
+have a canonical binding.
 
 Current coverage is declaration splitting. Other native operations retain their
 own existing checks. A separately projected workspace retains a

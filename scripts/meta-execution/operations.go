@@ -265,28 +265,6 @@ func observationFailure(action generation.Action, stage, step, reason, class, ne
 	return generation.ObservationFailure{ActionIndicatorID: action.IndicatorID, Decision: decision, Stage: stage, Step: step, Reason: reason, UnknownClass: unknownClass, NextOperation: next, BlockedBy: append([]string{}, blockedBy...), Executor: process}
 }
 
-func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
-	if action.Operation == sourcepolicy.OperationRegisterSyntax {
-		return executeNativeRegistration(workspace, plan, action)
-	}
-	if action.Operation == sourcepolicy.OperationCollapseAssign {
-		if failure := validateCollapseAction(action); failure != nil {
-			return operationMaterialization{}, failure
-		}
-		return executeCollapse(workspace, gitDir, metricsPath, plan, action, trace)
-	}
-	if action.Operation == sourcepolicy.OperationSplitGo {
-		if failure := checkSplitPrerequisite(workspace, metricsPath, plan, action); failure != nil {
-			return operationMaterialization{}, failure
-		}
-		return executeSplit(workspace, gitDir, metricsPath, plan, action, trace)
-	}
-	if action.Operation == sourcepolicy.OperationExtractFunction {
-		return executeExtract(workspace, gitDir, metricsPath, plan, action, trace)
-	}
-	return operationMaterialization{}, newOperationError("execute-operation", "select-executor", "UNSUPPORTED_SELECTED_OPERATION", "KNOWN_CONTRADICTION", "report-counterexample")
-}
-
 func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
 	replay, prepareErr := newMetaReplayWorkspace()
 	if prepareErr != nil {

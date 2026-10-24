@@ -14,6 +14,7 @@ type Binding struct {
 	InputContractSemanticDigest string                   `json:"input_contract_semantic_digest"`
 	IndependenceGroupID         string                   `json:"independence_group_id"`
 	ProofChoice                 ProofChoice              `json:"proof_choice"`
+	ExecutionRoute              ExecutionRoute           `json:"execution_route,omitempty"`
 	Executor                    string                   `json:"executor"`
 	Evaluator                   string                   `json:"evaluator"`
 	RequiredIndicatorIDs        []string                 `json:"required_indicator_ids"`

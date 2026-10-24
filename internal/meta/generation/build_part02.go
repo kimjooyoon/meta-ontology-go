@@ -102,7 +102,7 @@ func selectActionsWithPrerequisites(plan Plan, indicators []sourcepolicy.Indicat
 			continue
 		}
 		action := actionFor(candidate, id)
-		if observe != nil && action.Operation == sourcepolicy.OperationSplitGo {
+		if observe != nil && (action.Operation == sourcepolicy.OperationSplitGo || candidate.binding.ExecutionRoute == "") {
 			prerequisite := observe(action)
 			plan.Prerequisites = append(plan.Prerequisites, prerequisite)
 			if !validCandidatePrerequisite(prerequisite, action, plan.HeadSHA) {

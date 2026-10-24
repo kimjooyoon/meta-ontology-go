@@ -38,6 +38,9 @@ func validPlanPrerequisites(plan Plan) bool {
 		observations[observation.IndicatorID] = observation
 	}
 	for _, action := range plan.Selected {
+		if NativeExecutionRoute(action.Operation) == "" {
+			return false
+		}
 		if action.Operation == sourcepolicy.OperationSplitGo && observations[action.IndicatorID].State != "READY" {
 			return false
 		}

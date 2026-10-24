@@ -29,7 +29,7 @@ func nativeRegistrationBinding() (Binding, bool) {
 		evidence.ActivityID == "" || evidence.InputActivityID == "" || evidence.InputOutputID == "" {
 		return Binding{}, false
 	}
-	return Binding{Operation: sourcepolicy.OperationRegisterSyntax,
+	return Binding{Operation: sourcepolicy.OperationRegisterSyntax, ExecutionRoute: RouteRegisterSyntax,
 		Activity: evidence.ActivityID, Output: evidence.OutputID,
 		InputSubjectKind:          sourcepolicy.SubjectKindRegistrationRequest,
 		InputContractSourceDigest: source, InputContractSemanticDigest: semantic,

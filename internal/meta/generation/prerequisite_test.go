@@ -18,7 +18,7 @@ func TestPrerequisitesSelectLaterCandidateWithoutErasingDebt(t *testing.T) {
 		if action.Subject == "a.go" {
 			reason = "RENDERED_DECLARATION_CAPACITY"
 		}
-		return NewSplitPrerequisite(action, head, strings.Repeat("c", 64), strings.Repeat("d", 64), reason)
+		return NewCandidatePrerequisite(action, head, strings.Repeat("c", 64), strings.Repeat("d", 64), reason)
 	}
 	plan := BuildWithPrerequisites(base, head, report, nil, observe)
 	if plan.Decision != DecisionPlan || len(plan.Selected) != 2 || plan.Selected[1].Subject != "b.go" ||
@@ -46,7 +46,7 @@ func TestPrerequisiteShortfallRetainsUnknownAndDeferredInputs(t *testing.T) {
 			head := strings.Repeat("b", 40)
 			plan := BuildWithPrerequisites(strings.Repeat("a", 40), head, prerequisiteMetrics(), nil,
 				func(action Action) CandidatePrerequisite {
-					return NewSplitPrerequisite(action, head, strings.Repeat("c", 64), strings.Repeat("d", 64), reason)
+					return NewCandidatePrerequisite(action, head, strings.Repeat("c", 64), strings.Repeat("d", 64), reason)
 				})
 			if plan.Decision != DecisionUnknown || plan.Reason != ReasonPressureShortfall || len(plan.Selected) != 0 ||
 				len(plan.Prerequisites) != 3 || plan.IndicatorDecisionLedger == nil || plan.IndicatorDecisionLedger.IndicatorCount != 4 ||
@@ -61,7 +61,7 @@ func TestPrerequisitePlanRejectsForgedOriginsAndReadiness(t *testing.T) {
 	head := strings.Repeat("b", 40)
 	plan := BuildWithPrerequisites(strings.Repeat("a", 40), head, prerequisiteMetrics(), nil,
 		func(action Action) CandidatePrerequisite {
-			return NewSplitPrerequisite(action, head, strings.Repeat("c", 64), strings.Repeat("d", 64), "SPLIT_PLAN_READY")
+			return NewCandidatePrerequisite(action, head, strings.Repeat("c", 64), strings.Repeat("d", 64), "SPLIT_PLAN_READY")
 		})
 	for name, mutate := range map[string]func(*CandidatePrerequisite){
 		"head":      func(p *CandidatePrerequisite) { p.HeadSHA = strings.Repeat("e", 40) },
