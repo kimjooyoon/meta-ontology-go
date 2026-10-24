@@ -90,3 +90,25 @@ command compatibility checks.
 The bridge workflow can also be started manually to retain raw Go benchmark
 output as an artifact bound to the commit SHA and toolchain version. Normal PR
 checks do not run benchmarks, because their wall time is not a stable gate.
+
+To observe the real compiler, set `GOOO_ADK_TEST_BINARY` to an absolute path
+to a binary built from the same revision, then run:
+
+```sh
+go test -run '^$' -bench '^BenchmarkCompiler/' -benchmem -benchtime=200ms -count=5
+```
+
+The native Go benchmark runs valid source checking, a semantic error, and
+capability discovery through both the direct command and the bridge. Every
+call must return identical JSON and exit status for that workload. `ns/op`
+includes process startup and compiler execution. `B/op` and `allocs/op` count
+the parent process only; they do not measure compiler RSS or child allocations.
+The bridge route uses the host's default no-op tracer and no model. A configured
+exporter or a full ADK agent loop needs its own observation.
+
+Manual CI runs include these workloads and retain the compiler build information,
+runner OS/architecture, image version, and setup-go cache-hit result alongside
+the raw samples. The cache field describes setup-go restoration, not OS file-cache
+warmth. Compare matching workloads and environments with Go's `benchstat`;
+measurements from different runner images are separate cohorts. Fixtures are tiny
+declaration programs, so the results do not establish large-project throughput.

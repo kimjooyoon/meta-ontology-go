@@ -41,7 +41,7 @@ func loadDiscoveryDomainContract(reader SourceReader, sourcePath string, source 
 	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(contractPath, string(contractSource), syntax.EntityFieldsV4Support())
 	if diagnostics.HasErrors() || file == nil {
 		if diagnosticErr := diagnostics.Error(); diagnosticErr != nil {
-			return nil, "DOMAIN_CONTRACT_PARSE_FAILED", diagnosticErr
+			return nil, "DOMAIN_CONTRACT_PARSE_FAILED", &discoveryLocatedError{diagnosticErr, firstDiscoveryErrorSpan(diagnostics)}
 		}
 		return nil, "DOMAIN_CONTRACT_PARSE_FAILED", fmt.Errorf("domain contract parser did not produce a declaration")
 	}
@@ -50,7 +50,7 @@ func loadDiscoveryDomainContract(reader SourceReader, sourcePath string, source 
 	}
 	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV4Support()))
 	if err != nil {
-		return nil, "DOMAIN_CONTRACT_LOWER_FAILED", err
+		return nil, "DOMAIN_CONTRACT_LOWER_FAILED", &discoveryLocatedError{err, semanticFailureSpan(file, err)}
 	}
 	inputSequences, err := discoveryInputSequences(file, ir)
 	if err != nil {
