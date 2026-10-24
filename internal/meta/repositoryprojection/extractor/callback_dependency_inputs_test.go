@@ -28,8 +28,8 @@ func callbackDependencyFixture(t *testing.T) (callbackListedPackage, callbackLis
 	module := &callbackListedModule{Path: "example.invalid/dependency", Version: "v1.2.3", Sum: "h1:fixture",
 		Replace: &callbackListedModule{Path: root, GoMod: filepath.Join(root, "go.mod")}}
 	return callbackListedPackage{Dir: root, ImportPath: module.Path, Module: module, GoFiles: []string{"value.go"},
-			EmbedFiles: []string{"data.txt"}}, callbackListedPackage{Dir: root, ImportPath: module.Path + "/transitive",
-			Module: module, GoFiles: []string{"other.go"}}
+		EmbedFiles: []string{"data.txt"}}, callbackListedPackage{Dir: root, ImportPath: module.Path + "/transitive",
+		Module: module, GoFiles: []string{"other.go"}}
 }
 
 func callbackDependencyFixtureJSON(t *testing.T, packages ...callbackListedPackage) []byte {
