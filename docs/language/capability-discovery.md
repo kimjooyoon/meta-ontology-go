@@ -37,6 +37,20 @@ not a measure of whether Gooo implements the requested behavior.
 
 ## Reading the result
 
+An invalid source or domain contract returns exit code 1 and the existing
+`gooo/diagnostics/v1` envelope in JSON mode. Its discovery-stage code remains
+`SOURCE_PARSE_FAILED`, `SOURCE_LOWER_FAILED`, or the corresponding
+`DOMAIN_CONTRACT_*` code. The diagnostic span now retains the authored file and
+coordinates from parsing or semantic lowering. A parser summary points to its
+first canonically ordered error; the message preserves all reported errors.
+An unresolved entity reference points to that reference. Read failures keep
+zero coordinates because no source location was observed.
+
+An agent can use that span directly for a targeted repair. `check --semantic
+--json` remains useful for the full diagnostic list or when a discovery failure
+has no precise location. The discovery error does not contain a successful
+capability receipt and does not authorize a source change.
+
 - `AVAILABLE` means the query matched a catalog entry. It does not mean that
   generation or runtime behavior was verified.
 - `DEFERRED` means the catalog recognizes the capability but an external

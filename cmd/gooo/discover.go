@@ -58,11 +58,13 @@ func discoverFromSource(reader SourceReader, filename string, source []byte, fla
 		if diagnosticErr := diagnostics.Error(); diagnosticErr != nil {
 			message = diagnosticErr.Error()
 		}
-		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_PARSE_FAILED", message)
+		return reportFailure(jsonMode, stdout, stderr, "discover", filename, "SOURCE_PARSE_FAILED", message,
+			firstDiscoveryErrorSpan(diagnostics))
 	}
 	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsSupportForFile(file, syntax.EntityFieldsV4Support()))
 	if err != nil {
-		return reportDiscoverFailure(jsonMode, stdout, stderr, filename, "SOURCE_LOWER_FAILED", err.Error())
+		return reportFailure(jsonMode, stdout, stderr, "discover", filename, "SOURCE_LOWER_FAILED", err.Error(),
+			semanticFailureSpan(file, err))
 	}
 	inputSequences, err := discoveryInputSequences(file, ir)
 	if err != nil {
@@ -70,7 +72,8 @@ func discoverFromSource(reader SourceReader, filename string, source []byte, fla
 	}
 	domainContract, contractFailure, err := loadDiscoveryDomainContract(reader, filename, source, flags["--domain-contract"])
 	if err != nil {
-		return reportDiscoverFailure(jsonMode, stdout, stderr, flags["--domain-contract"], contractFailure, err.Error())
+		return reportFailure(jsonMode, stdout, stderr, "discover", flags["--domain-contract"], contractFailure, err.Error(),
+			discoveryFailureSpan(err))
 	}
 	trail := jev.DiscoverCapabilityQueryTrail(flags["--query"], string(source))
 	if err := trail.Validate(); err != nil {
