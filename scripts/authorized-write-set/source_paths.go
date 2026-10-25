@@ -59,10 +59,12 @@ func extractionPaths(report extractionReport) (map[string]bool, map[string]bool,
 }
 
 func splitPaths(report splitReport) (map[string]bool, map[string]bool, bool) {
-	decisionExact := report.Decision == "PASS" || report.Decision == "FIXED_POINT"
 	coordinates := report.Coordinates
-	if !decisionExact || report.Resolution != "EXACT" || !report.Exact || coordinates.Unknowns != 0 ||
+	if !report.Exact || coordinates.Unknowns != 0 ||
 		coordinates.Selected != coordinates.Applied || coordinates.Applied != len(report.Subjects) {
+		return nil, nil, false
+	}
+	if !splitCompletionKnown(report) {
 		return nil, nil, false
 	}
 	paths, created, exact := extractionPaths(extractionReport{Subjects: report.Subjects, Unhandled: report.Unhandled})

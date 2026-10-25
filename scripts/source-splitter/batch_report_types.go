@@ -1,12 +1,14 @@
 package main
 
 type splitBatchCoordinates struct {
-	SelectedSubjects int `json:"selected_subjects"`
-	AppliedSubjects  int `json:"applied_subjects"`
-	ChangedPaths     int `json:"changed_paths"`
-	CreatedPaths     int `json:"created_paths"`
-	DeferredTopology int `json:"deferred_topology_subjects"`
-	Unknowns         int `json:"unknowns"`
+	InputSubjects     int `json:"input_subjects"`
+	UnhandledSubjects int `json:"unhandled_subjects"`
+	SelectedSubjects  int `json:"selected_subjects"`
+	AppliedSubjects   int `json:"applied_subjects"`
+	ChangedPaths      int `json:"changed_paths"`
+	CreatedPaths      int `json:"created_paths"`
+	DeferredTopology  int `json:"deferred_topology_subjects"`
+	Unknowns          int `json:"unknowns"`
 }
 
 type splitBatchIndicator struct {
@@ -31,6 +33,9 @@ type splitBatchReport struct {
 	Decision                    string                `json:"decision"`
 	Resolution                  string                `json:"resolution"`
 	Reason                      string                `json:"reason"`
+	NextOperation               string                `json:"next_operation"`
+	PolicySourceDigest          string                `json:"policy_source_sha256"`
+	PlanSourceDigest            string                `json:"plan_source_sha256"`
 	MetaOperation               string                `json:"meta_operation"`
 	Selected                    []string              `json:"selected"`
 	Unhandled                   []string              `json:"unhandled"`
