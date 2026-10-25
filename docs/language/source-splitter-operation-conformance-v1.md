@@ -103,7 +103,10 @@ boundaries. Its unrestricted runtime side effects are not adopted here.
 
 examples/source-splitter-conformance is a DECISION_ALGEBRA corpus. Its 18 oracle cases exercise composition of PASS, FAIL, and UNKNOWN across the fixed six-indicator contract; they do not execute or establish the runtime behavior of SplitGo.
 
-The evidence dimensions remain non-compensatory:
+The initial decision-algebra baseline below remains a historical observation,
+with separate denominators. The repository also contains
+[native behavioral checks](../../scripts/source-splitter/conformance_test.go);
+their results do not inherit credit from this initial baseline.
 
 - decision-algebra oracle cases: 18/18
 - behavioral indicators observed against a SplitGo implementation: 0/6
@@ -113,3 +116,23 @@ The evidence dimensions remain non-compensatory:
 - readiness credit: 0
 
 A later behavioral corpus must bind real source bytes, Go build context, emitted candidates, write receipts, and injected faults. It may increase only its own versioned denominator and cannot inherit completion from this decision-algebra corpus.
+
+## Batch completion and remaining construction
+
+The logical batch report has a separate completion policy authored in
+[Gooo](../../scripts/source-splitter/completion/source.gooo). Existing code
+generation projects it to the native batch writer. The report retains the exact
+input-plan byte digest and policy-source digest alongside its repository origin.
+
+Applied logical paths do not finish a pending physical successor projection:
+that scope returns `PROGRESS / LOGICAL_ONLY` and `project-generated-paths`.
+Nonprojectable input subjects remain in `unhandled`, counted alongside selected
+subjects, and prevent a fixed-point claim. No input subject is repaired merely
+because it is outside this batch's executable scope.
+
+`exact` still records selected/applied logical coverage. It can be true while
+projection is pending. The top-level decision, resolution, remaining coordinates
+and next operation describe the declared batch scope; they do not establish
+repository-wide consumer coverage. A successful command exit means its receipt
+was written, including a progress receipt. The source policy does not execute the
+missing projection or discharge the separate native consumer obligations.

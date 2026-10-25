@@ -1,0 +1,44 @@
+package completion
+namespace sourcesplitcompletion
+
+entity Integer id "urn:gooo:type:integer"
+entity Text id "urn:gooo:type:string"
+
+# Applied logical paths and remaining construction obligations are separate facts.
+activity Classify(selected Integer, applied Integer, deferred Integer, unhandled Integer) -> Text
+    id "gooo://source-split/completion/classify" computes `
+if selected < 0 || applied < 0 || deferred < 0 || unhandled < 0 { return "INVALID_SPLIT_COUNTS" }
+if applied > selected { return "APPLICATION_COUNT_REFUTED" }
+if applied < selected { return "APPLICATION_INCOMPLETE" }
+if deferred > 0 { return "SUCCESSOR_PROJECTION_REQUIRED" }
+if unhandled > 0 { return "SOURCE_OBLIGATIONS_UNHANDLED" }
+if selected == 0 { return "NO_PROJECTABLE_SUBJECTS" }
+return "PROJECTABLE_SUBJECTS_SPLIT"
+`
+
+activity Decision(reason Text) -> Text id "gooo://source-split/completion/decision" computes `
+if reason == "INVALID_SPLIT_COUNTS" || reason == "APPLICATION_COUNT_REFUTED" { return "FAIL" }
+if reason == "APPLICATION_INCOMPLETE" || reason == "SUCCESSOR_PROJECTION_REQUIRED" ||
+   reason == "SOURCE_OBLIGATIONS_UNHANDLED" { return "PROGRESS" }
+if reason == "NO_PROJECTABLE_SUBJECTS" { return "FIXED_POINT" }
+if reason == "PROJECTABLE_SUBJECTS_SPLIT" { return "PASS" }
+return "UNKNOWN"
+`
+
+activity Resolution(reason Text) -> Text id "gooo://source-split/completion/resolution" computes `
+if reason == "INVALID_SPLIT_COUNTS" || reason == "APPLICATION_COUNT_REFUTED" { return "REFUTED" }
+if reason == "APPLICATION_INCOMPLETE" { return "PARTIAL" }
+if reason == "SUCCESSOR_PROJECTION_REQUIRED" { return "LOGICAL_ONLY" }
+if reason == "SOURCE_OBLIGATIONS_UNHANDLED" { return "UNRESOLVED_SUBJECTS" }
+if reason == "NO_PROJECTABLE_SUBJECTS" || reason == "PROJECTABLE_SUBJECTS_SPLIT" { return "EXACT" }
+return "UNKNOWN"
+`
+
+activity NextOperation(reason Text) -> Text id "gooo://source-split/completion/next-operation" computes `
+if reason == "INVALID_SPLIT_COUNTS" || reason == "APPLICATION_COUNT_REFUTED" { return "report-counterexample" }
+if reason == "APPLICATION_INCOMPLETE" { return "complete-logical-split" }
+if reason == "SUCCESSOR_PROJECTION_REQUIRED" { return "project-generated-paths" }
+if reason == "SOURCE_OBLIGATIONS_UNHANDLED" { return "resolve-unhandled-source-subjects" }
+if reason == "NO_PROJECTABLE_SUBJECTS" || reason == "PROJECTABLE_SUBJECTS_SPLIT" { return "none" }
+return "restore-split-observation"
+`
