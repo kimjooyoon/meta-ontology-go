@@ -1,6 +1,7 @@
 package workspaceinput_test
 
 import (
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -19,5 +20,17 @@ func TestFailedWorkspaceLoadCannotBecomeExecutableSubset(t *testing.T) {
 	}
 	if _, semanticErr := packageruntime.Describe(partial); semanticErr == nil {
 		t.Fatal("failed source-set load returned an executable subset of the requested workspace")
+	}
+}
+
+func TestNativeConsumerRejectsUnvalidatedDefinitionAndOversizeSource(t *testing.T) {
+	definition := workspaceinput.Definition{Schema: "wrong-version", Packages: []workspaceinput.Package{{Path: "p", Sources: []string{"p.gooo"}}}}
+	if _, err := workspaceinput.Load(fstest.MapFS{}, "workspace.json", definition); err == nil || !strings.Contains(err.Error(), "schema must be") {
+		t.Fatal("native caller bypassed the external definition contract", err)
+	}
+	definition.Schema = workspaceinput.Schema
+	files := fstest.MapFS{"p.gooo": {Data: make([]byte, workspaceinput.MaxSourceBytes+1)}}
+	if _, err := workspaceinput.Load(files, "workspace.json", definition); err == nil || !strings.Contains(err.Error(), "input exceeds maximum size") {
+		t.Fatal("native caller bypassed the source byte limit", err)
 	}
 }
