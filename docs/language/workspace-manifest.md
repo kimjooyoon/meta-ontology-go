@@ -645,6 +645,41 @@ remains `UNASSESSED` in both inventories. Embedded-reader preservation and nativ
 ABI acceptance still require their existing checks. There is no new CLI, model
 call or mandatory CI job.
 
+### Preparing registration alongside a physical partition
+
+`languagesyntax.PreparePartitionRegistration` prepares the syntax registry side
+of a source partition. It accepts the current corpus and exact partition, extends
+the affected `case_sources`, `package_units[].members` and `meta_sources`, and
+returns the projected registry together with its exact formatted `Corpus` bytes.
+The projected inventory digest refers to those bytes. Case IDs, definitions,
+selected profiles, package entries and capability denominators stay unchanged.
+
+For example, separating `NextObservation` from the compiler's recovery policy
+extends the existing continuation case from two physical members to three. Its
+whole-case replay still sees the same activities. Separating the activity in
+`examples/entity-fields-v1/main.gooo` creates a two-member group for the same
+case, rather than registering another language capability.
+
+Each affected case is replayed before and after under its existing profile.
+Package membership receives a separately labelled `package-syntax` replay; that
+observation does not execute its entry. Additional siblings are captured from
+the observed inventory and rechecked before returning. Changes to sibling bytes,
+an occupied or already registered destination, or unsupported projection-consumer
+membership yield no plan. Unrelated missing and unregistered files remain visible.
+
+Field-bearing sources use `sourcebundle.PreparePartitionWithEntityFieldsSupport`.
+The exact selected profile travels through parsing, lowering, the physical cut
+and proposal replay. The ordinary path keeps its deferred default, and consumers
+retain their own profiles even if a partition was prepared under a newer one.
+
+This is an internal preparation API. Native Go registry edits, embedded readers,
+external workspace consumers and joint publication still require their own
+bindings. The returned corpus alone cannot be installed as an accepted registry.
+Inventory admission remains `UNASSESSED`, with zero repository writes and native
+executions. The practical milestone is one source-owned change plan carrying all
+affected consumers into the existing publisher, without hand-maintained follow-up
+edits or a new capability for each file fragment.
+
 ### One syntax case across physical source members
 
 The syntax corpus can associate an existing case with an ordered `case_sources`
