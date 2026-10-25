@@ -23,10 +23,14 @@ func emitCompositionProjection(steps []CompositionStep, graph compositionGraph) 
 		}
 		source.WriteString(part)
 	}
-	if source.Len() > 256<<10 {
+	return formatCompositionProjection(source.String())
+}
+
+func formatCompositionProjection(source string) (string, error) {
+	if len(source) > 256<<10 {
 		return "", fmt.Errorf("composition projection exceeds 256 KiB")
 	}
-	raw, err := format.Source([]byte(source.String()))
+	raw, err := format.Source([]byte(source))
 	if err != nil {
 		return "", err
 	}
