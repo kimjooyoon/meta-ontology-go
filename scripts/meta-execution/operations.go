@@ -445,7 +445,7 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	reportRaw, report, err := decodeExtractorReport(filepath.Join(temporary, reportName), plan.HeadSHA)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
+			return operationMaterialization{Executor: result.Observation}, extractionReportDecodeError(err)
 		}
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "read-function-extraction-report", "INSTANCE_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
 	}

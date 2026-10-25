@@ -351,7 +351,10 @@ Adding a file cannot add an unimplemented executor or bypass those checks.
 
 The bundle identity binds ordered filenames and exact bytes. It differs from the
 old single-file content hash even for one member, so old operation plans need
-fresh preparation. Semantic identity remains separate: moving a declaration to a
+fresh preparation. An extraction report with matching meaning but a different
+contract source reports `EXTRACTION_CONTRACT_SOURCE_MISMATCH`, directing the caller
+to prepare a new extraction. Historical observations retain their original identity.
+Semantic identity remains separate: moving a declaration to a
 different member preserves its stable ID and semantic hash while changing its
 physical origin. Admission exposes each member's content hash and byte length,
 plus all declaration IDs and physical spans; cached metadata is copied for callers.

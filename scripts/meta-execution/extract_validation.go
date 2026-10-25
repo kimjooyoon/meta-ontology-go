@@ -87,8 +87,13 @@ func decodeExtractorReport(path, expectedSHA string) ([]byte, extractorReport, e
 	var presence extractorReportPresence
 	if err := decodeStrictBytes(raw, &report); err != nil ||
 		decodeStrictBytes(raw, &presence) != nil ||
-		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA ||
-		!validStrategyEvidenceReport(report, presence) {
+		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA {
+		return raw, extractorReport{}, fmt.Errorf("malformed extraction report")
+	}
+	if !validStrategyEvidenceReport(report, presence) {
+		if extractorContractSourceMismatch(report) {
+			return raw, extractorReport{}, errExtractorContractSourceMismatch
+		}
 		return raw, extractorReport{}, fmt.Errorf("malformed extraction report")
 	}
 	return raw, report, nil
@@ -215,7 +220,7 @@ func failedExtractionError(root, reportName string, plan generation.Plan, action
 		if os.IsNotExist(err) {
 			return newOperationError("execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
 		}
-		return newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
+		return extractionReportDecodeError(err)
 	}
 	if failure := adjudicateExtractorReport(report); failure != nil {
 		failure.counterexample = extractionCounterexample(action.Subject)
