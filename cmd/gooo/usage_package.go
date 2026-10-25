@@ -68,11 +68,14 @@ The interface includes imported packages, stable IDs, ordered activity inputs,
 and record field types, presence, and cardinality. See docs/language/package-interface.md.
 
 Generate an importable Go package from authored computes bodies:
-  gooo package generate --go-package rules gooo.workspace.json > rules_generated.go
+  gooo package generate --go-package rules --out ./rules gooo.workspace.json
 
 Evaluate calls the entry and its bound producers. R_<record> and F_<field> expose
 source names; stable field IDs remain in gooo struct tags. Generation needs no
 cases, model, native build or program execution. Assembling contracts are unsupported.
+--out writes semantic.gooo.go after complete generation using the shared atomic
+writer. A failed generation preserves the previous file. Without --out, source
+is written to stdout. Keep handwritten host adapters in separate files.
 See docs/language/package-library-generation.md for input and validation limits.
 
 Inspect the entry's prepared source calls before execution:

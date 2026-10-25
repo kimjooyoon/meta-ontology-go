@@ -35,10 +35,16 @@ func TestPackageGenerateImportedLibraries(t *testing.T) {
 		if !bytes.Equal(generated, generateLibraryCommand(t, example.name, filepath.Join(path, example.manifest))) {
 			t.Fatal("identical source did not reproduce identical library bytes")
 		}
-		if err := os.Mkdir(filepath.Join(root, example.name), 0700); err != nil {
-			t.Fatal(err)
+		var published, diagnostics bytes.Buffer
+		directory := filepath.Join(root, example.name)
+		if code := run([]string{"package", "generate", "--out", directory, "--go-package", example.name,
+			filepath.Join(path, example.manifest)}, &published, &diagnostics); code != exitOK {
+			t.Fatal(code, diagnostics.String())
 		}
-		writeWorkspaceSource(t, root, example.name+"/generated.go", string(generated))
+		stored, err := os.ReadFile(filepath.Join(directory, generatedFileName))
+		if err != nil || !bytes.Equal(stored, generated) {
+			t.Fatal("directory delivery changed the generated library", err)
+		}
 		if example.name != "named" {
 			raw, err := os.ReadFile(filepath.Join(path, "cases.json"))
 			if err != nil {

@@ -4,11 +4,11 @@ The development compiler can emit an importable Go source file from a workspace
 whose entry and reachable activities already have authored `computes` bodies:
 
 ```sh
-gooo package generate --go-package surface \
-  examples/runtime-package-surface/gooo.workspace.json > surface_generated.go
+gooo package generate --go-package surface --out ./surface \
+  examples/runtime-package-surface/gooo.workspace.json
 ```
 
-Place the file in a Go package named `surface`. The caller can use it directly:
+This writes `surface/semantic.gooo.go`. The caller can use it directly:
 
 ```go
 result := surface.Evaluate(surface.R_Observation{
@@ -17,6 +17,18 @@ result := surface.Evaluate(surface.R_Observation{
 })
 fmt.Println(result.F_status, result.F_missing_count)
 ```
+
+`--out` creates the output directory after successful generation and publishes
+the complete source using the CLI's shared atomic writer. Generation errors leave
+the previous file untouched. Existing file permissions are preserved, and equal
+output bytes leave the existing file in place. Workspace inputs cannot also be
+output targets. Keep handwritten host adapters in separate files: the generated
+file is replaced as a whole. Publication errors are reported, including any
+rollback failure. If only the success message cannot be delivered, the completed
+file remains available and the command exits unsuccessfully.
+
+Omit `--out` to stream Go source to stdout. Shell redirection opens its destination
+before the compiler runs; callers using that route own staging and replacement.
 
 The existing Gooo declaration owns the expected package paths and comparison
 logic. The compiler owns record layout, field references, and the call sequence.
@@ -39,6 +51,16 @@ their existing representation and source field order. No field-wise copy bridge
 is generated; typed references are renamed together.
 Source locals that collide with public types or private helpers receive fresh
 names through their typed bindings. String values and other scopes stay intact.
+
+Agents can combine this file with the existing `package interface --json` output.
+Match the record's generated-region ID to its interface declaration, then match
+each field's `gooo` tag within that record. For example, `Observation.origin_ref`
+uses ID `urn:gooo:runtime-package-surface:observation:origin`; its field name cannot
+be inferred from the last segment of that ID. Keep the owning entity when joining
+fields instead of treating every field label or ID as a global key. Bind function
+arguments by their recorded activity, port and position: two inputs with the same
+entity type can carry different values. This recovers the generated view's
+correspondence; a host's existing public API may still require an explicit adapter.
 
 The output records compiler source/status, manifest, workspace image, original
 source-file, lowered source and typed-plan digests. Entity/activity regions retain their stable ID
