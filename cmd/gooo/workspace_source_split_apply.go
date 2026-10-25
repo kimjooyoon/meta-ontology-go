@@ -92,7 +92,7 @@ func decodeWorkspaceSourceSplitProposal(raw []byte) (workspaceSourceSplitReceipt
 		return proposal, err
 	}
 	if proposal.Schema != "gooo/workspace-source-split-receipt/v1" || proposal.Decision != "PROPOSED" ||
-		proposal.Application != nil || proposal.Error != "" || proposal.Result == nil ||
+		proposal.Application != nil || proposal.Boundaries != nil || proposal.Error != "" || proposal.Result == nil ||
 		proposal.UpdatedWorkspace == nil || len(proposal.Result.Files) != 2 ||
 		len(proposal.Consumers) > maxSplitConsumerWorkspaces {
 		return proposal, fmt.Errorf("apply requires a complete, unapplied source split proposal")

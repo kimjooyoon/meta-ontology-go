@@ -51,6 +51,7 @@ also inspects callers outside the entry closure and leaves source files intact.
 See docs/language/workspace-activity-refactoring.ko.md.
 
 Propose a source split at a stable declaration ID:
+  gooo package split-source --boundaries --package named/inputs --source main.gooo --json workspace.json
   gooo package split-source --package named/inputs --source main.gooo --before urn:gooo:example:named-inputs:net --into net.gooo --json workspace.json
 
 The proposal includes both sources, their original byte ranges and the updated

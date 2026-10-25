@@ -35,20 +35,16 @@ func SplitAt(filename, source, into string, cut int) ([]File, error) {
 		strings.EqualFold(path.Clean(filename), into) {
 		return nil, fmt.Errorf("split destination must be a different canonical relative .gooo filename")
 	}
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV4Support())
-	if file == nil || diagnostics.HasErrors() || len(file.Decls) < 2 {
-		return nil, fmt.Errorf("split requires valid source with at least two declarations")
+	file, header, err := partitionSyntax(filename, source)
+	if err != nil {
+		return nil, err
 	}
 	matched := false
 	for _, declaration := range file.Decls[1:] {
 		matched = matched || declaration.SourceSpan().Start.Offset == cut
 	}
-	header := file.Decls[0].SourceSpan().Start.Offset
 	if !matched || header <= 0 || cut <= header || cut >= len(source) {
 		return nil, fmt.Errorf("split boundary must precede a non-first declaration")
-	}
-	if err := validateHeader(file, header); err != nil {
-		return nil, err
 	}
 	left, right := source[:cut], source[:header]+source[cut:]
 	return []File{
@@ -56,6 +52,18 @@ func SplitAt(filename, source, into string, cut int) ([]File, error) {
 		{Filename: into, SHA256: digest(right), Source: right,
 			Origins: []Slice{{0, header, 0, header}, {cut, len(source), header, len(right)}}},
 	}, nil
+}
+
+func partitionSyntax(filename, source string) (*syntax.File, int, error) {
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV4Support())
+	if file == nil || diagnostics.HasErrors() || len(file.Decls) == 0 {
+		return nil, 0, fmt.Errorf("split requires valid source with declarations")
+	}
+	header := file.Decls[0].SourceSpan().Start.Offset
+	if err := validateHeader(file, header); err != nil {
+		return nil, 0, err
+	}
+	return file, header, nil
 }
 
 func validateHeader(file *syntax.File, header int) error {
