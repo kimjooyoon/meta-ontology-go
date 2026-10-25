@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
@@ -24,9 +26,14 @@ type goooSplitRuntime struct {
 func verifyGoooSplitRuntime(root string, environment []string, request workspacesplit.Request,
 	trace metaExecutionTrace, pass string) (goooSplitRuntime, processResult, *operationError) {
 	casesPath := filepath.Join(root, filepath.FromSlash(request.Cases))
-	raw, err := os.ReadFile(casesPath)
+	file, err := os.Open(casesPath)
 	if err != nil {
-		return goooSplitRuntime{}, processResult{}, goooSplitFailure("read-cases", "WORKSPACE_CASES_UNAVAILABLE", err)
+		return goooSplitRuntime{}, processResult{}, goooSplitUnavailable("read-cases", "WORKSPACE_CASES_UNAVAILABLE", err)
+	}
+	defer file.Close()
+	raw, err := io.ReadAll(io.LimitReader(file, bodyexecution.CompositionInputMaxBytes+1))
+	if err != nil {
+		return goooSplitRuntime{}, processResult{}, goooSplitUnavailable("read-cases", "WORKSPACE_CASES_UNAVAILABLE", err)
 	}
 	cases, err := bodyexecution.DecodeCompositionCases(raw)
 	if err != nil {
@@ -62,8 +69,15 @@ func decodeGoooSplitRuntime(raw []byte, casesDigest string, total int) (goooSpli
 	}
 	runtime := receipt.Result.Runtime
 	if total < 1 || runtime.FiniteTotal != total || runtime.FinitePassed != total ||
-		!runtime.ProjectionReplayed || !runtime.RuntimeReplayed || runtime.ModelCalls != 0 || runtime.Failure != "" || len(runtime.Traces) != total {
+		!runtime.ProjectionReplayed || !runtime.RuntimeReplayed || runtime.ModelCalls != 0 || runtime.Failure != "" || len(runtime.Traces) != total ||
+		!validBareDigest(strings.TrimPrefix(runtime.GeneratedSHA256, "sha256:")) ||
+		!validBareDigest(strings.TrimPrefix(runtime.GoToolSHA256, "sha256:")) {
 		return goooSplitRuntime{}, fmt.Errorf("independent finite expectations or deterministic replay failed")
+	}
+	for index, trace := range runtime.Traces {
+		if trace.CaseIndex != index {
+			return goooSplitRuntime{}, fmt.Errorf("finite runtime case population differs")
+		}
 	}
 	return goooSplitRuntime{CasesSHA256: casesDigest, GeneratedSHA256: runtime.GeneratedSHA256,
 		GoToolSHA256: runtime.GoToolSHA256, FiniteTotal: total, FinitePassed: runtime.FinitePassed, Traces: runtime.Traces}, nil

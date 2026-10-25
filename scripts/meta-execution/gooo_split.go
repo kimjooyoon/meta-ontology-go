@@ -21,19 +21,14 @@ func executeGoooSplit(workspace, gitDir string, plan generation.Plan, action gen
 	}
 	snapshot, err := readOnlyGitSnapshot(gitDir, plan.HeadSHA)
 	if err != nil {
-		return operationMaterialization{}, goooSplitFailure("snapshot", "EXACT_GIT_INPUT_UNAVAILABLE", err)
+		return operationMaterialization{}, goooSplitUnavailable("snapshot", "EXACT_GIT_INPUT_UNAVAILABLE", err)
 	}
 	defer cleanupGitSnapshot(filepath.Dir(snapshot))
-	replay, err := newMetaReplayWorkspace()
-	if err != nil {
-		return operationMaterialization{}, goooSplitFailure("workspace", "WORKSPACE_UNAVAILABLE", err)
-	}
-	defer replay.close()
-	first, failure := materializeGoooSplit(snapshot, replay.path, plan, action, trace, "first")
+	first, failure := materializeFreshGoooSplit(snapshot, plan, action, trace, "first")
 	if failure != nil {
 		return first, failure
 	}
-	second, failure := materializeGoooSplit(snapshot, replay.path, plan, action, trace, "replay")
+	second, failure := materializeFreshGoooSplit(snapshot, plan, action, trace, "replay")
 	if failure != nil {
 		return second, failure
 	}
@@ -44,11 +39,25 @@ func executeGoooSplit(workspace, gitDir string, plan generation.Plan, action gen
 	return first, nil
 }
 
+func materializeFreshGoooSplit(snapshot string, plan generation.Plan, action generation.Action,
+	trace metaExecutionTrace, pass string) (operationMaterialization, *operationError) {
+	replay, err := newMetaReplayWorkspace()
+	if err != nil {
+		return operationMaterialization{}, goooSplitUnavailable("workspace", "WORKSPACE_UNAVAILABLE", err)
+	}
+	defer replay.close()
+	root, err := filepath.EvalSymlinks(replay.path)
+	if err != nil {
+		return operationMaterialization{}, goooSplitUnavailable("workspace", "WORKSPACE_UNAVAILABLE", err)
+	}
+	return materializeGoooSplit(snapshot, root, plan, action, trace, pass)
+}
+
 func materializeGoooSplit(gitDir, root string, plan generation.Plan, action generation.Action,
 	trace metaExecutionTrace, pass string) (operationMaterialization, *operationError) {
 	var materialized operationMaterialization
 	if err := restoreGoooSplitSnapshot(root, gitDir, plan.HeadSHA); err != nil {
-		return materialized, goooSplitFailure("restore-snapshot", "EXACT_GIT_INPUT_UNAVAILABLE", err)
+		return materialized, goooSplitUnavailable("restore-snapshot", "EXACT_GIT_INPUT_UNAVAILABLE", err)
 	}
 	request := *action.WorkspaceSplitRequest
 	environment := childEnvironment(gitDir, root)
@@ -65,10 +74,11 @@ func materializeGoooSplit(gitDir, root string, plan generation.Plan, action gene
 	if err := verifyGoooSplitProposal(root, request, action, proposal); err != nil {
 		return materialized, goooSplitFailure("verify-proposal", "WORKSPACE_SPLIT_PROPOSAL_MISMATCH", err)
 	}
+	proposal.ReplaySHA256 = digestBytes(canonicalProcessBytes(root, prepared.Stdout))
 	proposalPath := root + ".split-proposal.json"
 	defer os.Remove(proposalPath)
 	if err := os.WriteFile(proposalPath, prepared.Stdout, 0600); err != nil {
-		return materialized, goooSplitFailure("save-proposal", "WORKSPACE_SPLIT_RECEIPT_UNAVAILABLE", err)
+		return materialized, goooSplitUnavailable("save-proposal", "WORKSPACE_SPLIT_RECEIPT_UNAVAILABLE", err)
 	}
 	return applyAndVerifyGoooSplit(root, environment, proposalPath, request, proposal, plan, action, trace, pass, materialized)
 }
@@ -98,7 +108,11 @@ func goooSplitFailure(step, reason string, err error) *operationError {
 }
 
 func goooSplitProcessFailure(step string, process processResult, err error) *operationError {
-	failure := newOperationError("WORKSPACE_SPLIT", step, "WORKSPACE_SPLIT_PROCESS_FAILED", "DIRECT_MISSING", "inspect-scoped-workspace-split")
+	failure := classifyVerifierProcess(step, process, err)
+	if failure == nil {
+		return goooSplitFailure(step, "WORKSPACE_SPLIT_PROCESS_PROTOCOL_MISMATCH", nil)
+	}
+	failure.stage = "WORKSPACE_SPLIT"
 	var observed struct {
 		Error string `json:"error"`
 	}
@@ -107,6 +121,14 @@ func goooSplitProcessFailure(step string, process processResult, err error) *ope
 	}
 	if err != nil {
 		failure.diagnostics = append(failure.diagnostics, err.Error())
+	}
+	return failure
+}
+
+func goooSplitUnavailable(step, reason string, err error) *operationError {
+	failure := newOperationError("WORKSPACE_SPLIT", step, reason, "DIRECT_MISSING", "restore-workspace-split-input")
+	if err != nil {
+		failure.diagnostics = []string{err.Error()}
 	}
 	return failure
 }

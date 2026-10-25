@@ -23,6 +23,7 @@ func applyAndVerifyGoooSplit(root string, environment []string, proposalPath str
 	}
 	receipt, err := readGoooSplitReceipt(applied.Stdout)
 	if err != nil || receipt.Decision != "APPLIED" || receipt.Application == nil || receipt.Application.State != "OUTPUT_VERIFIED" ||
+		receipt.Application.ProposalSHA256 != proposal.RawSHA256 ||
 		!reflect.DeepEqual(proposal.Result, receipt.Result) || !reflect.DeepEqual(proposal.Selection, receipt.Selection) ||
 		!reflect.DeepEqual(proposal.Registration, receipt.Registration) || !reflect.DeepEqual(proposal.Discovery, receipt.Discovery) {
 		return materialized, goooSplitFailure("read-application", "WORKSPACE_SPLIT_APPLICATION_MISMATCH", err)
@@ -37,10 +38,14 @@ func applyAndVerifyGoooSplit(root string, environment []string, proposalPath str
 	}
 	native, err := verifyGoooSplitNative(root, environment, trace, pass)
 	materialized.Evaluator = native.Observation
-	if err != nil {
-		return materialized, goooSplitFailure("native-conformance", "WORKSPACE_SPLIT_NATIVE_CONFORMANCE_FAILED", err)
+	if err != nil || native.Observation.ExitCode != 0 {
+		return materialized, goooSplitProcessFailure("native-conformance", native, err)
 	}
-	canonical, err := json.Marshal(goooSplitReplay{Request: request, Receipt: json.RawMessage(canonicalProcessBytes(root, applied.Stdout)),
+	replayReceipt, err := canonicalGoooSplitReceipt(root, applied.Stdout, proposal.ReplaySHA256)
+	if err != nil {
+		return materialized, goooSplitFailure("encode-application", "WORKSPACE_SPLIT_EVIDENCE_FAILED", err)
+	}
+	canonical, err := json.Marshal(goooSplitReplay{Request: request, Receipt: replayReceipt,
 		Runtime: runtime, Native: string(native.Stdout), Executor: splitReplayProcessFrom(materialized.Executor),
 		Evaluator: splitReplayProcessFrom(materialized.Evaluator), Verifier: splitReplayProcessFrom(materialized.Verifier)})
 	if err != nil {
@@ -83,7 +88,7 @@ func verifyGoooSplitNative(root string, environment []string, trace metaExecutio
 		"./internal/meta/languageassurance/verticalsliceclosureshadow"}
 	process, err := runProcessObserved(root, environment, command, command, &trace, pass, "native-verifier")
 	if err != nil || process.Observation.ExitCode != 0 {
-		return process, fmt.Errorf("native registry conformance failed: %w", err)
+		return process, err
 	}
 	normalized, err := normalizeRegistrationVerifier(process.Stdout)
 	if err != nil {

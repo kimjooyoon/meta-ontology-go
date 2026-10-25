@@ -16,6 +16,8 @@ import (
 // This is a read projection of the CLI receipt. The CLI's existing strict
 // decoder and re-preparation remain authoritative for the complete proposal.
 type goooSplitReceipt struct {
+	RawSHA256    string                            `json:"-"`
+	ReplaySHA256 string                            `json:"-"`
 	Schema       string                            `json:"schema"`
 	Decision     string                            `json:"decision"`
 	ManifestPath string                            `json:"manifest_path"`
@@ -36,7 +38,8 @@ type goooSplitReceipt struct {
 		} `json:"outputs"`
 	} `json:"syntax_registration"`
 	Application *struct {
-		State string `json:"state"`
+		State          string `json:"state"`
+		ProposalSHA256 string `json:"proposal_sha256"`
 	} `json:"application"`
 }
 
@@ -48,6 +51,7 @@ func readGoooSplitReceipt(raw []byte) (goooSplitReceipt, error) {
 	if err := json.Unmarshal(raw, &receipt); err != nil {
 		return receipt, err
 	}
+	receipt.RawSHA256 = digestBytes(raw)
 	if receipt.Schema != "gooo/workspace-source-split-receipt/v1" || receipt.Error != "" ||
 		receipt.Result == nil || len(receipt.Result.Files) != 2 || receipt.Selection == nil ||
 		receipt.Selection.Boundary == nil || receipt.Selection.State != "SELECTED" ||

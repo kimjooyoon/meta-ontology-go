@@ -773,8 +773,7 @@ checks its embedded operation contract against the repository source family.
 Its identity comes from the semantic graph, including an explicitly authored ID
 when present. The two source fragments retain their existing wire location and
 are not duplicated in the registration payload. The mechanical edit implementation
-remains Go. This command does
-not add a route to the repository metric-driven execution scheduler.
+remains Go. The scoped metric executor described below reuses this command.
 
 Workspace parsing and lowering use the same existing field-profile selection as
 package execution. Registered syntax consumers continue to replay under their
@@ -801,6 +800,63 @@ Dynamic file readers and consumers outside the supplied repository/workspace
 scope remain outside this command's observation. No repository-wide consumer
 completeness is claimed. The executable must match the repository registry and
 operation contract; rebuild it after changing those compiler sources.
+
+### Binding a source split into a metric plan
+
+`scripts/refactor-metrics -workspace-split-inputs <requests.json> -plan <plan.json>`
+accepts explicit instances of the existing `SplitGoooSections(FileInput)` activity.
+The ordinary `-metrics`, `-sha`, `-base-sha`, `-root` and `-check` arguments still
+apply. One request looks like this:
+
+```json
+{
+  "schema": "gooo/workspace-split-inputs/v1",
+  "requests": [{
+    "workspace": "examples/agent-tool-inventory/gooo.workspace.json",
+    "package": "example/agent-tool-inventory",
+    "source": "main.gooo",
+    "into": "inspect.gooo",
+    "discovery_root": "examples/agent-tool-inventory",
+    "cases": "examples/agent-tool-inventory/cases.json",
+    "line_limit": 75
+  }]
+}
+```
+
+Addresses are relative to the repository revision; source and destination names
+are relative to the workspace. The request must match exactly one already
+observed Gooo file-line driver and its limit. Its digest enters the indicator,
+canonical plan and selected execution step. Changing the scope or cases address
+changes plan identity. This binding does not invent pressure, force a particular
+candidate to win, or lower the planner's independent-operation floor.
+
+For a selected bound action, `scripts/meta-execution` restores the plan's Git
+commit into two fresh directories and invokes the existing `package split-source`
+prepare/apply path. The committed file inventory and Git blob bytes are checked;
+an archive that omits or substitutes committed content is refused. Untracked
+files and the previous pass's outputs cannot supply missing inputs. This route
+requires regular committed files and limits the inventory to 65,536 files and
+1 GiB; file data is copied as a stream.
+
+After application, the executor checks the installed fragments and native
+registry, runs the supplied independent finite cases through `package execute`,
+and runs both existing native syntax conformance packages. It compares the
+constructed result across the two directories. Raw command output hashes remain
+observations; temporary addresses and the corresponding proposal hash have a
+separate normalized replay representation. A real output or case change remains
+observable. Model calls must be zero in this deterministic route.
+
+The current integration case preserves all eight inventory cases in each pass.
+This is one selected operation with a finite oracle. It does not establish that
+every action in a repository plan has executed or that eight cases cover every
+possible program behavior. An unbound split retains
+`WORKSPACE_SPLIT_REQUEST_MISSING`; unavailable inputs and interrupted processes
+remain unresolved, while an observed failing verifier is a counterexample.
+
+Execution is disposable: it returns the constructed instance and observations.
+It does not write the caller's checkout, open a PR, or extend consumer discovery
+beyond the requested root. Repository-wide discovery, imported source packages
+and embedded consumers retain the limits stated above.
 
 ### One syntax case across physical source members
 

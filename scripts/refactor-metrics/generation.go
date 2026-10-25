@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
@@ -15,7 +16,12 @@ func emitGenerationPlan(opts options, report sourcepolicy.Report) error {
 	}
 	inputs := generation.OperationInputs{}
 	if opts.workspaceSplits != "" {
-		raw, err := os.ReadFile(opts.workspaceSplits)
+		file, err := os.Open(opts.workspaceSplits)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		raw, err := io.ReadAll(io.LimitReader(file, (1<<20)+1))
 		if err != nil {
 			return err
 		}
