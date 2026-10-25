@@ -547,3 +547,32 @@ dynamic readers, other packages/build contexts, current-input checks at publicat
 and coordinated installation retain their own obligations. This native planning
 API adds no standalone CLI and does not grant the existing workspace apply command
 repository-wide consumer coverage.
+
+### Predicting source registration changes before installation
+
+The native `languagesyntax.InspectPartitionInventory(repository, registryRaw,
+directory, proposal)` API accepts that same `sourcebundle.Partition`. It replays
+the proposal against current source members and compares the repository's current
+and proposed file observations with the existing syntax corpus registry. For
+example, splitting `NextObservation` from `source_recovery.gooo` into
+`source_observation.gooo` preserves the activity IDs but introduces a file that
+the registry does not yet list. `AddedUnregistered` names that file before a write.
+
+`Before` and `Projected` are the existing source-inventory shape, with separate
+observation digests and the same registry digest. Existing missing and unregistered
+paths stay visible in both views; the added-path list is only their difference.
+The projection uses the ordinary observer's byte digest, line count and directory
+traversal order. Tests compare it with an independently populated in-memory tree,
+including the compiler's actual two-member continuation policy.
+
+Selected members are bounded by the source-bundle reader and rechecked after the
+repository walk. A changed member, altered proposal, occupied destination or read
+failure returns no inventory. The complete repository walk has the same scope
+and cost as `InspectSourceInventory`; it is not an incremental observation or an
+atomic filesystem snapshot. The caller owns global snapshot freshness.
+
+This API observes one additional consumer of file organization. It installs no
+files, changes no registration and runs no native activity. Semantic admission
+remains `UNASSESSED` in both inventories. Embedded-reader preservation and native
+ABI acceptance still require their existing checks. There is no new CLI, model
+call or mandatory CI job.
