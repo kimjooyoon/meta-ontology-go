@@ -17,6 +17,12 @@ type FileMetric struct {
 	Path     string       `json:"path"`
 	Language FileLanguage `json:"language"`
 	Lines    int          `json:"lines"`
+	// ModuleRoot is the repository-relative owning go.mod directory. Empty
+	// means the repository root (including the legacy no-manifest fallback).
+	ModuleRoot string `json:"module_root,omitempty"`
+	// ModuleBoundaryReason makes an unsafe Go rewrite inapplicable without
+	// hiding this file from repository-wide line totals.
+	ModuleBoundaryReason sourcepolicy.ApplicabilityReason `json:"module_boundary_reason,omitempty"`
 }
 
 // DirectoryMetric is a directory-level aggregate.

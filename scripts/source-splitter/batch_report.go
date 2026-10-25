@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"os"
+
+	completion "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcecompletion"
 )
 
 func readLogicalSplitPlan(name string) (logicalSplitPlan, error) {
@@ -13,10 +15,15 @@ func readLogicalSplitPlan(name string) (logicalSplitPlan, error) {
 	if err == nil {
 		err = json.Unmarshal(data, &report)
 	}
+	if err == nil {
+		digest := sha256.Sum256(data)
+		report.sourceDigest = "sha256:" + hex.EncodeToString(digest[:])
+	}
 	return report, err
 }
 
-func buildSplitBatchReport(sha string, plans []plannedSplit, subjects []splitBatchSubject, deferred int) splitBatchReport {
+func buildSplitBatchReport(sha, planDigest string, plans []plannedSplit, subjects []splitBatchSubject,
+	deferred int, unhandled []string) splitBatchReport {
 	selected := make([]string, len(plans))
 	changed, created := 0, 0
 	for index, item := range plans {
@@ -26,14 +33,16 @@ func buildSplitBatchReport(sha string, plans []plannedSplit, subjects []splitBat
 		changed += len(subject.ChangedFiles)
 		created += len(subject.CreatedFiles)
 	}
-	decision, reason := "PASS", "PROJECTABLE_SUBJECTS_SPLIT"
-	if len(selected) == 0 {
-		decision, reason = "FIXED_POINT", "NO_PROJECTABLE_SUBJECTS"
-	}
+	reason := completion.Classify(int64(len(selected)), int64(len(subjects)), int64(deferred), int64(len(unhandled)))
 	coordinates := splitBatchCoordinates{SelectedSubjects: len(selected), AppliedSubjects: len(subjects),
-		ChangedPaths: changed, CreatedPaths: created, DeferredTopology: deferred}
-	report := splitBatchReport{Schema: splitBatchSchema, SourceSHA: sha, Decision: decision, Resolution: "EXACT",
+		ChangedPaths: changed, CreatedPaths: created, DeferredTopology: deferred,
+		InputSubjects: len(selected) + len(unhandled), UnhandledSubjects: len(unhandled)}
+	report := splitBatchReport{Schema: splitBatchSchema, SourceSHA: sha,
+		PlanSourceDigest: planDigest,
+		Decision:         completion.Decision(reason), Resolution: completion.Resolution(reason),
+		NextOperation: completion.NextOperation(reason), PolicySourceDigest: completion.SourceDigest(),
 		Reason: reason, MetaOperation: splitBatchOperation, Selected: selected, Subjects: subjects,
+		Unhandled:   append([]string{}, unhandled...),
 		Coordinates: coordinates, SuccessorProjectionRequired: deferred != 0, Exact: len(selected) == len(subjects)}
 	report.Indicators = []splitBatchIndicator{
 		{ID: "split.selected", Class: "DRIVER", ProofChoice: "FOUNDATION", MetaOperation: splitBatchOperation,

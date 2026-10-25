@@ -30,8 +30,7 @@ func runJSONCommand(ctx context.Context, binary, root string, timeout time.Durat
 	defer span.End()
 	defer func() {
 		if runErr != nil {
-			var boundary *Failure
-			if errors.As(runErr, &boundary) {
+			if boundary, ok := errors.AsType[*Failure](runErr); ok {
 				span.SetAttributes(attribute.String("gooo.failure.stage", boundary.Stage),
 					attribute.String("gooo.failure.code", boundary.Code))
 				span.SetStatus(codes.Error, boundary.Error())

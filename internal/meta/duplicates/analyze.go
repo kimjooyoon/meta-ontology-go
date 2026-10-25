@@ -20,7 +20,7 @@ func Analyze(root string) ([]sourcepolicy.Observation, error) {
 	if err != nil {
 		return nil, err
 	}
-	groups := map[string][]string{}
+	groups := map[string][]member{}
 	err = filepath.WalkDir(absRoot, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -52,7 +52,7 @@ func Analyze(root string) ([]sourcepolicy.Observation, error) {
 				return err
 			}
 			if ok {
-				groups[member.group] = append(groups[member.group], member.subject)
+				groups[member.group] = append(groups[member.group], member)
 			}
 		}
 		return nil

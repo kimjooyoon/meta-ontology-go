@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
 
 func transformCandidate(root string, candidate candidate, write bool) error {
@@ -26,6 +27,9 @@ func transformCandidate(root string, candidate candidate, write bool) error {
 	relative, err := filepath.Rel(absRoot, path)
 	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return fmt.Errorf("candidate escapes root: %q", candidate.source.Path)
+	}
+	if err := moduleboundary.CheckWriteSet(absRoot, path); err != nil {
+		return err
 	}
 	source, err := os.ReadFile(path)
 	if err != nil {

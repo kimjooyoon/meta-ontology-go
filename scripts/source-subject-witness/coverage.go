@@ -20,6 +20,9 @@ func fileBinding(file fileMetric, index indicatorIndex) (metaBinding, error) {
 	if file.Language == "gooo" {
 		want = "split-gooo-sections"
 	}
+	if row.ModuleRoot != file.ModuleRoot {
+		return metaBinding{}, fmt.Errorf("file %q module owner differs from its indicator", file.Path)
+	}
 	if row.MetaOperation != want {
 		return metaBinding{}, fmt.Errorf("file %q operation %q, want %q", file.Path, row.MetaOperation, want)
 	}

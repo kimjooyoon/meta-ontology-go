@@ -19,7 +19,7 @@ func TestExtractFunctionHelperProjectionRegressionCohort(t *testing.T) {
 	}
 	if contract.Operation != sourcepolicy.OperationExtractFunction ||
 		contract.Activity != "ExtractFunction" ||
-		contract.InputEntity != "FunctionInput" ||
+		contract.InputEntity != "FunctionSource" ||
 		contract.OutputEntity != "OperationResult" ||
 		contract.InputSubjectKind != sourcepolicy.SubjectKindFunction ||
 		!contract.UsedInputFact || !contract.GeneratedOutputFact ||

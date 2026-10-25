@@ -45,11 +45,14 @@ const (
 	ApplicabilityApplicable    Applicability = "APPLICABLE"
 	ApplicabilityNotApplicable Applicability = "NOT_APPLICABLE"
 
-	ApplicabilityReasonCatalogApplicable  ApplicabilityReason = "CATALOG_APPLICABLE"
-	ApplicabilityReasonRootTopologyExempt ApplicabilityReason = "ROOT_TOPOLOGY_EXEMPT"
-	ApplicabilityReasonWorkflowRootExempt ApplicabilityReason = "WORKFLOW_DISCOVERY_ROOT_EXEMPT"
-	ApplicabilityReasonRootREADMEExempt   ApplicabilityReason = "ROOT_README_EXEMPT"
-	ApplicabilityReasonWorkflowDiscovery  ApplicabilityReason = "GITHUB_WORKFLOW_DISCOVERY_ROOT"
+	ApplicabilityReasonCatalogApplicable          ApplicabilityReason = "CATALOG_APPLICABLE"
+	ApplicabilityReasonRootTopologyExempt         ApplicabilityReason = "ROOT_TOPOLOGY_EXEMPT"
+	ApplicabilityReasonWorkflowRootExempt         ApplicabilityReason = "WORKFLOW_DISCOVERY_ROOT_EXEMPT"
+	ApplicabilityReasonRootREADMEExempt           ApplicabilityReason = "ROOT_README_EXEMPT"
+	ApplicabilityReasonWorkflowDiscovery          ApplicabilityReason = "GITHUB_WORKFLOW_DISCOVERY_ROOT"
+	ApplicabilityReasonModuleOwnerUnavailable     ApplicabilityReason = "GO_MODULE_OWNER_UNAVAILABLE"
+	ApplicabilityReasonCrossModuleSource          ApplicabilityReason = "GO_SOURCE_CROSSES_MODULE_BOUNDARY"
+	ApplicabilityReasonModuleToolchainUnavailable ApplicabilityReason = "GO_MODULE_TOOLCHAIN_UNAVAILABLE"
 
 	WorkflowDiscoveryObservationDetail = "topology=github-workflow-discovery-root"
 )

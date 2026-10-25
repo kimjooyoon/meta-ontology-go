@@ -104,6 +104,9 @@ func isLineCapMetric(metric string) bool {
 
 func validateLineCapIndicator(row sourceIndicator) error {
 	contract, known := lineCapContract(row.MetricID)
+	if row.Applicability == "NOT_APPLICABLE" {
+		return validateModuleLineCap(row, contract, known)
+	}
 	valid := known && row.Applicability == "APPLICABLE" && row.SubjectKind == contract.kind && row.Family == contract.family && row.ApplicabilityRuleID == defaultApplicabilityRule && row.ApplicabilityReason == "CATALOG_APPLICABLE" && row.Relation == "less_or_equal" && row.Role == "DRIVER" && !row.Blocking && row.Producer == contract.producer && row.Consumer == contract.consumer && row.MetaOperation == contract.operation && row.ProofChoice == "foundation" && row.EvaluationState == "EVALUATED" && row.EnforcementEffect == "NO_EFFECT" && row.Satisfied == (row.Value <= row.Limit)
 	if !valid {
 		return sourceValidationFailure("SOURCE_LINE_CAP_DRIVER_CONTRADICTION", "KNOWN_CONTRADICTION", "report-counterexample")

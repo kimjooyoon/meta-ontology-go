@@ -2,12 +2,15 @@ package sourcepolicy
 
 // Observation is a raw fact produced by a scanner or CI observer.
 type Observation struct {
-	Subject      string
-	Dimension    Dimension
-	Value        int
-	Detail       string
-	Producer     string
-	SemanticRole string
+	Subject              string
+	ModuleRoot           string
+	ModuleBoundaryReason ApplicabilityReason
+	SourcePaths          []string // Physical origins of aggregate observations, before policy evaluation.
+	Dimension            Dimension
+	Value                int
+	Detail               string
+	Producer             string
+	SemanticRole         string
 }
 
 // Indicator joins a metric fact to policy, proof choice, and meta operation.
@@ -15,6 +18,7 @@ type Indicator struct {
 	MetricID            Dimension           `json:"metric_id"`
 	Family              Family              `json:"family"`
 	Subject             string              `json:"subject"`
+	ModuleRoot          string              `json:"module_root,omitempty"`
 	SubjectKind         SubjectKind         `json:"subject_kind"`
 	Value               int                 `json:"value"`
 	Limit               int                 `json:"limit"`
