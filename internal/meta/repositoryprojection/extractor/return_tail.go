@@ -30,6 +30,7 @@ func preparationProgressEvidence(contract generation.OperationInputContractEvide
 		Operation:              string(contract.Operation),
 		Activity:               contract.Activity,
 		InputEntity:            contract.InputEntity,
+		InputEntityID:          contract.InputEntityID,
 		InputSubjectKind:       string(contract.InputSubjectKind),
 		ContractSourceDigest:   contract.SourceDigest,
 		ContractSemanticDigest: contract.SemanticDigest,
@@ -46,8 +47,8 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 	if err != nil {
 		return nil, fail("derive-recipe", "admit-return-tail", "OPERATION_INPUT_CONTRACT_MISSING", "DIRECT_MISSING", "restore-operation-input-contract", nil)
 	}
-	if contract.Operation == "" || contract.Activity != "ExtractFunction" || contract.InputEntity != "FunctionInput" ||
-		contract.OutputEntity != "OperationResult" || contract.InputSubjectKind != sourcepolicy.SubjectKindFunction ||
+	if contract.Operation == "" || contract.Activity != "ExtractFunction" || contract.InputEntity == "" || contract.InputEntityID != generation.NativeContractEntityID("FunctionInput") ||
+		contract.OutputEntity == "" || contract.OutputEntityID != generation.NativeContractEntityID("OperationResult") || contract.InputSubjectKind != sourcepolicy.SubjectKindFunction ||
 		!contract.UsedInputFact || !contract.GeneratedOutputFact || contract.SourceDigest == "" || contract.SemanticDigest == "" {
 		return nil, fail("derive-recipe", "admit-return-tail", "OPERATION_INPUT_CONTRACT_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
 	}
@@ -236,7 +237,9 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 			Operation:                     string(contract.Operation),
 			ContractActivity:              contract.Activity,
 			ContractInputEntity:           contract.InputEntity,
+			ContractInputEntityID:         contract.InputEntityID,
 			ContractOutputEntity:          contract.OutputEntity,
+			ContractOutputEntityID:        contract.OutputEntityID,
 			ContractInputSubjectKind:      string(contract.InputSubjectKind),
 			ContractSourceDigest:          contract.SourceDigest,
 			ContractSemanticDigest:        contract.SemanticDigest,
@@ -271,6 +274,7 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 			Operation:                       string(contract.Operation),
 			Activity:                        contract.Activity,
 			InputEntity:                     contract.InputEntity,
+			InputEntityID:                   contract.InputEntityID,
 			InputSubjectKind:                string(contract.InputSubjectKind),
 			Metric:                          sourcepolicy.DimensionFunctionLines,
 			HelperMeasurementScope:          renderedCapacityHelperMeasurementScope,
@@ -322,8 +326,8 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 	if err != nil {
 		return nil, fail("derive-recipe", "admit-suffix", "OPERATION_INPUT_CONTRACT_MISSING", "DIRECT_MISSING", "restore-operation-input-contract", nil)
 	}
-	if contract.Operation == "" || contract.Activity != "ExtractFunction" || contract.InputEntity != "FunctionInput" ||
-		contract.OutputEntity != "OperationResult" || contract.InputSubjectKind != sourcepolicy.SubjectKindFunction ||
+	if contract.Operation == "" || contract.Activity != "ExtractFunction" || contract.InputEntity == "" || contract.InputEntityID != generation.NativeContractEntityID("FunctionInput") ||
+		contract.OutputEntity == "" || contract.OutputEntityID != generation.NativeContractEntityID("OperationResult") || contract.InputSubjectKind != sourcepolicy.SubjectKindFunction ||
 		!contract.UsedInputFact || !contract.GeneratedOutputFact || contract.SourceDigest == "" || contract.SemanticDigest == "" {
 		return nil, fail("derive-recipe", "admit-suffix", "OPERATION_INPUT_CONTRACT_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
 	}
@@ -337,7 +341,9 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 		Operation:                     string(contract.Operation),
 		ContractActivity:              contract.Activity,
 		ContractInputEntity:           contract.InputEntity,
+		ContractInputEntityID:         contract.InputEntityID,
 		ContractOutputEntity:          contract.OutputEntity,
+		ContractOutputEntityID:        contract.OutputEntityID,
 		ContractInputSubjectKind:      string(contract.InputSubjectKind),
 		ContractSourceDigest:          contract.SourceDigest,
 		ContractSemanticDigest:        contract.SemanticDigest,
@@ -361,52 +367,24 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 }
 
 func returnTailContractObligations(values []generation.OperationInputContractObligationEvidence) ([]ContractObligationEvidence, bool) {
-	if len(values) != len(returnTailObligations) {
+	contract, err := generation.ExtractFunctionInputContractEvidence()
+	if err != nil || len(values) != len(returnTailObligations) || len(contract.Obligations) != len(values) {
 		return nil, false
 	}
-	known := make(map[string]bool, len(values))
 	result := make([]ContractObligationEvidence, 0, len(values))
-	previousOutput := "FunctionInput"
-	for _, value := range values {
-		expectedActivity, expectedOutput := returnTailContractStage(value.Name)
-		if known[value.Name] || !value.UsedInputFact || !value.GeneratedOutputFact || value.Activity != expectedActivity || value.InputEntity != previousOutput || value.OutputEntity != expectedOutput {
+	for index, value := range values {
+		expected := contract.Obligations[index]
+		if value != expected || value.Name != returnTailObligations[index] ||
+			!value.UsedInputFact || !value.GeneratedOutputFact || value.InputEntityID == "" || value.OutputEntityID == "" {
 			return nil, false
 		}
-		known[value.Name] = true
-		previousOutput = value.OutputEntity
 		result = append(result, ContractObligationEvidence{
 			Name: value.Name, Activity: value.Activity, InputEntity: value.InputEntity, OutputEntity: value.OutputEntity,
+			InputEntityID: value.InputEntityID, OutputEntityID: value.OutputEntityID,
 			UsedInputFact: value.UsedInputFact, GeneratedOutputFact: value.GeneratedOutputFact,
 		})
 	}
-	for _, name := range returnTailObligations {
-		if !known[name] {
-			return nil, false
-		}
-	}
-	if previousOutput != "ProjectedConformanceObligation" {
-		return nil, false
-	}
 	return result, true
-}
-
-func returnTailContractStage(name string) (string, string) {
-	switch name {
-	case obligationReturnShape:
-		return "ProveReturnShape", "ReturnShapeObligation"
-	case obligationControlFlow:
-		return "ProveControlFlow", "ControlFlowObligation"
-	case obligationFreeBindings:
-		return "ProveFreeBindings", "FreeBindingsObligation"
-	case obligationCalleeEffects:
-		return "ProveCalleeEffects", "CalleeEffectsObligation"
-	case obligationRenderedCapacity:
-		return "ProveRenderedCapacity", "RenderedCapacityObligation"
-	case obligationProjectedConform:
-		return "ProveProjectedConformance", "ProjectedConformanceObligation"
-	default:
-		return "", ""
-	}
 }
 
 func stableReturnTailName(function string, suffix int) string {

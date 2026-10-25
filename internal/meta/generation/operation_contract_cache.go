@@ -25,7 +25,7 @@ type operationContractParseCache struct {
 var operationContractCache operationContractParseCache
 
 func cachedOperationInputContract(sources []sourcebundle.Source) (operationInputContract, error) {
-	abi, err := json.Marshal([]any{nativeOperationInputs, nativeOperationObligations, nativeContractPolicies})
+	abi, err := json.Marshal([]any{nativeOperationInputs, nativeOperationObligations, nativeContractPolicies, nativeContractEntities})
 	if err != nil {
 		return operationInputContract{}, err
 	}

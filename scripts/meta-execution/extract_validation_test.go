@@ -616,6 +616,10 @@ func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.St
 	evidence := currentStrategySchemaFixture(t)
 	evidence.AfterRenderedCapacityOverage = 3
 	evidence.PreflightObservations = []projectionextractor.PreflightObservationEvidence{{
+		Operation: evidence.Operation, Activity: evidence.ContractActivity,
+		InputEntity: evidence.ContractInputEntity, InputEntityID: evidence.ContractInputEntityID,
+		InputSubjectKind:     evidence.ContractInputSubjectKind,
+		ContractSourceDigest: evidence.ContractSourceDigest, ContractSemanticDigest: evidence.ContractSemanticDigest,
 		Subject:      evidence.Subject,
 		SourceDigest: evidence.ProofStages[0].SourceDigest,
 	}}
@@ -623,6 +627,7 @@ func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.St
 		Operation:              evidence.Operation,
 		Activity:               evidence.ContractActivity,
 		InputEntity:            evidence.ContractInputEntity,
+		InputEntityID:          evidence.ContractInputEntityID,
 		InputSubjectKind:       evidence.ContractInputSubjectKind,
 		ContractSourceDigest:   evidence.ContractSourceDigest,
 		ContractSemanticDigest: evidence.ContractSemanticDigest,

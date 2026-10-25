@@ -104,7 +104,7 @@ func TestNativeContractRejectsPartialOrChangedPartition(t *testing.T) {
 		},
 		"duplicate across members": func(files fstest.MapFS) {
 			files[contractActivitiesFile].Data = append(files[contractActivitiesFile].Data,
-				[]byte("\nentity FunctionInput id \"gooo://meta-operation-input-contract/entity/function-input\"\n")...)
+				[]byte("\nentity FunctionSource id \"gooo://meta-operation-input-contract/entity/function-input\"\n")...)
 		},
 		"unresolved import scope": func(files fstest.MapFS) {
 			files[contractTypesFile].Data = []byte(strings.Replace(string(files[contractTypesFile].Data),
@@ -112,11 +112,11 @@ func TestNativeContractRejectsPartialOrChangedPartition(t *testing.T) {
 		},
 		"changed obligation chain": func(files fstest.MapFS) {
 			files[contractActivitiesFile].Data = []byte(strings.Replace(string(files[contractActivitiesFile].Data),
-				"ProveControlFlow(ReturnShapeObligation)", "ProveControlFlow(FunctionInput)", 1))
+				"ProveControlFlow(ReturnShapeObligation)", "ProveControlFlow(FunctionSource)", 1))
 		},
 		"extra activity": func(files fstest.MapFS) {
 			files[contractActivitiesFile].Data = append(files[contractActivitiesFile].Data,
-				[]byte("\nactivity Extra(FunctionInput) -> OperationResult\n")...)
+				[]byte("\nactivity Extra(FunctionSource) -> OperationResult\n")...)
 		},
 		"extra policy": func(files fstest.MapFS) {
 			files[contractActivitiesFile].Data = append(files[contractActivitiesFile].Data,

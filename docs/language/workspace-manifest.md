@@ -434,3 +434,29 @@ Reads are bounded to 64 files, 1 MiB per file and 16 MiB in total; an I/O failur
 returns no partial source set. Mutable filesystem snapshots and publication remain
 the caller's responsibility. The production contract remains one small source file;
 repository-wide discovery and automatic embedded-consumer migration remain open.
+
+### Native entity identity across display renames
+
+The native operation-input contract binds its ten entity roles by explicit stable
+ID. Authored names remain visible in extraction reports. For example, the compiler
+now uses this declaration with its original identity:
+
+```gooo
+entity FunctionSource id "gooo://meta-operation-input-contract/entity/function-input"
+activity ExtractFunction(FunctionSource) -> OperationResult
+```
+
+Changing `FunctionInput` to `FunctionSource` preserves the semantic hash and native
+input role. It changes the source digest, so a previous plan still needs fresh
+preparation. Extraction reports carry both the authored `input_entity` and its
+`input_entity_id` through obligations, proof stages, preflight observations and
+preparation progress. The decoder checks both against the current source contract;
+proof stages also retain the previous stage's output identity as their input.
+Historical reports retain their original labels and source identity.
+
+All ten entity renames are covered at admission. Same labels with swapped,
+missing, duplicated or unknown IDs are rejected with no partial contract. Actual
+map-construction extraction and report decoding exercise the production rename,
+including rejection of altered type IDs and a disconnected proof edge. Source
+labels are not aliases for the host ABI vocabulary. Activity renames, executor
+discovery and publication of a repository-wide split remain separate work.

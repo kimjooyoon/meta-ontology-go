@@ -16,6 +16,7 @@ func TestContractParseReusePreservesValueAndRejectsChangedSource(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(first, want) {
 		t.Fatalf("cached contract changed: %v", err)
 	}
+	first.Entities[0] = contractEntityReference{ID: "caller-id", Name: "caller-name"}
 	clear(first.Bindings)
 	clear(first.Facts)
 	clear(first.ObligationFacts)
