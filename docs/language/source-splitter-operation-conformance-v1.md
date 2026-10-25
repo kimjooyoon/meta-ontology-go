@@ -136,3 +136,11 @@ and next operation describe the declared batch scope; they do not establish
 repository-wide consumer coverage. A successful command exit means its receipt
 was written, including a progress receipt. The source policy does not execute the
 missing projection or discharge the separate native consumer obligations.
+
+The authorized-write-set consumer checks logical write coverage separately. It
+reads the same Gooo policy and verifies the current policy digest, input-plan
+digest shape, completion tuple and selected/unhandled counts before consuming a
+progress receipt. Actual and declared path sets must still match independently.
+An unhandled subject never adds a writable path. Legacy exact receipts retain
+their original admission path; progress without the new source bindings is
+unresolved. Write-set acceptance does not mark the pending projection complete.
