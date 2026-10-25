@@ -30,10 +30,20 @@ the current checkout. Unknown fields still refuse decoding with
 `SOURCE_SCHEMA_UNSUPPORTED` and `update-source-metrics-consumer`; invalid JSON
 remains `SOURCE_JSON_MALFORMED`. Existing rewrite applicability rules are unchanged.
 
+The producer also records why a module cannot currently be rewritten: an unavailable
+module owner, a source link crossing module boundaries, or a newer required Go
+toolchain. These known reasons remain in file witnesses and their identities. The
+consumer requires the recorded file reason and the existing policy's `NOT_APPLICABLE`
+indicator to agree, including the original failure code and lack of write effect.
+It retains raw file/line counts even when the rewrite cannot run. Unknown reasons,
+disagreement, and a substituted `PASS` produce no ledger.
+
 The regression uses the actual line-metrics producer and meta-binding constructor
 on a small nested-module repository, followed by this consumer. Independent
 expected line counts, source paths, unresolved observations and owner-tampering
 cases check the connection across those components.
+The same producer path exercises all three module-boundary reasons and their replay,
+with five contradictory-consumer cases. No unavailable toolchain is downloaded.
 
 The original [workflow failure](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/40164129378)
 consumed source commit `68867ca2e82dd6d08f3237dc58ec99852f7c8c88` from CI run

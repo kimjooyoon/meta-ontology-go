@@ -20,10 +20,11 @@ type sourceReport struct {
 }
 
 type fileMetric struct {
-	ModuleRoot string `json:"module_root,omitempty"`
-	Path       string `json:"path"`
-	Language   string `json:"language"`
-	Lines      int    `json:"lines"`
+	ModuleBoundaryReason string `json:"module_boundary_reason,omitempty"`
+	ModuleRoot           string `json:"module_root,omitempty"`
+	Path                 string `json:"path"`
+	Language             string `json:"language"`
+	Lines                int    `json:"lines"`
 }
 
 type directoryMetric struct {

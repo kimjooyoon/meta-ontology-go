@@ -84,6 +84,11 @@ func TestModuleOriginDisagreementsRejectNativeReport(t *testing.T) {
 
 func nativeModuleReport(t *testing.T) sourceReport {
 	t.Helper()
+	return nativeModuleReportWithSetup(t, func(string) {})
+}
+
+func nativeModuleReportWithSetup(t *testing.T, setup func(string)) sourceReport {
+	t.Helper()
 	root, storage := t.TempDir(), t.TempDir()
 	inputs := map[string]string{
 		".github/workflows/ci.yml": "name: fixture\n",
@@ -108,6 +113,7 @@ func nativeModuleReport(t *testing.T) sourceReport {
 	if err := os.WriteFile(workflow, []byte("name: fixture\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
+	setup(root)
 	produced, err := linecaps.AnalyzeProjectedLineMetrics(root, storage)
 	if err != nil {
 		t.Fatal(err)
