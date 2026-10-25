@@ -27,11 +27,14 @@ const (
 	moduleListPackagesMax  = 512
 	moduleListWaitDelay    = 2 * time.Second
 	moduleSourceMax        = 8 << 20
-	moduleFileMax          = 1 << 20
-	moduleExportMax        = 64 << 20
-	moduleFilesMax         = 256
-	moduleStageFilesMax    = 4096
-	modulePackageMax       = 64
+	// A compilation closure contains multiple packages. Keep its budget distinct
+	// from the per-package budget, including after physical source partitioning.
+	moduleStageSourceMax = 16 << 20
+	moduleFileMax        = 1 << 20
+	moduleExportMax      = 64 << 20
+	moduleFilesMax       = 256
+	moduleStageFilesMax  = 4096
+	modulePackageMax     = 64
 )
 
 var errModuleDependency = errors.New("module dependency could not be resolved safely")
@@ -39,15 +42,16 @@ var errModuleDependency = errors.New("module dependency could not be resolved sa
 type moduleDependencyCauseCode string
 
 const (
-	moduleCauseCallBudget   moduleDependencyCauseCode = "GO_LIST_CALL_BUDGET"
-	moduleCauseTimeBudget   moduleDependencyCauseCode = "GO_LIST_TIME_BUDGET"
-	moduleCauseByteBudget   moduleDependencyCauseCode = "GO_LIST_BYTE_BUDGET"
-	moduleCauseTimeout      moduleDependencyCauseCode = "GO_LIST_TIMEOUT"
-	moduleCauseOutputCap    moduleDependencyCauseCode = "GO_LIST_OUTPUT_CAP"
-	moduleCauseSubprocess   moduleDependencyCauseCode = "GO_LIST_SUBPROCESS_FAILURE"
-	moduleCausePackageLimit moduleDependencyCauseCode = "MODULE_PACKAGE_LIMIT"
-	moduleCauseSourceLimit  moduleDependencyCauseCode = "MODULE_SOURCE_LIMIT"
-	moduleCauseFileLimit    moduleDependencyCauseCode = "MODULE_STAGE_FILE_LIMIT"
+	moduleCauseCallBudget       moduleDependencyCauseCode = "GO_LIST_CALL_BUDGET"
+	moduleCauseTimeBudget       moduleDependencyCauseCode = "GO_LIST_TIME_BUDGET"
+	moduleCauseByteBudget       moduleDependencyCauseCode = "GO_LIST_BYTE_BUDGET"
+	moduleCauseTimeout          moduleDependencyCauseCode = "GO_LIST_TIMEOUT"
+	moduleCauseOutputCap        moduleDependencyCauseCode = "GO_LIST_OUTPUT_CAP"
+	moduleCauseSubprocess       moduleDependencyCauseCode = "GO_LIST_SUBPROCESS_FAILURE"
+	moduleCausePackageLimit     moduleDependencyCauseCode = "MODULE_PACKAGE_LIMIT"
+	moduleCauseSourceLimit      moduleDependencyCauseCode = "MODULE_SOURCE_LIMIT"
+	moduleCauseStageSourceLimit moduleDependencyCauseCode = "MODULE_STAGE_SOURCE_LIMIT"
+	moduleCauseFileLimit        moduleDependencyCauseCode = "MODULE_STAGE_FILE_LIMIT"
 )
 
 type moduleDependencyFailure struct {

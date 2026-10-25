@@ -53,6 +53,9 @@ func TestPartitionOracleRenderedCapacity(t *testing.T) {
 		"internal/meta/syntaxregistration#compiledPartitionRegistry",
 		"internal/meta/syntaxregistration#compiledPartitionOverlay",
 		"internal/meta/syntaxregistration#checkCompiledPartitionRun",
+		"internal/meta/syntaxregistration#partitionNativeSource",
+		"internal/meta/syntaxregistration#partitionNativeFieldOwner",
+		"internal/meta/syntaxregistration#partitionNativeCounterexampleOwner",
 	}
 	observed, err := collectNamedCapacityFiles(root, targets, true)
 	if err != nil {
