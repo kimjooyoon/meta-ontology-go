@@ -148,7 +148,7 @@ func materializeCollapseWithReplayWorkspace(workspace, gitDir, metricsPath strin
 	if snapshotErr != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context")
 	}
-	defer os.RemoveAll(filepath.Dir(snapshot))
+	defer cleanupGitSnapshot(filepath.Dir(snapshot))
 	environment := childEnvironment(snapshot, temporary)
 	sourcePath := filepath.Join(temporary, filepath.FromSlash(subject.Path))
 	beforeFiles, err := snapshotWorkspaceFiles(temporary)
