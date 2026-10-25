@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // Each pass restores the same committed file population and Git blob bytes.
@@ -29,6 +30,11 @@ func restoreGoooSplitSnapshot(target, gitDir, head string) error {
 }
 
 func unpackGoooSplitSnapshot(target string, archive *tar.Reader, head string, members map[string]goooSnapshotMember) error {
+	root, err := os.OpenRoot(target)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
 	for count := 0; ; count++ {
 		header, err := archive.Next()
 		if err == io.EOF {
@@ -51,15 +57,15 @@ func unpackGoooSplitSnapshot(target string, archive *tar.Reader, head string, me
 		}
 		name := header.Name
 		if header.Typeflag == tar.TypeDir {
-			name = filepath.ToSlash(filepath.Clean(name))
+			name = strings.TrimSuffix(name, "/")
 		}
-		if !fs.ValidPath(name) || name == "." || header.Size < 0 {
+		if !fs.ValidPath(name) || name == "." || strings.ContainsAny(name, "\\\x00:") || header.Size < 0 {
 			return fmt.Errorf("invalid Git snapshot member")
 		}
-		address := filepath.Join(target, filepath.FromSlash(name))
+		address := filepath.FromSlash(name)
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(address, 0700); err != nil {
+			if err := root.MkdirAll(address, 0700); err != nil {
 				return err
 			}
 		case tar.TypeReg:
@@ -67,7 +73,7 @@ func unpackGoooSplitSnapshot(target string, archive *tar.Reader, head string, me
 			if !found || member.size != header.Size || (member.mode&0111 != 0) != (fs.FileMode(header.Mode)&0111 != 0) {
 				return fmt.Errorf("Git archive member differs: %s", name)
 			}
-			if err := writeGoooSnapshotFile(address, member, archive); err != nil {
+			if err := writeGoooSnapshotFile(root, address, member, archive); err != nil {
 				return err
 			}
 			delete(members, name)
@@ -77,11 +83,11 @@ func unpackGoooSplitSnapshot(target string, archive *tar.Reader, head string, me
 	}
 }
 
-func writeGoooSnapshotFile(address string, member goooSnapshotMember, reader io.Reader) error {
-	if err := os.MkdirAll(filepath.Dir(address), 0700); err != nil {
+func writeGoooSnapshotFile(root *os.Root, address string, member goooSnapshotMember, reader io.Reader) error {
+	if err := root.MkdirAll(filepath.Dir(address), 0700); err != nil {
 		return err
 	}
-	file, err := os.OpenFile(address, os.O_WRONLY|os.O_CREATE|os.O_EXCL, member.mode)
+	file, err := root.OpenFile(address, os.O_WRONLY|os.O_CREATE|os.O_EXCL, member.mode)
 	if err != nil {
 		return err
 	}
