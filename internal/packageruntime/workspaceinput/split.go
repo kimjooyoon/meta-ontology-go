@@ -29,7 +29,7 @@ func PrepareSplit(reader Reader, manifestPath string, definition Definition, req
 	if err != nil {
 		return SplitProposal{}, err
 	}
-	result, err := packageruntime.SplitSource(loaded, request.PackagePath,
+	result, err := packageruntime.SplitSharedSource(loaded, request.PackagePath,
 		filepath.ToSlash(source), request.BeforeID, request.Into)
 	if err != nil {
 		return SplitProposal{}, err
@@ -43,7 +43,7 @@ func PrepareSplit(reader Reader, manifestPath string, definition Definition, req
 		pkg := &after.Packages[i]
 		pkg.Imports = slices.Clone(pkg.Imports)
 		pkg.Sources = slices.Clone(pkg.Sources)
-		if pkg.Path == request.PackagePath {
+		if pkg.Path == request.PackagePath || slices.Contains(result.AffectedPackages, pkg.Path) {
 			pkg.Sources = append(pkg.Sources, request.Into)
 		}
 	}

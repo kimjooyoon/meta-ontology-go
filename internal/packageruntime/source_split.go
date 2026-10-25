@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"path"
-	"reflect"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -29,6 +28,7 @@ type SplitSourceFile struct {
 type SourceSplit struct {
 	Schema            string            `json:"schema"`
 	PackagePath       string            `json:"package_path"`
+	AffectedPackages  []string          `json:"affected_packages,omitempty"`
 	InputFilename     string            `json:"input_filename"`
 	InputSHA256       string            `json:"input_sha256"`
 	BeforeID          string            `json:"before_id"`
@@ -43,6 +43,10 @@ type SourceSplit struct {
 // source list with both outputs. Single-file or embedded consumers need their
 // own migration; this function does not discover or modify those consumers.
 func SplitSource(manifest Manifest, packagePath, filename, beforeID, into string) (SourceSplit, error) {
+	return splitSource(manifest, packagePath, filename, beforeID, into, false)
+}
+
+func splitSource(manifest Manifest, packagePath, filename, beforeID, into string, shared bool) (SourceSplit, error) {
 	beforeImage, beforePackages, err := build(manifest, true)
 	if err != nil {
 		return SourceSplit{}, err
@@ -62,16 +66,13 @@ func SplitSource(manifest Manifest, packagePath, filename, beforeID, into string
 	if err != nil {
 		return SourceSplit{}, err
 	}
-	afterImage, afterPackages, err := build(result.Manifest, true)
-	if err != nil {
-		return SourceSplit{}, fmt.Errorf("split package: %w", err)
+	if shared {
+		result, err = shareSourcePartition(manifest, result)
+		if err != nil {
+			return SourceSplit{}, err
+		}
 	}
-	after := Interface{Entry: result.Manifest.Entry, Packages: afterPackages, ImageDigest: afterImage.Digest}
-	if !reflect.DeepEqual(splitInterface(before), splitInterface(after)) {
-		return SourceSplit{}, fmt.Errorf("split changed a declaration identity, type, field or entry")
-	}
-	result.OutputImageDigest = after.ImageDigest
-	return result, nil
+	return verifySourcePartition(before, result)
 }
 
 func splitFilename(value string) bool {
