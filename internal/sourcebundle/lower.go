@@ -62,13 +62,30 @@ func Lower(sources []Source) (Bundle, error) {
 	if err := ir.Validate(); err != nil {
 		return Bundle{}, err
 	}
-	origins := make([]DeclarationOrigin, 0, len(document.Declarations))
+	origins := make([]DeclarationOrigin, 0, len(carrier.Decls))
 	for _, declaration := range document.Declarations {
 		node, ok := ir.Graph.NodeByName(ir.Namespace, declaration.Name)
 		if !ok {
 			return Bundle{}, fmt.Errorf("source bundle declaration %q was not lowered", declaration.Name)
 		}
 		origins = append(origins, DeclarationOrigin{ID: node.ID.String(), Span: declaration.Span})
+	}
+	// Policies lower outside Document.Declarations and the entity/activity graph.
+	// Keep the parser's physical address; semantic span normalization may trim it.
+	for _, declaration := range carrier.Decls {
+		policy, ok := declaration.(*syntax.PolicyDecl)
+		if !ok {
+			continue
+		}
+		id, err := semantic.ParseIdentity(policy.ID)
+		if err != nil {
+			return Bundle{}, err
+		}
+		span := policy.Span
+		origins = append(origins, DeclarationOrigin{ID: id.String(), Span: bidir.SourceSpan{
+			File: span.Filename, Start: span.Start.Offset, End: span.End.Offset,
+			StartLine: span.Start.Line, StartColumn: span.Start.Column,
+			EndLine: span.End.Line, EndColumn: span.End.Column}})
 	}
 	return Bundle{Package: document.Package, Namespace: document.Namespace,
 		SourceDigest: hex.EncodeToString(digest[:]), Declarations: carrier.Decls, IR: ir,

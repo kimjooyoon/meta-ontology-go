@@ -118,6 +118,10 @@ func TestNativeContractRejectsPartialOrChangedPartition(t *testing.T) {
 			files[contractActivitiesFile].Data = append(files[contractActivitiesFile].Data,
 				[]byte("\nactivity Extra(FunctionInput) -> OperationResult\n")...)
 		},
+		"extra policy": func(files fstest.MapFS) {
+			files[contractActivitiesFile].Data = append(files[contractActivitiesFile].Data,
+				[]byte("\npolicy Extra id \"urn:example:extra-policy\" { state \"READY\" }\n")...)
+		},
 	}
 	for name, mutate := range mutations {
 		t.Run(name, func(t *testing.T) {
@@ -129,6 +133,9 @@ func TestNativeContractRejectsPartialOrChangedPartition(t *testing.T) {
 			got, err := loadOperationInputContractFS(files)
 			if err == nil || !reflect.DeepEqual(got, operationInputContract{}) {
 				t.Fatalf("invalid bundle inherited successful admission: err=%v", err)
+			}
+			if name == "extra policy" && !strings.Contains(err.Error(), "unknown operation input contract declaration") {
+				t.Fatalf("valid policy did not reach the native ABI boundary: %v", err)
 			}
 		})
 	}

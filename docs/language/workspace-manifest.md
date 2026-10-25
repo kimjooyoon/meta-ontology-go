@@ -420,6 +420,12 @@ physical origin. Admission exposes each member's content hash and byte length,
 plus all declaration IDs and physical spans; cached metadata is copied for callers.
 Existing serialized operation plans continue to carry the contract digests.
 
+The adapter also retains the physical origin of first-class `policy` declarations,
+which the semantic IR stores separately from the entity/activity graph. The public
+policy-compilation example is checked across a filename change: its meaning stays
+the same while its source identity and physical origin change. This general source
+support does not admit extra policies into the exact native operation ABI.
+
 The connected regression partitions the actual authored contract into ten entities
 and twelve activities, admits it through the native consumer, and checks all 22
 physical origins and unchanged native facts. Missing members, conflicting IDs,
