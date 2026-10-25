@@ -500,3 +500,50 @@ still requires its own current-input checks. Existing overlays supplied through
 `GOFLAGS` are refused rather than silently replaced. The observation is bounded to
 64 variables, 1,024 input files, 1 MiB per file, 16 MiB total and a 30-second query
 context. Failure returns no report, and owned query files are removed.
+
+### Planning a partition against each embedded source view
+
+`sourcebundle.PreparePartition(sources, filename, beforeID, into)` resolves a
+stable declaration ID in the original source set and proposes two source members.
+It shares the byte partitioner used by `package split-source`: original bodies,
+comments, line endings and bindings are copied with explicit input/output byte
+ranges. The package headers are duplicated. Both source sets are lowered and
+compared; a new file changes source identity while preserving the semantic image.
+Policy declaration IDs and their physical spans participate in this preparation.
+
+`embeduse.PreparePartition(ctx, directory, names, filename, beforeID, into)` adds
+the selected Go package's consumer observations to that proposal. `names` is the
+explicit original source set, and every member must have an observed input in
+that package. The destination must be absent. Each consumer that read the original
+member or starts selecting the new member receives a result:
+
+| State | Meaning in this observation |
+| --- | --- |
+| `PRESERVED` | Both selected source sets lower to the same semantic image. |
+| `CHANGED` | Both lower, but their images differ; missing and new declaration IDs remain visible. |
+| `UNASSESSED` | At least one selected source set cannot be lowered in this source-bundle scope; the reason and any available image remain visible. |
+
+For example, the single-file consumer in the earlier counterexample still parses
+successfully after the split. Its plan is `CHANGED` because two declaration IDs
+are missing. A wildcard consumer of the same file retains all three declarations.
+A previously unrelated wildcard that starts selecting the new member also appears
+in the plan. Mixed-package source sets, unresolved imports and incomplete fragments
+remain `UNASSESSED`; a lowerer error does not become an empty successful image.
+
+The actual operation-input contract regression takes the planned members selected
+by each variable into the native ABI reader. The family retains all 22 declaration
+origins, four operations, six obligations and two policy activities. The single-file
+reader loses twelve activities and is refused by the ABI reader. Image comparison
+and native admission are distinct checks. The shared workspace regression continues
+to execute and replay six independent expected activity outputs after partitioning.
+
+Planning rereads original inputs, binds proposed bytes to the after-observation,
+and rejects changed Go declarations, build context or unplanned source members.
+The complete call has a 30-second context, with the existing input and consumer
+bounds. A host error returns no plan; an assessable change or unsupported consumer
+scope stays in the returned plan. These observations are sequential reads, not an
+immutable filesystem snapshot. No files are written. Native ABI acceptance,
+dynamic readers, other packages/build contexts, current-input checks at publication
+and coordinated installation retain their own obligations. This native planning
+API adds no standalone CLI and does not grant the existing workspace apply command
+repository-wide consumer coverage.
