@@ -64,17 +64,22 @@ func pinRevisionConsumer(directory, path, expected string) (string, string, erro
 }
 
 type revisionBoundedCapture struct {
-	bytes.Buffer
+	// Keep optimized copy paths from bypassing the capture limit.
+	data  bytes.Buffer
 	limit int
 }
+
+func (capture *revisionBoundedCapture) Len() int       { return capture.data.Len() }
+func (capture *revisionBoundedCapture) Bytes() []byte  { return capture.data.Bytes() }
+func (capture *revisionBoundedCapture) String() string { return capture.data.String() }
 
 func (capture *revisionBoundedCapture) Write(data []byte) (int, error) {
 	remaining := capture.limit - capture.Len()
 	if len(data) > remaining {
-		n, _ := capture.Buffer.Write(data[:remaining])
+		n, _ := capture.data.Write(data[:remaining])
 		return n, errors.New("consumer output exceeds its capture limit")
 	}
-	return capture.Buffer.Write(data)
+	return capture.data.Write(data)
 }
 
 func runRevisionConsumer(ctx context.Context, directory, executable string, source, request, report []byte,
