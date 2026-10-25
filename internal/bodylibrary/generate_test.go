@@ -1,4 +1,4 @@
-package bodyexecution
+package bodylibrary
 
 import (
 	"context"
@@ -12,7 +12,7 @@ func TestLibraryDeclinesUnresolvedConstruction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := GenerateLibrary(context.Background(), "source.gooo", source, "Echo", "library")
+	generated, err := Generate(context.Background(), "source.gooo", source, "Echo", "library")
 	if generated != "" || err == nil || !strings.Contains(err.Error(), "authored computes bodies") {
 		t.Fatal("construction was selected without an explicit evaluation route", generated, err)
 	}
@@ -29,7 +29,7 @@ entity Record id "urn:library:record" fields {
 }
 activity Keep(Record) -> Record id "urn:library:keep" computes "return input"
 `
-	generated, err := GenerateLibrary(context.Background(), "source.gooo", []byte(source), "Keep", "records")
+	generated, err := Generate(context.Background(), "source.gooo", []byte(source), "Keep", "records")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ activity Keep(Record) -> Record id "urn:library:keep" computes "return input"
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if output, err := GenerateLibrary(ctx, "source.gooo", []byte(source), "Keep", "records"); err == nil || output != "" {
+	if output, err := Generate(ctx, "source.gooo", []byte(source), "Keep", "records"); err == nil || output != "" {
 		t.Fatal("cancelled generation produced source", output, err)
 	}
 }

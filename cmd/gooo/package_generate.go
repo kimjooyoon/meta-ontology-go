@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"runtime"
+	"runtime/debug"
 	"strings"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodylibrary"
 )
 
 const packageGenerateUsage = "usage: gooo package generate --go-package <name> <workspace.json>"
@@ -20,7 +22,7 @@ func runPackageGenerate(args []string, reader SourceReader, stdout, stderr io.Wr
 	program, manifestDigest, err := inspectWorkspaceSource(reader, args[2])
 	var source string
 	if err == nil {
-		source, err = bodyexecution.GenerateLibrary(context.Background(), "workspace.gooo",
+		source, err = bodylibrary.Generate(context.Background(), "workspace.gooo",
 			[]byte(program.Source), program.Entry.LoweredName, args[1])
 	}
 	if err != nil {
@@ -28,6 +30,10 @@ func runPackageGenerate(args []string, reader SourceReader, stdout, stderr io.Wr
 		return exitFailure
 	}
 	var header strings.Builder
+	info, _ := debug.ReadBuildInfo()
+	compiler := versionBuildMetadata(info, runtime.Version())
+	fmt.Fprintf(&header, "// Compiler version=%q source=%q source_status=%q go=%q\n",
+		compiler.Version, compiler.CompilerSourceSHA, compiler.SourceStatus, compiler.GoVersion)
 	fmt.Fprintf(&header, "// Workspace manifest: %s\n// Workspace image: %s\n", manifestDigest, program.Workspace.Digest)
 	for _, pkg := range program.Workspace.Packages {
 		for _, source := range pkg.Sources {

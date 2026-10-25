@@ -37,16 +37,23 @@ stable IDs. Field tags carry `gooo:"<field-id>"`, original JSON names and declar
 text bounds. Required values, optional pointers, slices and optional slices keep
 their existing representation and source field order. No field-wise copy bridge
 is generated; typed references are renamed together.
+Source locals that collide with public types or private helpers receive fresh
+names through their typed bindings. String values and other scopes stay intact.
 
-The output records manifest, workspace image, original source-file, lowered
-source and typed-plan digests. Entity/activity regions retain their stable ID
+The output records compiler source/status, manifest, workspace image, original
+source-file, lowered source and typed-plan digests. Entity/activity regions retain their stable ID
 markers. These identify generation inputs, not producer authentication or a
 claim that the program has run. Keep the exact original workspace to reproduce
-the file; identical inputs and package name produce identical output bytes.
+the file; identical inputs, package name and compiler build produce identical
+output bytes. Compiler source can be `UNBOUND_LOCAL_SOURCE` when build metadata
+cannot bind it; the command does not infer a producer from the current checkout.
+Hash the complete generated file separately when recording its consumer. A later
+commit with equal source bytes does not become the original generation producer.
 
 Generation typechecks the emitted Go in process. It neither invokes the Go
 toolchain nor executes the program, asks a model, or creates test expectations.
-The current route rejects unresolved `assembling` activities. Existing workspace
+The current route rejects every `assembling` contract, including a saved selection
+checkpoint that still retains that contract. Existing workspace
 and body-profile bounds apply, including the 256 KiB projection bound.
 
 Go callers own decoding, UTF-8 and text-bound checks, missing/duplicate JSON

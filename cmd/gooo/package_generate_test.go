@@ -15,6 +15,13 @@ import (
 func TestPackageGenerateImportedLibraries(t *testing.T) {
 	root := t.TempDir()
 	writeWorkspaceSource(t, root, "go.mod", "module libraryprobe\n\ngo 1.27.3\n")
+	fixture := t.TempDir()
+	writeWorkspaceSource(t, fixture, "main.gooo", libraryHygieneSource)
+	manifest := writeWorkspaceManifest(t, fixture, `{"schema":"gooo/package-workspace-manifest/v1","entry":{"package_path":"hygiene","activity":"Keep"},"packages":[{"path":"hygiene","sources":["main.gooo"]}]}`)
+	if err := os.Mkdir(filepath.Join(root, "hygiene"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	writeWorkspaceSource(t, root, "hygiene/generated.go", string(generateLibraryCommand(t, "hygiene", manifest)))
 	for _, example := range []struct{ name, folder, manifest string }{
 		{"surface", "runtime-package-surface", "gooo.workspace.json"},
 		{"optional", "package-optional-record-flow", "gooo.workspace.json"},
@@ -59,8 +66,8 @@ func generateLibraryCommand(t *testing.T, name, manifest string) []byte {
 			t.Fatal(code, diagnostics.String())
 		}
 	})
-	for _, marker := range []string{"// Workspace manifest: sha256:", "// Workspace image: sha256:",
-		"// Gooo source package=", "// Lowered Gooo source: sha256:", "// Typed plan: sha256:", "func Evaluate("} {
+	for _, marker := range []string{"// Compiler version=", "// Workspace manifest: sha256:", "// Workspace image: sha256:",
+		"// Gooo source package=", "// Lowered Gooo source: sha256:", "// Typed plan: sha256:", "func Evaluate(", "// Evaluate returns activity="} {
 		if !strings.Contains(out.String(), marker) {
 			t.Fatal("generated library lacks source binding", marker)
 		}

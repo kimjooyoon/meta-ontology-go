@@ -11,6 +11,7 @@ import (
  "libraryprobe/surface"
  "libraryprobe/optional"
  "libraryprobe/named"
+ "libraryprobe/hygiene"
 )
 func check[I, O any](t *testing.T, file, input, entry string, count int, evaluate func(I) O) {
  t.Helper()
@@ -48,4 +49,23 @@ func TestIndependentOrderedRoots(t *testing.T) {
   if got := named.Evaluate(row[0],row[1]); got != row[2] { t.Fatal(row,got) }
  }
 }
+func TestIndependentHygiene(t *testing.T) {
+ if got := hygiene.Evaluate(hygiene.R_Record{F_label:"before"}); got.F_label != "before|before|literal" {
+  t.Fatal("public types or private helpers captured source locals", got)
+ }
+}
+`
+
+const libraryHygieneSource = `package hygiene
+namespace hygiene
+entity Record id "urn:library:record" fields {
+ field label id "urn:library:label" type string required one
+}
+activity Copy(Record) -> Record id "urn:library:copy" computes "return input"
+activity Keep(Record) -> Record id "urn:library:keep" computes ` + "`" + `
+let R_Record = input.label
+let goooComposedActivity0Call0 = R_Record
+let goooLibraryLocal0 = "|literal"
+return Copy(Record{label: R_Record + "|" + goooComposedActivity0Call0 + goooLibraryLocal0})
+` + "`" + `
 `

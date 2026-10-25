@@ -72,7 +72,7 @@ Generate an importable Go package from authored computes bodies:
 
 Evaluate calls the entry and its bound producers. R_<record> and F_<field> expose
 source names; stable field IDs remain in gooo struct tags. Generation needs no
-cases, model, native build or program execution. Assembly must first be realized.
+cases, model, native build or program execution. Assembling contracts are unsupported.
 See docs/language/package-library-generation.md for input and validation limits.
 
 Inspect the entry's prepared source calls before execution:

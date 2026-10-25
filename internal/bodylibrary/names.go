@@ -1,4 +1,4 @@
-package bodyexecution
+package bodylibrary
 
 import (
 	"bytes"
@@ -10,11 +10,13 @@ import (
 	"go/types"
 	"strconv"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
 
 // Change typed objects, including keyed literals and selectors. Equal spellings
 // in another scope and source string values are never treated as references.
-func nameLibraryProjection(source, packageName, sourceDigest string, plan CompositionPlan) (string, error) {
+func nameLibraryProjection(source, packageName, sourceDigest string, plan bodyexecution.CompositionPlan) (string, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "library.go", source, parser.ParseComments)
 	if err != nil {
@@ -45,6 +47,7 @@ func nameLibraryProjection(source, packageName, sourceDigest string, plan Compos
 			names[shape.Field(i)], identities[shape.Field(i)] = "F_"+field.Name, field.ID
 		}
 	}
+	avoidLibraryShadowing(file, info, names)
 	file.Name.Name = packageName
 	ast.Inspect(file, func(node ast.Node) bool {
 		if field, ok := node.(*ast.Field); ok && len(field.Names) == 1 {
@@ -73,5 +76,5 @@ func nameLibraryProjection(source, packageName, sourceDigest string, plan Compos
 	if err := format.Node(&out, fset, file); err != nil {
 		return "", err
 	}
-	return formatCompositionProjection(out.String())
+	return formatLibraryProjection(out.String())
 }
