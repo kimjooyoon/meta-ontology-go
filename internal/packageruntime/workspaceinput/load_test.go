@@ -2,7 +2,6 @@ package workspaceinput_test
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -48,7 +47,7 @@ func TestNativeConsumerLoadsSplitsAndExecutesWorkspaceWithoutCLI(t *testing.T) {
 	for _, file := range proposal.Result.Files {
 		files[file.Filename] = &fstest.MapFile{Data: []byte(file.Source)}
 	}
-	afterBytes, err := json.Marshal(proposal.Definition)
+	afterBytes, err := workspaceinput.Encode(proposal.Definition)
 	if err != nil {
 		t.Fatal(err)
 	}

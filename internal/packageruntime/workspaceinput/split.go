@@ -2,6 +2,7 @@ package workspaceinput
 
 import (
 	"fmt"
+	"path/filepath"
 	"slices"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
@@ -24,7 +25,12 @@ func PrepareSplit(reader Reader, manifestPath string, definition Definition, req
 	if err != nil {
 		return SplitProposal{}, err
 	}
-	result, err := packageruntime.SplitSource(loaded, request.PackagePath, request.Source, request.BeforeID, request.Into)
+	source, err := SourcePath(request.Source)
+	if err != nil {
+		return SplitProposal{}, err
+	}
+	result, err := packageruntime.SplitSource(loaded, request.PackagePath,
+		filepath.ToSlash(source), request.BeforeID, request.Into)
 	if err != nil {
 		return SplitProposal{}, err
 	}
@@ -40,6 +46,9 @@ func PrepareSplit(reader Reader, manifestPath string, definition Definition, req
 		if pkg.Path == request.PackagePath {
 			pkg.Sources = append(pkg.Sources, request.Into)
 		}
+	}
+	if _, err := Encode(after); err != nil {
+		return SplitProposal{}, err
 	}
 	return SplitProposal{Definition: after, Result: result}, nil
 }

@@ -287,3 +287,12 @@ files through the shared reader, checks the planned image, and executes both
 old and reloaded programs against independent expectations. Hosts still own
 current-input checks and filesystem writes. This API does not discover other
 single-file/embed consumers or establish repository-wide rewrite coverage.
+
+The requested source path uses the loader's canonical resolution, while authored
+paths such as `./main.gooo` remain unchanged in the returned definition. Use
+`workspaceinput.Encode(proposal.Definition)` to serialize it. The encoder retains
+the existing indented JSON plus final newline, checks the same 1-MiB reader limit,
+and rejects any JSON round-trip that changes authored values. `PrepareSplit`
+performs this check before returning a proposal; the CLI writer and installed
+manifest check use the same encoder. A valid source partition cannot leave an
+output file list that the shared reader refuses to reload.

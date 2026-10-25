@@ -9,6 +9,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
 type workspaceSourceSplitApplication struct {
@@ -133,11 +134,10 @@ func sourceSplitWrites(receipt workspaceSourceSplitReceipt) ([]atomicWrite, erro
 		}
 		writes = append(writes, atomicWrite{path: target, data: []byte(file.Source), before: &before})
 	}
-	manifestData, err := json.MarshalIndent(receipt.UpdatedWorkspace, "", "  ")
+	manifestData, err := workspaceinput.Encode(*receipt.UpdatedWorkspace)
 	if err != nil {
 		return nil, err
 	}
-	manifestData = append(manifestData, '\n')
 	return append(writes, atomicWrite{path: manifestPath, data: manifestData, before: &manifestBefore}), nil
 }
 
@@ -162,11 +162,11 @@ func verifyAppliedSourceSplit(receipt workspaceSourceSplitReceipt) error {
 	if err != nil {
 		return err
 	}
-	expected, err := json.MarshalIndent(receipt.UpdatedWorkspace, "", "  ")
+	expected, err := workspaceinput.Encode(*receipt.UpdatedWorkspace)
 	if err != nil {
 		return err
 	}
-	if digest != workspaceDigest(append(expected, '\n')) {
+	if digest != workspaceDigest(expected) {
 		return fmt.Errorf("installed workspace manifest differs from the proposal")
 	}
 	loaded, err := loadPackageSources(OSFileReader{}, receipt.ManifestPath, manifest)
