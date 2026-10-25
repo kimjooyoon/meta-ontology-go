@@ -18,7 +18,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageExecuteUsage = "usage: gooo package execute [--json [--receipt-compression gzip]] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json> | --origin-receipt <execution.json>) [--origin-kind reads|constructions|elements|links|faults|local-writes|local-uses|local-elements|local-fill-fragments|local-input-locations|field-writes|field-uses|field-input-locations] [--origin-shape rows|local-fill-columns|field-lineage-columns|field-local-columns|field-parent-columns|local-version-columns|local-use-columns] [--origin-field-id <id>] [--origin-activity-id <id>] [--origin-root-activity-id <id>] [--origin-offset <row-index>] [--origin-limit <1..128>] [--body-plans <plans.json>] [--assembly-model <model.json>] [--assembly-policy-workspace <policy.workspace.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
+const packageExecuteUsage = "usage: gooo package execute [--timing] [--json [--receipt-compression gzip]] (--cases <cases.json> | --inputs <inputs.json> | --construction-receipt <execution.json> | --origin-receipt <execution.json>) [--origin-kind reads|constructions|elements|links|faults|local-writes|local-uses|local-elements|local-fill-fragments|local-input-locations|field-writes|field-uses|field-input-locations] [--origin-shape rows|local-fill-columns|field-lineage-columns|field-local-columns|field-parent-columns|local-version-columns|local-use-columns] [--origin-field-id <id>] [--origin-activity-id <id>] [--origin-root-activity-id <id>] [--origin-offset <row-index>] [--origin-limit <1..128>] [--body-plans <plans.json>] [--assembly-model <model.json>] [--assembly-policy-workspace <policy.workspace.json>] [--tiny-model <model.json>] [--go <go-binary>] <gooo.workspace.json>"
 
 type packageBodyFillPlanSet struct {
 	Schema     string                     `json:"schema"`
@@ -49,6 +49,7 @@ type packageExecutionReceipt struct {
 }
 
 func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Writer) int {
+	ctx, args, timing := packageTimingContext(context.Background(), args)
 	args, jsonMode := parseJSONFlag(args)
 	flags, manifestPath, err := parsePackageExecuteArgs(args)
 	if err == nil {
@@ -59,11 +60,13 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, packageExecuteUsage)
 		return exitUsage
 	}
-	receipt, err := executePackage(context.Background(), reader, manifestPath, flags)
+	receipt, err := executePackage(ctx, reader, manifestPath, flags)
 	if err != nil {
 		markPackageExecutionError(&receipt, err)
 	}
-	return writePackageExecution(receipt, err, jsonMode, flags["--receipt-compression"], stdout, stderr)
+	code := writePackageExecution(receipt, err, jsonMode, flags["--receipt-compression"], stdout, stderr)
+	writePackageTiming(stderr, timing, "execute", receipt)
+	return code
 }
 
 func markPackageExecutionError(receipt *packageExecutionReceipt, err error) {

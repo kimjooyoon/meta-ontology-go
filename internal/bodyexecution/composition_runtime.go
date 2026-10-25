@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
 	"github.com/kimjooyoon/meta-ontology-go/internal/buildidentity"
 )
 
@@ -145,7 +146,9 @@ func initialCompositionRuntime(source []byte, prior Composition, suite Compositi
 func executeComposition(ctx context.Context, filename string, source []byte, prior Composition,
 	suite CompositionCases, goBinary string, owner *Executor, calls *jointCallContext) (CompositionRuntime, error) {
 	start := time.Now()
+	phase := bodytiming.Start(ctx, "composition_receipt")
 	r := initialCompositionRuntime(source, prior, suite)
+	phase.End(true)
 	if owner != nil {
 		r.Schema = "gooo/body-composition-runtime/v2"
 	}
@@ -161,13 +164,17 @@ func executeComposition(ctx context.Context, filename string, source []byte, pri
 	}
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
+	phase = bodytiming.Start(ctx, "source_replay")
 	graph, err := replayComposition(ctx, filename, source, prior)
+	phase.End(err == nil)
 	if err != nil {
 		return finish(err)
 	}
 	observed := prior
 	if calls != nil {
+		phase = bodytiming.Start(ctx, "composition_call_context")
 		graph, observed, err = calls.bind(graph, prior)
+		phase.End(err == nil)
 		if err != nil {
 			return finish(err)
 		}
@@ -175,7 +182,9 @@ func executeComposition(ctx context.Context, filename string, source []byte, pri
 	}
 	err = executeCompositionNative(ctx, graph, observed, suite, goBinary, &r, owner)
 	if err == nil {
+		phase = bodytiming.Start(ctx, "input_separation")
 		r.InputSeparation = graph.measureInputSeparation(ctx, filename, source, prior, suite, r.Traces)
+		phase.End(true)
 	}
 	return finish(err)
 }
@@ -183,7 +192,9 @@ func executeComposition(ctx context.Context, filename string, source []byte, pri
 func executeCompositionNative(ctx context.Context, graph compositionGraph, prior Composition,
 	suite CompositionCases, goBinary string, r *CompositionRuntime, owner *Executor) error {
 	r.ProjectionReplayed, r.Stage = true, "RUNTIME_CASES"
+	phase := bodytiming.Start(ctx, "runtime_suite_prepare")
 	rows, err := graph.inputRows(suite)
+	phase.End(err == nil)
 	if err != nil {
 		return err
 	}
@@ -210,12 +221,16 @@ func prepareCompositionTool(ctx context.Context, requested string, r *Compositio
 	if err != nil {
 		return "", err
 	}
+	phase := bodytiming.Start(ctx, "go_tool_hash")
 	native.GoToolSHA256, err = owner.bindFile(goBinary)
+	phase.End(err == nil)
 	if err != nil {
 		return "", err
 	}
 	r.GoToolSHA256 = native.GoToolSHA256
+	phase = bodytiming.Start(ctx, "toolchain_bind")
 	err = observeToolchain(ctx, goBinary, native, owner)
+	phase.End(err == nil)
 	r.Toolchain, r.GoVersion = native.Toolchain, native.GoVersion
 	r.ToolchainReference = native.ToolchainReference
 	return goBinary, err
@@ -247,17 +262,29 @@ func observeCompositionRuns(ctx context.Context, root, executable string, rows [
 	graph compositionGraph, suite CompositionCases, r *CompositionRuntime) error {
 	input, _ := json.Marshal(rows)
 	var observations compositionNativeObservation
+	phaseNames := [2][3]string{
+		{"native_prepare_1", "native_run_1", "runtime_decode_1"},
+		{"native_prepare_2", "native_run_2", "runtime_decode_2"},
+	}
 	for attempt := range 2 {
 		r.Stage = fmt.Sprintf("EXECUTE_%d", attempt+1)
-		if err := observations.reset(root, r); err != nil {
+		phase := bodytiming.Start(ctx, phaseNames[attempt][0])
+		err := observations.reset(root, r)
+		phase.End(err == nil)
+		if err != nil {
 			return err
 		}
+		phase = bodytiming.Start(ctx, phaseNames[attempt][1])
 		output, observation, err := runCompositionProcess(ctx, root, executable, input)
+		phase.End(err == nil)
 		r.Runs = append(r.Runs, observation)
 		if err != nil {
 			return err
 		}
-		if err := observations.observe(attempt, root, output, graph, suite, r); err != nil {
+		phase = bodytiming.Start(ctx, phaseNames[attempt][2])
+		err = observations.observe(attempt, root, output, graph, suite, r)
+		phase.End(err == nil)
+		if err != nil {
 			return err
 		}
 	}
