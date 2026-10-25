@@ -220,12 +220,15 @@ format:   gofmt -l .
 vet:      go vet ./...
 test:     go test ./...
 race:     go test -race ./...
-semantic: go run ./cmd/gooo check examples/billing/main.gooo
+semantic: ./scripts/semantic-conformance.sh (materialized CI workspace)
 policy:   go run ./scripts/verify
 ```
 
 Evidence, proof, and failure-report jobs consume those six results. The semantic
-check is a runnable billing-fixture check. Static analysis, LSP behavior, cache
+job transforms the materialized workspace, checks its final projected program
+with the full test suite, and runs the staged verifier, billing example and
+reproducibility checks. The raw-source unit job and the transformed-source test
+observe different program states. Static analysis, LSP behavior, cache
 conformance, generated-output snapshots, and automatic durable provenance
 publishing are not current guarantees.
 
