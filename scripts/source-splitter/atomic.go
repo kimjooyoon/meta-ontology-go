@@ -16,9 +16,13 @@ func applySplit(plan splitPlan) error {
 }
 
 func applySplitObserved(plan splitPlan, observer splitObserver) error {
+	return applySplitWithTemp(plan, observer, os.CreateTemp)
+}
+
+func applySplitWithTemp(plan splitPlan, observer splitObserver, create splitTempCreator) error {
 	staged := make([]stagedPart, len(plan.Parts))
 	for index, part := range plan.Parts {
-		temporary, err := stagePart(part, plan.Mode)
+		temporary, err := stagePart(part, plan.Mode, create)
 		emitSplit(observer, "STAGE", part.Path, temporary, err == nil)
 		if err != nil {
 			for _, item := range staged {
