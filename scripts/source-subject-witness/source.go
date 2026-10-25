@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strings"
 )
 
 type sourceReport struct {
@@ -19,9 +20,11 @@ type sourceReport struct {
 }
 
 type fileMetric struct {
-	Path     string `json:"path"`
-	Language string `json:"language"`
-	Lines    int    `json:"lines"`
+	ModuleBoundaryReason string `json:"module_boundary_reason,omitempty"`
+	ModuleRoot           string `json:"module_root,omitempty"`
+	Path                 string `json:"path"`
+	Language             string `json:"language"`
+	Lines                int    `json:"lines"`
 }
 
 type directoryMetric struct {
@@ -63,7 +66,11 @@ func loadSource(path string) (sourceReport, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&report); err != nil {
-		return report, sourceValidationFailure("SOURCE_JSON_MALFORMED", "MALFORMED_EVIDENCE", "restore-source-metrics")
+		reason, next := "SOURCE_JSON_MALFORMED", "restore-source-metrics"
+		if strings.HasPrefix(err.Error(), "json: unknown field ") {
+			reason, next = "SOURCE_SCHEMA_UNSUPPORTED", "update-source-metrics-consumer"
+		}
+		return report, sourceValidationFailure(reason, "MALFORMED_EVIDENCE", next)
 	}
 	var trailing any
 	if err := decoder.Decode(&trailing); err != io.EOF {
