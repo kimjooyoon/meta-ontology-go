@@ -34,6 +34,11 @@ func prepareActivityBodySource(filename string, source []byte, activityName stri
 	if diagnostics.HasErrors() {
 		return p, fmt.Errorf("parse .gooo source: %w", diagnostics.Error())
 	}
+	return prepareActivityBodyFile(file, activityName)
+}
+
+func prepareActivityBodyFile(file *syntax.File, activityName string) (preparedBody, error) {
+	var p preparedBody
 	if file == nil || file.Package == nil {
 		return p, fmt.Errorf(".gooo source has no package declaration")
 	}

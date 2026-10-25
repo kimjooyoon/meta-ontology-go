@@ -34,7 +34,11 @@ func TestDependencyProjectionFresh1619(t *testing.T) {
 		{"MissingDependency", "dependency.generated.go"}, {"NextObservation", "next.generated.go"},
 	} {
 		t.Run(c.activity, func(t *testing.T) {
-			projection, err := bodycodegen.Generate("source.gooo", source, c.activity)
+			members, err := policySources()
+			if err != nil {
+				t.Fatal(err)
+			}
+			projection, err := bodycodegen.GenerateSourceBundle(members, c.activity)
 			if err != nil {
 				t.Fatal(err)
 			}

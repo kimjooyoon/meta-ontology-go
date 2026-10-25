@@ -9,7 +9,11 @@ import (
 func TestConsumerPolicyProjectionFresh1617(t *testing.T) {
 	for _, c := range []struct{ activity, file string }{{"BindSubjects", "subjects.generated.go"}, {"PermitContinuation", "eligibility.generated.go"}, {"PermitWait", "wait.generated.go"}, {"BindTargetRun", "target.generated.go"}, {"ObserveStage", "stage.generated.go"}, {"ArtifactLabel", "artifact.generated.go"}, {"WorkflowPath", "workflow.generated.go"}} {
 		t.Run(c.activity, func(t *testing.T) {
-			p, err := bodycodegen.Generate("source.gooo", source, c.activity)
+			members, err := policySources()
+			if err != nil {
+				t.Fatal(err)
+			}
+			p, err := bodycodegen.GenerateSourceBundle(members, c.activity)
 			if err != nil {
 				t.Fatal(err)
 			}
