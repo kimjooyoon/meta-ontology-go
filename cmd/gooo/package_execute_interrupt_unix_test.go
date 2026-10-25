@@ -14,6 +14,9 @@ func TestPackageExecuteInterruptJoinsOwnedTool(t *testing.T) {
 	if os.Getenv("GOOO_INTERRUPT_TEST_CHILD") == "1" {
 		args := []string{"package", "execute", "--json", "--cases", "../../examples/assembly-explainer/cases.json",
 			"--go", os.Getenv("GOOO_INTERRUPT_TEST_TOOL"), "../../examples/assembly-explainer/gooo.workspace.json"}
+		if os.Getenv("GOOO_INTERRUPT_TEST_TIMING") == "1" {
+			args = append(args, "--timing")
+		}
 		os.Exit(run(args, os.Stdout, os.Stderr))
 	}
 	for _, signal := range []os.Signal{os.Interrupt, syscall.SIGTERM} {
@@ -36,6 +39,7 @@ func TestPackageExecuteInterruptJoinsOwnedTool(t *testing.T) {
 			if err := json.Unmarshal(fixture.stdout.Bytes(), &receipt); err != nil || receipt.Decision != "FAIL_CLOSED" || receipt.Error == "" {
 				t.Fatalf("interruption lost its structured result: decode=%v decision=%s stderr=%s", err, receipt.Decision, fixture.stderr.String())
 			}
+			checkPackageInterruptTiming(t, fixture.stderr.Bytes(), receipt)
 		})
 	}
 }

@@ -53,6 +53,13 @@ measured operation returned normally, including a classification of `UNKNOWN`;
 it does not establish correctness of all inputs. CLI argument rejection happens
 before an execution diagnostic is produced.
 
+Consumers keep diagnostic parsing and storage failures separate from the command's
+exit status and primary stdout publication. An unavailable timing view remains an
+unobserved diagnostic; it must not replace the actual execution result. With
+Unix interrupt/termination cancellation, the view retains the interrupted tool
+phase and the current source/input bindings while the primary receipt remains
+`FAIL_CLOSED`. The command still joins its owned child before publishing that result.
+
 ## Individual native processes
 
 Development source records process creation and termination waiting separately.
