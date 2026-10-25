@@ -34,3 +34,25 @@ func TestNativeConsumerRejectsUnvalidatedDefinitionAndOversizeSource(t *testing.
 		t.Fatal("native caller bypassed the source byte limit", err)
 	}
 }
+
+type sourceReadFunc func(string) ([]byte, error)
+
+func (r sourceReadFunc) ReadFile(path string) ([]byte, error) { return r(path) }
+
+func TestWorkspaceSharesOneSourceObservationOnlyWithinOneLoad(t *testing.T) {
+	definition, files, _ := nativeSplitFixture()
+	definition.Packages = append(definition.Packages, workspaceinput.Package{
+		Path: "native/other", Sources: []string{"./main.gooo"}})
+	reads := 0
+	reader := sourceReadFunc(func(path string) ([]byte, error) { reads++; return files.ReadFile(path) })
+	first, err := workspaceinput.Load(reader, "workspace.json", definition)
+	if err != nil || reads != 1 || first.Packages[0].Sources[0].Content != first.Packages[1].Sources[0].Content {
+		t.Fatal("shared source was observed separately within one definition", reads, err)
+	}
+	files["main.gooo"].Data = append(files["main.gooo"].Data, []byte("\n# later source revision\n")...)
+	second, err := workspaceinput.Load(reader, "workspace.json", definition)
+	if err != nil || reads != 2 || first.Packages[0].Sources[0].Content == second.Packages[0].Sources[0].Content ||
+		second.Packages[1].Sources[0].Content != string(files["main.gooo"].Data) {
+		t.Fatal("source observation was cached across separate loads", reads, err)
+	}
+}

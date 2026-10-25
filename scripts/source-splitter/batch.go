@@ -16,6 +16,7 @@ func runBatch(cfg config, metrics metricevidence.Report, indicators []metricevid
 		return fmt.Errorf("logical split plan identity is unknown")
 	}
 	selected := make([]logicalSplitSubject, 0)
+	unhandled := make([]string, 0)
 	seen := map[string]bool{}
 	for _, subject := range logical.Subjects {
 		if seen[subject.Logical] || !metricevidence.Contains(indicators, subject.Logical) {
@@ -23,6 +24,7 @@ func runBatch(cfg config, metrics metricevidence.Report, indicators []metricevid
 		}
 		seen[subject.Logical] = true
 		if subject.Reason != "projectable" {
+			unhandled = append(unhandled, subject.Logical)
 			continue
 		}
 		if subject.Consumer != "logical-source-splitter" || subject.Operation != splitBatchOperation ||
@@ -61,5 +63,7 @@ func runBatch(cfg config, metrics metricevidence.Report, indicators []metricevid
 		}
 		applied = append(applied, subject)
 	}
-	return writeSplitBatchReport(cfg.output, buildSplitBatchReport(cfg.sha, plans, applied, deferredTopology))
+	sort.Strings(unhandled)
+	return writeSplitBatchReport(cfg.output,
+		buildSplitBatchReport(cfg.sha, logical.sourceDigest, plans, applied, deferredTopology, unhandled))
 }
