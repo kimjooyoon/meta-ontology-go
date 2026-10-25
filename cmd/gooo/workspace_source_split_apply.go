@@ -33,6 +33,9 @@ func applyWorkspaceSourceSplit(options workspaceSourceSplitOptions, ops atomicFi
 	proposalOptions := workspaceSourceSplitOptions{
 		packagePath: proposal.Result.PackagePath, source: proposal.Result.InputFilename,
 		before: proposal.Result.BeforeID, into: proposal.Result.Files[1].Filename, manifestPath: options.manifestPath}
+	if proposal.Selection != nil {
+		proposalOptions.before, proposalOptions.lineLimit = "", proposal.Selection.LineLimit
+	}
 	if proposal.Registration != nil {
 		proposalOptions.registryRoot = proposal.Registration.Root
 	}

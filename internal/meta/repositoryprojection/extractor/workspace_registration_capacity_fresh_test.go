@@ -38,6 +38,20 @@ func TestRegisteredWorkspaceRenderedCapacity(t *testing.T) {
 		"cmd/gooo#verifySplitRegistrationOutput",
 		"internal/meta/generation#SplitGoooInputContractEvidence",
 		"internal/meta/generation#TestSplitGoooOperationRetainsSourceActivityIdentity",
+		"internal/packageruntime#ChooseSourceSplit",
+		"internal/packageruntime#chooseSourceSplit",
+		"internal/packageruntime#TestSourceSplitChoiceMatchesMaterializedOutputs",
+		"internal/packageruntime#TestSourceSplitChoiceCountsPartialProgressAndStableTies",
+		"cmd/gooo#parseSplitLineLimit",
+		"cmd/gooo#prepareChosenWorkspaceSplit",
+		"cmd/gooo#chosenRegisteredSplit",
+		"cmd/gooo#TestWorkspaceChosenSplitPublishesAndExecutes",
+		"cmd/gooo#assertChosenSplitRuntime",
+		"cmd/gooo#TestWorkspaceSplitChoiceModesAreExclusive",
+		"cmd/gooo#TestWorkspaceSplitChoiceRecomputedBeforePublication",
+		"cmd/gooo#TestWorkspaceSplitChoiceRetainsSatisfiedSource",
+		"cmd/gooo#changingSplitChoiceReader.ReadFile",
+		"cmd/gooo#TestWorkspaceSplitChoiceRejectsChangingSelectionInputs",
 	}
 	observed, err := collectNamedCapacityFiles(root, targets, true)
 	if err != nil {

@@ -287,6 +287,40 @@ observation cannot be passed to `--apply`, even if its decision is edited. Nativ
 callers can use `packageruntime.InspectSourceSplit` with the same boundary
 semantics. No new CI job or persistent service is required.
 
+### Choose a cut from a physical line target
+
+An agent can supply a target instead of selecting a declaration ID itself:
+
+```sh
+go run ./cmd/gooo package split-source --line-limit 75 --json \
+  --package example/agent-tool-inventory --source main.gooo --into inspect.gooo \
+  --syntax-registry-root . \
+  examples/agent-tool-inventory/gooo.workspace.json > /tmp/inventory-split.json
+go run ./cmd/gooo package split-source --apply /tmp/inventory-split.json --json \
+  examples/agent-tool-inventory/gooo.workspace.json
+```
+
+The selection minimizes the larger output's physical line count among existing
+declaration boundaries that strictly reduce the original file's size. Equal
+results use the stable declaration ID as a deterministic tie break. Selection
+uses the compact boundary observations; it constructs and admits only the chosen
+partition through the ordinary workspace and registration path. If that consumer
+admission fails, it returns the failure without trying an unreported alternative.
+
+The optional `selection` object records the original source and workspace image,
+candidate count, improving candidate count, count meeting the target, and selected
+boundary. For this example it selects `Inspect`: 82 lines become 44 and 41,
+including the duplicated header. A target of 30 still proposes the same useful
+intermediate split with `limit_satisfied: false`; it does not claim the target has
+been reached. A source already within the target, or without an improving cut,
+returns an explanation and no writable proposal. `--line-limit` and `--before`
+are exclusive. Saved selections are recomputed from current inputs on application.
+
+Native callers can use `packageruntime.ChooseSourceSplit`. This is a deterministic
+physical-size objective, not a judgment of conceptual cohesion or a model choice.
+The metric executor still needs an explicit workspace consumer scope before it
+can use this path; a file-length observation alone does not identify that scope.
+
 ## Native workspace consumers
 
 Repository Go consumers can use
