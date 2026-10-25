@@ -19,6 +19,9 @@ func (overlay profileOverlay) Open(path string) (fs.File, error) {
 	if raw, found := overlay.members[path]; found {
 		return &profileMemoryFile{Reader: bytes.NewReader(raw), path: path, size: int64(len(raw))}, nil
 	}
+	if overlay.FS == nil {
+		return nil, &fs.PathError{Op: "open", Path: path, Err: fs.ErrNotExist}
+	}
 	return overlay.FS.Open(path)
 }
 

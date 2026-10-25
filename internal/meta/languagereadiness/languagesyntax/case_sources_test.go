@@ -100,3 +100,30 @@ func TestCaseSourceSetMembershipCannotReplaceACaseOrItsPrimary(t *testing.T) {
 		}
 	}
 }
+
+func TestCaseSourceMembershipRequiresExactIdentityAndReturnsOwnedSlices(t *testing.T) {
+	registry := expectedRegistry()
+	var definition CaseDefinition
+	for _, item := range registry.Cases {
+		if item.ID == registry.CaseSources[0].CaseID {
+			definition = item
+		}
+	}
+	names, err := CaseSourceMembers(registry, definition)
+	if err != nil || len(names) != 2 {
+		t.Fatal(err)
+	}
+	names[1] = "changed.gooo"
+	if registry.CaseSources[0].Members[1] == names[1] {
+		t.Fatal("caller owns the registry's slice")
+	}
+	changed := definition
+	changed.EntityFieldsProfile = "unselected"
+	if _, err := CaseSourceMembers(registry, changed); err == nil {
+		t.Fatal("another profile inherited this case's source membership")
+	}
+	registry.Cases = append(registry.Cases, definition)
+	if _, err := CaseSourceMembers(registry, definition); err == nil {
+		t.Fatal("duplicate case identity accepted")
+	}
+}

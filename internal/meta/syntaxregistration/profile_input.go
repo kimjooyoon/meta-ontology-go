@@ -30,6 +30,9 @@ func readProfileInputs(repository fs.FS, request ProfileMigrationRequest) (map[s
 		return nil, profileIssue("REFUTED", "bind-contract", "PROFILE_CONTRACT_SOURCE_DIVERGED")
 	}
 	inputs[profileContractPath] = bytes.Clone(raw)
+	if err := readProfileFamilyInputs(repository, inputs, request.Case); err != nil {
+		return nil, err
+	}
 	return inputs, nil
 }
 
@@ -68,7 +71,7 @@ func CompileProfileMigration(repository fs.FS, request ProfileMigrationRequest,
 	if err := plan.bindProfileCase(); err != nil {
 		return ProfileMigrationPlan{}, err
 	}
-	if err := plan.replayProfileSources(repository); err != nil {
+	if err := plan.replayProfileSources(); err != nil {
 		return ProfileMigrationPlan{}, err
 	}
 	return plan, nil
@@ -132,6 +135,9 @@ func (plan *ProfileMigrationPlan) bindProfileCase() error {
 	if err := bindProfileMetaSources(native, plan.registry.MetaSources); err != nil {
 		return err
 	}
+	if err := bindNativeCaseSources(native, plan.registry.CaseSources); err != nil {
+		return err
+	}
 	rows, err := readProfileNativeCases(native)
 	if err != nil {
 		return err
@@ -146,15 +152,20 @@ func (plan *ProfileMigrationPlan) bindProfileCase() error {
 	return nil
 }
 
-func (plan *ProfileMigrationPlan) replayProfileSources(repository fs.FS) error {
+func (plan *ProfileMigrationPlan) replayProfileSources() error {
+	names, err := languagesyntax.CaseSourceMembers(plan.registry, plan.request.Case)
+	if err != nil {
+		return err
+	}
+	pinned := profileOverlay{members: plan.inputs}
 	for index, item := range []struct {
 		definition languagesyntax.CaseDefinition
 		files      fs.FS
 	}{
-		{plan.request.Case, repository},
-		{profileAfterCase(plan.request), profileOverlay{repository, map[string][]byte{plan.request.Case.Path: plan.replacement}}},
+		{plan.request.Case, pinned},
+		{profileAfterCase(plan.request), profileOverlay{pinned, map[string][]byte{plan.request.Case.Path: plan.replacement}}},
 	} {
-		r := languagesyntax.ReplayCase(item.files, item.definition)
+		r := languagesyntax.ReplayCaseSources(item.files, item.definition, names)
 		if r.ObservedDecision != languagesyntax.DecisionPass || !r.ASTReplayed || !r.ByteReplayed ||
 			!r.SemanticReplayed || !r.GetPut || !r.PutGet {
 			return fmt.Errorf("PROFILE_SOURCE_CONFORMANCE_FAILED: %s: %v", item.definition.EntityFieldsProfile, r.Diagnostics)

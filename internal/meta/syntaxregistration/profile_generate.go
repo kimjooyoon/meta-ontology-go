@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"reflect"
+	"slices"
 )
 
 func (plan ProfileMigrationPlan) Generate(repository fs.FS) (ProfileMigrationCandidate, error) {
@@ -44,6 +45,7 @@ func (plan ProfileMigrationPlan) Generate(repository fs.FS) (ProfileMigrationCan
 			Identity: plan.request.ExecutionIdentity}}
 	for index, check := range candidate.SourceChecks {
 		candidate.SourceChecks[index].Diagnostics = append([]string{}, check.Diagnostics...)
+		candidate.SourceChecks[index].SourceMembers = slices.Clone(check.SourceMembers)
 	}
 	for index, path := range paths {
 		candidate.Members[index] = ProfileMigrationMember{Path: path,

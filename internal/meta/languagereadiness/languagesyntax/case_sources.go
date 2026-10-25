@@ -27,6 +27,28 @@ func caseSourcesFor(registry Registry, id string) []string {
 	return nil
 }
 
+// CaseSourceMembers resolves membership for an exact registered definition.
+// A nil result preserves the single-file route; returned slices are caller-owned.
+// This validates membership, not the native registry or source file contents.
+func CaseSourceMembers(registry Registry, definition CaseDefinition) ([]string, error) {
+	if err := validateCaseSources(registry); err != nil {
+		return nil, err
+	}
+	count := 0
+	for _, item := range registry.Cases {
+		if item.ID == definition.ID {
+			if item != definition {
+				return nil, fmt.Errorf("source membership requires the exact case definition")
+			}
+			count++
+		}
+	}
+	if count != 1 {
+		return nil, fmt.Errorf("source membership requires one registered case")
+	}
+	return caseSourcesFor(registry, definition.ID), nil
+}
+
 func cloneCaseSources(groups []CaseSourceSet) []CaseSourceSet {
 	cloned := slices.Clone(groups)
 	for i := range cloned {

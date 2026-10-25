@@ -19,6 +19,11 @@ func (source *goSource) registryCaseTail(function *ast.FuncDecl) (*ast.Composite
 }
 
 func (source *goSource) registryCaseLeaves(function *ast.FuncDecl) ([]*ast.CompositeLit, error) {
+	return source.registryFieldLeaves(function, "Cases", "CaseDefinition", false)
+}
+
+func (source *goSource) registryFieldLeaves(function *ast.FuncDecl, fieldName, elementType string,
+	optional bool) ([]*ast.CompositeLit, error) {
 	if function.Body == nil || len(function.Body.List) != 1 {
 		return nil, fmt.Errorf("native registry must have one direct return")
 	}
@@ -33,18 +38,22 @@ func (source *goSource) registryCaseLeaves(function *ast.FuncDecl) ([]*ast.Compo
 	var value ast.Expr
 	for _, element := range registry.Elts {
 		field, ok := element.(*ast.KeyValueExpr)
-		if !ok || !namedRegistryType(field.Key, "Cases") {
+		if !ok || !namedRegistryType(field.Key, fieldName) {
 			continue
 		}
 		if value != nil {
-			return nil, fmt.Errorf("native Cases field is ambiguous")
+			return nil, fmt.Errorf("native %s field is ambiguous", fieldName)
 		}
 		value = field.Value
 	}
 	if value == nil {
-		return nil, fmt.Errorf("native Cases field is missing")
+		if optional {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("native %s field is missing", fieldName)
 	}
-	walk := registryOriginWalk{source: source, functions: map[string]bool{}, literals: map[*ast.CompositeLit]bool{}}
+	walk := registryOriginWalk{source: source, elementType: elementType,
+		functions: map[string]bool{}, literals: map[*ast.CompositeLit]bool{}}
 	return walk.expression(value)
 }
 
@@ -53,21 +62,22 @@ func namedRegistryType(expression ast.Expr, name string) bool {
 	return ok && identifier.Name == name
 }
 
-func caseRegistrySlice(expression ast.Expr) bool {
+func (walk *registryOriginWalk) sliceType(expression ast.Expr) bool {
 	array, ok := expression.(*ast.ArrayType)
-	return ok && array.Len == nil && namedRegistryType(array.Elt, "CaseDefinition")
+	return ok && array.Len == nil && namedRegistryType(array.Elt, walk.elementType)
 }
 
 type registryOriginWalk struct {
-	source    *goSource
-	functions map[string]bool
-	literals  map[*ast.CompositeLit]bool
+	source      *goSource
+	elementType string
+	functions   map[string]bool
+	literals    map[*ast.CompositeLit]bool
 }
 
 func (walk *registryOriginWalk) expression(expression ast.Expr) ([]*ast.CompositeLit, error) {
 	switch expression := expression.(type) {
 	case *ast.CompositeLit:
-		if !caseRegistrySlice(expression.Type) || walk.literals[expression] {
+		if !walk.sliceType(expression.Type) || walk.literals[expression] {
 			return nil, fmt.Errorf("native case literal is unsupported or repeated")
 		}
 		walk.literals[expression] = true

@@ -679,3 +679,18 @@ invalid-syntax examples retain their single-file diagnostic route. Reading the
 case is sequential and does not establish a mutable-filesystem snapshot.
 Automatic joint rewriting of source files and their registration is the next
 consumer of this capability; this change itself performs no repository writes.
+
+The existing `syntax-profile-migration` command also consumes this membership.
+It pins all members, binds the native registry to the corpus, and checks the
+complete family under both the original and requested profiles. Replaying the
+primary alone cannot establish that a sibling's declarations support the new
+profile. A changed sibling makes the saved request or plan stale, including a
+comment-only change. Replay reads the pinned bytes; generation rereads the input
+set before exporting the proposal.
+
+Migration still proposes three writes: the primary source, its existing native
+case definition, and the corpus definition. Unchanged siblings remain observed
+inputs, and the case population is preserved. Registering an existing family
+fragment as a new capability is refused even if that path also appears in
+`meta_sources`. The path-only profile hint command remains advisory for that
+single file; it does not select a profile for a source family.
