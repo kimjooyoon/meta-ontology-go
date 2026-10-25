@@ -333,3 +333,63 @@ retaining a full directory listing. This extra verification runs on explicit spl
 application; ordinary package execution gains no new model or projection phase.
 The host's existing single-writer boundary still applies, including external edits
 after the last check and process interruption during publication.
+
+### One source with multiple workspace consumers
+
+Changing a shared source and only one source list can leave another workspace
+without its entry activity. `internal/packageruntime/workspacesplit.Prepare`
+constructs one joint draft for explicitly supplied `Owner` values. Each owner
+names its external definition address, authored definition and split request;
+the existing Gooo compiler verifies each workspace's semantic partition.
+The result contains two shared source writes and each updated definition with
+its encoded JSON and separate package-image/source-origin records. Different
+entry activities remain different consumer contexts.
+
+All owners must agree on the source and destination addresses, partition bytes
+and original byte ranges. Identical content at different addresses does not
+identify the same occurrence. Missing dependencies, conflicting destinations,
+duplicate definition addresses or changed shared bytes return an error and no
+partial plan. Preparation writes nothing and retains authored source spelling.
+It accepts at most 64 owners and bounds the aggregate proposed source payload
+by the shared reader's 16-MiB source-set limit, including repeated consumer views.
+
+Addresses are lexically normalized in the host reader's namespace. The host
+still owns filesystem alias/symlink identity, discovery of every affected
+consumer, current-input checks and atomic publication of the whole draft.
+Omitted workspaces and single-file/embed consumers remain obligations. The API
+provides no repository-wide coverage or execution authority. The joint native
+regression reloads both updated definitions and checks six expected activity
+outputs across their different entries, including runtime replay without a model.
+The same output conditions run with one package per workspace and with an
+additional package consuming the source inside the first workspace; both external
+definitions must still reload to their planned images.
+The executable input is an [authored Gooo source](../../examples/shared-source-consumers/main.gooo);
+the Go tests supply the consumer definitions and independent expected results.
+The syntax registration constructor generated all nine registration members from
+this source and appended denominator v101 (136 to 137 syntax cases). That inventory
+count is separate from the six independently expected execution outputs.
+
+The joint plan also returns `Inputs`: observed source addresses, SHA-256 digests,
+byte lengths and the definitions that read each occurrence, sorted deterministically.
+Every supplied consumer still reads its inputs; a second read of any shared source
+with different bytes returns `ErrSourceChanged`, including unchanged dependency
+files. Equal contents at distinct addresses remain separate observations. Definition
+outputs cannot overwrite any observed source address. The list records source
+reads; `Prepare` receives decoded definitions and does not observe their serialized
+bytes. The host checks current definition and source inputs again before
+publication. Only digest/consumer metadata is retained by the source observer.
+
+`PrepareFiles` accepts `FileOwner` requests naming the external definitions and
+split choices. It reads and decodes those definitions through the same bounded
+workspace contract, then calls the joint constructor. `Definitions` records each
+input address, raw-byte SHA-256 and byte length separately from the source reads.
+Definition inputs are limited to 1 MiB each and 16 MiB in aggregate, independently
+of the source-set limit. They are reread after preparation; changed bytes, even
+formatting-only changes, return `ErrDefinitionChanged` and no plan. Failed or
+malformed reads likewise return no partial proposal. The original serialized
+inputs are not kept as an additional payload.
+
+These sequential reads are observations, not a filesystem snapshot or publication
+permission. Current-input checks, alias resolution and complete consumer discovery
+still belong to the applying host. The native execution regression now begins at
+this file-backed entry point and retains the same six expected activity outputs.
