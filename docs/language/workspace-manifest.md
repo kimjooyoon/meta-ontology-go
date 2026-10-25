@@ -336,6 +336,14 @@ after the last check and process interruption during publication.
 
 ### One source with multiple workspace consumers
 
+`--discover-consumers <directory>` can supply the group from recursive `.json`
+workspace definitions under a declared root. The saved proposal retains that
+scope and all observed workspace definition hashes. Apply rescans before writes;
+a newly introduced consumer or changed definition makes the old plan stale.
+Malformed/unreadable candidates and unknown workspace versions refuse discovery.
+This is scoped source-list discovery; embedded or dynamic readers and other roots
+remain separate obligations. See the [runnable example and limits](../../examples/shared-source-consumers/README.md).
+
 Changing a shared source and only one source list can leave another workspace
 without its entry activity. `internal/packageruntime/workspacesplit.Prepare`
 constructs one joint draft for explicitly supplied `Owner` values. Each owner

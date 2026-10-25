@@ -45,8 +45,35 @@ respectively, and native replay. The split itself does not execute activities or
 use a model. The example's finite outputs are an independent check of these two
 entry contexts, not a proof for every input.
 
-This command does not discover omitted workspaces, embedded Go readers or syntax
-registries. Additional paths are explicit, and the saved proposal retains those
-addresses. The filesystem checks are sequential; multi-file publication is
+With explicit consumer options, the proposal covers the named workspaces and
+retains their addresses. Embedded Go readers and syntax registries need their
+own observations. The filesystem checks are sequential; multi-file publication is
 rollback-capable, not a crash-atomic or concurrent-writer transaction. The wider
 repository executor still has to connect its discovered consumers and obligations.
+
+To find JSON workspace consumers in this example's directory, replace the
+`--consumer-workspace` option in the proposal command with:
+
+```sh
+--discover-consumers "$split_example"
+```
+
+Discovery recursively reads `.json` files in that explicit directory, recognizes
+workspace definitions, and selects those declaring this source occurrence. Its
+`discovery` receipt records the canonical root, `recursive-json-files` candidate
+scope, and exact hashes of **all** workspace definitions found, including those
+not currently using this source. Apply repeats discovery before staging and again
+before publication. New consumers, removed definitions or changed definition
+bytes require a new proposal. A valid saved proposal/cases file in this directory
+is not a workspace and does not invalidate its own plan.
+
+Unreadable or ambiguous JSON, unsupported workspace schema versions, nonregular
+entries (including symlinks), and missing or noncanonical source references stop
+discovery with the affected path. This scope must be an inspectable project
+directory. Limits are 65,536 entries, 4,096 JSON candidates, 1 MiB per JSON file
+and 64 MiB total JSON reads per scan; the existing 64-owner and source-set limits
+still govern planning. Discovery keeps source addresses and definition hashes,
+not copies of every Gooo body. It runs on demand. Workspaces under other roots or
+with other filename extensions, embedded Go readers, and dynamic reads remain
+outside this observation. Explicit `--consumer-workspace` remains available for
+declared groups; it cannot be combined with discovery in one proposal.
