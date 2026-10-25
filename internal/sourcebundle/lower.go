@@ -41,16 +41,25 @@ type Bundle struct {
 // is attributed to a real file. Duplicate declarations and unknown references
 // still pass through the existing semantic validator.
 func Lower(sources []Source) (Bundle, error) {
-	parsed, err := Parse(sources)
+	return LowerWithEntityFieldsSupport(sources, syntax.CurrentEntityFieldsSupport())
+}
+
+// LowerWithEntityFieldsSupport preserves one caller-selected profile through
+// parsing and lowering. Source contents never widen that contract.
+func LowerWithEntityFieldsSupport(sources []Source, support syntax.EntityFieldsSupport) (Bundle, error) {
+	if err := support.Validate(); err != nil {
+		return Bundle{}, err
+	}
+	parsed, err := ParseWithEntityFieldsSupport(sources, support)
 	if err != nil {
 		return Bundle{}, err
 	}
 	carrier := parsed.File
-	document, err := bidir.DocumentFromSyntax(carrier)
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(carrier, support)
 	if err != nil {
 		return Bundle{}, err
 	}
-	ir, err := bidir.LowerDocument(document)
+	ir, err := bidir.LowerDocumentWithEntityFieldsSupport(document, support)
 	if err != nil {
 		return Bundle{}, err
 	}

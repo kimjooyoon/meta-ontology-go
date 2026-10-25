@@ -11,11 +11,12 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
-const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> (--boundaries | --before <declaration-id> --into <file.gooo> [--consumer-workspace <workspace.json> | --discover-consumers <directory>]) | --apply <proposal.json>) [--json] <workspace.json>"
+const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> (--boundaries | --before <declaration-id> --into <file.gooo> [--consumer-workspace <workspace.json> | --discover-consumers <directory>] [--syntax-registry-root <repository>]) | --apply <proposal.json>) [--json] <workspace.json>"
 
 type workspaceSourceSplitOptions struct {
 	packagePath, source, before, into, manifestPath string
 	applyReceipt                                    string
+	registryRoot                                    string
 	consumerWorkspaces                              []string
 	discoveryRoot                                   string
 	jsonMode                                        bool
@@ -34,6 +35,7 @@ type workspaceSourceSplitReceipt struct {
 	Consumers        []workspaceSourceSplitConsumer        `json:"consumers,omitempty"`
 	Discovery        *workspaceConsumerDiscovery           `json:"discovery,omitempty"`
 	Boundaries       *packageruntime.SourceSplitBoundaries `json:"boundaries,omitempty"`
+	Registration     *workspaceSplitRegistration           `json:"syntax_registration,omitempty"`
 }
 
 func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -108,6 +110,7 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 	flags.StringVar(&options.before, "before", "", "stable ID of the first declaration to move")
 	flags.StringVar(&options.into, "into", "", "new source path relative to the workspace")
 	flags.StringVar(&options.applyReceipt, "apply", "", "apply a saved proposal after checking current inputs")
+	flags.StringVar(&options.registryRoot, "syntax-registry-root", "", "also update this compiler repository's syntax corpus and native registry")
 	flags.Func("discover-consumers", "discover JSON workspace consumers inside this directory", func(value string) error {
 		if strings.TrimSpace(value) == "" || options.discoveryRoot != "" {
 			return fmt.Errorf("supply one nonempty consumer discovery directory")
@@ -134,7 +137,7 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 	if options.boundaries {
 		if strings.TrimSpace(options.packagePath) == "" || strings.TrimSpace(options.source) == "" ||
 			options.before != "" || options.into != "" || options.applyReceipt != "" ||
-			options.discoveryRoot != "" || len(options.consumerWorkspaces) != 0 {
+			options.discoveryRoot != "" || options.registryRoot != "" || len(options.consumerWorkspaces) != 0 {
 			return options, fmt.Errorf("--boundaries requires only package, source and one workspace")
 		}
 		return options, nil
@@ -142,7 +145,7 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 	if options.discoveryRoot != "" && len(options.consumerWorkspaces) != 0 {
 		return options, fmt.Errorf("choose discovery scope or explicit consumer workspaces")
 	}
-	if options.applyReceipt != "" && (len(options.consumerWorkspaces) != 0 || options.discoveryRoot != "") {
+	if options.applyReceipt != "" && (len(options.consumerWorkspaces) != 0 || options.discoveryRoot != "" || options.registryRoot != "") {
 		return options, fmt.Errorf("--apply reads consumer workspaces from the saved proposal")
 	}
 	for _, value := range []string{options.packagePath, options.source, options.before, options.into} {
@@ -160,6 +163,9 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 }
 
 func prepareWorkspaceSourceSplit(options workspaceSourceSplitOptions, reader SourceReader) (workspaceSourceSplitReceipt, error) {
+	if options.registryRoot != "" {
+		return prepareRegisteredWorkspaceSplit(options, reader)
+	}
 	receipt := workspaceSourceSplitReceipt{Schema: "gooo/workspace-source-split-receipt/v1",
 		Decision: "FAIL_CLOSED", ManifestPath: options.manifestPath}
 	if options.discoveryRoot != "" {

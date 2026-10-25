@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
-	"reflect"
 	"slices"
 	"strings"
 
@@ -75,13 +74,8 @@ func replayInventoryPartition(repository fs.FS, directory string, proposal sourc
 	if err != nil {
 		return err
 	}
-	observed, err := sourcebundle.PreparePartition(sources, proposal.Files[0].Filename,
-		proposal.BoundaryID, proposal.Files[1].Filename)
-	if err != nil {
+	if err := sourcebundle.ValidatePartition(sources, proposal); err != nil {
 		return err
-	}
-	if !reflect.DeepEqual(observed, proposal) {
-		return fmt.Errorf("partition inventory proposal differs from current source replay")
 	}
 	if _, err := fs.Stat(repository, path.Join(directory, proposal.Files[1].Filename)); !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("partition inventory destination must be absent")

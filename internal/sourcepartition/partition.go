@@ -30,12 +30,18 @@ type File struct {
 // It preserves comments, bodies, bindings and spacing without reformatting them.
 // The resulting files require joint semantic validation in their original scope.
 func SplitAt(filename, source, into string, cut int) ([]File, error) {
+	return SplitAtWithEntityFieldsSupport(filename, source, into, cut, syntax.EntityFieldsV4Support())
+}
+
+// SplitAtWithEntityFieldsSupport checks the physical boundary under the exact
+// caller-selected profile. Semantic and consumer validation remain separate.
+func SplitAtWithEntityFieldsSupport(filename, source, into string, cut int, support syntax.EntityFieldsSupport) ([]File, error) {
 	if into == "" || path.Clean(into) != into || path.IsAbs(into) || path.Ext(into) != ".gooo" ||
 		strings.ContainsAny(into, "\\\x00:") || strings.HasPrefix(into, "../") ||
 		strings.EqualFold(path.Clean(filename), into) {
 		return nil, fmt.Errorf("split destination must be a different canonical relative .gooo filename")
 	}
-	file, header, err := partitionSyntax(filename, source)
+	file, header, err := partitionSyntaxWithEntityFieldsSupport(filename, source, support)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +61,14 @@ func SplitAt(filename, source, into string, cut int) ([]File, error) {
 }
 
 func partitionSyntax(filename, source string) (*syntax.File, int, error) {
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV4Support())
+	return partitionSyntaxWithEntityFieldsSupport(filename, source, syntax.EntityFieldsV4Support())
+}
+
+func partitionSyntaxWithEntityFieldsSupport(filename, source string, support syntax.EntityFieldsSupport) (*syntax.File, int, error) {
+	if err := support.Validate(); err != nil {
+		return nil, 0, err
+	}
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(filename, source, support)
 	if file == nil || diagnostics.HasErrors() || len(file.Decls) == 0 {
 		return nil, 0, fmt.Errorf("split requires valid source with declarations")
 	}

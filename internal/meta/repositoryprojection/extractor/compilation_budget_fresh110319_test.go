@@ -16,18 +16,18 @@ func TestCompilationInputBudgetIsStageOwned110319(t *testing.T) {
 		t.Fatal(err)
 	}
 	importer := newModuleImporter(root)
-	importer.compilationSourceBytes = moduleSourceMax - int64(len(source)) + 1
+	importer.compilationSourceBytes = moduleStageSourceMax - int64(len(source)) + 1
 	observed := []moduleCompiledPackage{{Dir: directory, ImportPath: "budget110319/dep", GoFiles: []string{"value.go"}}}
 	if _, err = importer.captureCompilationSources(observed); err == nil {
 		t.Fatal("existing stage input population ignored")
 	}
-	importer.compilationSourceBytes = moduleSourceMax - int64(len(source))
+	importer.compilationSourceBytes = moduleStageSourceMax - int64(len(source))
 	inputs, err := importer.captureCompilationSources(observed)
 	if err != nil || len(inputs) != 1 {
 		t.Fatal(inputs, err)
 	}
 	importer.retainCompilationOrigins(inputs, map[string]moduleCompilationOrigin{"budget110319/dep": {ImportPath: "budget110319/dep"}})
-	if importer.compilationSourceBytes != moduleSourceMax {
+	if importer.compilationSourceBytes != moduleStageSourceMax {
 		t.Fatal("retained input population lost", importer.compilationSourceBytes)
 	}
 	if _, err = importer.captureCompilationSources(observed); err != nil {

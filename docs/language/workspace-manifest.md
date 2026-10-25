@@ -645,6 +645,128 @@ remains `UNASSESSED` in both inventories. Embedded-reader preservation and nativ
 ABI acceptance still require their existing checks. There is no new CLI, model
 call or mandatory CI job.
 
+### Preparing registration alongside a physical partition
+
+`languagesyntax.PreparePartitionRegistration` prepares the syntax registry side
+of a source partition. It accepts the current corpus and exact partition, extends
+the affected `case_sources`, `package_units[].members` and `meta_sources`, and
+returns the projected registry together with its exact formatted `Corpus` bytes.
+The projected inventory digest refers to those bytes. Case IDs, definitions,
+selected profiles, package entries and capability denominators stay unchanged.
+
+For example, separating `NextObservation` from the compiler's recovery policy
+extends the existing continuation case from two physical members to three. Its
+whole-case replay still sees the same activities. Separating the activity in
+`examples/entity-fields-v1/main.gooo` creates a two-member group for the same
+case, rather than registering another language capability.
+
+Each affected case is replayed before and after under its existing profile.
+Package membership receives a separately labelled `package-syntax` replay; that
+observation does not execute its entry. Additional siblings are captured from
+the observed inventory and rechecked before returning. Changes to sibling bytes,
+an occupied or already registered destination, or unsupported projection-consumer
+membership yield no plan. Unrelated missing and unregistered files remain visible.
+
+Field-bearing sources use `sourcebundle.PreparePartitionWithEntityFieldsSupport`.
+The exact selected profile travels through parsing, lowering, the physical cut
+and proposal replay. The ordinary path keeps its deferred default, and consumers
+retain their own profiles even if a partition was prepared under a newer one.
+
+This is an internal preparation API. Native Go registry edits, embedded readers,
+external workspace consumers and joint publication require their own bindings.
+The workspace command described below joins the supported registry and workspace
+consumers. The returned corpus alone cannot be installed as an accepted registry.
+Inventory admission remains `UNASSESSED`, with zero repository writes and native
+executions. The practical milestone is one source-owned change plan carrying all
+affected consumers into the existing publisher, without hand-maintained follow-up
+edits or a new capability for each file fragment.
+
+The next construction boundary is
+`syntaxregistration.PreparePartitionRegistrationCandidate(repository, directory,
+partition)`. Its `Outputs` contains the two exact Gooo fragments, the projected
+corpus, and every Go registry source that owns changed membership. `Inputs`
+retains the current corpus, the native registry package and all affected source
+members, including unchanged siblings. The continuation example produces five
+files because its family and meta-source memberships have separate Go owners;
+the single-case, meta-only and package examples each produce four.
+
+Native owners are resolved through the registry's finite expressions and physical
+declaration spans. Renaming an owner file does not change that binding. Direct
+slices, ordered helper assembly and explicit local row declarations are supported;
+arbitrary computation and reassignment remain unresolved. The existing case
+definitions, package entries, projection consumers and schema must match the
+corpus before construction. Re-reading the emitted Go checks the complete
+projected registry. Independent tests compile that Go and compare the resulting
+registry with the corpus, including a deliberately wrong expected value.
+
+Preparation rechecks the native file population and captured bytes. Validation
+reconstructs the whole candidate, so changing an output or an input invalidates
+the saved result. Each of the native and Gooo input sets is bounded to 1 MiB per
+file and 16 MiB total, with at most 1,024 observed files. Neither function writes
+the repository. The internal native edit label describes mechanical construction;
+binding the existing `SplitGoooSections` operation, admitting embedded/native
+consumers and publishing the joint write set remain caller obligations.
+
+### Publishing a workspace split with syntax registration
+
+For a source-only package registered by this compiler repository, the existing
+workspace command can construct and install one combined change:
+
+```sh
+go run ./cmd/gooo package split-source \
+  --package example/agent-tool-inventory --source main.gooo \
+  --before urn:gooo:agent-tool-inventory:inspect --into inspect.gooo \
+  --syntax-registry-root . --json \
+  examples/agent-tool-inventory/gooo.workspace.json > /tmp/inventory-split.json
+
+go run ./cmd/gooo package split-source --apply /tmp/inventory-split.json --json \
+  examples/agent-tool-inventory/gooo.workspace.json
+```
+
+The first command prepares five file changes: `main.gooo`, `inspect.gooo`, the
+workspace source list, the syntax corpus, and the native registry owner. It writes
+only the redirected proposal. The second command reconstructs the proposal from
+current inputs and publishes through the existing staged writer. Source writes
+shared by multiple consumers occur once; explicit `--consumer-workspace` or
+`--discover-consumers` options add their manifest edits to the same transaction.
+
+The proposal includes each registry output's exact text and digest, input file
+digests, the selected workspace profile, and the existing Gooo `SplitGoooSections`
+operation's lowered activity
+identity, physical origins and `used`/`wasGeneratedBy` contract facts. The compiler
+checks its embedded operation contract against the repository source family.
+Its identity comes from the semantic graph, including an explicitly authored ID
+when present. The two source fragments retain their existing wire location and
+are not duplicated in the registration payload. The mechanical edit implementation
+remains Go. This command does
+not add a route to the repository metric-driven execution scheduler.
+
+Workspace parsing and lowering use the same existing field-profile selection as
+package execution. Registered syntax consumers continue to replay under their
+own declared profiles. These independent consumers must agree on the exact two
+source fragments; a physical split adds no capability case.
+
+Before publication, all captured inputs and output preconditions are rechecked,
+including unchanged native registry files and operation source members. Failures
+during installation use the existing rollback path. Tests inject failures at
+the corpus/native writes and directory synchronization and verify all five
+pre-states. A native input changed during staging prevents any rename and retains
+that independent edit. Successful installation is checked against the proposed
+file digests and package image. The installed inventory example passes its eight
+existing runtime cases without model calls. Sequential rechecks and rollback do
+not provide a concurrent filesystem snapshot or crash-atomic multi-file commit.
+
+The optional registry scope is explicit and must contain the workspace. Import
+resolution still needs a source-bundle adapter. Go embed consumers in source
+ancestor packages are observed through the existing Go-tool observer; affected
+readers require native admission before this command can publish. Inactive Go
+files in an embed-bearing package also leave admission unresolved. Even a
+wildcard that captures both output files needs its runtime contract checked.
+Dynamic file readers and consumers outside the supplied repository/workspace
+scope remain outside this command's observation. No repository-wide consumer
+completeness is claimed. The executable must match the repository registry and
+operation contract; rebuild it after changing those compiler sources.
+
 ### One syntax case across physical source members
 
 The syntax corpus can associate an existing case with an ordered `case_sources`
@@ -677,8 +799,8 @@ This route supports bounded, explicitly listed same-package sources (up to 64
 members, 1 MiB per member, 16 MiB total). Imports still require package execution;
 invalid-syntax examples retain their single-file diagnostic route. Reading the
 case is sequential and does not establish a mutable-filesystem snapshot.
-Automatic joint rewriting of source files and their registration is the next
-consumer of this capability; this change itself performs no repository writes.
+The joint workspace publisher above consumes this capability; syntax replay
+itself performs no repository writes.
 
 The existing `syntax-profile-migration` command also consumes this membership.
 It pins all members, binds the native registry to the corpus, and checks the

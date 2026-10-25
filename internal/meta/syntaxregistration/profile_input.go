@@ -9,6 +9,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
+	"github.com/kimjooyoon/meta-ontology-go/internal/sourcebundle"
 )
 
 func DecodeProfileMigrationRequest(raw []byte) (ProfileMigrationRequest, error) {
@@ -157,13 +158,13 @@ func (plan *ProfileMigrationPlan) replayProfileSources() error {
 	if err != nil {
 		return err
 	}
-	pinned := profileOverlay{members: plan.inputs}
+	pinned := sourcebundle.Overlay{Files: plan.inputs}
 	for index, item := range []struct {
 		definition languagesyntax.CaseDefinition
 		files      fs.FS
 	}{
 		{plan.request.Case, pinned},
-		{profileAfterCase(plan.request), profileOverlay{pinned, map[string][]byte{plan.request.Case.Path: plan.replacement}}},
+		{profileAfterCase(plan.request), sourcebundle.Overlay{FS: pinned, Files: map[string][]byte{plan.request.Case.Path: plan.replacement}}},
 	} {
 		r := languagesyntax.ReplayCaseSources(item.files, item.definition, names)
 		if r.ObservedDecision != languagesyntax.DecisionPass || !r.ASTReplayed || !r.ByteReplayed ||
