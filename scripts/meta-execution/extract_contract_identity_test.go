@@ -27,6 +27,15 @@ func currentStrategySchemaFixture(t *testing.T) projectionextractor.StrategyEvid
 		t.Fatal("contract meaning changed; review the decoder fixture's shape before adapting it")
 	}
 	evidence.ContractSourceDigest = contract.SourceDigest
+	evidence.ContractInputEntity, evidence.ContractInputEntityID = contract.InputEntity, contract.InputEntityID
+	evidence.ContractOutputEntity, evidence.ContractOutputEntityID = contract.OutputEntity, contract.OutputEntityID
+	for index, expected := range contract.Obligations {
+		obligation, stage := &evidence.ContractObligations[index], &evidence.ProofStages[index]
+		obligation.InputEntity, obligation.InputEntityID = expected.InputEntity, expected.InputEntityID
+		obligation.OutputEntity, obligation.OutputEntityID = expected.OutputEntity, expected.OutputEntityID
+		stage.InputEntity, stage.InputEntityID = expected.InputEntity, expected.InputEntityID
+		stage.OutputEntity, stage.OutputEntityID = expected.OutputEntity, expected.OutputEntityID
+	}
 	return evidence
 }
 
@@ -53,6 +62,17 @@ func TestHistoricalStrategyIdentityIsNotCurrentAdmission(t *testing.T) {
 		t.Fatalf("historical source did not retain the actionable contract mismatch: %v", err)
 	}
 	assertContractMismatchReachesDrivers(t, root, "historical-report.json")
+}
+
+func TestPreparationProgressRequiresCurrentEntityIdentity(t *testing.T) {
+	evidence := intermediatePreparationEvidenceFixture(t)
+	assertExtractorReportMapAccepted(t, extractionReportMapWithStrategyEvidence(t, evidence))
+	evidence.PreparationProgress.InputEntityID = "wrong-identity-with-same-label"
+	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence})
+	path := writeMapConstructionConsumerReport(t, t.TempDir(), report)
+	if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+		t.Fatal("progress from a different entity identity was accepted")
+	}
 }
 
 func assertContractMismatchReachesDrivers(t *testing.T, root, reportName string) {

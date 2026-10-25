@@ -1,7 +1,7 @@
 package operationinputcontract
 namespace operationinputcontract
 
-entity FunctionInput id "gooo://meta-operation-input-contract/entity/function-input"
+entity FunctionSource id "gooo://meta-operation-input-contract/entity/function-input"
 entity FileInput id "gooo://meta-operation-input-contract/entity/file-input"
 entity OperationResult id "gooo://meta-operation-input-contract/entity/result"
 entity ImportNormalizationPolicy id "gooo://meta-operation-input-contract/entity/import-normalization-policy"
@@ -12,13 +12,13 @@ entity CalleeEffectsObligation id "gooo://meta-operation-input-contract/entity/c
 entity RenderedCapacityObligation id "gooo://meta-operation-input-contract/entity/rendered-capacity-obligation"
 entity ProjectedConformanceObligation id "gooo://meta-operation-input-contract/entity/projected-conformance-obligation"
 
-activity CollapseAssignReturn(FunctionInput) -> OperationResult
+activity CollapseAssignReturn(FunctionSource) -> OperationResult
 activity SplitGoDeclarations(FileInput) -> OperationResult
 activity SplitGoooSections(FileInput) -> OperationResult
-activity ExtractFunction(FunctionInput) -> OperationResult
+activity ExtractFunction(FunctionSource) -> OperationResult
 activity NormalizeEligibleImportGroup(FileInput) -> ImportNormalizationPolicy
 activity NormalizeNamedAliasImportHeader(FileInput) -> ImportNormalizationPolicy
-activity ProveReturnShape(FunctionInput) -> ReturnShapeObligation
+activity ProveReturnShape(FunctionSource) -> ReturnShapeObligation
 activity ProveControlFlow(ReturnShapeObligation) -> ControlFlowObligation
 activity ProveFreeBindings(ControlFlowObligation) -> FreeBindingsObligation
 activity ProveCalleeEffects(FreeBindingsObligation) -> CalleeEffectsObligation

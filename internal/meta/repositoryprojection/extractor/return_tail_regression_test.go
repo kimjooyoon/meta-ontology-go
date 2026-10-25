@@ -67,7 +67,9 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 				capacityDigest := proofDigest(capacityPayload)
 				for evidenceIndex, evidence := range result.Evidence {
 					contractBound := evidence.Strategy == returnTailStrategy && evidence.Operation == "extract-function" &&
-						evidence.ContractActivity == "ExtractFunction" && evidence.ContractInputEntity == "FunctionInput" &&
+						evidence.ContractActivity == "ExtractFunction" && evidence.ContractInputEntity == "FunctionSource" &&
+						evidence.ContractInputEntityID == "gooo://meta-operation-input-contract/entity/function-input" &&
+						evidence.ContractOutputEntityID == "gooo://meta-operation-input-contract/entity/result" &&
 						evidence.ContractOutputEntity == "OperationResult" && evidence.ContractSourceDigest != "" &&
 						evidence.ContractSemanticDigest != "" && len(evidence.ContractObligations) == len(baseline)
 					if contractBound {
@@ -75,6 +77,7 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 							got := evidence.ContractObligations[index]
 							contractBound = contractBound && got.Name == want.Name && got.Activity == want.Activity &&
 								got.InputEntity == want.InputEntity && got.OutputEntity == want.OutputEntity &&
+								got.InputEntityID == want.InputEntityID && got.OutputEntityID == want.OutputEntityID &&
 								got.UsedInputFact == want.UsedInputFact && got.GeneratedOutputFact == want.GeneratedOutputFact
 						}
 					}
@@ -88,6 +91,7 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 						want := baseline[index]
 						chainBound = chainBound && stage.Name == want.Name && stage.Activity == want.Activity &&
 							stage.InputEntity == want.InputEntity && stage.OutputEntity == want.OutputEntity && stage.Status == "PASS" &&
+							stage.InputEntityID == want.InputEntityID && stage.OutputEntityID == want.OutputEntityID &&
 							stage.SourceDigest != "" && stage.SourceDigest == stages[0].SourceDigest && stage.CandidateDigest != "" &&
 							stage.InputEvidenceID != "" && stage.OutputEvidenceID != "" && stage.PayloadDigest != "" &&
 							(stage.Name == "free-bindings" || stage.PayloadBytes > 0)
@@ -131,11 +135,12 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 
 func returnTailContractBaseline() []generation.OperationInputContractObligationEvidence {
 	values := make([]generation.OperationInputContractObligationEvidence, 0, len(returnTailObligations))
-	previous := "FunctionInput"
+	previous := "FunctionSource"
+	previousID := generation.NativeContractEntityID("FunctionInput")
 	for _, name := range returnTailObligations {
 		activity, output := returnTailContractStage(name)
-		values = append(values, generation.OperationInputContractObligationEvidence{Name: name, Activity: activity, InputEntity: previous, OutputEntity: output, UsedInputFact: true, GeneratedOutputFact: true})
-		previous = output
+		values = append(values, generation.OperationInputContractObligationEvidence{Name: name, Activity: activity, InputEntity: previous, OutputEntity: output, InputEntityID: previousID, OutputEntityID: generation.NativeContractEntityID(output), UsedInputFact: true, GeneratedOutputFact: true})
+		previous, previousID = output, generation.NativeContractEntityID(output)
 	}
 	return values
 }
@@ -187,4 +192,23 @@ func returnTailExposedMutationFixture() string {
 
 func returnTailIncompleteCalleeFixture() string {
 	return "package p\n\nfunc F() error {\n" + strings.Repeat("\t_ = 1\n", 72) + "\treturn missingCallee()\n}\n"
+}
+
+func returnTailContractStage(name string) (string, string) {
+	switch name {
+	case obligationReturnShape:
+		return "ProveReturnShape", "ReturnShapeObligation"
+	case obligationControlFlow:
+		return "ProveControlFlow", "ControlFlowObligation"
+	case obligationFreeBindings:
+		return "ProveFreeBindings", "FreeBindingsObligation"
+	case obligationCalleeEffects:
+		return "ProveCalleeEffects", "CalleeEffectsObligation"
+	case obligationRenderedCapacity:
+		return "ProveRenderedCapacity", "RenderedCapacityObligation"
+	case obligationProjectedConform:
+		return "ProveProjectedConformance", "ProjectedConformanceObligation"
+	default:
+		return "", ""
+	}
 }
