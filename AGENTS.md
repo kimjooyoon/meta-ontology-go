@@ -51,11 +51,14 @@ must not change stable IDs or unrelated semantic facts.
 ## Required checks
 
 ```sh
-gofmt -w .
+"$(go env GOROOT)/bin/gofmt" -w .
 go vet ./...
 go test ./...
 go run ./cmd/gooo check examples/billing/main.gooo
 ```
+
+Use the selected toolchain's formatter: automatic Go toolchain selection does
+not update a standalone `gofmt` found on the shell's `PATH`.
 
 Do not claim that a command or subsystem is supported unless it has an implemented
 entry point and runnable evidence. In particular, `analyze` and `lsp` are not

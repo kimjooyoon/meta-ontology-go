@@ -31,6 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
       - uses: actions/setup-go@v7.0.0
+        id: go
         with:
           go-version-file: integrations/adk-go/go.mod
           cache-dependency-path: integrations/adk-go/go.sum
@@ -46,12 +47,26 @@ jobs:
       - name: Observe ADK boundary benchmarks
         if: github.event_name == 'workflow_dispatch'
         working-directory: integrations/adk-go
+        env:
+          GOOO_ADK_TEST_BINARY: ${{ runner.temp }}/gooo
+          GO_CACHE_HIT: ${{ steps.go.outputs.cache-hit }}
         run: |
-          go version > "$RUNNER_TEMP/adk-bench.txt"
-          go test -run '^$' -bench '^Benchmark(Bridge|Direct)' -benchmem -count=1 ./... >> "$RUNNER_TEMP/adk-bench.txt"
+          {
+            git log -1 --format='commit=%H'
+            go version
+            go version -m "$GOOO_ADK_TEST_BINARY"
+            go env -json GOOS GOARCH GOAMD64 GOARM64 CGO_ENABLED GOTOOLCHAIN
+            printf 'runner_os=%s\nrunner_arch=%s\nimage_os=%s\nimage_version=%s\ngo_cache_hit=%s\n' \
+              "${RUNNER_OS:-unknown}" "${RUNNER_ARCH:-unknown}" \
+              "${ImageOS:-unknown}" "${ImageVersion:-unknown}" "${GO_CACHE_HIT:-unknown}"
+          } > "$RUNNER_TEMP/adk-bench-environment.txt"
+          go test -run '^$' -bench '^Benchmark(Bridge|Direct|Compiler)' -benchmem -benchtime=200ms -count=5 ./... > "$RUNNER_TEMP/adk-bench.txt"
       - name: Preserve raw benchmark output
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: adk-boundary-bench-${{ github.sha }}
-          path: ${{ runner.temp }}/adk-bench.txt
+          path: |
+            ${{ runner.temp }}/adk-bench.txt
+            ${{ runner.temp }}/adk-bench-environment.txt
+          retention-days: 14

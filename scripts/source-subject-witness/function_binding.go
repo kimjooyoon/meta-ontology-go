@@ -34,6 +34,9 @@ func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, e
 		}
 		rows := bySubject[row.Subject]
 		for _, existing := range rows {
+			if existing.ModuleRoot != row.ModuleRoot {
+				return nil, fmt.Errorf("function subject %q has contradictory module owners", row.Subject)
+			}
 			if existing.MetricID == row.MetricID {
 				return nil, fmt.Errorf("function subject %q metric %q is duplicated", row.Subject, row.MetricID)
 			}
@@ -54,7 +57,7 @@ func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, e
 		for _, row := range rows {
 			metrics = append(metrics, metricValue{ID: row.MetricID, Value: row.Value})
 		}
-		witness := subjectWitness{Space: "LOGICAL_FUNCTION", Path: subject, SubjectKind: "FUNCTION", Metrics: metrics, Meta: sourceBinding(rows, "COHERENCE")}
+		witness := subjectWitness{Space: "LOGICAL_FUNCTION", Path: subject, SubjectKind: "FUNCTION", ModuleRoot: rows[0].ModuleRoot, Metrics: metrics, Meta: sourceBinding(rows, "COHERENCE")}
 		witnesses = append(witnesses, sealWitness(witness))
 	}
 	return witnesses, nil

@@ -40,13 +40,15 @@ type splitPlan struct {
 	Parts     []splitPart
 }
 
-func stagePart(part splitPart, mode os.FileMode) (string, error) {
-	file, err := os.CreateTemp(filepath.Dir(part.Path), ".source-split-*")
+type splitTempCreator func(string, string) (*os.File, error)
+
+func stagePart(part splitPart, mode os.FileMode, create splitTempCreator) (string, error) {
+	file, err := create(filepath.Dir(part.Path), ".source-split-*")
 	if err != nil {
 		return "", err
 	}
 	name := file.Name()
-	if err := file.Chmod(mode); err == nil {
+	if err = file.Chmod(mode); err == nil {
 		_, err = file.Write(part.Data)
 	}
 	if err == nil {

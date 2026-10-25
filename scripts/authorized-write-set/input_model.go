@@ -29,20 +29,27 @@ type extractionSubject struct {
 }
 
 type splitReport struct {
-	Schema      string              `json:"schema"`
-	SourceSHA   string              `json:"source_sha"`
-	Decision    string              `json:"decision"`
-	Resolution  string              `json:"resolution"`
-	Subjects    []extractionSubject `json:"subjects"`
-	Unhandled   []string            `json:"unhandled"`
-	Coordinates splitCoordinates    `json:"coordinates"`
-	Exact       bool                `json:"exact"`
+	Schema             string              `json:"schema"`
+	SourceSHA          string              `json:"source_sha"`
+	Decision           string              `json:"decision"`
+	Resolution         string              `json:"resolution"`
+	Reason             string              `json:"reason"`
+	NextOperation      string              `json:"next_operation"`
+	PolicySourceDigest string              `json:"policy_source_sha256"`
+	PlanSourceDigest   string              `json:"plan_source_sha256"`
+	Subjects           []extractionSubject `json:"subjects"`
+	Unhandled          []string            `json:"unhandled"`
+	Coordinates        splitCoordinates    `json:"coordinates"`
+	Exact              bool                `json:"exact"`
 }
 
 type splitCoordinates struct {
-	Selected int `json:"selected_subjects"`
-	Applied  int `json:"applied_subjects"`
-	Changed  int `json:"changed_paths"`
-	Created  int `json:"created_paths"`
-	Unknowns int `json:"unknowns"`
+	Input     int `json:"input_subjects"`
+	Unhandled int `json:"unhandled_subjects"`
+	Deferred  int `json:"deferred_topology_subjects"`
+	Selected  int `json:"selected_subjects"`
+	Applied   int `json:"applied_subjects"`
+	Changed   int `json:"changed_paths"`
+	Created   int `json:"created_paths"`
+	Unknowns  int `json:"unknowns"`
 }

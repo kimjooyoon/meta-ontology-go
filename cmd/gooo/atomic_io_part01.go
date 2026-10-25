@@ -7,15 +7,17 @@ import (
 )
 
 type atomicFileOps struct {
-	createTemp func(string, string) (*os.File, error)
-	syncFile   func(*os.File) error
-	rename     func(string, string) error
-	remove     func(string) error
-	syncDir    func(string) error
+	createTemp    func(string, string) (*os.File, error)
+	syncFile      func(*os.File) error
+	rename        func(string, string) error
+	remove        func(string) error
+	syncDir       func(string) error
+	beforePublish func() error
 }
 type atomicWrite struct {
-	path string
-	data []byte
+	path   string
+	data   []byte
+	before *outputSnapshot
 }
 type outputSnapshot struct {
 	path   string
@@ -40,6 +42,14 @@ func writeAtomicFilesWithOps(writes []atomicWrite, ops atomicFileOps) error {
 		return err
 	}
 	defer removeAtomicTemps(temps, ops)
+	if err := checkAtomicPreconditions(writes); err != nil {
+		return err
+	}
+	if ops.beforePublish != nil {
+		if err := ops.beforePublish(); err != nil {
+			return err
+		}
+	}
 	return publishAtomicWrites(writes, changed, temps, snapshots, ops)
 }
 func snapshotAtomicWrites(writes []atomicWrite) ([]outputSnapshot, []bool, error) {
@@ -65,7 +75,31 @@ func snapshotAtomicWrites(writes []atomicWrite) ([]outputSnapshot, []bool, error
 			return nil, nil, err
 		}
 		snapshots[index] = snapshot
+		if write.before != nil && !sameOutputSnapshot(snapshot, *write.before) {
+			return nil, nil, fmt.Errorf("atomic input changed: %q", write.path)
+		}
 		changed[index] = !snapshot.exists || !bytesEqual(snapshot.data, write.data)
 	}
 	return snapshots, changed, nil
+}
+
+func sameOutputSnapshot(left, right outputSnapshot) bool {
+	return left.path == right.path && left.exists == right.exists &&
+		(!left.exists || left.mode.Perm() == right.mode.Perm() && bytesEqual(left.data, right.data))
+}
+
+func checkAtomicPreconditions(writes []atomicWrite) error {
+	for _, write := range writes {
+		if write.before == nil {
+			continue
+		}
+		current, err := captureOutputSnapshot(write.path)
+		if err != nil {
+			return err
+		}
+		if !sameOutputSnapshot(current, *write.before) {
+			return fmt.Errorf("atomic input changed: %q", write.path)
+		}
+	}
+	return nil
 }

@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/contextual-mapping", "activity": "View"},
+  "packages": [
+    {"path": "example/contextual-mapping", "sources": ["mapping.gooo.fixture"]}
+  ]
+}

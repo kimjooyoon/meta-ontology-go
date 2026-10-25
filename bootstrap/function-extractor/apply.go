@@ -48,32 +48,8 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 			evidenceBySubject[logical] = evidence
 			continue
 		}
-		for _, edit := range recipe.Edits {
-			name, err := extractionPath(root, edit.Path)
-			if err != nil {
-				return nil, nil, nil, nil, err
-			}
-			data, exists := buffers[edit.Path]
-			if !exists {
-				data, err = os.ReadFile(name)
-				if err != nil {
-					return nil, nil, nil, nil, err
-				}
-			}
-			oldText, newText := editText(edit.Old), editText(edit.New)
-			if bytes.Count(data, oldText) != 1 {
-				return nil, nil, nil, nil, fmt.Errorf("recipe %s is not exact in %s", logical, edit.Path)
-			}
-			buffers[edit.Path] = bytes.Replace(data, oldText, newText, 1)
-			changedBySubject[logical] = appendUnique(changedBySubject[logical], edit.Path)
-		}
-		paths, err := stageCreations(root, recipe, buffers, created)
-		if err != nil {
+		if err := stageRecipe(root, logical, recipe, buffers, created, changedBySubject, createdBySubject); err != nil {
 			return nil, nil, nil, nil, err
-		}
-		for _, path := range paths {
-			changedBySubject[logical] = appendUnique(changedBySubject[logical], path)
-			createdBySubject[logical] = appendUnique(createdBySubject[logical], path)
 		}
 	}
 	staged, err := formatStaged(root, buffers, created)
@@ -85,6 +61,46 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 		return nil, nil, nil, nil, err
 	}
 	return staged, subjects, unhandled, failures, nil
+}
+
+func stageRecipe(root, logical string, recipe extractionRecipe, buffers map[string][]byte,
+	created map[string]bool, changedBySubject, createdBySubject map[string][]string) error {
+	if err := validateRecipeModule(root, logical, recipe); err != nil {
+		return err
+	}
+	for _, edit := range recipe.Edits {
+		name, err := extractionPath(root, edit.Path)
+		if err != nil {
+			return err
+		}
+		data, exists := buffers[edit.Path]
+		if !exists {
+			data, err = os.ReadFile(name)
+			if err != nil {
+				return err
+			}
+		}
+		oldText, newText := editText(edit.Old), editText(edit.New)
+		if bytes.Count(data, oldText) != 1 {
+			return fmt.Errorf("recipe %s is not exact in %s", logical, edit.Path)
+		}
+		buffers[edit.Path] = bytes.Replace(data, oldText, newText, 1)
+		changedBySubject[logical] = appendUnique(changedBySubject[logical], edit.Path)
+	}
+	paths, err := stageCreations(root, recipe, buffers, created)
+	if err != nil {
+		return err
+	}
+	for _, path := range paths {
+		changedBySubject[logical] = appendUnique(changedBySubject[logical], path)
+		createdBySubject[logical] = appendUnique(createdBySubject[logical], path)
+	}
+	for _, path := range changedBySubject[logical] {
+		if err := projectionextractor.ValidateSourceImports(root, path, buffers[path]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func stageCreations(root string, recipe extractionRecipe, buffers map[string][]byte,

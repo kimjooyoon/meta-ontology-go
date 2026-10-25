@@ -26,3 +26,16 @@ savings. The new original source run owns that measurement and merge eligibility
 The first source run exposed two stale regression assertions. Their
 [source-contract correction](../ci-command-evolution/README.md) retains the
 original command inventory and adds explicit descendant bindings.
+
+On 25 October, dependency PR #1780 exposed a separate late rejection: its
+`dependabot/*` head failed the existing feature-branch policy after a reported
+1,583,566 ms work prefix. The dev-target preflight now supplies head/base to the
+same verifier before metric generation, transformations and replay. The final
+exact-head gate and canonical check join remain in place. This rejects work
+early; it does not authorize a merge or establish CI time savings.
+
+The command-evolution ledger retains every original policy command: twelve
+bodies are unchanged, while original index 3 gains the route check. Existing
+baseline and earlier workflow-origin metadata remain historical; the tests bind
+all current descendants directly to the current workflow. No original command
+or observation was deleted to make the new population match.

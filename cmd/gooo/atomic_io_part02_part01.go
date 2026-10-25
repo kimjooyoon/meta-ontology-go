@@ -37,7 +37,11 @@ func stageAtomicWrites(writes []atomicWrite, changed []bool, ops atomicFileOps) 
 			return nil, fmt.Errorf("create temporary output for %q: %w", write.path, err)
 		}
 		temps[index] = temp.Name()
-		if err := prepareAtomicTemp(temp, write.data, ops); err != nil {
+		mode := os.FileMode(0o644)
+		if write.before != nil {
+			mode = write.before.mode.Perm()
+		}
+		if err := prepareAtomicTempMode(temp, write.data, ops, mode); err != nil {
 			_ = temp.Close()
 			return nil, fmt.Errorf("prepare temporary output for %q: %w", write.path, err)
 		}
@@ -46,7 +50,11 @@ func stageAtomicWrites(writes []atomicWrite, changed []bool, ops atomicFileOps) 
 	return temps, nil
 }
 func prepareAtomicTemp(temp *os.File, data []byte, ops atomicFileOps) error {
-	if err := temp.Chmod(0o644); err != nil {
+	return prepareAtomicTempMode(temp, data, ops, 0o644)
+}
+
+func prepareAtomicTempMode(temp *os.File, data []byte, ops atomicFileOps, mode os.FileMode) error {
+	if err := temp.Chmod(mode); err != nil {
 		return fmt.Errorf("set mode: %w", err)
 	}
 	if err := writeAll(temp, data); err != nil {

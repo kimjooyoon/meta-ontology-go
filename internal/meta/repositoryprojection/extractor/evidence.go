@@ -10,7 +10,9 @@ type StrategyEvidence struct {
 	Operation                     string                         `json:"operation"`
 	ContractActivity              string                         `json:"contract_activity"`
 	ContractInputEntity           string                         `json:"contract_input_entity"`
+	ContractInputEntityID         string                         `json:"contract_input_entity_id"`
 	ContractOutputEntity          string                         `json:"contract_output_entity"`
+	ContractOutputEntityID        string                         `json:"contract_output_entity_id"`
 	ContractInputSubjectKind      string                         `json:"contract_input_subject_kind"`
 	ContractSourceDigest          string                         `json:"contract_source_digest"`
 	ContractSemanticDigest        string                         `json:"contract_semantic_digest"`
@@ -58,6 +60,7 @@ type PreparationProgressEvidence struct {
 	Operation              string `json:"operation"`
 	Activity               string `json:"activity"`
 	InputEntity            string `json:"input_entity"`
+	InputEntityID          string `json:"input_entity_id"`
 	InputSubjectKind       string `json:"input_subject_kind"`
 	ContractSourceDigest   string `json:"contract_source_digest"`
 	ContractSemanticDigest string `json:"contract_semantic_digest"`
@@ -83,6 +86,7 @@ type PreflightObservationEvidence struct {
 	Operation                       string                    `json:"operation"`
 	Activity                        string                    `json:"activity"`
 	InputEntity                     string                    `json:"input_entity"`
+	InputEntityID                   string                    `json:"input_entity_id"`
 	InputSubjectKind                string                    `json:"input_subject_kind"`
 	Metric                          sourcepolicy.Dimension    `json:"metric"`
 	HelperMeasurementScope          string                    `json:"helper_measurement_scope"`
@@ -125,7 +129,9 @@ type ContractObligationEvidence struct {
 	Name                string `json:"name"`
 	Activity            string `json:"activity"`
 	InputEntity         string `json:"input_entity"`
+	InputEntityID       string `json:"input_entity_id"`
 	OutputEntity        string `json:"output_entity"`
+	OutputEntityID      string `json:"output_entity_id"`
 	UsedInputFact       bool   `json:"used_input_fact"`
 	GeneratedOutputFact bool   `json:"generated_output_fact"`
 }
@@ -134,7 +140,9 @@ type ProofStageEvidence struct {
 	Name             string `json:"name"`
 	Activity         string `json:"activity"`
 	InputEntity      string `json:"input_entity"`
+	InputEntityID    string `json:"input_entity_id"`
 	OutputEntity     string `json:"output_entity"`
+	OutputEntityID   string `json:"output_entity_id"`
 	Status           string `json:"status"`
 	SourceDigest     string `json:"source_digest"`
 	CandidateDigest  string `json:"candidate_digest"`

@@ -146,7 +146,11 @@ func projectedFinalConformance(root, logical string, generated map[string][]byte
 	if err != nil {
 		return projectedConformanceFailure(root, "logical="+logical, "resolve-module-owner", err)
 	}
-	configuration := types.Config{Importer: newModuleImporter(owner), Error: func(error) {}}
+	imports := newModuleImporter(owner)
+	if err := imports.prepareCompilationImports(files); err != nil {
+		return projectedDependencyOriginFailure(root, "logical="+logical, err)
+	}
+	configuration := types.Config{Importer: imports, Error: func(error) {}}
 	if _, err := configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, nil); err != nil {
 		return projectedConformanceFailure(root, "logical="+logical, "typecheck", err)
 	}

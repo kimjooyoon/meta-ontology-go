@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"maps"
 	"sync"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/sourcebundle"
 )
 
 type operationContractCacheKey struct {
@@ -22,25 +24,29 @@ type operationContractParseCache struct {
 
 var operationContractCache operationContractParseCache
 
-func cachedOperationInputContract(raw []byte) (operationInputContract, error) {
-	abi, err := json.Marshal([]any{nativeOperationInputs, nativeOperationObligations, nativeContractPolicies})
+func cachedOperationInputContract(sources []sourcebundle.Source) (operationInputContract, error) {
+	abi, err := json.Marshal([]any{nativeOperationInputs, nativeOperationObligations, nativeContractPolicies, nativeContractEntities})
 	if err != nil {
 		return operationInputContract{}, err
 	}
-	return operationContractCache.load(raw, sha256.Sum256(abi))
+	return operationContractCache.load(sources, sha256.Sum256(abi))
 }
 
 // Reuse only parsed embedded-contract data inside this executable. No candidate,
 // verifier result, test result, or execution authorization is stored here.
-func (cache *operationContractParseCache) load(raw []byte, abi [32]byte) (operationInputContract, error) {
-	key := operationContractCacheKey{source: sha256.Sum256(raw), abi: abi}
+func (cache *operationContractParseCache) load(sources []sourcebundle.Source, abi [32]byte) (operationInputContract, error) {
+	digest, err := sourcebundle.Digest(sources)
+	if err != nil {
+		return operationInputContract{}, err
+	}
+	key := operationContractCacheKey{source: digest, abi: abi}
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 	if cache.valid && cache.key == key {
 		return cloneOperationInputContract(cache.value), nil
 	}
 	cache.parses++
-	value, err := parseOperationInputContract(raw)
+	value, err := parseOperationInputContractSources(sources)
 	if err != nil {
 		return operationInputContract{}, err
 	}
@@ -49,6 +55,7 @@ func (cache *operationContractParseCache) load(raw []byte, abi [32]byte) (operat
 }
 
 func cloneOperationInputContract(value operationInputContract) operationInputContract {
+	value.SourceOrigins = value.SourceOrigins.Clone()
 	value.Bindings = maps.Clone(value.Bindings)
 	value.Facts = maps.Clone(value.Facts)
 	value.ObligationFacts = maps.Clone(value.ObligationFacts)

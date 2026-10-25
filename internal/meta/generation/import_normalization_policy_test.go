@@ -10,7 +10,7 @@ func TestImportNormalizationPolicyContractRegressionCohort(t *testing.T) {
 		name   string
 		source string
 	}{
-		{name: "exact-policy-is-bound-to-ir", source: string(operationInputContractSource)},
+		{name: "exact-policy-is-bound-to-ir", source: string(operationContractFixture(t))},
 		{name: "missing-or-mismatched-policy-fails-closed", source: ""},
 	}
 	if len(cases) != 2 {
@@ -27,12 +27,12 @@ func TestImportNormalizationPolicyContractRegressionCohort(t *testing.T) {
 				}
 				return
 			}
-			base := string(operationInputContractSource)
+			base := string(operationContractFixture(t))
 			missing := strings.Replace(base, "activity NormalizeEligibleImportGroup(FileInput) -> ImportNormalizationPolicy\n", "", 1)
 			if _, err := parseOperationInputContract([]byte(missing)); err == nil {
 				t.Fatal("missing import normalization policy was accepted")
 			}
-			mismatched := strings.Replace(base, "activity NormalizeEligibleImportGroup(FileInput) -> ImportNormalizationPolicy", "activity NormalizeEligibleImportGroup(FunctionInput) -> ImportNormalizationPolicy", 1)
+			mismatched := strings.Replace(base, "activity NormalizeEligibleImportGroup(FileInput) -> ImportNormalizationPolicy", "activity NormalizeEligibleImportGroup(FunctionSource) -> ImportNormalizationPolicy", 1)
 			if _, err := parseOperationInputContract([]byte(mismatched)); err == nil {
 				t.Fatal("mismatched import normalization policy input was accepted")
 			}
@@ -40,7 +40,7 @@ func TestImportNormalizationPolicyContractRegressionCohort(t *testing.T) {
 			if _, err := parseOperationInputContract([]byte(missingHeader)); err == nil {
 				t.Fatal("missing named-alias header policy was accepted")
 			}
-			mismatchedHeader := strings.Replace(base, "activity NormalizeNamedAliasImportHeader(FileInput) -> ImportNormalizationPolicy", "activity NormalizeNamedAliasImportHeader(FunctionInput) -> ImportNormalizationPolicy", 1)
+			mismatchedHeader := strings.Replace(base, "activity NormalizeNamedAliasImportHeader(FileInput) -> ImportNormalizationPolicy", "activity NormalizeNamedAliasImportHeader(FunctionSource) -> ImportNormalizationPolicy", 1)
 			if _, err := parseOperationInputContract([]byte(mismatchedHeader)); err == nil {
 				t.Fatal("mismatched named-alias header policy input was accepted")
 			}

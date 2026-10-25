@@ -100,7 +100,7 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 		r.Artifact = &ArtifactObservation{Schema: "gooo/owned-native-artifact/v1", KeySHA256: key, MissReason: "empty"}
 		if cached := owner.artifact; cached != nil {
 			r.Artifact.MissReason = "key_changed"
-			if cached.key == key {
+			if cached.key == key && r.ToolchainReference != nil {
 				observed, readErr := owner.bindFile(cached.executable)
 				if readErr == nil && observed == cached.digest {
 					r.ExecutableSHA256 = observed
@@ -115,6 +115,9 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 				return "", "", release, err
 			}
 		}
+		if r.ToolchainReference == nil {
+			r.Artifact.MissReason = "tool_dependencies_unbound"
+		}
 	}
 	root, err = os.MkdirTemp("", "gooo-composition-runtime-")
 	if err != nil {
@@ -126,11 +129,13 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 		return root, executable, release, err
 	}
 	if owner != nil {
-		owner.artifact = &compiledArtifact{key: key, root: root, executable: executable,
-			digest: r.ExecutableSHA256, build: copyProcess(r.Build)}
 		r.Artifact.ExecutableVerified, r.Artifact.SourceBuild = true, copyProcess(r.Build)
 		bindCompositionBuild(r)
-		release = func() {}
+		if r.ToolchainReference != nil {
+			owner.artifact = &compiledArtifact{key: key, root: root, executable: executable,
+				digest: r.ExecutableSHA256, build: copyProcess(r.Build)}
+			release = func() {}
+		}
 	}
 	return root, executable, release, nil
 }

@@ -331,7 +331,7 @@ func TestDecodeExtractorReportAcceptsLegacyWithoutStrategyEvidence(t *testing.T)
 
 func TestDecodeExtractorReportPreservesNativeStrategyEvidence(t *testing.T) {
 	root := t.TempDir()
-	evidence := strategyEvidenceFixture(t)
+	evidence := currentStrategySchemaFixture(t)
 	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence})
 	payload, err := json.Marshal(report)
 	if err != nil {
@@ -408,7 +408,7 @@ func TestDecodeExtractorReportRejectsMalformedStrategyEvidence(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			root := t.TempDir()
-			value := extractionReportMapWithStrategyEvidence(t, strategyEvidenceFixture(t))
+			value := extractionReportMapWithStrategyEvidence(t, currentStrategySchemaFixture(t))
 			subjects := value["subjects"].([]any)
 			subject := subjects[0].(map[string]any)
 			evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
@@ -457,7 +457,7 @@ func TestDecodeExtractorReportRejectsStrategyEvidenceStatusCohort8(t *testing.T)
 		for _, status := range statusValues {
 			t.Run("cohort8/"+location.name+"/"+status, func(t *testing.T) {
 				root := t.TempDir()
-				value := extractionReportMapWithStrategyEvidence(t, strategyEvidenceFixture(t))
+				value := extractionReportMapWithStrategyEvidence(t, currentStrategySchemaFixture(t))
 				subjects := value["subjects"].([]any)
 				subject := subjects[0].(map[string]any)
 				evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
@@ -598,7 +598,7 @@ func assertExtractorReportMapAccepted(t *testing.T, value map[string]any) {
 // This schema fixture is derived from source e9b261d6b9c3ab118ea15c64976c36ad9641b244,
 // CI run 33951302941, runtime artifact 9964924639. It is a test fixture rather
 // than a claim about a current native observation.
-func strategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
+func historicalStrategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
 	t.Helper()
 	payload, err := os.ReadFile(filepath.Join("testdata", "native-strategy-evidence-w2.json"))
 	if err != nil {
@@ -613,9 +613,13 @@ func strategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence 
 
 func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
 	t.Helper()
-	evidence := strategyEvidenceFixture(t)
+	evidence := currentStrategySchemaFixture(t)
 	evidence.AfterRenderedCapacityOverage = 3
 	evidence.PreflightObservations = []projectionextractor.PreflightObservationEvidence{{
+		Operation: evidence.Operation, Activity: evidence.ContractActivity,
+		InputEntity: evidence.ContractInputEntity, InputEntityID: evidence.ContractInputEntityID,
+		InputSubjectKind:     evidence.ContractInputSubjectKind,
+		ContractSourceDigest: evidence.ContractSourceDigest, ContractSemanticDigest: evidence.ContractSemanticDigest,
 		Subject:      evidence.Subject,
 		SourceDigest: evidence.ProofStages[0].SourceDigest,
 	}}
@@ -623,6 +627,7 @@ func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.St
 		Operation:              evidence.Operation,
 		Activity:               evidence.ContractActivity,
 		InputEntity:            evidence.ContractInputEntity,
+		InputEntityID:          evidence.ContractInputEntityID,
 		InputSubjectKind:       evidence.ContractInputSubjectKind,
 		ContractSourceDigest:   evidence.ContractSourceDigest,
 		ContractSemanticDigest: evidence.ContractSemanticDigest,
