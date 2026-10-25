@@ -644,3 +644,38 @@ files, changes no registration and runs no native activity. Semantic admission
 remains `UNASSESSED` in both inventories. Embedded-reader preservation and native
 ABI acceptance still require their existing checks. There is no new CLI, model
 call or mandatory CI job.
+
+### One syntax case across physical source members
+
+The syntax corpus can associate an existing case with an ordered `case_sources`
+entry. The first member remains the case's original `path`; additional members
+belong to that same package and namespace. This optional registry-v2 field
+describes physical source organization. It does not add a case or change its
+capability/governance scope or parser profile.
+
+The existing `explicit-consumer-continuation` case now reads both
+`source.gooo` and `source_recovery.gooo` in
+`internal/meta/executioncontinuation/policy/`. The family contains the original
+types and all nine continuation/recovery activities. Both files were already in
+the corpus inventory. The total remains 139 cases, including 137 capability
+cases, and the distinct physical file population is unchanged.
+
+Replay formats and reparses each member separately, then checks semantic and BX
+preservation on the complete source set. The shared source-bundle parser keeps
+each declaration's physical span; it creates no concatenated virtual source.
+The result retains ordered `source_members` with exact file hashes and physical
+line counts. `source_digest_kind: gooo/source-bundle/v1` identifies the ordered
+name-and-byte digest; ordinary single-file cases retain their existing digest
+representation. The report also records the registry's explicit case membership.
+
+Missing members produce an unresolved observation without a usable input prefix.
+Invalid syntax, conflicting identities or inconsistent package headers fail the
+case. The caller's exact EntityFields profile is retained. Changing member names,
+hashes, order or membership cannot be hidden by recomputing a report seal.
+
+This route supports bounded, explicitly listed same-package sources (up to 64
+members, 1 MiB per member, 16 MiB total). Imports still require package execution;
+invalid-syntax examples retain their single-file diagnostic route. Reading the
+case is sequential and does not establish a mutable-filesystem snapshot.
+Automatic joint rewriting of source files and their registration is the next
+consumer of this capability; this change itself performs no repository writes.

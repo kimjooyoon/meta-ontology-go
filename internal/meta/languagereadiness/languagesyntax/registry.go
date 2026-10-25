@@ -11,7 +11,7 @@ import (
 )
 
 func expectedRegistry() Registry {
-	return Registry{Schema: RegistrySchema, ProjectionUnits: expectedProjectionUnits(), Cases: expectedSyntaxCases(), PackageUnits: expectedSyntaxPackageUnits(), MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo", "internal/meta/generation/self_improvement_outcome_contract.gooo", "internal/meta/policycompilation/revision-operation.gooo", "examples/relay-game-contract/main.gooo", "internal/meta/generation/experience_memory_receipt_contract.gooo", "internal/meta/syntaxregistration/profile_migration.gooo", "examples/source-owned-cohort-observations/main.gooo", "internal/meta/publictestreuse/policy.gooo", "examples/measurement-metadata/main.gooo", "internal/meta/languagereadiness/toolchainrelease/payload.gooo", "examples/agent-tool-inventory/main.gooo", "examples/recorded-use-origins/retention.gooo", "examples/toolchain-version-impact/impact.gooo", "examples/toolchain-version-impact/plan.gooo", "examples/direct-module-impact/plan.gooo", "examples/ci-strategy/strategy.gooo", "internal/meta/executioncontinuation/policy/source_recovery.gooo"}}
+	return Registry{Schema: RegistrySchema, CaseSources: expectedCaseSources(), ProjectionUnits: expectedProjectionUnits(), Cases: expectedSyntaxCases(), PackageUnits: expectedSyntaxPackageUnits(), MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo", "internal/meta/generation/self_improvement_outcome_contract.gooo", "internal/meta/policycompilation/revision-operation.gooo", "examples/relay-game-contract/main.gooo", "internal/meta/generation/experience_memory_receipt_contract.gooo", "internal/meta/syntaxregistration/profile_migration.gooo", "examples/source-owned-cohort-observations/main.gooo", "internal/meta/publictestreuse/policy.gooo", "examples/measurement-metadata/main.gooo", "internal/meta/languagereadiness/toolchainrelease/payload.gooo", "examples/agent-tool-inventory/main.gooo", "examples/recorded-use-origins/retention.gooo", "examples/toolchain-version-impact/impact.gooo", "examples/toolchain-version-impact/plan.gooo", "examples/direct-module-impact/plan.gooo", "examples/ci-strategy/strategy.gooo", "internal/meta/executioncontinuation/policy/source_recovery.gooo"}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {
@@ -28,6 +28,9 @@ func decodeRegistry(raw []byte) (Registry, error) {
 		return registry, fmt.Errorf("decode language syntax registry: trailing content")
 	}
 	if err := validateCaseScopes(registry); err != nil {
+		return registry, err
+	}
+	if err := validateCaseSources(registry); err != nil {
 		return registry, err
 	}
 	if !reflect.DeepEqual(registry, expectedRegistry()) {

@@ -54,33 +54,13 @@ func executeValidWithSupportAndImplicitActivityPorts(repository fs.FS, path stri
 		return result
 	}
 	result.SourceLines, result.SourceDigest = sourceLines(raw), digestBytes(raw)
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(path, string(raw), support)
-	if diagnostics.HasErrors() {
-		return reject(result, diagnostics.Error().Error())
-	}
-	canonical, err := syntax.FormatWithEntityFieldsSupport(file, support)
-	if err != nil {
-		return reject(result, "format: "+err.Error())
-	}
-	replayed, replayDiagnostics := syntax.ParseFileWithEntityFieldsSupport(path, canonical, support)
-	if replayDiagnostics.HasErrors() {
-		return reject(result, replayDiagnostics.Error().Error())
-	}
-	replayCanonical, err := syntax.FormatWithEntityFieldsSupport(replayed, support)
-	if err != nil {
-		return reject(result, "replay format: "+err.Error())
-	}
-	leftShape, err := astShape(file)
+	observed, err := replaySourceSyntax(path, string(raw), support)
 	if err != nil {
 		return reject(result, err.Error())
 	}
-	rightShape, err := astShape(replayed)
-	if err != nil {
-		return reject(result, err.Error())
-	}
-	result.ASTDigest, result.CanonicalDigest = digestBytes([]byte(leftShape)), digestBytes([]byte(canonical))
-	result.ASTReplayed, result.ByteReplayed = leftShape == rightShape, canonical == replayCanonical
-	return executeSemanticWithImplicitActivityPorts(result, file, replayed, support, allowImplicitActivityPorts)
+	result.ASTDigest, result.CanonicalDigest = digestBytes([]byte(observed.shape)), digestBytes([]byte(observed.canonical))
+	result.ASTReplayed, result.ByteReplayed = observed.astReplayed, observed.byteReplayed
+	return executeSemanticWithImplicitActivityPorts(result, observed.before, observed.after, support, allowImplicitActivityPorts)
 }
 
 func reject(result Result, diagnostic string) Result {
