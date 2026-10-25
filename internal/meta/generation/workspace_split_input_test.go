@@ -1,6 +1,7 @@
 package generation
 
 import (
+	"maps"
 	"reflect"
 	"strings"
 	"testing"
@@ -67,9 +68,7 @@ func TestWorkspaceSplitPlanRetainsUnboundAndContradictoryInputs(t *testing.T) {
 	}
 	for _, mode := range []string{"missing", "stale", "wrong-limit", "unreferenced"} {
 		local := OperationInputs{WorkspaceSplits: map[string]workspacesplit.Request{}}
-		for k, v := range inputs.WorkspaceSplits {
-			local.WorkspaceSplits[k] = v
-		}
+		maps.Copy(local.WorkspaceSplits, inputs.WorkspaceSplits)
 		modified := request
 		switch mode {
 		case "missing":

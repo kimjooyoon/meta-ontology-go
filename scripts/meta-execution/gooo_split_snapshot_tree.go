@@ -42,7 +42,7 @@ func goooSnapshotMembers(gitDir, head string) (map[string]goooSnapshotMember, er
 func parseGoooSnapshotMembers(raw []byte) (map[string]goooSnapshotMember, error) {
 	members := map[string]goooSnapshotMember{}
 	var total int64
-	for _, entry := range bytes.Split(raw, []byte{0}) {
+	for entry := range bytes.SplitSeq(raw, []byte{0}) {
 		if len(entry) == 0 {
 			continue
 		}
