@@ -460,3 +460,43 @@ map-construction extraction and report decoding exercise the production rename,
 including rejection of altered type IDs and a disconnected proof edge. Source
 labels are not aliases for the host ABI vocabulary. Activity renames, executor
 discovery and publication of a repository-wide split remain separate work.
+
+### Observing Go embed consumers
+
+The native `sourcebundle/embeduse.Inspect` API observes one Go package and an
+optional proposed set of Gooo source members. It uses Go's own `list -test` and
+`-overlay` selection. It performs no source installation, test execution, model
+call or native ABI admission. The selected Go build context is retained alongside
+the requested directory and the physical directory used by the tool.
+
+A package's `EmbedFiles` is a union. Suppose one `embed.FS` variable reads
+`contract*.gooo`, while another `[]byte` variable reads `contract.gooo`. After a
+split, the union can include both parts while the second variable still receives
+only the original filename. The observer attributes selected members to each
+variable declaration. It keeps all proposed members visible, including those
+selected by no observed variable.
+
+Each query temporarily masks sibling embed directives, preserving offsets in the
+query source, and lets Go resolve the remaining directive. Directory patterns,
+`all:`, quoted names and test contexts use Go's resolver. Reports refer to the
+original Go file hash and physical declaration span, including when a `//line`
+directive supplies a different logical filename. Query overlays never become
+authored source origins. Go source and Gooo member records share one flat file
+table; consumer rows refer to its indices. Projected bytes are marked separately
+from bytes read from disk.
+
+The counterexample fixture compares all three contexts: production, internal
+tests and external tests. Its independent Gooo reader finds three declarations
+in the combined partition and only one in the single-file view, although both
+views are valid inputs. A separate native probe of the actual operation-input
+contract admits two projected members and preserves all 22 declaration origins,
+the semantic hash and six obligations while changing source identity.
+
+This is selected-context discovery of static embed bindings. Dynamic `ReadFile`
+calls, other build contexts and the consumer's later interpretation remain
+unobserved. Membership does not establish that a native consumer accepts a changed
+contract. Source bytes and package selection are reread before return; publication
+still requires its own current-input checks. Existing overlays supplied through
+`GOFLAGS` are refused rather than silently replaced. The observation is bounded to
+64 variables, 1,024 input files, 1 MiB per file, 16 MiB total and a 30-second query
+context. Failure returns no report, and owned query files are removed.
