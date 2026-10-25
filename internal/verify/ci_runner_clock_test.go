@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -100,7 +101,7 @@ func TestActualRunnerClockBinderPreservesRunnerFreeGaps(t *testing.T) {
 	queued["runner_id"], queued["conclusion"] = 0, nil
 	cancelled := job(4, "Unassigned cancellation", "completed", prepared, prepared.Add(time.Minute))
 	cancelled["runner_id"], cancelled["conclusion"] = 0, "cancelled"
-	skipped := job(5, "Unassigned skip", "completed", now, now)
+	skipped := job(5, "Unassigned skip", "completed", now, now.Add(-time.Second))
 	skipped["runner_id"], skipped["conclusion"] = nil, "skipped"
 	pages := putJSON("original-pages.json", []any{map[string]any{"total_count": 5, "jobs": []any{
 		job(1, "Work domain preparation", "completed", prepared, prepared.Add(10*time.Second)),
@@ -128,12 +129,16 @@ func TestActualRunnerClockBinderPreservesRunnerFreeGaps(t *testing.T) {
 		t.Fatal(err)
 	}
 	var receipt struct {
-		Decision string
-		Active   int64 `json:"active_elapsed_ms"`
-		Wall     int64 `json:"wall_elapsed_ms"`
+		Decision   string
+		Active     int64   `json:"active_elapsed_ms"`
+		Wall       int64   `json:"wall_elapsed_ms"`
+		Unassigned []int64 `json:"unassigned_job_ids"`
 	}
 	if err = json.Unmarshal(raw, &receipt); err != nil || receipt.Decision != "READY" || receipt.Active >= 60000 || receipt.Wall < 3600000 {
 		t.Fatal("runner-free time spent the command allowance", string(raw), err)
+	}
+	if !slices.Equal(receipt.Unassigned, []int64{3, 4, 5}) {
+		t.Fatal("unassigned observations were lost", receipt.Unassigned)
 	}
 	environment, err := os.ReadFile(envPath)
 	if err != nil || !strings.Contains(string(environment), "GOOO_CI_CLOCK_SCOPE=runner_active_union\n") {
