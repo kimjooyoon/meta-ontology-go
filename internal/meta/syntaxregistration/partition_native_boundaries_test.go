@@ -36,7 +36,8 @@ func partitionNativeFiles(t *testing.T) (fstest.MapFS, sourcebundle.Partition) {
 
 func TestPartitionNativeOwnershipFollowsDeclarationsAcrossFiles(t *testing.T) {
 	files, partition := partitionNativeFiles(t)
-	old, renamed := syntaxRoot+"case_sources.go", syntaxRoot+"physical-owners.go"
+	old := partitionNativeFieldOwner(t, files, "CaseSources", "CaseSourceSet", "explicit-consumer-continuation")
+	renamed := syntaxRoot + "physical-owners.go"
 	files[renamed] = files[old]
 	delete(files, old)
 	const incidental = "\n// keep incidental origin\nfunc unrelatedPartitionMembers() []string { return []string{\"keep.gooo\"} }\n"
@@ -57,18 +58,18 @@ func TestPartitionNativeOwnershipFollowsDeclarationsAcrossFiles(t *testing.T) {
 }
 
 func TestPartitionNativeRefusesDivergentAndUnboundedOwners(t *testing.T) {
-	for _, item := range []struct{ name, path, from, to string }{
-		{"case", "registry_cases_core.go", "", ""},
-		{"family", "case_sources.go", "explicit-consumer-continuation", "wrong-family"},
-		{"meta", "registry.go", "examples/agent-tool-inventory/main.gooo", "examples/unknown/main.gooo"},
-		{"package-entry", "registry_packages.go", `Entry: "PayOrder"`, `Entry: "Other"`},
-		{"package-members", "registry_packages.go", "examples/billing-package/entities.gooo", "examples/billing-package/other.gooo"},
-		{"package-return", "registry_packages.go", "packageUnit, symbolicUnit", "packageUnit, packageUnit"},
-		{"package-mutation", "registry_packages.go", "return []PackageDefinition", `packageUnit.Entry = "PayOrder"; return []PackageDefinition`},
-		{"package-import", "registry_packages.go", "internal/meta/languagepackageexecution", "internal/otherexecution"},
-		{"package-import-shadow", "registry_packages.go", "packageUnit", "languagepackageexecution"},
-		{"package-type-shadow", "registry_packages.go", "packageUnit", "PackageDefinition"},
-		{"projection", "projection.go", "internal/completeness/receipt.gooo", "examples/entity-fields-v1/main.gooo"},
+	for _, item := range []struct{ name, from, to string }{
+		{"case", "", ""},
+		{"family", "explicit-consumer-continuation", "wrong-family"},
+		{"meta", "examples/agent-tool-inventory/main.gooo", "examples/unknown/main.gooo"},
+		{"package-entry", `Entry: "PayOrder"`, `Entry: "Other"`},
+		{"package-members", "examples/billing-package/entities.gooo", "examples/billing-package/other.gooo"},
+		{"package-return", "packageUnit, symbolicUnit", "packageUnit, packageUnit"},
+		{"package-mutation", "return []PackageDefinition", `packageUnit.Entry = "PayOrder"; return []PackageDefinition`},
+		{"package-import", "internal/meta/languagepackageexecution", "internal/otherexecution"},
+		{"package-import-shadow", "packageUnit", "languagepackageexecution"},
+		{"package-type-shadow", "packageUnit", "PackageDefinition"},
+		{"projection", "internal/completeness/receipt.gooo", "examples/entity-fields-v1/main.gooo"},
 	} {
 		t.Run(item.name, func(t *testing.T) {
 			files, partition := partitionNativeFiles(t)
@@ -89,7 +90,7 @@ func TestPartitionNativeRefusesDivergentAndUnboundedOwners(t *testing.T) {
 				name, _ := source.location(rows[0].literal.Pos())
 				files[name].Data = bytes.Replace(files[name].Data, []byte(rows[0].definition.ID), []byte("divergent-case"), 1)
 			} else {
-				name := syntaxRoot + item.path
+				name := partitionNativeCounterexampleOwner(t, files, item.name, item.from)
 				if !bytes.Contains(files[name].Data, []byte(item.from)) {
 					t.Fatal("counterexample did not match an actual owner")
 				}
