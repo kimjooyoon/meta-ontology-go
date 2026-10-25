@@ -33,8 +33,12 @@ func applyWorkspaceSourceSplit(options workspaceSourceSplitOptions, ops atomicFi
 	proposalOptions := workspaceSourceSplitOptions{
 		packagePath: proposal.Result.PackagePath, source: proposal.Result.InputFilename,
 		before: proposal.Result.BeforeID, into: proposal.Result.Files[1].Filename, manifestPath: options.manifestPath}
-	for _, consumer := range proposal.Consumers {
-		proposalOptions.consumerWorkspaces = append(proposalOptions.consumerWorkspaces, consumer.ManifestPath)
+	if proposal.Discovery != nil {
+		proposalOptions.discoveryRoot = proposal.Discovery.Root
+	} else {
+		for _, consumer := range proposal.Consumers {
+			proposalOptions.consumerWorkspaces = append(proposalOptions.consumerWorkspaces, consumer.ManifestPath)
+		}
 	}
 	current, err := currentWorkspaceSourceSplitProposal(proposalOptions, proposal)
 	if err != nil {
@@ -98,6 +102,10 @@ func decodeWorkspaceSourceSplitProposal(raw []byte) (workspaceSourceSplitReceipt
 			consumer.Result == nil || len(consumer.Result.Files) != 2 {
 			return proposal, fmt.Errorf("apply requires complete consumer proposals")
 		}
+	}
+	if proposal.Discovery != nil && (proposal.Discovery.Root == "" ||
+		proposal.Discovery.Candidates != "recursive-json-files" || len(proposal.Discovery.Definitions) == 0) {
+		return proposal, fmt.Errorf("apply requires a complete workspace discovery scope")
 	}
 	return proposal, nil
 }
