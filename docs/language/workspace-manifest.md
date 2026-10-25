@@ -393,3 +393,44 @@ These sequential reads are observations, not a filesystem snapshot or publicatio
 permission. Current-input checks, alias resolution and complete consumer discovery
 still belong to the applying host. The native execution regression now begins at
 this file-backed entry point and retains the same six expected activity outputs.
+
+### Embedded native contract sources
+
+Native declaration contracts have no executable entry point. The internal
+`sourcebundle` adapter reads an explicit ordered set of `.gooo` members, parses
+each with its physical filename, and lowers their declarations through the
+existing bidirectional and semantic validators. Every member must have the same
+package and namespace. Imports require the package compiler and are refused here.
+This adapter does not replace the workspace compiler or discover consumers.
+
+The operation-input contract is its first connected consumer. Its embedded family
+is `operation-input-contract*.gooo`; partitions within that family are read in
+lexical filename order. The existing native checks still require exactly four
+operations, six obligation activities, two policy activities and ten entities.
+Adding a file cannot add an unimplemented executor or bypass those checks.
+
+The bundle identity binds ordered filenames and exact bytes. It differs from the
+old single-file content hash even for one member, so old operation plans need
+fresh preparation. An extraction report with matching meaning but a different
+contract source reports `EXTRACTION_CONTRACT_SOURCE_MISMATCH`, directing the caller
+to prepare a new extraction. Historical observations retain their original identity.
+Semantic identity remains separate: moving a declaration to a
+different member preserves its stable ID and semantic hash while changing its
+physical origin. Admission exposes each member's content hash and byte length,
+plus all declaration IDs and physical spans; cached metadata is copied for callers.
+Existing serialized operation plans continue to carry the contract digests.
+
+The adapter also retains the physical origin of first-class `policy` declarations,
+which the semantic IR stores separately from the entity/activity graph. The public
+policy-compilation example is checked across a filename change: its meaning stays
+the same while its source identity and physical origin change. This general source
+support does not admit extra policies into the exact native operation ABI.
+
+The connected regression partitions the actual authored contract into ten entities
+and twelve activities, admits it through the native consumer, and checks all 22
+physical origins and unchanged native facts. Missing members, conflicting IDs,
+changed obligations, extra activities and unknown import scopes return no contract.
+Reads are bounded to 64 files, 1 MiB per file and 16 MiB in total; an I/O failure
+returns no partial source set. Mutable filesystem snapshots and publication remain
+the caller's responsibility. The production contract remains one small source file;
+repository-wide discovery and automatic embedded-consumer migration remain open.

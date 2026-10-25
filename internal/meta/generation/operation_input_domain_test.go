@@ -40,7 +40,7 @@ func TestOperationInputContractUsesExactEmbeddedGoooIR(t *testing.T) {
 }
 
 func TestOperationInputContractRejectsMissingDuplicateAndUnknownDeclarations(t *testing.T) {
-	base := string(operationInputContractSource)
+	base := string(operationContractFixture(t))
 	cases := map[string]string{
 		"missing activity":   strings.Replace(base, "activity ExtractFunction(FunctionInput) -> OperationResult\n", "", 1),
 		"duplicate activity": base + "\nactivity ExtractFunction(FunctionInput) -> OperationResult\n",
@@ -56,7 +56,7 @@ func TestOperationInputContractRejectsMissingDuplicateAndUnknownDeclarations(t *
 }
 
 func TestReturnTailContractRejectsTamperedDependencyChain(t *testing.T) {
-	base := string(operationInputContractSource)
+	base := string(operationContractFixture(t))
 	tampered := strings.Replace(base, "activity ProveControlFlow(ReturnShapeObligation) -> ControlFlowObligation", "activity ProveControlFlow(FunctionInput) -> ControlFlowObligation", 1)
 	if _, err := parseOperationInputContract([]byte(tampered)); err == nil {
 		t.Fatal("tampered return-tail dependency chain was accepted")
