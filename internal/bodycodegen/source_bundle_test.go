@@ -159,3 +159,21 @@ func TestSourceBundleRejectsPartialOrConflictingPrograms(t *testing.T) {
 		})
 	}
 }
+
+func TestSourceBundleRequiresFixedEntryAndCallees(t *testing.T) {
+	sources := []sourcebundle.Source{{Filename: "choice.gooo", Content: sourceRecordObservationFixture}}
+	result, err := GenerateSourceBundle(sources, "Decide")
+	if err == nil || !strings.Contains(err.Error(), "fixed computes") || !reflect.DeepEqual(result, SourceBundleResult{}) {
+		t.Fatal("unresolved assembly accepted as a fixed entry", err)
+	}
+	// An unrelated assembling declaration does not prevent a fixed entry from
+	// using its own typed body. Selection is scoped to the entry's call closure.
+	if _, err := GenerateSourceBundle(sources, "Expected"); err != nil {
+		t.Fatal("unrelated draft blocked a fixed body", err)
+	}
+	sources = append(sources, sourcebundle.Source{Filename: "invoke.gooo", Content: "package refunds\nnamespace refunds\nactivity Invoke(Order,Boolean) -> Order computes `return Decide(input0,input1)`\n"})
+	result, err = GenerateSourceBundle(sources, "Invoke")
+	if err == nil || !reflect.DeepEqual(result, SourceBundleResult{}) {
+		t.Fatal("unresolved assembly accepted through a callee", err)
+	}
+}

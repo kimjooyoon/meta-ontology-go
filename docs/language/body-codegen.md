@@ -30,7 +30,8 @@ fixed pure callees declared in other members. Each member has its own package an
 namespace header; imports require the package compiler. The existing body parser,
 type resolver, call bounds, route equivalence and deterministic replay are shared
 with single-file generation. Required and optional record fields keep their
-existing profiles.
+existing profiles. An `assembling` entry or callee is rejected until its choices
+are realized; unrelated draft declarations can remain in the source set.
 
 For compiler development, the existing generator can select a source family:
 

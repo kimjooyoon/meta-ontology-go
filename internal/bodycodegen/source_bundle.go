@@ -30,6 +30,9 @@ func GenerateSourceBundle(sources []sourcebundle.Source, activity string) (Sourc
 	if err != nil {
 		return SourceBundleResult{}, err
 	}
+	if p.activity.Assembly != nil {
+		return SourceBundleResult{}, fmt.Errorf("source bundle generation requires a fixed computes activity")
+	}
 	p.base, err = p.generate(preserveRoute)
 	if err != nil {
 		return SourceBundleResult{}, err
