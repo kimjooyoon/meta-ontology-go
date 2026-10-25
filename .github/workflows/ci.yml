@@ -47,7 +47,7 @@ env:
   # One allowance charges the union of exact-attempt runner intervals, including
   # setup, running barriers and proof. Runner-free gaps retain their own origin.
   GOOO_CI_BUDGET_MS: 3000000
-  GOOO_CI_DOMAIN_REVISION: 81e335bd62f8c9639c6b1979c2620e5ea44a4019
+  GOOO_CI_DOMAIN_REVISION: 027a9d1fd8c8dd8687cb4e5e99e26c920a943bf8
 
 jobs:
   work-domain:

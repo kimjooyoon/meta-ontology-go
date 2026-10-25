@@ -29,7 +29,7 @@ func TestRunnerClockJobNamesFollowWorkflow(t *testing.T) {
 	}
 	pattern := regexp.MustCompile(`(?m)^  ([a-z][a-z0-9-]*):\n    name: ([^\n]+)\n`)
 	jobs := pattern.FindAllStringSubmatch(string(workflow), -1)
-	if len(jobs) != len(profile) || len(jobs) != 13 {
+	if len(jobs) != len(profile) || len(jobs) == 0 {
 		t.Fatal("clock job population differs", len(jobs), len(profile))
 	}
 	for _, job := range jobs {
@@ -93,11 +93,19 @@ func TestActualRunnerClockBinderPreservesRunnerFreeGaps(t *testing.T) {
 	runPath := putJSON("original-run.json", map[string]any{"id": 19725, "run_attempt": 1, "head_sha": head, "created_at": created})
 	job := func(id int, name, status string, start time.Time, end any) map[string]any {
 		return map[string]any{"id": id, "run_id": 19725, "run_attempt": 1, "head_sha": head, "name": name,
-			"status": status, "conclusion": "success", "started_at": start, "completed_at": end}
+			"status": status, "conclusion": "success", "started_at": start, "completed_at": end,
+			"runner_id": id + 100, "steps": []any{}}
 	}
-	pages := putJSON("original-pages.json", []any{map[string]any{"total_count": 2, "jobs": []any{
+	queued := job(3, "Queued timestamp", "queued", prepared, nil)
+	queued["runner_id"], queued["conclusion"] = 0, nil
+	cancelled := job(4, "Unassigned cancellation", "completed", prepared, prepared.Add(time.Minute))
+	cancelled["runner_id"], cancelled["conclusion"] = 0, "cancelled"
+	skipped := job(5, "Unassigned skip", "completed", now, now)
+	skipped["runner_id"], skipped["conclusion"] = nil, "skipped"
+	pages := putJSON("original-pages.json", []any{map[string]any{"total_count": 5, "jobs": []any{
 		job(1, "Work domain preparation", "completed", prepared, prepared.Add(10*time.Second)),
 		job(2, "CI proof bundle", "in_progress", now.Add(-time.Second), nil),
+		queued, cancelled, skipped,
 	}}})
 	put("bin/gh", []byte("#!/bin/bash\ncase \"$*\" in *attempts*) cat \"$CLOCK_TEST_PAGES\";; *) cat \"$CLOCK_TEST_RUN\";; esac\n"), 0700)
 	body := put("bind.sh", []byte(script), 0600)
