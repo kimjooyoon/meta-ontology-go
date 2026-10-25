@@ -18,9 +18,10 @@ type File struct {
 }
 
 type Plan struct {
-	Owners []OwnedProposal
-	Files  []File
-	Inputs []InputObservation
+	Definitions []DefinitionObservation
+	Owners      []OwnedProposal
+	Files       []File
+	Inputs      []InputObservation
 }
 
 // Prepare returns one joint draft or no draft. Equal content at different source

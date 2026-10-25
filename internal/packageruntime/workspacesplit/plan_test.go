@@ -2,7 +2,9 @@ package workspacesplit_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
@@ -28,7 +30,8 @@ func checkJointPlan(t *testing.T, shared bool) {
 		owners[0].Definition.Packages = append(owners[0].Definition.Packages, extra)
 	}
 	before, _ := json.Marshal(owners)
-	plan, err := workspacesplit.Prepare(files, owners)
+	requested := storedOwners(t, files, owners)
+	plan, err := workspacesplit.PrepareFiles(files, requested)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,8 +39,15 @@ func checkJointPlan(t *testing.T, shared bool) {
 		t.Fatal("shared package inside one workspace was dropped")
 	}
 	after, _ := json.Marshal(owners)
-	if string(before) != string(after) || len(plan.Owners) != 2 || len(plan.Files) != 2 || len(files) != 1 {
+	if string(before) != string(after) || len(plan.Owners) != 2 || len(plan.Files) != 2 || len(files) != 3 || len(plan.Definitions) != 2 || len(plan.Inputs) != 1 {
 		t.Fatal("joint preparation changed inputs or duplicated shared writes")
+	}
+	for i, observed := range plan.Definitions {
+		raw := files[observed.ManifestPath].Data
+		if observed.ManifestPath != requested[i].ManifestPath || observed.ByteLength != len(raw) ||
+			observed.SHA256 != fmt.Sprintf("sha256:%x", sha256.Sum256(raw)) {
+			t.Fatal("definition origin changed", observed)
+		}
 	}
 	for _, file := range plan.Files {
 		files[filepath.Base(file.Path)] = &fstest.MapFile{Data: []byte(file.Source.Source)}

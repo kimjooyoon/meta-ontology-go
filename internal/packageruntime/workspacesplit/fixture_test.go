@@ -54,3 +54,17 @@ func sharedOwners(t *testing.T) (fstest.MapFS, []workspacesplit.Owner) {
 		{ManifestPath: "second.workspace.json", Definition: other, Request: request},
 	}
 }
+
+func storedOwners(t *testing.T, files fstest.MapFS, owners []workspacesplit.Owner) []workspacesplit.FileOwner {
+	t.Helper()
+	requested := make([]workspacesplit.FileOwner, 0, len(owners))
+	for _, owner := range owners {
+		raw, err := workspaceinput.Encode(owner.Definition)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files[owner.ManifestPath] = &fstest.MapFile{Data: raw}
+		requested = append(requested, workspacesplit.FileOwner{ManifestPath: owner.ManifestPath, Request: owner.Request})
+	}
+	return requested
+}

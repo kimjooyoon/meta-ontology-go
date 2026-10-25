@@ -375,6 +375,21 @@ Every supplied consumer still reads its inputs; a second read of any shared sour
 with different bytes returns `ErrSourceChanged`, including unchanged dependency
 files. Equal contents at distinct addresses remain separate observations. Definition
 outputs cannot overwrite any observed source address. The list records source
-reads; external definition bytes and a filesystem-wide snapshot are not observed
-by this constructor. The host checks current definition and source inputs again
-before publication. Only digest/consumer metadata is retained by the observer.
+reads; `Prepare` receives decoded definitions and does not observe their serialized
+bytes. The host checks current definition and source inputs again before
+publication. Only digest/consumer metadata is retained by the source observer.
+
+`PrepareFiles` accepts `FileOwner` requests naming the external definitions and
+split choices. It reads and decodes those definitions through the same bounded
+workspace contract, then calls the joint constructor. `Definitions` records each
+input address, raw-byte SHA-256 and byte length separately from the source reads.
+Definition inputs are limited to 1 MiB each and 16 MiB in aggregate, independently
+of the source-set limit. They are reread after preparation; changed bytes, even
+formatting-only changes, return `ErrDefinitionChanged` and no plan. Failed or
+malformed reads likewise return no partial proposal. The original serialized
+inputs are not kept as an additional payload.
+
+These sequential reads are observations, not a filesystem snapshot or publication
+permission. Current-input checks, alias resolution and complete consumer discovery
+still belong to the applying host. The native execution regression now begins at
+this file-backed entry point and retains the same six expected activity outputs.
