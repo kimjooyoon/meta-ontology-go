@@ -267,3 +267,32 @@ native consumer regression loads imported activities, splits at a stable ID,
 and executes both workspaces against the same independent expected values.
 Reading the definition is not execution or rewrite authority; consumers still
 validate the semantic image, current inputs and the operation's own preconditions.
+
+`workspaceinput.PrepareSplit(reader, manifestPath, definition, request)` also
+prepares the authored source list and normalized source partition together.
+`SplitRequest` names a package, source, stable boundary ID and destination.
+For the existing [named-inputs program](../../examples/named-inputs/main.gooo),
+the boundary is `urn:gooo:example:named-inputs:net` and the destination can be
+`net.gooo`. The native caller uses the same operation as `package split-source`.
+
+The returned `Definition` appends the new source while retaining authored names,
+imports and entry. `Result` carries the exact output bytes, byte origins and
+semantic image already verified by `packageruntime.SplitSource`. Both outputs
+are needed to install a proposal. Preparation leaves the input definition and
+reader unchanged; returned file lists do not alias caller-owned storage. Output
+source-set limits are checked before returning an installable proposal.
+
+The native regression serializes that authored definition, reloads the proposed
+files through the shared reader, checks the planned image, and executes both
+old and reloaded programs against independent expectations. Hosts still own
+current-input checks and filesystem writes. This API does not discover other
+single-file/embed consumers or establish repository-wide rewrite coverage.
+
+The requested source path uses the loader's canonical resolution, while authored
+paths such as `./main.gooo` remain unchanged in the returned definition. Use
+`workspaceinput.Encode(proposal.Definition)` to serialize it. The encoder retains
+the existing indented JSON plus final newline, checks the same 1-MiB reader limit,
+and rejects any JSON round-trip that changes authored values. `PrepareSplit`
+performs this check before returning a proposal; the CLI writer and installed
+manifest check use the same encoder. A valid source partition cannot leave an
+output file list that the shared reader refuses to reload.

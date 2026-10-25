@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
 const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> --before <declaration-id> --into <file.gooo> | --apply <proposal.json>) [--json] <workspace.json>"
@@ -117,36 +118,11 @@ func prepareWorkspaceSourceSplit(options workspaceSourceSplitOptions, reader Sou
 	if err != nil {
 		return receipt, err
 	}
-	sources, err := loadPackageSources(reader, options.manifestPath, manifest)
+	proposal, err := workspaceinput.PrepareSplit(reader, options.manifestPath, manifest, workspaceinput.SplitRequest{
+		PackagePath: options.packagePath, Source: options.source, BeforeID: options.before, Into: options.into})
 	if err != nil {
 		return receipt, err
 	}
-	result, err := packageruntime.SplitSource(sources, options.packagePath, options.source, options.before, options.into)
-	if err != nil {
-		return receipt, err
-	}
-	if err := checkSplitWorkspaceLimits(result.Manifest); err != nil {
-		return receipt, err
-	}
-	for i := range manifest.Packages {
-		if manifest.Packages[i].Path == options.packagePath {
-			manifest.Packages[i].Sources = append(manifest.Packages[i].Sources, options.into)
-		}
-	}
-	receipt.Decision, receipt.Result, receipt.UpdatedWorkspace = "PROPOSED", &result, &manifest
+	receipt.Decision, receipt.Result, receipt.UpdatedWorkspace = "PROPOSED", &proposal.Result, &proposal.Definition
 	return receipt, nil
-}
-
-func checkSplitWorkspaceLimits(manifest packageruntime.Manifest) error {
-	count, size := 0, 0
-	for _, pkg := range manifest.Packages {
-		for _, source := range pkg.Sources {
-			count++
-			size += len(source.Content)
-			if count > workspaceMaxSourceCount || len(source.Content) > workspaceMaxSourceBytes || size > workspaceMaxSourceSetSize {
-				return fmt.Errorf("split output exceeds the workspace source count or byte limit")
-			}
-		}
-	}
-	return nil
 }

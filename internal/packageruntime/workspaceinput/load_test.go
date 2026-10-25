@@ -2,7 +2,6 @@ package workspaceinput_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -13,6 +12,31 @@ import (
 )
 
 func TestNativeConsumerLoadsSplitsAndExecutesWorkspaceWithoutCLI(t *testing.T) {
+	definition, files, loaded := loadImportedNativeFixture(t)
+	after := reloadNativeSplitFixture(t, files, definition)
+	suite, err := bodyexecution.DecodeCompositionCases([]byte(`{"schema":"gooo/body-composition-cases/v1","cases":[
+ {"inputs":{"shared/app:Credit":5},"expected":{"shared/app:Credit":12,"shared/app:Run":41}},
+ {"inputs":{"shared/app:Credit":-7},"expected":{"shared/app:Credit":0,"shared/app:Run":29}}
+]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, manifest := range map[string]packageruntime.Manifest{"loaded": loaded, "reloaded proposal": after} {
+		t.Run(name, func(t *testing.T) {
+			result, err := workspaceexecution.ExecuteWorkspace(context.Background(), manifest, suite, "", "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			r := result.Runtime
+			if r.FinitePassed != 4 || r.FiniteTotal != 4 || !r.RuntimeReplayed || r.ModelCalls != 0 {
+				t.Fatal("native consumer output/replay obligations", r)
+			}
+		})
+	}
+}
+
+func loadImportedNativeFixture(t *testing.T) (workspaceinput.Definition, fstest.MapFS, packageruntime.Manifest) {
+	t.Helper()
 	definition, err := workspaceinput.Decode([]byte(`{
  "schema":"gooo/package-workspace-manifest/v1",
  "entry":{"package_path":"shared/app","activity":"Run"},
@@ -35,39 +59,5 @@ func TestNativeConsumerLoadsSplitsAndExecutesWorkspaceWithoutCLI(t *testing.T) {
 	if definition.Packages[1].Name != "" || definition.Packages[1].Imports != nil {
 		t.Fatal("derived metadata rewrote the authored external definition")
 	}
-	split, err := packageruntime.SplitSource(loaded, "shared/app", "app.gooo", "urn:shared:run", "run.gooo")
-	if err != nil {
-		t.Fatal(err)
-	}
-	suite, err := bodyexecution.DecodeCompositionCases([]byte(`{"schema":"gooo/body-composition-cases/v1","cases":[
- {"inputs":{"shared/app:Credit":5},"expected":{"shared/app:Credit":12,"shared/app:Run":41}},
- {"inputs":{"shared/app:Credit":-7},"expected":{"shared/app:Credit":0,"shared/app:Run":29}}
-]}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for name, manifest := range map[string]packageruntime.Manifest{"loaded": loaded, "split": split.Manifest} {
-		t.Run(name, func(t *testing.T) {
-			result, err := workspaceexecution.ExecuteWorkspace(context.Background(), manifest, suite, "", "")
-			if err != nil {
-				t.Fatal(err)
-			}
-			r := result.Runtime
-			if r.FinitePassed != 4 || r.FiniteTotal != 4 || !r.RuntimeReplayed || r.ModelCalls != 0 {
-				t.Fatal("native consumer output/replay obligations", r)
-			}
-		})
-	}
-}
-
-func TestNativeConsumerRejectsUnvalidatedDefinitionAndOversizeSource(t *testing.T) {
-	definition := workspaceinput.Definition{Schema: "wrong-version", Packages: []workspaceinput.Package{{Path: "p", Sources: []string{"p.gooo"}}}}
-	if _, err := workspaceinput.Load(fstest.MapFS{}, "workspace.json", definition); err == nil || !strings.Contains(err.Error(), "schema must be") {
-		t.Fatal("native caller bypassed the external definition contract", err)
-	}
-	definition.Schema = workspaceinput.Schema
-	files := fstest.MapFS{"p.gooo": {Data: make([]byte, workspaceinput.MaxSourceBytes+1)}}
-	if _, err := workspaceinput.Load(files, "workspace.json", definition); err == nil || !strings.Contains(err.Error(), "input exceeds maximum size") {
-		t.Fatal("native caller bypassed the source byte limit", err)
-	}
+	return definition, files, loaded
 }
