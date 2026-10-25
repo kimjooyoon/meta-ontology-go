@@ -323,3 +323,13 @@ Omitted workspaces and single-file/embed consumers remain obligations. The API
 provides no repository-wide coverage or execution authority. The joint native
 regression reloads both updated definitions and checks six expected activity
 outputs across their different entries, including runtime replay without a model.
+
+The joint plan also returns `Inputs`: observed source addresses, SHA-256 digests,
+byte lengths and the definitions that read each occurrence, sorted deterministically.
+Every supplied consumer still reads its inputs; a second read of any shared source
+with different bytes returns `ErrSourceChanged`, including unchanged dependency
+files. Equal contents at distinct addresses remain separate observations. Definition
+outputs cannot overwrite any observed source address. The list records source
+reads; external definition bytes and a filesystem-wide snapshot are not observed
+by this constructor. The host checks current definition and source inputs again
+before publication. Only digest/consumer metadata is retained by the observer.

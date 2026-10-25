@@ -8,6 +8,14 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
+// InputObservation records a source read, not an external definition read or a
+// filesystem snapshot. Consumers are the definitions that used this occurrence.
+type InputObservation struct {
+	Path, SHA256 string
+	ByteLength   int
+	Consumers    []string
+}
+
 func sharedFiles(owner Owner, proposal workspaceinput.SplitProposal) ([]File, error) {
 	files := make([]File, len(proposal.Result.Files))
 	for i, source := range proposal.Result.Files {
@@ -36,6 +44,20 @@ func coupleFiles(expected, candidate []File) error {
 		if file.Path != other.Path || file.Source.Source != other.Source.Source ||
 			file.Source.SHA256 != other.Source.SHA256 || !slices.Equal(file.Source.Origins, other.Source.Origins) {
 			return fmt.Errorf("shared consumers disagree on source address, partition bytes or origins")
+		}
+	}
+	return nil
+}
+
+func checkMemberAddresses(plan Plan, manifests map[string]bool) error {
+	for _, file := range plan.Files {
+		if manifests[file.Path] {
+			return fmt.Errorf("workspace definition and split source addresses overlap: %s", file.Path)
+		}
+	}
+	for _, input := range plan.Inputs {
+		if manifests[input.Path] {
+			return fmt.Errorf("workspace definition would overwrite an observed source: %s", input.Path)
 		}
 	}
 	return nil

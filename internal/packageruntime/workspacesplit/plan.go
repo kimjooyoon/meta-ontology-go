@@ -12,18 +12,6 @@ import (
 
 const MaxOwners = 64
 
-type Owner struct {
-	ManifestPath string
-	Definition   workspaceinput.Definition
-	Request      workspaceinput.SplitRequest
-}
-
-type OwnedProposal struct {
-	ManifestPath   string
-	Split          workspaceinput.SplitProposal
-	DefinitionJSON []byte
-}
-
 type File struct {
 	Path   string
 	Source packageruntime.SplitSourceFile
@@ -32,6 +20,7 @@ type File struct {
 type Plan struct {
 	Owners []OwnedProposal
 	Files  []File
+	Inputs []InputObservation
 }
 
 // Prepare returns one joint draft or no draft. Equal content at different source
@@ -43,10 +32,11 @@ func Prepare(reader workspaceinput.Reader, owners []Owner) (Plan, error) {
 		return Plan{}, fmt.Errorf("shared split requires 1 to %d explicit owners", MaxOwners)
 	}
 	plan := Plan{}
+	observed := &sourceObservations{reader: reader, values: make(map[string]InputObservation)}
 	manifests := make(map[string]bool, len(owners))
 	sourceBytes := 0
 	for _, owner := range owners {
-		proposal, err := prepareOwner(reader, owner, manifests)
+		proposal, err := prepareOwner(observed, owner, manifests)
 		if err != nil {
 			return Plan{}, err
 		}
@@ -66,10 +56,9 @@ func Prepare(reader workspaceinput.Reader, owners []Owner) (Plan, error) {
 		}
 		plan.Owners = append(plan.Owners, proposal)
 	}
-	for _, file := range plan.Files {
-		if manifests[file.Path] {
-			return Plan{}, fmt.Errorf("workspace definition and split source addresses overlap")
-		}
+	plan.Inputs = observed.list()
+	if err := checkMemberAddresses(plan, manifests); err != nil {
+		return Plan{}, err
 	}
 	return plan, nil
 }

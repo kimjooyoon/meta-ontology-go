@@ -8,7 +8,19 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
-func prepareOwner(reader workspaceinput.Reader, owner Owner, manifests map[string]bool) (OwnedProposal, error) {
+type Owner struct {
+	ManifestPath string
+	Definition   workspaceinput.Definition
+	Request      workspaceinput.SplitRequest
+}
+
+type OwnedProposal struct {
+	ManifestPath   string
+	Split          workspaceinput.SplitProposal
+	DefinitionJSON []byte
+}
+
+func prepareOwner(reader *sourceObservations, owner Owner, manifests map[string]bool) (OwnedProposal, error) {
 	if strings.TrimSpace(owner.ManifestPath) == "" {
 		return OwnedProposal{}, fmt.Errorf("workspace definition address is required")
 	}
@@ -20,6 +32,7 @@ func prepareOwner(reader workspaceinput.Reader, owner Owner, manifests map[strin
 		return OwnedProposal{}, fmt.Errorf("duplicate workspace definition address")
 	}
 	manifests[address] = true
+	reader.consumer = address
 	split, err := workspaceinput.PrepareSplit(reader, owner.ManifestPath, owner.Definition, owner.Request)
 	if err != nil {
 		return OwnedProposal{}, fmt.Errorf("workspace %q: %w", owner.ManifestPath, err)
