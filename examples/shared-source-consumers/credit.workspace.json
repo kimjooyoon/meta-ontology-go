@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "shared/app", "activity": "Credit"},
+  "packages": [{"path": "shared/app", "sources": ["main.gooo"]}]
+}

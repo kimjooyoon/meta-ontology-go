@@ -11,11 +11,12 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
-const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> --before <declaration-id> --into <file.gooo> | --apply <proposal.json>) [--json] <workspace.json>"
+const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> --before <declaration-id> --into <file.gooo> [--consumer-workspace <workspace.json>] | --apply <proposal.json>) [--json] <workspace.json>"
 
 type workspaceSourceSplitOptions struct {
 	packagePath, source, before, into, manifestPath string
 	applyReceipt                                    string
+	consumerWorkspaces                              []string
 	jsonMode                                        bool
 }
 
@@ -28,6 +29,7 @@ type workspaceSourceSplitReceipt struct {
 	Result           *packageruntime.SourceSplit      `json:"result,omitempty"`
 	Error            string                           `json:"error,omitempty"`
 	Application      *workspaceSourceSplitApplication `json:"application,omitempty"`
+	Consumers        []workspaceSourceSplitConsumer   `json:"consumers,omitempty"`
 }
 
 func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -76,6 +78,14 @@ func sourceSplitPublicReceipt(receipt workspaceSourceSplitReceipt) workspaceSour
 		result.Manifest = packageruntime.Manifest{}
 		receipt.Result = &result
 	}
+	receipt.Consumers = append([]workspaceSourceSplitConsumer(nil), receipt.Consumers...)
+	for i := range receipt.Consumers {
+		if receipt.Consumers[i].Result != nil {
+			result := *receipt.Consumers[i].Result
+			result.Manifest = packageruntime.Manifest{}
+			receipt.Consumers[i].Result = &result
+		}
+	}
 	return receipt
 }
 
@@ -88,6 +98,13 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 	flags.StringVar(&options.before, "before", "", "stable ID of the first declaration to move")
 	flags.StringVar(&options.into, "into", "", "new source path relative to the workspace")
 	flags.StringVar(&options.applyReceipt, "apply", "", "apply a saved proposal after checking current inputs")
+	flags.Func("consumer-workspace", "additional workspace reading this source (repeatable)", func(value string) error {
+		if strings.TrimSpace(value) == "" || len(options.consumerWorkspaces) >= maxSplitConsumerWorkspaces {
+			return fmt.Errorf("supply at most %d nonempty additional workspace paths", maxSplitConsumerWorkspaces)
+		}
+		options.consumerWorkspaces = append(options.consumerWorkspaces, value)
+		return nil
+	})
 	flags.BoolVar(&options.jsonMode, "json", false, "print the complete source proposal")
 	if err := flags.Parse(args); err != nil {
 		return options, err
@@ -96,6 +113,9 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 		return options, fmt.Errorf("one workspace manifest is required")
 	}
 	options.manifestPath = flags.Arg(0)
+	if options.applyReceipt != "" && len(options.consumerWorkspaces) != 0 {
+		return options, fmt.Errorf("--apply reads consumer workspaces from the saved proposal")
+	}
 	for _, value := range []string{options.packagePath, options.source, options.before, options.into} {
 		if options.applyReceipt != "" {
 			if value != "" {
@@ -113,6 +133,9 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 func prepareWorkspaceSourceSplit(options workspaceSourceSplitOptions, reader SourceReader) (workspaceSourceSplitReceipt, error) {
 	receipt := workspaceSourceSplitReceipt{Schema: "gooo/workspace-source-split-receipt/v1",
 		Decision: "FAIL_CLOSED", ManifestPath: options.manifestPath}
+	if len(options.consumerWorkspaces) != 0 {
+		return prepareSharedWorkspaceSourceSplit(options, reader)
+	}
 	manifest, digest, err := loadWorkspaceRenameManifest(reader, options.manifestPath)
 	receipt.ManifestDigest = digest
 	if err != nil {

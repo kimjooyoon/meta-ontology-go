@@ -548,6 +548,29 @@ and coordinated installation retain their own obligations. This native planning
 API adds no standalone CLI and does not grant the existing workspace apply command
 repository-wide consumer coverage.
 
+### Apply one source split across explicit workspace consumers
+
+`gooo package split-source` accepts repeatable `--consumer-workspace <path>`
+options during proposal generation. Each additional manifest must declare the
+same source address inside its workspace root. The common shared-source planner
+checks every owner and retains its independent package image and original
+manifest digest. The saved receipt carries those additional views in `consumers`.
+
+`--apply <proposal.json>` rechecks that declared group and stages the two source
+members plus every manifest in one write set. It verifies all proposed images
+through the existing loader before publication, uses the existing rollback
+writer, and rereads all installed owners afterward. Stale dependencies in any
+owner refuse the group; an old proposal cannot be applied twice. The primary
+`application` state describes the whole supplied group. Single-workspace receipts
+and their compressed form remain supported.
+
+The [two-entry example](../../examples/shared-source-consumers/README.md) executes
+both installed workspaces and checks six expected activity outputs. This command
+does not infer omitted consumers or edit embedding/registration declarations.
+The saved paths, per-owner images and source byte origins define its scope.
+Filesystem rechecks are sequential, and rollback does not imply crash-atomic
+visibility across multiple files.
+
 ### Predicting source registration changes before installation
 
 The native `languagesyntax.InspectPartitionInventory(repository, registryRaw,

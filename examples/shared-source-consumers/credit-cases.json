@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {"inputs": {"shared/app:Credit": 2}, "expected": {"shared/app:Credit": 9}},
+    {"inputs": {"shared/app:Credit": -10}, "expected": {"shared/app:Credit": -3}}
+  ]
+}
