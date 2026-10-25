@@ -21,7 +21,7 @@ func TestJointSplitReloadsAndExecutesEverySuppliedWorkspace(t *testing.T) {
 
 func checkJointPlan(t *testing.T, shared bool) {
 	t.Helper()
-	files, owners := sharedOwners()
+	files, owners := sharedOwners(t)
 	if shared {
 		extra := owners[0].Definition.Packages[0]
 		extra.Path = "shared/other"

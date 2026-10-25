@@ -363,8 +363,11 @@ outputs across their different entries, including runtime replay without a model
 The same output conditions run with one package per workspace and with an
 additional package consuming the source inside the first workspace; both external
 definitions must still reload to their planned images.
-The executable input is an [authored Gooo source](../../internal/packageruntime/workspacesplit/testdata/shared.gooo);
+The executable input is an [authored Gooo source](../../examples/shared-source-consumers/main.gooo);
 the Go tests supply the consumer definitions and independent expected results.
+The syntax registration constructor generated all nine registration members from
+this source and appended denominator v101 (136 to 137 syntax cases). That inventory
+count is separate from the six independently expected execution outputs.
 
 The joint plan also returns `Inputs`: observed source addresses, SHA-256 digests,
 byte lengths and the definitions that read each occurrence, sorted deterministically.

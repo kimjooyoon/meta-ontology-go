@@ -12,7 +12,7 @@ import (
 )
 
 func TestOneWorkspaceProposalCannotDischargeAnotherSharedConsumer(t *testing.T) {
-	files, definition, request := sharedFixture()
+	files, definition, request := sharedFixture(t)
 	for _, path := range []string{"first.workspace.json", "second.workspace.json"} {
 		loaded, err := workspaceinput.Load(files, path, definition)
 		if err != nil {
@@ -39,7 +39,7 @@ func TestOneWorkspaceProposalCannotDischargeAnotherSharedConsumer(t *testing.T) 
 }
 
 func TestJointDefinitionCannotOverwriteAnotherObservedSource(t *testing.T) {
-	files, owners := sharedOwners()
+	files, owners := sharedOwners(t)
 	files["dependency.gooo"] = &fstest.MapFile{Data: []byte("package shared\nnamespace shared\n")}
 	owners[0].Definition.Packages[0].Sources = append(owners[0].Definition.Packages[0].Sources, "dependency.gooo")
 	owners[1].ManifestPath = "dependency.gooo"
@@ -51,7 +51,7 @@ func TestJointDefinitionCannotOverwriteAnotherObservedSource(t *testing.T) {
 }
 
 func TestJointObservationsRequireAnUnderlyingReader(t *testing.T) {
-	_, owners := sharedOwners()
+	_, owners := sharedOwners(t)
 	plan, err := workspacesplit.Prepare(nil, owners)
 	if err == nil || !reflect.DeepEqual(plan, workspacesplit.Plan{}) {
 		t.Fatal("missing reader produced a usable proposal", err)

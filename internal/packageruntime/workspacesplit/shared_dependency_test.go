@@ -14,7 +14,7 @@ import (
 )
 
 func TestJointSplitRejectsChangingSharedDependency(t *testing.T) {
-	files, owners := sharedOwners()
+	files, owners := sharedOwners(t)
 	files["dependency.gooo"] = &fstest.MapFile{Data: []byte("package shared\nnamespace shared\n" +
 		"activity Side(Integer) -> Integer id \"urn:shared:side\" computes \"return input+11\"\n")}
 	owners[0].Definition.Packages[0].Sources = append(owners[0].Definition.Packages[0].Sources, "dependency.gooo")
@@ -37,7 +37,7 @@ func TestJointSplitRejectsChangingSharedDependency(t *testing.T) {
 }
 
 func TestJointOriginsRetainEqualContentAtDistinctAddresses(t *testing.T) {
-	files, owners := sharedOwners()
+	files, owners := sharedOwners(t)
 	for _, name := range []string{"dep-a.gooo", "dep-b.gooo"} {
 		files[name] = &fstest.MapFile{Data: []byte("package shared\nnamespace shared\n")}
 		owners[0].Definition.Packages[0].Sources = append(owners[0].Definition.Packages[0].Sources, name)

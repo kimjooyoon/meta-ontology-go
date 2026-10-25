@@ -14,7 +14,7 @@ func TestJointSplitRefusesPartialConflictingOrContentOnlyCoupling(t *testing.T) 
 	for _, mode := range []string{"empty", "too many", "blank address", "duplicate owner", "address alias",
 		"same content elsewhere", "different destination", "missing boundary", "missing dependency", "overlapping member"} {
 		t.Run(mode, func(t *testing.T) {
-			files, owners := sharedOwners()
+			files, owners := sharedOwners(t)
 			switch mode {
 			case "empty":
 				owners = nil
@@ -50,7 +50,7 @@ func TestJointSplitRefusesPartialConflictingOrContentOnlyCoupling(t *testing.T) 
 }
 
 func TestJointSplitBoundsAggregateSourcePayload(t *testing.T) {
-	files, owners := sharedOwners()
+	files, owners := sharedOwners(t)
 	note := []byte("package shared\nnamespace shared\n#" + strings.Repeat("x", 950000) + "\n")
 	for i := range 9 {
 		name := fmt.Sprintf("note%d.gooo", i)

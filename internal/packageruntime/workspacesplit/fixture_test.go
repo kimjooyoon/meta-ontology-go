@@ -1,7 +1,7 @@
 package workspacesplit_test
 
 import (
-	_ "embed"
+	"os"
 	"testing"
 	"testing/fstest"
 
@@ -11,17 +11,18 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspacesplit"
 )
 
-//go:embed testdata/shared.gooo
-var sharedSource string
-
-func sharedFixture() (fstest.MapFS, workspaceinput.Definition, workspaceinput.SplitRequest) {
-
+func sharedFixture(t *testing.T) (fstest.MapFS, workspaceinput.Definition, workspaceinput.SplitRequest) {
+	t.Helper()
+	sharedSource, err := os.ReadFile("../../../examples/shared-source-consumers/main.gooo")
+	if err != nil {
+		t.Fatal(err)
+	}
 	definition := workspaceinput.Definition{Schema: workspaceinput.Schema,
 		Entry:    packageruntime.EntrySpec{PackagePath: "shared/app", Activity: "Run"},
 		Packages: []workspaceinput.Package{{Path: "shared/app", Sources: []string{"shared.gooo"}}}}
 	request := workspaceinput.SplitRequest{PackagePath: "shared/app", Source: "shared.gooo",
 		BeforeID: "urn:shared:run", Into: "run.gooo"}
-	return fstest.MapFS{"shared.gooo": {Data: []byte(sharedSource)}}, definition, request
+	return fstest.MapFS{"shared.gooo": {Data: sharedSource}}, definition, request
 }
 
 func jointCases(t *testing.T, entry string) (bodyexecution.CompositionCases, int) {
@@ -43,8 +44,9 @@ func jointCases(t *testing.T, entry string) (bodyexecution.CompositionCases, int
 	return suite, total
 }
 
-func sharedOwners() (fstest.MapFS, []workspacesplit.Owner) {
-	files, definition, request := sharedFixture()
+func sharedOwners(t *testing.T) (fstest.MapFS, []workspacesplit.Owner) {
+	t.Helper()
+	files, definition, request := sharedFixture(t)
 	other := definition
 	other.Entry.Activity = "Credit"
 	return files, []workspacesplit.Owner{

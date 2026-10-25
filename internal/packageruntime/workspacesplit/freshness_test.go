@@ -13,7 +13,7 @@ type changingReader struct{ read func(string) ([]byte, error) }
 func (r changingReader) ReadFile(path string) ([]byte, error) { return r.read(path) }
 
 func TestJointSplitRefusesChangedSharedBytesAcrossOwners(t *testing.T) {
-	files, owners := sharedOwners()
+	files, owners := sharedOwners(t)
 	reads := 0
 	reader := changingReader{read: func(path string) ([]byte, error) {
 		raw, err := files.ReadFile(path)
@@ -30,7 +30,7 @@ func TestJointSplitRefusesChangedSharedBytesAcrossOwners(t *testing.T) {
 }
 
 func TestJointSplitCanonicalizesAddressesAndRetainsAuthoredSourceAlias(t *testing.T) {
-	files, owners := sharedOwners()
+	files, owners := sharedOwners(t)
 	owners[0].Definition.Packages[0].Sources = []string{"./shared.gooo"}
 	owners[1].ManifestPath = "nested/../second.workspace.json"
 	owners[1].Request.Source = "nested/../shared.gooo"
