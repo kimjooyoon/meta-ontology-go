@@ -11,7 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
-const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> --before <declaration-id> --into <file.gooo> [--consumer-workspace <workspace.json> | --discover-consumers <directory>] | --apply <proposal.json>) [--json] <workspace.json>"
+const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> (--boundaries | --before <declaration-id> --into <file.gooo> [--consumer-workspace <workspace.json> | --discover-consumers <directory>]) | --apply <proposal.json>) [--json] <workspace.json>"
 
 type workspaceSourceSplitOptions struct {
 	packagePath, source, before, into, manifestPath string
@@ -19,19 +19,21 @@ type workspaceSourceSplitOptions struct {
 	consumerWorkspaces                              []string
 	discoveryRoot                                   string
 	jsonMode                                        bool
+	boundaries                                      bool
 }
 
 type workspaceSourceSplitReceipt struct {
-	Schema           string                           `json:"schema"`
-	Decision         string                           `json:"decision"`
-	ManifestPath     string                           `json:"manifest_path"`
-	ManifestDigest   string                           `json:"manifest_digest,omitempty"`
-	UpdatedWorkspace *workspaceManifest               `json:"updated_workspace,omitempty"`
-	Result           *packageruntime.SourceSplit      `json:"result,omitempty"`
-	Error            string                           `json:"error,omitempty"`
-	Application      *workspaceSourceSplitApplication `json:"application,omitempty"`
-	Consumers        []workspaceSourceSplitConsumer   `json:"consumers,omitempty"`
-	Discovery        *workspaceConsumerDiscovery      `json:"discovery,omitempty"`
+	Schema           string                                `json:"schema"`
+	Decision         string                                `json:"decision"`
+	ManifestPath     string                                `json:"manifest_path"`
+	ManifestDigest   string                                `json:"manifest_digest,omitempty"`
+	UpdatedWorkspace *workspaceManifest                    `json:"updated_workspace,omitempty"`
+	Result           *packageruntime.SourceSplit           `json:"result,omitempty"`
+	Error            string                                `json:"error,omitempty"`
+	Application      *workspaceSourceSplitApplication      `json:"application,omitempty"`
+	Consumers        []workspaceSourceSplitConsumer        `json:"consumers,omitempty"`
+	Discovery        *workspaceConsumerDiscovery           `json:"discovery,omitempty"`
+	Boundaries       *packageruntime.SourceSplitBoundaries `json:"boundaries,omitempty"`
 }
 
 func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -41,7 +43,9 @@ func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr 
 		return exitUsage
 	}
 	var receipt workspaceSourceSplitReceipt
-	if options.applyReceipt != "" {
+	if options.boundaries {
+		receipt, err = inspectWorkspaceSourceSplit(options, reader)
+	} else if options.applyReceipt != "" {
 		receipt, err = applyWorkspaceSourceSplit(options, defaultAtomicFileOps())
 	} else {
 		receipt, err = prepareWorkspaceSourceSplit(options, reader)
@@ -58,6 +62,10 @@ func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr 
 		}
 	} else if err != nil {
 		fmt.Fprintln(stderr, "gooo package split-source:", err)
+	} else if receipt.Boundaries != nil {
+		if err := printSourceSplitBoundaries(stdout, *receipt.Boundaries); err != nil {
+			return exitFailure
+		}
 	} else {
 		r := receipt.Result
 		if _, err := fmt.Fprintf(stdout, "%s %s: %s + %s before id=%s\nUse --json for sources, byte origins and the updated workspace.\n",
@@ -115,6 +123,7 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 		return nil
 	})
 	flags.BoolVar(&options.jsonMode, "json", false, "print the complete source proposal")
+	flags.BoolVar(&options.boundaries, "boundaries", false, "inspect declaration cuts and physical output sizes without selecting a split")
 	if err := flags.Parse(args); err != nil {
 		return options, err
 	}
@@ -122,6 +131,14 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 		return options, fmt.Errorf("one workspace manifest is required")
 	}
 	options.manifestPath = flags.Arg(0)
+	if options.boundaries {
+		if strings.TrimSpace(options.packagePath) == "" || strings.TrimSpace(options.source) == "" ||
+			options.before != "" || options.into != "" || options.applyReceipt != "" ||
+			options.discoveryRoot != "" || len(options.consumerWorkspaces) != 0 {
+			return options, fmt.Errorf("--boundaries requires only package, source and one workspace")
+		}
+		return options, nil
+	}
 	if options.discoveryRoot != "" && len(options.consumerWorkspaces) != 0 {
 		return options, fmt.Errorf("choose discovery scope or explicit consumer workspaces")
 	}

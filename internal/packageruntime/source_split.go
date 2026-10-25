@@ -124,14 +124,7 @@ func splitSourceBytes(source Source, view Interface, packagePath, beforeID, into
 		return nil, fmt.Errorf("split needs a resolved declaration ID and valid source")
 	}
 	for _, declaration := range file.Decls {
-		declName := ""
-		switch value := declaration.(type) {
-		case *syntax.EntityDecl:
-			declName = value.Name
-		case *syntax.ActivityDecl:
-			declName = value.Name
-		}
-		if declName == name {
+		if splitDeclarationName(declaration) == name {
 			return sourcepartition.SplitAt(source.Filename, source.Content, into, declaration.SourceSpan().Start.Offset)
 		}
 	}

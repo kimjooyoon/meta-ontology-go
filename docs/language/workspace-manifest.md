@@ -250,6 +250,43 @@ fields in the original record-flow example. The workspace runtime's V4 profile
 also supports optional single fields of those types. Repeated, nested, and
 arbitrary user-defined field types remain outside this support boundary.
 
+## Inspect a source before choosing a split
+
+An agent can ask the existing split command for declaration boundaries:
+
+```sh
+go run ./cmd/gooo package split-source --boundaries --json \
+  --package example/agent-tool-inventory --source main.gooo \
+  examples/agent-tool-inventory/gooo.workspace.json
+```
+
+The `OBSERVED` receipt binds the manifest, original source bytes and original
+workspace image. Candidates are ordered by physical declaration position and
+carry a resolved `before_id`, display name, byte/line address and both output
+sizes. Counts include comments, blank lines and the header copied into the new
+file. The current example has 82 physical lines; the cut before `Inspect`
+produces 44 and 41 lines. The extra three lines are the copied header.
+
+The caller chooses a candidate according to its own source-owned constraints,
+then passes its ID to the ordinary `--before ... --into ...` proposal command.
+Use explicit `--consumer-workspace` arguments or `--discover-consumers` there
+when other workspaces read the same source. Applying the resulting proposal
+rechecks current inputs and every declared consumer. The regression exercises
+this complete path on the example and checks its eight existing expected outputs.
+
+Boundary inspection allocates compact size observations rather than a complete
+source copy per candidate. It validates the original workspace once, then scans
+the selected source's declarations. It does not execute bodies, choose a model
+decision or establish that a candidate meets the caller's size limit. A single
+declaration produces an empty candidate list. Missing inputs and invalid source
+produce no candidate prefix.
+
+`semantic_admission` remains `UNASSESSED`: destinations, changed consumer images,
+source-set limits and repository registration have not been evaluated. An
+observation cannot be passed to `--apply`, even if its decision is edited. Native
+callers can use `packageruntime.InspectSourceSplit` with the same boundary
+semantics. No new CI job or persistent service is required.
+
 ## Native workspace consumers
 
 Repository Go consumers can use
