@@ -77,6 +77,7 @@ This offers a small interoperability path from a Gooo metaprogram to RDF tools.
 | Read the finite palette of a source grammar | [Derived candidate origins](examples/derived-candidate-origins/README.md) |
 | Group recorded origins in Gooo | [Derived-origin reader](examples/derived-origin/README.md), [scoped-counter coverage](examples/scoped-origin-coverage/README.md) |
 | Distinguish declarations, calls and completed value versions | [Recorded local identities and PROV generation](examples/local-version-origins/README.md) (development source) |
+| Read mapping claims in their source versions and context | [Contextual mappings](examples/contextual-mappings/README.md), [Meta Mesh applicability review](docs/research/meta-mesh-applicability-20261025.ko.md) |
 | Assemble a bounded collection summary | [Length-aware summary](examples/length-aware-summary/README.md), [three-field assembly](examples/assembled-length-summary/README.md) |
 
 These links describe development source. Each example reports its finite cases

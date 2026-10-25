@@ -1,0 +1,545 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "EXACT_ASSERTED",
+        "example/contextual-mapping:View": {
+          "status": "EXACT_ASSERTED",
+          "reference_visible": true,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#closeMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "CLOSE_ASSERTED",
+        "example/contextual-mapping:View": {
+          "status": "CLOSE_ASSERTED",
+          "reference_visible": true,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "RELATED_ASSERTED",
+        "example/contextual-mapping:View": {
+          "status": "RELATED_ASSERTED",
+          "reference_visible": true,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://purl.org/mit/mmo#isMappedTo",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "ASSOCIATION_ASSERTED",
+        "example/contextual-mapping:View": {
+          "status": "ASSOCIATION_ASSERTED",
+          "reference_visible": true,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://purl.org/mit/mmo#isConstantRefinementOf",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "REFINEMENT_ASSERTED",
+        "example/contextual-mapping:View": {
+          "status": "REFINEMENT_ASSERTED",
+          "reference_visible": true,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:work:runner-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "EXACT_ASSERTED",
+        "example/contextual-mapping:View": {
+          "status": "EXACT_ASSERTED",
+          "reference_visible": true,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "UNIDENTIFIED_CONCEPT",
+        "example/contextual-mapping:View": {
+          "status": "UNIDENTIFIED_CONCEPT",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "UNIDENTIFIED_CONCEPT",
+        "example/contextual-mapping:View": {
+          "status": "UNIDENTIFIED_CONCEPT",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "MAPPING_ORIGIN_INCOMPLETE",
+        "example/contextual-mapping:View": {
+          "status": "MAPPING_ORIGIN_INCOMPLETE",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "MAPPING_ORIGIN_INCOMPLETE",
+        "example/contextual-mapping:View": {
+          "status": "MAPPING_ORIGIN_INCOMPLETE",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "MAPPING_ORIGIN_INCOMPLETE",
+        "example/contextual-mapping:View": {
+          "status": "MAPPING_ORIGIN_INCOMPLETE",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "MAPPING_ORIGIN_INCOMPLETE",
+        "example/contextual-mapping:View": {
+          "status": "MAPPING_ORIGIN_INCOMPLETE",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "QUERY_CONTEXT_UNOBSERVED",
+        "example/contextual-mapping:View": {
+          "status": "QUERY_CONTEXT_UNOBSERVED",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "QUERY_CONTEXT_UNOBSERVED",
+        "example/contextual-mapping:View": {
+          "status": "QUERY_CONTEXT_UNOBSERVED",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": ""
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "QUERY_CONTEXT_UNOBSERVED",
+        "example/contextual-mapping:View": {
+          "status": "QUERY_CONTEXT_UNOBSERVED",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:another-task",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "OUTSIDE_MAPPING_CONTEXT",
+        "example/contextual-mapping:View": {
+          "status": "OUTSIDE_MAPPING_CONTEXT",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-3",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "STALE_MAPPING_CONTEXT",
+        "example/contextual-mapping:View": {
+          "status": "STALE_MAPPING_CONTEXT",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2004/02/skos/core#relatedMatch",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-4"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "STALE_MAPPING_CONTEXT",
+        "example/contextual-mapping:View": {
+          "status": "STALE_MAPPING_CONTEXT",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "http://www.w3.org/2002/07/owl#sameAs",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "UNSUPPORTED_RELATION",
+        "example/contextual-mapping:View": {
+          "status": "UNSUPPORTED_RELATION",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/contextual-mapping:Classify": {
+          "source_id": "urn:gooo:example:ci:job-time",
+          "target_id": "urn:gooo:example:work:runner-time",
+          "relation": "urn:gooo:example:unknown-relation",
+          "context_id": "urn:gooo:example:ci-time:reported-intervals",
+          "origin_ref": "urn:gooo:example:synthetic:mapping-origin",
+          "source_revision": "source-release-1",
+          "target_revision": "target-release-2",
+          "query_context": "urn:gooo:example:ci-time:reported-intervals",
+          "current_source_revision": "source-release-1",
+          "current_target_revision": "target-release-2"
+        }
+      },
+      "expected": {
+        "example/contextual-mapping:Classify": "UNSUPPORTED_RELATION",
+        "example/contextual-mapping:View": {
+          "status": "UNSUPPORTED_RELATION",
+          "reference_visible": false,
+          "identity_merge": false,
+          "behavior_verified": false,
+          "permission_granted": false,
+          "mapping_validity": "UNASSESSED"
+        }
+      }
+    }
+  ]
+}
