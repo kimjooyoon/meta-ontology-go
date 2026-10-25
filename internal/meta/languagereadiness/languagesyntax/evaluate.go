@@ -25,6 +25,7 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 	}
 	report.Source.RegistryDigest = registryDigest()
 	report.Source.PackageUnits = append([]PackageDefinition(nil), registry.PackageUnits...)
+	report.Source.CaseSources = cloneCaseSources(registry.CaseSources)
 	report.Source.ConceptBound = conceptBound(repository, artifact)
 	observed, observationErr := replay.Observe(repository)
 	if observationErr == nil {
@@ -39,7 +40,7 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 		return finish(report)
 	}
 	for _, definition := range registry.Cases {
-		evidence := ReplayCase(repository, definition)
+		evidence := ReplayCaseSources(repository, definition, caseSourcesFor(registry, definition.ID))
 		item := CaseResult{Definition: definition, Evidence: evidence}
 		item.Status = caseStatus(item)
 		item.EvidenceDigest = caseDigest(item, report.Source)

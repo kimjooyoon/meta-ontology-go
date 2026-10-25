@@ -1,6 +1,9 @@
 package languagesyntax
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 // DeclaredSourceCount counts distinct registered paths before observing files.
 // It is an inventory boundary, not a language capability denominator.
@@ -24,6 +27,13 @@ func registryPaths(registry Registry) []string {
 		paths = append(paths, unit.Members...)
 	}
 	paths = append(paths, registry.MetaSources...)
+	for _, group := range registry.CaseSources {
+		for _, member := range group.Members {
+			if !slices.Contains(paths, member) {
+				paths = append(paths, member)
+			}
+		}
+	}
 	for _, unit := range registry.ProjectionUnits {
 		paths = append(paths, unit.Path)
 	}

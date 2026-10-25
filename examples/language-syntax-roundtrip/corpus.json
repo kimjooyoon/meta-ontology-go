@@ -1410,5 +1410,14 @@
     "examples/direct-module-impact/plan.gooo",
     "examples/ci-strategy/strategy.gooo",
     "internal/meta/executioncontinuation/policy/source_recovery.gooo"
+  ],
+  "case_sources": [
+    {
+      "case_id": "explicit-consumer-continuation",
+      "members": [
+        "internal/meta/executioncontinuation/policy/source.gooo",
+        "internal/meta/executioncontinuation/policy/source_recovery.gooo"
+      ]
+    }
   ]
 }

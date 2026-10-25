@@ -12,7 +12,19 @@ import (
 )
 
 func TestProfileCLIProtocolFresh1854(t *testing.T) {
+	testProfileCLIProtocol(t, false)
+}
+
+func TestProfileCLISourceFamily(t *testing.T) {
+	testProfileCLIProtocol(t, true)
+}
+
+func testProfileCLIProtocol(t *testing.T, family bool) {
+	t.Helper()
 	root, requestPath, afterPath, directory, originals := profileCLIFixture1854(t)
+	if family {
+		profileCLIFamily(t, root, afterPath, originals)
+	}
 	arguments := []string{"--root", root, "--request", requestPath, "--source-after", afterPath}
 	var observed bytes.Buffer
 	if err := runProfileMigration(append(arguments, "--inspect"), &observed, io.Discard); err != nil {
@@ -51,10 +63,21 @@ func TestProfileCLIProtocolFresh1854(t *testing.T) {
 		t.Fatal(err)
 	}
 	checkProfileCLIBytes1854(t, root, directory, originals, candidate)
+	if family && (len(candidate.SourceChecks[0].SourceMembers) != 2 || len(candidate.SourceChecks[1].SourceMembers) != 2) {
+		t.Fatal("CLI exported only part of the source family")
+	}
 	observed.Reset()
 	if err := runProfileMigration(append(arguments, "--verify-candidate", filepath.Join(directory, "candidate.json")),
 		&observed, io.Discard); err != nil || !bytes.Contains(observed.Bytes(), []byte("EXACT_SOURCE_CANDIDATE")) {
 		t.Fatalf("CLI consumer failed: %v %s", err, observed.String())
+	}
+	if family {
+		secondary := "examples/cli1854/echo.gooo"
+		profileCLIWrite1854(t, filepath.Join(root, secondary), append(originals[secondary], []byte("\n// changed origin\n")...))
+		if err := runProfileMigration(append(arguments, "--verify-candidate", filepath.Join(directory, "candidate.json")),
+			io.Discard, io.Discard); err == nil {
+			t.Fatal("CLI accepted a candidate with a stale sibling source")
+		}
 	}
 }
 

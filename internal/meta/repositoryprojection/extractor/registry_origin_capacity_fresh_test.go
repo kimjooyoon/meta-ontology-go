@@ -13,13 +13,17 @@ func TestRegistryOriginCapacity29111(t *testing.T) {
 	targets := []string{
 		"internal/meta/syntaxregistration#generateRegistry",
 		"internal/meta/syntaxregistration#goSource.registryCaseTail",
+		"internal/meta/syntaxregistration#goSource.registryCaseLeaves",
+		"internal/meta/syntaxregistration#goSource.registryFieldLeaves",
 		"internal/meta/syntaxregistration#namedRegistryType",
-		"internal/meta/syntaxregistration#caseRegistrySlice",
+		"internal/meta/syntaxregistration#registryOriginWalk.sliceType",
 		"internal/meta/syntaxregistration#registryOriginWalk.expression",
 		"internal/meta/syntaxregistration#registryOriginWalk.helper",
 		"internal/meta/syntaxregistration#registryOriginWalk.appended",
 		"internal/meta/syntaxregistration#goSource.registryTailNeedsComma",
+		"internal/meta/syntaxregistration#bindNativeCaseSources",
+		"internal/meta/syntaxregistration#readCaseSourceLiteral",
 	}
 	requireNamedCapacities(t, root, targets)
-	t.Log("all8 changed production declarations for source-owned registry origins;unchanged75-line rendered helper cap;parent38 unchanged and retained;producer/model0")
+	t.Logf("%d required registry-origin declarations; unchanged 75-line rendered helper cap; producer/model 0", len(targets))
 }

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"go/format"
 	"os"
 	"path/filepath"
@@ -11,6 +13,36 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
+
+func profileCLIFamily(t *testing.T, root, afterPath string, files map[string][]byte) {
+	t.Helper()
+	const primary, secondary = "examples/cli1854/main.gooo", "examples/cli1854/echo.gooo"
+	cut := bytes.Index(files[primary], []byte("activity Echo"))
+	files[secondary] = append([]byte("package cli1854\nnamespace cli1854\n"), files[primary][cut:]...)
+	files[primary] = files[primary][:cut]
+	after, err := os.ReadFile(afterPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	profileCLIWrite1854(t, afterPath, after[:bytes.Index(after, []byte("activity Echo"))])
+	const corpus = "examples/language-syntax-roundtrip/corpus.json"
+	var registry languagesyntax.Registry
+	if err := json.Unmarshal(files[corpus], &registry); err != nil {
+		t.Fatal(err)
+	}
+	registry.CaseSources = []languagesyntax.CaseSourceSet{{CaseID: "cli1854", Members: []string{primary, secondary}}}
+	files[corpus], _ = json.Marshal(registry)
+	const native = "internal/meta/languagereadiness/languagesyntax/owner1854.go"
+	memberField := fmt.Sprintf("CaseSources: []CaseSourceSet{{CaseID: %q, Members: []string{%q, %q}}}, Cases:",
+		"cli1854", primary, secondary)
+	files[native], err = format.Source(bytes.Replace(files[native], []byte("Cases:"), []byte(memberField), 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for path, raw := range files {
+		profileCLIWrite1854(t, filepath.Join(root, path), raw)
+	}
+}
 
 func profileCLIFixture1854(t *testing.T) (string, string, string, string, map[string][]byte) {
 	t.Helper()
