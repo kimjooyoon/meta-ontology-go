@@ -3,6 +3,7 @@ package syntaxregistration
 import (
 	"fmt"
 	"io/fs"
+	"maps"
 	"path"
 	"reflect"
 
@@ -62,9 +63,7 @@ func PreparePartitionRegistrationCandidate(repository fs.FS, directory string,
 	if !reflect.DeepEqual(current, inputs) {
 		return PartitionRegistrationCandidate{}, fmt.Errorf("source consumer inputs changed during partition preparation")
 	}
-	for name, raw := range nativeInputs {
-		inputs[name] = raw
-	}
+	maps.Copy(inputs, nativeInputs)
 	return PartitionRegistrationCandidate{Projection: projection, Inputs: inputs, Outputs: outputs}, nil
 }
 

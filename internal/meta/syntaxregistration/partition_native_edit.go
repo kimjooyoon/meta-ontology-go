@@ -47,9 +47,7 @@ func generatePartitionNative(inputs map[string][]byte, before, after languagesyn
 		return nil, err
 	}
 	projected := maps.Clone(inputs)
-	for name, raw := range outputs {
-		projected[name] = raw
-	}
+	maps.Copy(projected, outputs)
 	native, err := parseSourceUnits(projected, syntaxRoot, "languagesyntax", false)
 	if err != nil {
 		return nil, err
