@@ -74,7 +74,12 @@ The executor keeps the first successful Go version check for a native Go1.27.3
 `cmd/go` executable. Every request hashes the current Go file and checks its
 embedded version/platform. The retained check is reused only when tool path,
 bytes, child environment and producer context match. Shell wrappers receive a
-fresh version process on every request. Current source/parent replay and the two
+fresh version process and build on every request, because their own bytes do not
+bind external build inputs. Their artifact observation records
+`miss_reason=tool_dependencies_unbound`; the build result is retained in the
+receipt, while its temporary executable is removed after execution. This applies
+to scalar and composed bodies. It does not establish transitive dependency
+closure for arbitrary toolchains. Current source/parent replay and the two
 compiled executions still run each time. A changed environment/tool invalidates
 the retained version check; closing or cancelling the executor clears it.
 
