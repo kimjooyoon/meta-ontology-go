@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 )
@@ -26,13 +27,15 @@ func runPackageGenerate(args []string, reader SourceReader, stdout, stderr io.Wr
 		fmt.Fprintf(stderr, "gooo package generate: %v\n", err)
 		return exitFailure
 	}
-	header := fmt.Sprintf("// Workspace manifest: %s\n// Workspace image: %s\n", manifestDigest, program.Workspace.Digest)
+	var header strings.Builder
+	fmt.Fprintf(&header, "// Workspace manifest: %s\n// Workspace image: %s\n", manifestDigest, program.Workspace.Digest)
 	for _, pkg := range program.Workspace.Packages {
 		for _, source := range pkg.Sources {
-			header += fmt.Sprintf("// Gooo source package=%q file=%q digest=%q\n", pkg.Path, source.Filename, source.SourceDigest)
+			fmt.Fprintf(&header, "// Gooo source package=%q file=%q digest=%q\n", pkg.Path, source.Filename, source.SourceDigest)
 		}
 	}
-	_, err = io.WriteString(stdout, header+source)
+	header.WriteString(source)
+	_, err = io.WriteString(stdout, header.String())
 	if err != nil {
 		return exitFailure
 	}
