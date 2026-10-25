@@ -28,7 +28,7 @@ func project(path string, source []byte, commit string) analysis {
 		return result
 	}
 	result.Report.SemanticHash = model.SemanticHash
-	result.Report.EntityCount = len(model.Entities)
+	result.Report.EntityCount = len(model.EntityByID)
 	result.Report.ActivityCount = len(model.Activities)
 	result.Report.ExecutorCoverage = coverExecutors(model, registry)
 	result.SemanticOK = model.SemanticHash != ""

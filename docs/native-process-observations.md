@@ -80,6 +80,12 @@ successfully created child, and a completed wait stops its timer.
 Cancellation and pipe cleanup can make observed Wait time exceed its requested
 budget; the observation retains that elapsed time.
 
+On Unix, `package execute`, `replay` and `resume` propagate a caught interrupt
+or SIGTERM through their execution context. Owned tool processes are terminated
+and joined before the command returns. With `--json` and a writable output,
+interrupted execution publishes a `FAIL_CLOSED` receipt and a failure exit code;
+any earlier construction observations remain partial results.
+
 This separates host creation from the native execution interval. Go's Start
 call can itself return after a caller deadline; the context at return records
 that fact and the child is joined without restoring the expired caller budget.

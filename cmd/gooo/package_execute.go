@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
@@ -60,6 +62,8 @@ func runPackageExecute(args []string, reader SourceReader, stdout, stderr io.Wri
 		fmt.Fprintln(stderr, packageExecuteUsage)
 		return exitUsage
 	}
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stop()
 	receipt, err := executePackage(ctx, reader, manifestPath, flags)
 	if err != nil {
 		markPackageExecutionError(&receipt, err)
