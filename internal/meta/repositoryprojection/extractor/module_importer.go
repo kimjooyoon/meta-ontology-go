@@ -458,12 +458,19 @@ type moduleListPackage struct {
 }
 
 type boundedBuffer struct {
-	bytes.Buffer
+	// A named buffer keeps io.Copy and io.WriteString on the bounded Write path.
+	data     bytes.Buffer
 	limit    int
 	exceeded bool
 }
 
+func (buffer *boundedBuffer) Len() int      { return buffer.data.Len() }
+func (buffer *boundedBuffer) Bytes() []byte { return buffer.data.Bytes() }
+
 func (buffer *boundedBuffer) Write(value []byte) (int, error) {
+	if len(value) == 0 {
+		return 0, nil
+	}
 	remaining := buffer.limit - buffer.Len()
 	if remaining <= 0 {
 		buffer.exceeded = true
@@ -471,10 +478,10 @@ func (buffer *boundedBuffer) Write(value []byte) (int, error) {
 	}
 	if len(value) > remaining {
 		buffer.exceeded = true
-		_, _ = buffer.Buffer.Write(value[:remaining])
+		_, _ = buffer.data.Write(value[:remaining])
 		return len(value), nil
 	}
-	_, _ = buffer.Buffer.Write(value)
+	_, _ = buffer.data.Write(value)
 	return len(value), nil
 }
 
