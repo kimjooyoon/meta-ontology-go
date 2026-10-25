@@ -3,6 +3,7 @@ package main
 import "fmt"
 
 type sourceIndicator struct {
+	ModuleRoot          string `json:"module_root,omitempty"`
 	Applicability       string `json:"applicability"`
 	ApplicabilityReason string `json:"applicability_reason"`
 	ApplicabilityRuleID string `json:"applicability_rule_id"`

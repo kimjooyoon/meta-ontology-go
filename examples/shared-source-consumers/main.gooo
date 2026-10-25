@@ -1,0 +1,7 @@
+package shared
+namespace shared
+
+entity Integer id "urn:gooo:type:integer"
+activity Credit(Integer) -> Integer id "urn:shared:credit" computes "return input+7"
+activity Run(Integer) -> Integer id "urn:shared:run" computes "return input-3"
+bind Credit.result -> Run.input
