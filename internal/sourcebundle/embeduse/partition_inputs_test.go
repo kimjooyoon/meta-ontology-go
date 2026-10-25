@@ -20,8 +20,8 @@ func TestPartitionCaptureRejectsChangedAndMislabeledBytes(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, name), []byte(raw), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	report := Report{Directory: root, Files: []File{{Member: sourcebundle.Member{
-		Filename: name, SHA256: fmt.Sprintf("%x", sha256.Sum256([]byte(raw))), ByteLength: len(raw)}}}}
+	report := Report{Directory: root, Files: []File{{
+		Filename: name, SHA256: fmt.Sprintf("%x", sha256.Sum256([]byte(raw))), ByteLength: len(raw)}}}
 	if _, err := captureInputs(report, nil); err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestPartitionCaptureRejectsChangedAndMislabeledBytes(t *testing.T) {
 }
 
 func TestPartitionContextRejectsUnplannedSourceChanges(t *testing.T) {
-	file := File{Member: sourcebundle.Member{Filename: "host.go", SHA256: "original", ByteLength: 5}}
+	file := File{Filename: "host.go", SHA256: "original", ByteLength: 5}
 	before := Report{Directory: "/same", ImportPath: "same", Files: []File{file}, Consumers: []Consumer{{Name: "input"}}}
 	if err := samePartitionContext(before, before); err != nil {
 		t.Fatal(err)
@@ -51,7 +51,7 @@ func TestPartitionContextRejectsUnplannedSourceChanges(t *testing.T) {
 		func(r *Report) { r.Build = map[string]string{"GOFLAGS": "-tags=other"} },
 		func(r *Report) { r.Files[0].SHA256 = "changed" },
 		func(r *Report) { r.Files = nil },
-		func(r *Report) { r.Files = append(r.Files, File{Member: sourcebundle.Member{Filename: "new.gooo"}}) },
+		func(r *Report) { r.Files = append(r.Files, File{Filename: "new.gooo"}) },
 		func(r *Report) { r.Consumers[0].Name = "other" },
 		func(r *Report) { r.Consumers[0].Kind = "external-test" },
 	} {
