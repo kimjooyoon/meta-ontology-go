@@ -1,47 +1,38 @@
 package main
 
 type stageContract struct {
-	Name   string
+	ID     string
 	Inputs []string
 	Output string
 }
 
 var loopStages = []stageContract{
-	{Name: "Measure", Inputs: []string{"SourceTree"}, Output: "SourceMetrics"},
-	{Name: "Plan", Inputs: []string{"SourceMetrics", "ProofChoice"}, Output: "GenerationPlan"},
-	{Name: "Evaluate", Inputs: []string{"ExecutionManifest"}, Output: "Receipt"},
-	{Name: "Verify", Inputs: []string{"Receipt"}, Output: "Evidence"},
-	{Name: "Improve", Inputs: []string{"Evidence"}, Output: "SourceTree"},
+	{ID: "meta://activity/measure", Inputs: []string{"gooo://meta/source-tree"}, Output: "gooo://meta/source-metrics"},
+	{ID: "meta://activity/plan", Inputs: []string{"gooo://meta/source-metrics", "gooo://meta/proof-choice"}, Output: "gooo://meta/generation-plan"},
+	{ID: "meta://activity/evaluate", Inputs: []string{"gooo://meta/execution-manifest"}, Output: "gooo://meta/receipt"},
+	{ID: "meta://activity/verify", Inputs: []string{"gooo://meta/receipt"}, Output: "gooo://meta/evidence"},
+	{ID: "meta://activity/improve", Inputs: []string{"gooo://meta/evidence"}, Output: "gooo://meta/source-tree"},
 }
+
+const executeActivityID = "meta://activity/execute"
 
 func closedLoop(model contractModel) bool {
 	for _, stage := range loopStages {
-		if !activityMatches(model.Activities[stage.Name], stage.Inputs, stage.Output) {
+		if !activityMatches(model.Activities[stage.ID], stage.Inputs, stage.Output) {
 			return false
 		}
 	}
-	execute, exists := model.Activities["Execute"]
+	execute, exists := model.Activities[executeActivityID]
 	return exists && len(execute.Inputs) > 0 &&
-		execute.Inputs[0] == "GenerationPlan" &&
-		execute.Output == "ExecutionManifest"
+		execute.Inputs[0] == "gooo://meta/generation-plan" &&
+		execute.Output == "gooo://meta/execution-manifest"
 }
 
 func trilemmaChoice(model contractModel, registry []RegistryBinding) bool {
-	choice := model.Activities["ChooseProof"]
+	choice := model.Activities["meta://activity/choose-proof"]
 	if !activityMatches(choice,
-		[]string{"Foundation", "Coherence", "Regression"}, "ProofChoice") {
+		[]string{"proof://foundation", "proof://coherence", "proof://regression"}, "gooo://meta/proof-choice") {
 		return false
-	}
-	expected := map[string]string{
-		"Foundation":  "proof://foundation",
-		"Coherence":   "proof://coherence",
-		"Regression":  "proof://regression",
-		"ProofChoice": "gooo://meta/proof-choice",
-	}
-	for name, id := range expected {
-		if model.Entities[name] != id {
-			return false
-		}
 	}
 	for _, binding := range registry {
 		if model.EntityByID[binding.ProofEntityID] == "" {

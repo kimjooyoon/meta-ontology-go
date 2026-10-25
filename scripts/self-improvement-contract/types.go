@@ -1,12 +1,15 @@
 package main
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+
 type activitySignature struct {
-	Inputs []string
-	Output string
+	Name         string
+	Inputs       []string
+	Output       string
+	InputOrigins map[string]semantic.Span
 }
 
 type contractModel struct {
-	Entities     map[string]string
 	EntityByID   map[string]string
 	Activities   map[string]activitySignature
 	SemanticHash string
