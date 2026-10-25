@@ -187,7 +187,7 @@ func executableFor(ctx context.Context, prior bodycodegen.Result, goBinary strin
 		r.Artifact = &ArtifactObservation{Schema: "gooo/owned-native-artifact/v1", KeySHA256: key, MissReason: "empty"}
 		if cached := owner.artifact; cached != nil {
 			r.Artifact.MissReason = "key_changed"
-			if cached.key == key {
+			if cached.key == key && r.ToolchainReference != nil {
 				observed, readErr := owner.bindFile(cached.executable)
 				if readErr == nil && observed == cached.digest {
 					r.ExecutableSHA256 = observed
@@ -201,6 +201,9 @@ func executableFor(ctx context.Context, prior bodycodegen.Result, goBinary strin
 			if err := owner.dropArtifact(); err != nil {
 				return "", "", release, err
 			}
+		}
+		if r.ToolchainReference == nil {
+			r.Artifact.MissReason = "tool_dependencies_unbound"
 		}
 	}
 	root, err = os.MkdirTemp("", "gooo-body-runtime-")
@@ -225,10 +228,15 @@ func executableFor(ctx context.Context, prior bodycodegen.Result, goBinary strin
 		return root, executable, release, fmt.Errorf("cannot bind emitted executable")
 	}
 	if owner != nil {
-		owner.artifact = &compiledArtifact{key: key, root: root, executable: executable, digest: r.ExecutableSHA256, build: copyProcess(r.Build)}
 		r.Artifact.ExecutableVerified, r.Artifact.SourceBuild = true, copyProcess(r.Build)
 		bindSourceBuild(r)
-		release = func() {}
+		// A wrapper's unchanged bytes do not bind its external build inputs.
+		// Retain the observed build record, but release its non-reusable output.
+		if r.ToolchainReference != nil {
+			owner.artifact = &compiledArtifact{key: key, root: root, executable: executable,
+				digest: r.ExecutableSHA256, build: copyProcess(r.Build)}
+			release = func() {}
+		}
 	}
 	return root, executable, release, nil
 }

@@ -6,15 +6,31 @@ import (
 	"errors"
 	"io"
 	"maps"
+	"slices"
 )
 
 func (imports *moduleImporter) listCompilationClosure(path string, export bool) ([]moduleCompiledPackage, error) {
+	return imports.listCompilationRoots([]string{path}, export)
+}
+
+func (imports *moduleImporter) listCompilationRoots(paths []string, export bool) ([]moduleCompiledPackage, error) {
+	paths = slices.Compact(slices.Sorted(slices.Values(paths)))
+	if len(paths) == 0 || len(paths) > moduleListPackagesMax {
+		return nil, moduleFailure(moduleCausePackageLimit)
+	}
+	missing := map[string]bool{}
+	for _, path := range paths {
+		if !validModuleImportPath(path) {
+			return nil, errModuleDependency
+		}
+		missing[path] = true
+	}
 	args := append([]string{"list"}, imports.moduleListCommonArgs()...)
 	args = append(args, "-deps", "-json=Dir,ImportPath,BuildID,Export,GoFiles,CgoFiles,CFiles,CXXFiles,MFiles,HFiles,FFiles,SFiles,SwigFiles,SwigCXXFiles,EmbedFiles,Goroot,Incomplete")
 	if export {
 		args = append(args, "-export")
 	}
-	args = append(args, path)
+	args = append(args, paths...)
 	output, err := imports.runGoList(args)
 	if err != nil {
 		return nil, err
@@ -22,7 +38,6 @@ func (imports *moduleImporter) listCompilationClosure(path string, export bool) 
 	decoder := json.NewDecoder(bytes.NewReader(output))
 	packages := []moduleCompiledPackage{}
 	ids := map[string]bool{}
-	found := false
 	for {
 		var pkg moduleCompiledPackage
 		err = decoder.Decode(&pkg)
@@ -36,10 +51,10 @@ func (imports *moduleImporter) listCompilationClosure(path string, export bool) 
 			return nil, moduleFailure(moduleCausePackageLimit)
 		}
 		ids[pkg.ImportPath] = true
-		found = found || pkg.ImportPath == path
+		delete(missing, pkg.ImportPath)
 		packages = append(packages, pkg)
 	}
-	if !found {
+	if len(missing) != 0 {
 		return nil, errModuleDependency
 	}
 	return packages, nil
@@ -49,11 +64,15 @@ func (imports *moduleImporter) ensureCompilationOrigin(path string) error {
 	if _, exists := imports.compilationInputs[path]; exists {
 		return nil
 	}
+	return imports.ensureCompilationRoots([]string{path})
+}
+
+func (imports *moduleImporter) ensureCompilationRoots(paths []string) error {
 	beforeScope, err := standardImportScope(imports.root)
 	if err != nil {
 		return errModuleDependency
 	}
-	discovered, err := imports.listCompilationClosure(path, false)
+	discovered, err := imports.listCompilationRoots(paths, false)
 	if err != nil {
 		return err
 	}
@@ -61,7 +80,7 @@ func (imports *moduleImporter) ensureCompilationOrigin(path string) error {
 	if err != nil {
 		return err
 	}
-	compiled, err := imports.listCompilationClosure(path, true)
+	compiled, err := imports.listCompilationRoots(paths, true)
 	if err != nil {
 		return err
 	}

@@ -249,3 +249,21 @@ EntityFields V3 currently covers required single string, boolean, and integer
 fields in the original record-flow example. The workspace runtime's V4 profile
 also supports optional single fields of those types. Repeated, nested, and
 arbitrary user-defined field types remain outside this support boundary.
+
+## Native workspace consumers
+
+Repository Go consumers can use
+`internal/packageruntime/workspaceinput.Decode` and `Load` for the same definition
+schema, source paths, file/count/byte limits and source-derived package metadata
+as the CLI. The external definition remains a source list; the returned
+`packageruntime.Manifest` contains the actual file bytes for semantic resolution.
+The host supplies `ReadFile` and owns filesystem access and file identities.
+If a file fails to load, the reader returns an error and no executable partial
+manifest. The original definition still names the full requested source set.
+
+This shared reader lets a metaprogram inspect and partition a package without
+importing the CLI or introducing a second interpretation of its manifest. A
+native consumer regression loads imported activities, splits at a stable ID,
+and executes both workspaces against the same independent expected values.
+Reading the definition is not execution or rewrite authority; consumers still
+validate the semantic image, current inputs and the operation's own preconditions.
