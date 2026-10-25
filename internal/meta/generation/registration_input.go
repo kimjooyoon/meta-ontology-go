@@ -9,7 +9,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
 )
 
-type RegistrationInputFailure struct {
+type OperationInputFailure struct {
 	IndicatorID   string   `json:"indicator_id,omitempty"`
 	RequestDigest string   `json:"request_digest"`
 	State         string   `json:"state"`
@@ -20,6 +20,9 @@ type RegistrationInputFailure struct {
 	NextOperation string   `json:"next_operation"`
 	BlockedBy     []string `json:"blocked_by"`
 }
+
+// Retain the existing registration wire field for saved registration consumers.
+type RegistrationInputFailure = OperationInputFailure
 
 func registrationDigestKnown(value string) bool {
 	return strings.HasPrefix(value, "sha256:") && validDigest(strings.TrimPrefix(value, "sha256:"))
@@ -62,6 +65,12 @@ func cloneRegistrationRequest(request *syntaxregistration.Request) *syntaxregist
 }
 
 func ValidRegistrationActionInput(action Action) bool {
+	if action.Operation == sourcepolicy.OperationSplitGooo {
+		return action.RegistrationRequest == nil && validWorkspaceSplitActionInput(action)
+	}
+	if action.WorkspaceSplitRequest != nil {
+		return false
+	}
 	if action.Operation != sourcepolicy.OperationRegisterSyntax {
 		return action.RegistrationRequest == nil && action.SourceIndicator.OperationInputDigest == ""
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
-const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> (--boundaries | --before <declaration-id> --into <file.gooo> [--consumer-workspace <workspace.json> | --discover-consumers <directory>] [--syntax-registry-root <repository>]) | --apply <proposal.json>) [--json] <workspace.json>"
+const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> (--boundaries | (--before <declaration-id> | --line-limit <n>) --into <file.gooo> [--consumer-workspace <workspace.json> | --discover-consumers <directory>] [--syntax-registry-root <repository>]) | --apply <proposal.json>) [--json] <workspace.json>"
 
 type workspaceSourceSplitOptions struct {
 	packagePath, source, before, into, manifestPath string
@@ -21,6 +21,7 @@ type workspaceSourceSplitOptions struct {
 	discoveryRoot                                   string
 	jsonMode                                        bool
 	boundaries                                      bool
+	lineLimit                                       int
 }
 
 type workspaceSourceSplitReceipt struct {
@@ -36,6 +37,7 @@ type workspaceSourceSplitReceipt struct {
 	Discovery        *workspaceConsumerDiscovery           `json:"discovery,omitempty"`
 	Boundaries       *packageruntime.SourceSplitBoundaries `json:"boundaries,omitempty"`
 	Registration     *workspaceSplitRegistration           `json:"syntax_registration,omitempty"`
+	Selection        *packageruntime.SourceSplitChoice     `json:"selection,omitempty"`
 }
 
 func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -68,11 +70,24 @@ func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr 
 		if err := printSourceSplitBoundaries(stdout, *receipt.Boundaries); err != nil {
 			return exitFailure
 		}
+	} else if receipt.Decision == "UNCHANGED" && receipt.Selection != nil {
+		if _, err := fmt.Fprintf(stdout, "unchanged: %d physical lines already satisfy limit %d\n",
+			receipt.Selection.InputLines, receipt.Selection.LineLimit); err != nil {
+			return exitFailure
+		}
 	} else {
 		r := receipt.Result
 		if _, err := fmt.Fprintf(stdout, "%s %s: %s + %s before id=%s\nUse --json for sources, byte origins and the updated workspace.\n",
 			strings.ToLower(receipt.Decision), r.PackagePath, r.InputFilename, r.Files[1].Filename, r.BeforeID); err != nil {
 			return exitFailure
+		}
+		if receipt.Selection != nil {
+			selected := receipt.Selection
+			if _, err := fmt.Fprintf(stdout, "Physical lines: %d -> %d + %d; limit %d satisfied: %t\n",
+				selected.InputLines, selected.Boundary.Left.Lines, selected.Boundary.Right.Lines,
+				selected.LineLimit, selected.LimitSatisfied); err != nil {
+				return exitFailure
+			}
 		}
 	}
 	if err != nil {
@@ -127,6 +142,9 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 	})
 	flags.BoolVar(&options.jsonMode, "json", false, "print the complete source proposal")
 	flags.BoolVar(&options.boundaries, "boundaries", false, "inspect declaration cuts and physical output sizes without selecting a split")
+	flags.Func("line-limit", "choose a declaration cut that reduces the largest output toward this physical line limit", func(value string) error {
+		return parseSplitLineLimit(&options, value)
+	})
 	if err := flags.Parse(args); err != nil {
 		return options, err
 	}
@@ -134,35 +152,49 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 		return options, fmt.Errorf("one workspace manifest is required")
 	}
 	options.manifestPath = flags.Arg(0)
+	return options, validateWorkspaceSourceSplitOptions(options)
+}
+
+func validateWorkspaceSourceSplitOptions(options workspaceSourceSplitOptions) error {
+	if options.lineLimit != 0 && (options.before != "" || options.boundaries || options.applyReceipt != "") {
+		return fmt.Errorf("--line-limit cannot be combined with --before, --boundaries or --apply")
+	}
 	if options.boundaries {
 		if strings.TrimSpace(options.packagePath) == "" || strings.TrimSpace(options.source) == "" ||
 			options.before != "" || options.into != "" || options.applyReceipt != "" ||
 			options.discoveryRoot != "" || options.registryRoot != "" || len(options.consumerWorkspaces) != 0 {
-			return options, fmt.Errorf("--boundaries requires only package, source and one workspace")
+			return fmt.Errorf("--boundaries requires only package, source and one workspace")
 		}
-		return options, nil
+		return nil
 	}
 	if options.discoveryRoot != "" && len(options.consumerWorkspaces) != 0 {
-		return options, fmt.Errorf("choose discovery scope or explicit consumer workspaces")
+		return fmt.Errorf("choose discovery scope or explicit consumer workspaces")
 	}
 	if options.applyReceipt != "" && (len(options.consumerWorkspaces) != 0 || options.discoveryRoot != "" || options.registryRoot != "") {
-		return options, fmt.Errorf("--apply reads consumer workspaces from the saved proposal")
+		return fmt.Errorf("--apply reads consumer workspaces from the saved proposal")
 	}
-	for _, value := range []string{options.packagePath, options.source, options.before, options.into} {
+	values := []string{options.packagePath, options.source, options.into}
+	if options.lineLimit == 0 {
+		values = append(values, options.before)
+	}
+	for _, value := range values {
 		if options.applyReceipt != "" {
 			if value != "" {
-				return options, fmt.Errorf("--apply cannot be combined with proposal options")
+				return fmt.Errorf("--apply cannot be combined with proposal options")
 			}
 			continue
 		}
 		if strings.TrimSpace(value) == "" {
-			return options, fmt.Errorf("package, source, boundary ID and destination are required")
+			return fmt.Errorf("package, source, boundary selection and destination are required")
 		}
 	}
-	return options, nil
+	return nil
 }
 
 func prepareWorkspaceSourceSplit(options workspaceSourceSplitOptions, reader SourceReader) (workspaceSourceSplitReceipt, error) {
+	if options.lineLimit != 0 {
+		return prepareChosenWorkspaceSplit(options, reader)
+	}
 	if options.registryRoot != "" {
 		return prepareRegisteredWorkspaceSplit(options, reader)
 	}

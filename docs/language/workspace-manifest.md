@@ -287,6 +287,41 @@ observation cannot be passed to `--apply`, even if its decision is edited. Nativ
 callers can use `packageruntime.InspectSourceSplit` with the same boundary
 semantics. No new CI job or persistent service is required.
 
+### Choose a cut from a physical line target
+
+An agent can supply a target instead of selecting a declaration ID itself:
+
+```sh
+go run ./cmd/gooo package split-source --line-limit 75 --json \
+  --package example/agent-tool-inventory --source main.gooo --into inspect.gooo \
+  --syntax-registry-root . \
+  examples/agent-tool-inventory/gooo.workspace.json > /tmp/inventory-split.json
+go run ./cmd/gooo package split-source --apply /tmp/inventory-split.json --json \
+  examples/agent-tool-inventory/gooo.workspace.json
+```
+
+The selection minimizes the larger output's physical line count among existing
+declaration boundaries that strictly reduce the original file's size. Equal
+results use the stable declaration ID as a deterministic tie break. Selection
+uses the compact boundary observations; it constructs and admits only the chosen
+partition through the ordinary workspace and registration path. If that consumer
+admission fails, it returns the failure without trying an unreported alternative.
+
+The optional `selection` object records the original source and workspace image,
+candidate count, improving candidate count, count meeting the target, and selected
+boundary. For this example it selects `Inspect`: 82 lines become 44 and 41,
+including the duplicated header. A target of 30 still proposes the same useful
+intermediate split with `limit_satisfied: false`; it does not claim the target has
+been reached. A source already within the target returns a successful `UNCHANGED`
+result. A source without an improving cut returns `NO_IMPROVING_CUT`; neither
+contains a writable proposal. `--line-limit` and `--before`
+are exclusive. Saved selections are recomputed from current inputs on application.
+
+Native callers can use `packageruntime.ChooseSourceSplit`. This is a deterministic
+physical-size objective, not a judgment of conceptual cohesion or a model choice.
+The metric executor still needs an explicit workspace consumer scope before it
+can use this path; a file-length observation alone does not identify that scope.
+
 ## Native workspace consumers
 
 Repository Go consumers can use
@@ -738,8 +773,7 @@ checks its embedded operation contract against the repository source family.
 Its identity comes from the semantic graph, including an explicitly authored ID
 when present. The two source fragments retain their existing wire location and
 are not duplicated in the registration payload. The mechanical edit implementation
-remains Go. This command does
-not add a route to the repository metric-driven execution scheduler.
+remains Go. The scoped metric executor described below reuses this command.
 
 Workspace parsing and lowering use the same existing field-profile selection as
 package execution. Registered syntax consumers continue to replay under their
@@ -766,6 +800,63 @@ Dynamic file readers and consumers outside the supplied repository/workspace
 scope remain outside this command's observation. No repository-wide consumer
 completeness is claimed. The executable must match the repository registry and
 operation contract; rebuild it after changing those compiler sources.
+
+### Binding a source split into a metric plan
+
+`scripts/refactor-metrics -workspace-split-inputs <requests.json> -plan <plan.json>`
+accepts explicit instances of the existing `SplitGoooSections(FileInput)` activity.
+The ordinary `-metrics`, `-sha`, `-base-sha`, `-root` and `-check` arguments still
+apply. One request looks like this:
+
+```json
+{
+  "schema": "gooo/workspace-split-inputs/v1",
+  "requests": [{
+    "workspace": "examples/agent-tool-inventory/gooo.workspace.json",
+    "package": "example/agent-tool-inventory",
+    "source": "main.gooo",
+    "into": "inspect.gooo",
+    "discovery_root": "examples/agent-tool-inventory",
+    "cases": "examples/agent-tool-inventory/cases.json",
+    "line_limit": 75
+  }]
+}
+```
+
+Addresses are relative to the repository revision; source and destination names
+are relative to the workspace. The request must match exactly one already
+observed Gooo file-line driver and its limit. Its digest enters the indicator,
+canonical plan and selected execution step. Changing the scope or cases address
+changes plan identity. This binding does not invent pressure, force a particular
+candidate to win, or lower the planner's independent-operation floor.
+
+For a selected bound action, `scripts/meta-execution` restores the plan's Git
+commit into two fresh directories and invokes the existing `package split-source`
+prepare/apply path. The committed file inventory and Git blob bytes are checked;
+an archive that omits or substitutes committed content is refused. Untracked
+files and the previous pass's outputs cannot supply missing inputs. This route
+requires regular committed files and limits the inventory to 65,536 files and
+1 GiB; file data is copied as a stream.
+
+After application, the executor checks the installed fragments and native
+registry, runs the supplied independent finite cases through `package execute`,
+and runs both existing native syntax conformance packages. It compares the
+constructed result across the two directories. Raw command output hashes remain
+observations; temporary addresses and the corresponding proposal hash have a
+separate normalized replay representation. A real output or case change remains
+observable. Model calls must be zero in this deterministic route.
+
+The current integration case preserves all eight inventory cases in each pass.
+This is one selected operation with a finite oracle. It does not establish that
+every action in a repository plan has executed or that eight cases cover every
+possible program behavior. An unbound split retains
+`WORKSPACE_SPLIT_REQUEST_MISSING`; unavailable inputs and interrupted processes
+remain unresolved, while an observed failing verifier is a counterexample.
+
+Execution is disposable: it returns the constructed instance and observations.
+It does not write the caller's checkout, open a PR, or extend consumer discovery
+beyond the requested root. Repository-wide discovery, imported source packages
+and embedded consumers retain the limits stated above.
 
 ### One syntax case across physical source members
 
