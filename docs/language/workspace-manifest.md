@@ -363,6 +363,8 @@ outputs across their different entries, including runtime replay without a model
 The same output conditions run with one package per workspace and with an
 additional package consuming the source inside the first workspace; both external
 definitions must still reload to their planned images.
+The executable input is an [authored Gooo source](../../internal/packageruntime/workspacesplit/testdata/shared.gooo);
+the Go tests supply the consumer definitions and independent expected results.
 
 The joint plan also returns `Inputs`: observed source addresses, SHA-256 digests,
 byte lengths and the definitions that read each occurrence, sorted deterministically.

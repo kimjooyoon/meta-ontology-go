@@ -13,22 +13,27 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspacesplit"
 )
 
-func sharedOwners() (fstest.MapFS, []workspacesplit.Owner) {
-	files, definition, request := sharedFixture()
-	other := definition
-	other.Entry.Activity = "Credit"
-	return files, []workspacesplit.Owner{
-		{ManifestPath: "first.workspace.json", Definition: definition, Request: request},
-		{ManifestPath: "second.workspace.json", Definition: other, Request: request},
+func TestJointSplitReloadsAndExecutesEverySuppliedWorkspace(t *testing.T) {
+	for _, shared := range []bool{false, true} {
+		checkJointPlan(t, shared)
 	}
 }
 
-func TestJointSplitReloadsAndExecutesEverySuppliedWorkspace(t *testing.T) {
+func checkJointPlan(t *testing.T, shared bool) {
+	t.Helper()
 	files, owners := sharedOwners()
+	if shared {
+		extra := owners[0].Definition.Packages[0]
+		extra.Path = "shared/other"
+		owners[0].Definition.Packages = append(owners[0].Definition.Packages, extra)
+	}
 	before, _ := json.Marshal(owners)
 	plan, err := workspacesplit.Prepare(files, owners)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if shared && len(plan.Owners[0].Split.Result.AffectedPackages) != 2 {
+		t.Fatal("shared package inside one workspace was dropped")
 	}
 	after, _ := json.Marshal(owners)
 	if string(before) != string(after) || len(plan.Owners) != 2 || len(plan.Files) != 2 || len(files) != 1 {

@@ -1,25 +1,27 @@
 package workspacesplit_test
 
 import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
+	_ "embed"
 	"testing"
 	"testing/fstest"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspacesplit"
 )
 
+//go:embed testdata/shared.gooo
+var sharedSource string
+
 func sharedFixture() (fstest.MapFS, workspaceinput.Definition, workspaceinput.SplitRequest) {
-	source := "package shared\nnamespace shared\nentity Integer id \"urn:gooo:type:integer\"\n" +
-		"activity Credit(Integer) -> Integer id \"urn:shared:credit\" computes \"return input+7\"\n" +
-		"activity Run(Integer) -> Integer id \"urn:shared:run\" computes \"return input-3\"\n" +
-		"bind Credit.result -> Run.input\n"
+
 	definition := workspaceinput.Definition{Schema: workspaceinput.Schema,
 		Entry:    packageruntime.EntrySpec{PackagePath: "shared/app", Activity: "Run"},
 		Packages: []workspaceinput.Package{{Path: "shared/app", Sources: []string{"shared.gooo"}}}}
 	request := workspaceinput.SplitRequest{PackagePath: "shared/app", Source: "shared.gooo",
 		BeforeID: "urn:shared:run", Into: "run.gooo"}
-	return fstest.MapFS{"shared.gooo": {Data: []byte(source)}}, definition, request
+	return fstest.MapFS{"shared.gooo": {Data: []byte(sharedSource)}}, definition, request
 }
 
 func jointCases(t *testing.T, entry string) (bodyexecution.CompositionCases, int) {
@@ -39,4 +41,14 @@ func jointCases(t *testing.T, entry string) (bodyexecution.CompositionCases, int
 		t.Fatal(err)
 	}
 	return suite, total
+}
+
+func sharedOwners() (fstest.MapFS, []workspacesplit.Owner) {
+	files, definition, request := sharedFixture()
+	other := definition
+	other.Entry.Activity = "Credit"
+	return files, []workspacesplit.Owner{
+		{ManifestPath: "first.workspace.json", Definition: definition, Request: request},
+		{ManifestPath: "second.workspace.json", Definition: other, Request: request},
+	}
 }
