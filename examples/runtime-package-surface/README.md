@@ -78,7 +78,10 @@ This example adds no production Go comparison algorithm and no compiler command.
 The existing runtime bounds collection size, text and transport independently;
 it is intended here for a small application package surface. Source/generator
 lineage and distribution-source rosters have separate owners and follow-up work.
-The three downstream lists are still pending consumer migration.
+The three downstream consumers' integration is tracked in
+[gooo-go-ports #237](https://github.com/kimjooyoon/gooo-go-ports/pull/237).
+That adapter binds retained Go observations to the generated Gooo evaluator;
+its compiler pin, generated-source checks and CI belong to the consumer repository.
 
 The [development retrospective](../../docs/research/development-retrospective-20261025.ko.md)
 records how this relates to source-owned changes and scoped provenance.
