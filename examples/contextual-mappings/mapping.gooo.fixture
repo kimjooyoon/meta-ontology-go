@@ -1,0 +1,50 @@
+package mapping
+namespace mapping
+
+entity Text id "urn:gooo:type:text"
+entity MappingRequest id "urn:gooo:contextual-mapping:request" fields {
+    field source_id id "urn:gooo:contextual-mapping:source-id" type string required one
+    field target_id id "urn:gooo:contextual-mapping:target-id" type string required one
+    field relation id "urn:gooo:contextual-mapping:relation" type string required one
+    field context_id id "urn:gooo:contextual-mapping:context-id" type string required one
+    field origin_ref id "urn:gooo:contextual-mapping:origin-ref" type string required one
+    field source_revision id "urn:gooo:contextual-mapping:source-revision" type string required one
+    field target_revision id "urn:gooo:contextual-mapping:target-revision" type string required one
+    field query_context id "urn:gooo:contextual-mapping:query-context" type string required one
+    field current_source_revision id "urn:gooo:contextual-mapping:current-source" type string required one
+    field current_target_revision id "urn:gooo:contextual-mapping:current-target" type string required one
+}
+entity MappingView id "urn:gooo:contextual-mapping:view" fields {
+    field status id "urn:gooo:contextual-mapping:status" type string required one
+    field reference_visible id "urn:gooo:contextual-mapping:visible" type boolean required one
+    field mapping_validity id "urn:gooo:contextual-mapping:validity" type string required one
+    field identity_merge id "urn:gooo:contextual-mapping:identity-merge" type boolean required one
+    field behavior_verified id "urn:gooo:contextual-mapping:behavior-verified" type boolean required one
+    field permission_granted id "urn:gooo:contextual-mapping:permission-granted" type boolean required one
+}
+
+# This classifies an asserted link in its supplied context, without executing it.
+activity Classify(MappingRequest) -> Text id "urn:gooo:contextual-mapping:classify" computes `
+if input.source_id == "" || input.target_id == "" { return "UNIDENTIFIED_CONCEPT" }
+if input.origin_ref == "" || input.context_id == "" ||
+   input.source_revision == "" || input.target_revision == "" { return "MAPPING_ORIGIN_INCOMPLETE" }
+if input.query_context == "" || input.current_source_revision == "" ||
+   input.current_target_revision == "" { return "QUERY_CONTEXT_UNOBSERVED" }
+if input.context_id != input.query_context { return "OUTSIDE_MAPPING_CONTEXT" }
+if input.source_revision != input.current_source_revision ||
+   input.target_revision != input.current_target_revision { return "STALE_MAPPING_CONTEXT" }
+if input.relation == "http://www.w3.org/2004/02/skos/core#exactMatch" { return "EXACT_ASSERTED" }
+if input.relation == "http://www.w3.org/2004/02/skos/core#closeMatch" { return "CLOSE_ASSERTED" }
+if input.relation == "http://www.w3.org/2004/02/skos/core#relatedMatch" { return "RELATED_ASSERTED" }
+if input.relation == "http://purl.org/mit/mmo#isMappedTo" { return "ASSOCIATION_ASSERTED" }
+if input.relation == "http://purl.org/mit/mmo#isConstantRefinementOf" { return "REFINEMENT_ASSERTED" }
+return "UNSUPPORTED_RELATION"
+`
+
+activity View(Text) -> MappingView id "urn:gooo:contextual-mapping:render-view" computes `
+let visible = input == "EXACT_ASSERTED" || input == "CLOSE_ASSERTED" ||
+              input == "RELATED_ASSERTED" || input == "ASSOCIATION_ASSERTED" || input == "REFINEMENT_ASSERTED"
+return MappingView{status: input, reference_visible: visible, mapping_validity: "UNASSESSED",
+                   identity_merge: false, behavior_verified: false, permission_granted: false}
+`
+bind Classify.result -> View.input
