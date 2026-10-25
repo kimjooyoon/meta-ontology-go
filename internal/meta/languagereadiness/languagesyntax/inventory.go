@@ -28,8 +28,12 @@ func InspectSourceInventory(repository fs.FS, registryRaw []byte) (SourceInvento
 	if err != nil {
 		return SourceInventory{}, err
 	}
+	return inventoryFromObservations(registryRaw, registry, observed), nil
+}
+
+func inventoryFromObservations(registryRaw []byte, registry Registry, observed []replay.FileObservation) SourceInventory {
 	extra, missing := compareCorpus(registry, observed)
 	return SourceInventory{Schema: "gooo/syntax-source-inventory/v1", RegistryDigest: digestBytes(registryRaw),
 		ObservationDigest: digestJSON(observed), Sources: observed, Unregistered: extra, Missing: missing,
-		SemanticAdmission: "UNASSESSED"}, nil
+		SemanticAdmission: "UNASSESSED"}
 }
