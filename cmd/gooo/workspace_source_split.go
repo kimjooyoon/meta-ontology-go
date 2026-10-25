@@ -152,22 +152,26 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 		return options, fmt.Errorf("one workspace manifest is required")
 	}
 	options.manifestPath = flags.Arg(0)
+	return options, validateWorkspaceSourceSplitOptions(options)
+}
+
+func validateWorkspaceSourceSplitOptions(options workspaceSourceSplitOptions) error {
 	if options.lineLimit != 0 && (options.before != "" || options.boundaries || options.applyReceipt != "") {
-		return options, fmt.Errorf("--line-limit cannot be combined with --before, --boundaries or --apply")
+		return fmt.Errorf("--line-limit cannot be combined with --before, --boundaries or --apply")
 	}
 	if options.boundaries {
 		if strings.TrimSpace(options.packagePath) == "" || strings.TrimSpace(options.source) == "" ||
 			options.before != "" || options.into != "" || options.applyReceipt != "" ||
 			options.discoveryRoot != "" || options.registryRoot != "" || len(options.consumerWorkspaces) != 0 {
-			return options, fmt.Errorf("--boundaries requires only package, source and one workspace")
+			return fmt.Errorf("--boundaries requires only package, source and one workspace")
 		}
-		return options, nil
+		return nil
 	}
 	if options.discoveryRoot != "" && len(options.consumerWorkspaces) != 0 {
-		return options, fmt.Errorf("choose discovery scope or explicit consumer workspaces")
+		return fmt.Errorf("choose discovery scope or explicit consumer workspaces")
 	}
 	if options.applyReceipt != "" && (len(options.consumerWorkspaces) != 0 || options.discoveryRoot != "" || options.registryRoot != "") {
-		return options, fmt.Errorf("--apply reads consumer workspaces from the saved proposal")
+		return fmt.Errorf("--apply reads consumer workspaces from the saved proposal")
 	}
 	values := []string{options.packagePath, options.source, options.into}
 	if options.lineLimit == 0 {
@@ -176,15 +180,15 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 	for _, value := range values {
 		if options.applyReceipt != "" {
 			if value != "" {
-				return options, fmt.Errorf("--apply cannot be combined with proposal options")
+				return fmt.Errorf("--apply cannot be combined with proposal options")
 			}
 			continue
 		}
 		if strings.TrimSpace(value) == "" {
-			return options, fmt.Errorf("package, source, boundary ID and destination are required")
+			return fmt.Errorf("package, source, boundary selection and destination are required")
 		}
 	}
-	return options, nil
+	return nil
 }
 
 func prepareWorkspaceSourceSplit(options workspaceSourceSplitOptions, reader SourceReader) (workspaceSourceSplitReceipt, error) {

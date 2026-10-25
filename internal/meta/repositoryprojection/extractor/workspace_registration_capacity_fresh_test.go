@@ -52,6 +52,11 @@ func TestRegisteredWorkspaceRenderedCapacity(t *testing.T) {
 		"cmd/gooo#TestWorkspaceSplitChoiceRetainsSatisfiedSource",
 		"cmd/gooo#changingSplitChoiceReader.ReadFile",
 		"cmd/gooo#TestWorkspaceSplitChoiceRejectsChangingSelectionInputs",
+		"cmd/gooo#runWorkspaceSourceSplit",
+		"cmd/gooo#parseWorkspaceSourceSplit",
+		"cmd/gooo#validateWorkspaceSourceSplitOptions",
+		"cmd/gooo#prepareWorkspaceSourceSplit",
+		"cmd/gooo#applyWorkspaceSourceSplit",
 	}
 	observed, err := collectNamedCapacityFiles(root, targets, true)
 	if err != nil {
