@@ -39,6 +39,10 @@ func prepareChosenWorkspaceSplit(options workspaceSourceSplitOptions, reader Sou
 		return receipt, err
 	}
 	receipt.Selection = &choice
+	if choice.State == "ALREADY_WITHIN_LIMIT" {
+		receipt.Decision = "UNCHANGED"
+		return receipt, nil
+	}
 	if choice.State != "SELECTED" || choice.Boundary == nil {
 		return receipt, fmt.Errorf("source split selection: %s", choice.State)
 	}

@@ -56,7 +56,7 @@ func TestWorkspaceSplitChoiceRetainsSatisfiedSource(t *testing.T) {
 		t.Fatal(err)
 	}
 	receipt, err := prepareWorkspaceSourceSplit(options, OSFileReader{})
-	if err == nil || receipt.Result != nil || receipt.Selection == nil ||
+	if err != nil || receipt.Decision != "UNCHANGED" || receipt.Result != nil || receipt.Selection == nil ||
 		receipt.Selection.State != "ALREADY_WITHIN_LIMIT" || !receipt.Selection.LimitSatisfied {
 		t.Fatal("satisfied file received a writable proposal", receipt, err)
 	}
@@ -66,6 +66,12 @@ func TestWorkspaceSplitChoiceRetainsSatisfiedSource(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(filepath.Dir(options.manifestPath), options.into)); !os.IsNotExist(err) {
 		t.Fatal("unnecessary output created", err)
+	}
+	var stdout, stderr bytes.Buffer
+	args := []string{"package", "split-source", "--package", options.packagePath, "--source", options.source,
+		"--into", options.into, "--line-limit", "82", options.manifestPath}
+	if code := run(args, &stdout, &stderr); code != exitOK || !bytes.Contains(stdout.Bytes(), []byte("unchanged:")) {
+		t.Fatal("satisfied target did not complete as a successful no-op", code, stdout.String(), stderr.String())
 	}
 }
 

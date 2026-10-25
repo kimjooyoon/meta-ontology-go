@@ -312,8 +312,9 @@ candidate count, improving candidate count, count meeting the target, and select
 boundary. For this example it selects `Inspect`: 82 lines become 44 and 41,
 including the duplicated header. A target of 30 still proposes the same useful
 intermediate split with `limit_satisfied: false`; it does not claim the target has
-been reached. A source already within the target, or without an improving cut,
-returns an explanation and no writable proposal. `--line-limit` and `--before`
+been reached. A source already within the target returns a successful `UNCHANGED`
+result. A source without an improving cut returns `NO_IMPROVING_CUT`; neither
+contains a writable proposal. `--line-limit` and `--before`
 are exclusive. Saved selections are recomputed from current inputs on application.
 
 Native callers can use `packageruntime.ChooseSourceSplit`. This is a deterministic

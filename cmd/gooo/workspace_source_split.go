@@ -70,6 +70,11 @@ func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr 
 		if err := printSourceSplitBoundaries(stdout, *receipt.Boundaries); err != nil {
 			return exitFailure
 		}
+	} else if receipt.Decision == "UNCHANGED" && receipt.Selection != nil {
+		if _, err := fmt.Fprintf(stdout, "unchanged: %d physical lines already satisfy limit %d\n",
+			receipt.Selection.InputLines, receipt.Selection.LineLimit); err != nil {
+			return exitFailure
+		}
 	} else {
 		r := receipt.Result
 		if _, err := fmt.Fprintf(stdout, "%s %s: %s + %s before id=%s\nUse --json for sources, byte origins and the updated workspace.\n",
