@@ -333,3 +333,35 @@ retaining a full directory listing. This extra verification runs on explicit spl
 application; ordinary package execution gains no new model or projection phase.
 The host's existing single-writer boundary still applies, including external edits
 after the last check and process interruption during publication.
+
+### Embedded native contract sources
+
+Native declaration contracts have no executable entry point. The internal
+`sourcebundle` adapter reads an explicit ordered set of `.gooo` members, parses
+each with its physical filename, and lowers their declarations through the
+existing bidirectional and semantic validators. Every member must have the same
+package and namespace. Imports require the package compiler and are refused here.
+This adapter does not replace the workspace compiler or discover consumers.
+
+The operation-input contract is its first connected consumer. Its embedded family
+is `operation-input-contract*.gooo`; partitions within that family are read in
+lexical filename order. The existing native checks still require exactly four
+operations, six obligation activities, two policy activities and ten entities.
+Adding a file cannot add an unimplemented executor or bypass those checks.
+
+The bundle identity binds ordered filenames and exact bytes. It differs from the
+old single-file content hash even for one member, so old operation plans need
+fresh preparation. Semantic identity remains separate: moving a declaration to a
+different member preserves its stable ID and semantic hash while changing its
+physical origin. Admission exposes each member's content hash and byte length,
+plus all declaration IDs and physical spans; cached metadata is copied for callers.
+Existing serialized operation plans continue to carry the contract digests.
+
+The connected regression partitions the actual authored contract into ten entities
+and twelve activities, admits it through the native consumer, and checks all 22
+physical origins and unchanged native facts. Missing members, conflicting IDs,
+changed obligations, extra activities and unknown import scopes return no contract.
+Reads are bounded to 64 files, 1 MiB per file and 16 MiB in total; an I/O failure
+returns no partial source set. Mutable filesystem snapshots and publication remain
+the caller's responsibility. The production contract remains one small source file;
+repository-wide discovery and automatic embedded-consumer migration remain open.

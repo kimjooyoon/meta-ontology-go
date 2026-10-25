@@ -1,14 +1,13 @@
 package generation
 
 import (
-	"crypto/sha256"
-	_ "embed"
-	"encoding/hex"
+	"embed"
 	"fmt"
+	"io/fs"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/sourcebundle"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -72,6 +71,7 @@ type operationInputContractFacts struct {
 type operationInputContract struct {
 	SourceDigest    string
 	SemanticDigest  string
+	SourceOrigins   sourcebundle.Provenance
 	Bindings        map[sourcepolicy.Operation]operationInputContractBinding
 	Facts           map[sourcepolicy.Operation]operationInputContractFacts
 	ObligationFacts map[string]operationInputContractFacts
@@ -89,6 +89,7 @@ type OperationInputContractEvidence struct {
 	InputSubjectKind    sourcepolicy.SubjectKind
 	SourceDigest        string
 	SemanticDigest      string
+	SourceOrigins       sourcebundle.Provenance
 	UsedInputFact       bool
 	GeneratedOutputFact bool
 	Obligations         []OperationInputContractObligationEvidence
@@ -111,34 +112,46 @@ type OperationInputContractPolicyEvidence struct {
 	InputSubjectKind    sourcepolicy.SubjectKind
 	SourceDigest        string
 	SemanticDigest      string
+	SourceOrigins       sourcebundle.Provenance
 	UsedInputFact       bool
 	GeneratedOutputFact bool
 	HeaderCapability    string
 }
 
-//go:embed operation-input-contract.gooo
-var operationInputContractSource []byte
+// This explicit embedded family can acquire source partitions without another
+// Go source list. Every member still participates in exact ABI validation.
+//
+//go:embed operation-input-contract*.gooo
+var operationInputContractFiles embed.FS
 
 func loadOperationInputContract() (operationInputContract, error) {
-	return cachedOperationInputContract(operationInputContractSource)
+	return loadOperationInputContractFS(operationInputContractFiles)
 }
 
-func parseOperationInputContract(raw []byte) (operationInputContract, error) {
-	file, diagnostics := syntax.ParseFile("operation-input-contract.gooo", string(raw))
-	if file == nil || diagnostics.HasErrors() {
-		return operationInputContract{}, fmt.Errorf("operation input contract has syntax errors")
+func loadOperationInputContractFS(files fs.FS) (operationInputContract, error) {
+	if files == nil {
+		return operationInputContract{}, fmt.Errorf("operation input contract filesystem is required")
 	}
-	if file.Package == nil || file.Namespace == nil ||
-		file.Package.Name != "operationinputcontract" || file.Namespace.Name != "operationinputcontract" {
-		return operationInputContract{}, fmt.Errorf("operation input contract headers are not exact")
+	names, err := fs.Glob(files, "operation-input-contract*.gooo")
+	if err != nil {
+		return operationInputContract{}, err
 	}
-	ir, err := bidir.Lower(file)
+	sources, err := sourcebundle.Read(files, names)
+	if err != nil {
+		return operationInputContract{}, err
+	}
+	return cachedOperationInputContract(sources)
+}
+
+func parseOperationInputContractSources(sources []sourcebundle.Source) (operationInputContract, error) {
+	bundle, err := sourcebundle.Lower(sources)
 	if err != nil {
 		return operationInputContract{}, fmt.Errorf("lower operation input contract: %w", err)
 	}
-	if err := ir.Validate(); err != nil {
-		return operationInputContract{}, fmt.Errorf("validate operation input contract: %w", err)
+	if bundle.Package != "operationinputcontract" || bundle.Namespace != "operationinputcontract" {
+		return operationInputContract{}, fmt.Errorf("operation input contract headers are not exact")
 	}
+	ir := bundle.IR
 
 	entityIDs := map[string]string{
 		"FunctionInput":                  "gooo://meta-operation-input-contract/entity/function-input",
@@ -158,7 +171,7 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 	}
 	activities := make(map[string]*syntax.ActivityDecl, len(nativeOperationInputs)+len(nativeOperationObligations)+len(nativeContractPolicies))
 	entities := make(map[string]*syntax.EntityDecl, len(entityIDs))
-	for _, declaration := range file.Decls {
+	for _, declaration := range bundle.Declarations {
 		switch declaration := declaration.(type) {
 		case *syntax.EntityDecl:
 			if _, duplicate := entities[declaration.Name]; duplicate {
@@ -275,10 +288,10 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		return operationInputContract{}, err
 	}
 
-	sourceDigest := sha256.Sum256(raw)
 	return operationInputContract{
-		SourceDigest:    hex.EncodeToString(sourceDigest[:]),
+		SourceDigest:    bundle.SourceDigest,
 		SemanticDigest:  ir.StableHash(),
+		SourceOrigins:   bundle.Provenance,
 		Bindings:        bindings,
 		Facts:           facts,
 		ObligationFacts: obligationFacts,
@@ -321,6 +334,7 @@ func ExtractFunctionInputContractEvidence() (OperationInputContractEvidence, err
 		InputSubjectKind:    binding.InputSubjectKind,
 		SourceDigest:        contract.SourceDigest,
 		SemanticDigest:      contract.SemanticDigest,
+		SourceOrigins:       contract.SourceOrigins,
 		UsedInputFact:       facts.UsedInput,
 		GeneratedOutputFact: facts.GeneratedOutput,
 		Obligations:         obligations,
@@ -371,6 +385,7 @@ func importNormalizationPolicyEvidence(activity string) (OperationInputContractP
 	return OperationInputContractPolicyEvidence{
 		Name: policy.Name, Activity: policy.Activity, InputEntity: policy.InputEntity, OutputEntity: policy.OutputEntity,
 		InputSubjectKind: policy.InputKind, SourceDigest: contract.SourceDigest, SemanticDigest: contract.SemanticDigest,
+		SourceOrigins: contract.SourceOrigins,
 		UsedInputFact: facts.UsedInput, GeneratedOutputFact: facts.GeneratedOutput, HeaderCapability: policy.HeaderCapability,
 	}, nil
 }

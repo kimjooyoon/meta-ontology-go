@@ -10,7 +10,7 @@ func TestImportNormalizationPolicyContractRegressionCohort(t *testing.T) {
 		name   string
 		source string
 	}{
-		{name: "exact-policy-is-bound-to-ir", source: string(operationInputContractSource)},
+		{name: "exact-policy-is-bound-to-ir", source: string(operationContractFixture(t))},
 		{name: "missing-or-mismatched-policy-fails-closed", source: ""},
 	}
 	if len(cases) != 2 {
@@ -27,7 +27,7 @@ func TestImportNormalizationPolicyContractRegressionCohort(t *testing.T) {
 				}
 				return
 			}
-			base := string(operationInputContractSource)
+			base := string(operationContractFixture(t))
 			missing := strings.Replace(base, "activity NormalizeEligibleImportGroup(FileInput) -> ImportNormalizationPolicy\n", "", 1)
 			if _, err := parseOperationInputContract([]byte(missing)); err == nil {
 				t.Fatal("missing import normalization policy was accepted")
