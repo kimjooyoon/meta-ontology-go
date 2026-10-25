@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"io/fs"
 	"maps"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -73,7 +74,7 @@ func splitRegistrationEmbedInputs(root string, candidate syntaxregistration.Part
 }
 
 func captureSplitAncestorGo(root, directory string, inputs map[string][]byte) (bool, error) {
-	names, err := filepath.Glob(filepath.Join(directory, "*.go"))
+	entries, err := os.ReadDir(directory)
 	if err != nil {
 		return false, err
 	}
@@ -82,7 +83,11 @@ func captureSplitAncestorGo(root, directory string, inputs map[string][]byte) (b
 	for _, raw := range inputs {
 		total += len(raw)
 	}
-	for _, name := range names {
+	for _, entry := range entries {
+		if !strings.HasSuffix(entry.Name(), ".go") {
+			continue
+		}
+		name := filepath.Join(directory, entry.Name())
 		if len(inputs) >= 1024 {
 			return false, fmt.Errorf("source ancestor scope exceeds 1024 Go files")
 		}

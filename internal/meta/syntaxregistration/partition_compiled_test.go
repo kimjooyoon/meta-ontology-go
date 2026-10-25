@@ -25,7 +25,20 @@ func compiledPartitionRegistry(t *testing.T, candidate PartitionRegistrationCand
 	if err != nil {
 		t.Fatal(err)
 	}
-	temporary := t.TempDir()
+	overlayPath, expected := compiledPartitionOverlay(t, root, t.TempDir(), candidate)
+	command := exec.CommandContext(t.Context(), "go", "test", "-json", "-p", "1", "-overlay", overlayPath,
+		"./internal/meta/languagereadiness/languagesyntax", "-run", "^TestCompiledPartitionRegistry$", "-count=1")
+	command.Dir = root
+	command.Env = append(os.Environ(), "GOOO_PARTITION_EXPECTED="+expected)
+	output, err := command.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("compile registry: %w\n%s", err, output)
+	}
+	return checkCompiledPartitionRun(output)
+}
+
+func compiledPartitionOverlay(t *testing.T, root, temporary string, candidate PartitionRegistrationCandidate) (string, string) {
+	t.Helper()
 	replacements := map[string]string{}
 	for name, raw := range candidate.Outputs {
 		if filepath.Ext(name) != ".go" {
@@ -62,14 +75,10 @@ func TestCompiledPartitionRegistry(t *testing.T) {
 	if err := os.WriteFile(overlayPath, overlay, 0600); err != nil {
 		t.Fatal(err)
 	}
-	command := exec.CommandContext(t.Context(), "go", "test", "-json", "-p", "1", "-overlay", overlayPath,
-		"./internal/meta/languagereadiness/languagesyntax", "-run", "^TestCompiledPartitionRegistry$", "-count=1")
-	command.Dir = root
-	command.Env = append(os.Environ(), "GOOO_PARTITION_EXPECTED="+expected)
-	output, err := command.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("compile registry: %w\n%s", err, output)
-	}
+	return overlayPath, expected
+}
+
+func checkCompiledPartitionRun(output []byte) error {
 	runs, passes := 0, 0
 	for line := range bytes.SplitSeq(output, []byte{'\n'}) {
 		var event struct{ Action, Test string }

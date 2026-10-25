@@ -42,3 +42,21 @@ func TestRegistryOriginCapacity29111(t *testing.T) {
 	requireNamedCapacities(t, root, targets)
 	t.Logf("%d required registry-origin declarations; unchanged 75-line rendered helper cap; producer/model 0", len(targets))
 }
+
+func TestPartitionOracleRenderedCapacity(t *testing.T) {
+	root := os.Getenv("GOOO_FRESH_FIELD_ROOT")
+	if root == "" {
+		root = "../../../.."
+	}
+	targets := []string{
+		"internal/meta/syntaxregistration#assertCompiledPartitionRegistry",
+		"internal/meta/syntaxregistration#compiledPartitionRegistry",
+		"internal/meta/syntaxregistration#compiledPartitionOverlay",
+		"internal/meta/syntaxregistration#checkCompiledPartitionRun",
+	}
+	observed, err := collectNamedCapacityFiles(root, targets, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireObservedCapacities(t, targets, observed)
+}

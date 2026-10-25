@@ -64,3 +64,10 @@ func TestWorkspaceRegisteredSplitFlagCombinationsAndRoot(t *testing.T) {
 		t.Fatal("workspace outside registry root accepted")
 	}
 }
+
+func TestWorkspaceRegisteredSplitAncestorReadFailure(t *testing.T) {
+	root := t.TempDir()
+	if _, err := captureSplitAncestorGo(root, filepath.Join(root, "missing"), map[string][]byte{}); err == nil {
+		t.Fatal("an unreadable ancestor was reported as zero native consumers")
+	}
+}
