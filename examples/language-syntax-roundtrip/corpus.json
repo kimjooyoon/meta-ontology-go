@@ -1408,6 +1408,7 @@
     "examples/toolchain-version-impact/impact.gooo",
     "examples/toolchain-version-impact/plan.gooo",
     "examples/direct-module-impact/plan.gooo",
-    "examples/ci-strategy/strategy.gooo"
+    "examples/ci-strategy/strategy.gooo",
+    "internal/meta/executioncontinuation/policy/source_recovery.gooo"
   ]
 }
