@@ -45,13 +45,7 @@ func applyWorkspaceSourceSplit(options workspaceSourceSplitOptions, ops atomicFi
 	}
 	priorCheck := ops.beforePublish
 	ops.beforePublish = func() error {
-		if priorCheck != nil {
-			if err := priorCheck(); err != nil {
-				return err
-			}
-		}
-		_, err := currentWorkspaceSourceSplitProposal(proposalOptions, proposal)
-		return err
+		return recheckSourceSplitProjection(proposalOptions, proposal, current, writes, priorCheck)
 	}
 	if err := writeAtomicFilesWithOps(writes, ops); err != nil {
 		current.Application.State = "STATE_DIFFERS"
@@ -158,28 +152,35 @@ func sourceSplitTarget(root, filename string) (string, error) {
 }
 
 func verifyAppliedSourceSplit(receipt workspaceSourceSplitReceipt) error {
-	manifest, digest, err := loadWorkspaceRenameManifest(OSFileReader{}, receipt.ManifestPath)
+	digest, err := verifySourceSplitOutput(receipt, OSFileReader{})
+	if err == nil {
+		receipt.Application.OutputManifestDigest = digest
+	}
+	return err
+}
+
+func verifySourceSplitOutput(receipt workspaceSourceSplitReceipt, reader SourceReader) (string, error) {
+	manifest, digest, err := loadWorkspaceRenameManifest(reader, receipt.ManifestPath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	expected, err := workspaceinput.Encode(*receipt.UpdatedWorkspace)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if digest != workspaceDigest(expected) {
-		return fmt.Errorf("installed workspace manifest differs from the proposal")
+		return "", fmt.Errorf("workspace manifest differs from the proposal")
 	}
-	loaded, err := loadPackageSources(OSFileReader{}, receipt.ManifestPath, manifest)
+	loaded, err := loadPackageSources(reader, receipt.ManifestPath, manifest)
 	if err != nil {
-		return err
+		return "", err
 	}
 	view, err := packageruntime.Describe(loaded)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if view.ImageDigest != receipt.Result.OutputImageDigest {
-		return fmt.Errorf("installed package image differs from the proposal")
+		return "", fmt.Errorf("package image differs from the proposal")
 	}
-	receipt.Application.OutputManifestDigest = digest
-	return nil
+	return digest, nil
 }

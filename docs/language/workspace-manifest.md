@@ -282,7 +282,7 @@ the boundary is `urn:gooo:example:named-inputs:net` and the destination can be
 The returned `Definition` appends the new source to every package that declares
 the same canonical source address, retaining authored names, imports and entry.
 `Result` carries the exact output bytes, byte origins and
-semantic image already verified by `packageruntime.SplitSource`. Both outputs
+semantic image already verified by the shared native partition operation. Both outputs
 are needed to install a proposal. Preparation leaves the input definition and
 reader unchanged; returned file lists do not alias caller-owned storage. Output
 source-set limits are checked before returning an installable proposal.
@@ -316,3 +316,20 @@ image, then executes the other package's entry through imported calls and bindin
 Its four expected activity outputs and runtime replay retain their own denominator.
 Validity of the reloaded program alone cannot establish preservation: the original
 counterexample was valid while the other package's moved declaration had disappeared.
+
+Before publishing a saved split, the CLI reads the planned file replacements
+through the current filesystem addresses and reuses native image verification.
+This catches directory aliases and case-insensitive aliases that would otherwise
+change an unplanned package only after writes. The check runs after staging and
+the current-input recheck, including a same-byte directory-alias retarget.
+An unplanned effect retains the existing files and reports `PRE_STATE_RETAINED`;
+authoring canonical source paths lets the shared-package plan include those consumers.
+
+A hard link is a separate directory entry: replacing one entry keeps the other's
+old bytes. Equal content or inode alone therefore does not couple planned writes.
+Ambiguous entry resolution is reported before publication. Alias resolution keeps
+two name observations and reads directory entries in batches of 64, rather than
+retaining a full directory listing. This extra verification runs on explicit split
+application; ordinary package execution gains no new model or projection phase.
+The host's existing single-writer boundary still applies, including external edits
+after the last check and process interruption during publication.
