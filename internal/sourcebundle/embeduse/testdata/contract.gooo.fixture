@@ -1,0 +1,5 @@
+package contract
+namespace contract
+entity Input id "gooo://contract/input"
+entity Result id "gooo://contract/result"
+activity Transform(Input) -> Result
