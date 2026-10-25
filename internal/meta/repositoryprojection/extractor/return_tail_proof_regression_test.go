@@ -95,9 +95,28 @@ func testReturnTailGeneratedByteAccounting(t *testing.T) {
 
 func singleReturnTailProofContract() []ContractObligationEvidence {
 	return []ContractObligationEvidence{{
-		Name: "return-shape", Activity: "ProveReturnShape", InputEntity: "FunctionInput", OutputEntity: "ReturnShapeObligation",
-		UsedInputFact: true, GeneratedOutputFact: true,
+		Name: "return-shape", Activity: "ProveReturnShape", InputEntity: "FunctionSource", OutputEntity: "ReturnShapeObligation",
+		InputEntityID:  "gooo://meta-operation-input-contract/entity/function-input",
+		OutputEntityID: "gooo://meta-operation-input-contract/entity/return-shape-obligation",
+		UsedInputFact:  true, GeneratedOutputFact: true,
 	}}
+}
+
+func TestReturnTailProofRejectsMissingEntityIDsWithoutAdvancing(t *testing.T) {
+	for _, field := range []string{"input", "output"} {
+		t.Run(field, func(t *testing.T) {
+			contract := singleReturnTailProofContract()
+			if field == "input" {
+				contract[0].InputEntityID = ""
+			} else {
+				contract[0].OutputEntityID = ""
+			}
+			chain := newReturnTailProofChain(contract, []byte("source"), []byte("candidate"), "source", "semantic")
+			if err := chain.consume(0, returnTailPredicateResult{Status: "PASS", Payload: []byte("payload")}); err == nil || len(chain.stages) != 0 {
+				t.Fatalf("missing %s identity advanced the proof: %v", field, err)
+			}
+		})
+	}
 }
 
 func returnTailProofOutputID(source, candidate []byte, contractSource, contractSemantic string, payload []byte) string {

@@ -7,9 +7,10 @@ const (
 )
 
 type logicalSplitPlan struct {
-	Schema    string                `json:"schema"`
-	SourceSHA string                `json:"source_sha"`
-	Subjects  []logicalSplitSubject `json:"subjects"`
+	Schema       string                `json:"schema"`
+	SourceSHA    string                `json:"source_sha"`
+	Subjects     []logicalSplitSubject `json:"subjects"`
+	sourceDigest string
 }
 
 type logicalSplitSubject struct {

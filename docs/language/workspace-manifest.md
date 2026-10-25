@@ -258,6 +258,10 @@ schema, source paths, file/count/byte limits and source-derived package metadata
 as the CLI. The external definition remains a source list; the returned
 `packageruntime.Manifest` contains the actual file bytes for semantic resolution.
 The host supplies `ReadFile` and owns filesystem access and file identities.
+Within one `Load`, each canonical source path is read once and its immutable
+content is shared by every declaring package. Every declared reference still
+counts toward the source-count and byte limits. A subsequent `Load` reads current
+bytes again; this observation scope does not establish a filesystem-wide snapshot.
 If a file fails to load, the reader returns an error and no executable partial
 manifest. The original definition still names the full requested source set.
 
@@ -275,9 +279,10 @@ For the existing [named-inputs program](../../examples/named-inputs/main.gooo),
 the boundary is `urn:gooo:example:named-inputs:net` and the destination can be
 `net.gooo`. The native caller uses the same operation as `package split-source`.
 
-The returned `Definition` appends the new source while retaining authored names,
-imports and entry. `Result` carries the exact output bytes, byte origins and
-semantic image already verified by `packageruntime.SplitSource`. Both outputs
+The returned `Definition` appends the new source to every package that declares
+the same canonical source address, retaining authored names, imports and entry.
+`Result` carries the exact output bytes, byte origins and
+semantic image already verified by the shared native partition operation. Both outputs
 are needed to install a proposal. Preparation leaves the input definition and
 reader unchanged; returned file lists do not alias caller-owned storage. Output
 source-set limits are checked before returning an installable proposal.
@@ -296,3 +301,249 @@ and rejects any JSON round-trip that changes authored values. `PrepareSplit`
 performs this check before returning a proposal; the CLI writer and installed
 manifest check use the same encoder. A valid source partition cannot leave an
 output file list that the shared reader refuses to reload.
+
+When several packages share the source within one definition, the native operation
+uses `packageruntime.SplitSharedSource`. It verifies every package's declaration
+interface before and after the common byte partition. A multi-package result uses
+`gooo/package-source-split/v2` and names all `affected_packages`; a single-package
+result retains the existing v1 representation. The saved CLI proposal includes this
+scope, and applying an old incomplete shared-source proposal is refused before writes.
+The ordinary `packageruntime.SplitSource` API retains package-local virtual filename
+semantics. Shared-source interpretation is explicit at the workspace boundary.
+
+The regression reloads the proposed external definition, requires its exact planned
+image, then executes the other package's entry through imported calls and bindings.
+Its four expected activity outputs and runtime replay retain their own denominator.
+Validity of the reloaded program alone cannot establish preservation: the original
+counterexample was valid while the other package's moved declaration had disappeared.
+
+Before publishing a saved split, the CLI reads the planned file replacements
+through the current filesystem addresses and reuses native image verification.
+This catches directory aliases and case-insensitive aliases that would otherwise
+change an unplanned package only after writes. The check runs after staging and
+the current-input recheck, including a same-byte directory-alias retarget.
+An unplanned effect retains the existing files and reports `PRE_STATE_RETAINED`;
+authoring canonical source paths lets the shared-package plan include those consumers.
+
+A hard link is a separate directory entry: replacing one entry keeps the other's
+old bytes. Equal content or inode alone therefore does not couple planned writes.
+Ambiguous entry resolution is reported before publication. Alias resolution keeps
+two name observations and reads directory entries in batches of 64, rather than
+retaining a full directory listing. This extra verification runs on explicit split
+application; ordinary package execution gains no new model or projection phase.
+The host's existing single-writer boundary still applies, including external edits
+after the last check and process interruption during publication.
+
+### One source with multiple workspace consumers
+
+Changing a shared source and only one source list can leave another workspace
+without its entry activity. `internal/packageruntime/workspacesplit.Prepare`
+constructs one joint draft for explicitly supplied `Owner` values. Each owner
+names its external definition address, authored definition and split request;
+the existing Gooo compiler verifies each workspace's semantic partition.
+The result contains two shared source writes and each updated definition with
+its encoded JSON and separate package-image/source-origin records. Different
+entry activities remain different consumer contexts.
+
+All owners must agree on the source and destination addresses, partition bytes
+and original byte ranges. Identical content at different addresses does not
+identify the same occurrence. Missing dependencies, conflicting destinations,
+duplicate definition addresses or changed shared bytes return an error and no
+partial plan. Preparation writes nothing and retains authored source spelling.
+It accepts at most 64 owners and bounds the aggregate proposed source payload
+by the shared reader's 16-MiB source-set limit, including repeated consumer views.
+
+Addresses are lexically normalized in the host reader's namespace. The host
+still owns filesystem alias/symlink identity, discovery of every affected
+consumer, current-input checks and atomic publication of the whole draft.
+Omitted workspaces and single-file/embed consumers remain obligations. The API
+provides no repository-wide coverage or execution authority. The joint native
+regression reloads both updated definitions and checks six expected activity
+outputs across their different entries, including runtime replay without a model.
+The same output conditions run with one package per workspace and with an
+additional package consuming the source inside the first workspace; both external
+definitions must still reload to their planned images.
+The executable input is an [authored Gooo source](../../examples/shared-source-consumers/main.gooo);
+the Go tests supply the consumer definitions and independent expected results.
+The syntax registration constructor generated all nine registration members from
+this source and appended denominator v101 (136 to 137 syntax cases). That inventory
+count is separate from the six independently expected execution outputs.
+
+The joint plan also returns `Inputs`: observed source addresses, SHA-256 digests,
+byte lengths and the definitions that read each occurrence, sorted deterministically.
+Every supplied consumer still reads its inputs; a second read of any shared source
+with different bytes returns `ErrSourceChanged`, including unchanged dependency
+files. Equal contents at distinct addresses remain separate observations. Definition
+outputs cannot overwrite any observed source address. The list records source
+reads; `Prepare` receives decoded definitions and does not observe their serialized
+bytes. The host checks current definition and source inputs again before
+publication. Only digest/consumer metadata is retained by the source observer.
+
+`PrepareFiles` accepts `FileOwner` requests naming the external definitions and
+split choices. It reads and decodes those definitions through the same bounded
+workspace contract, then calls the joint constructor. `Definitions` records each
+input address, raw-byte SHA-256 and byte length separately from the source reads.
+Definition inputs are limited to 1 MiB each and 16 MiB in aggregate, independently
+of the source-set limit. They are reread after preparation; changed bytes, even
+formatting-only changes, return `ErrDefinitionChanged` and no plan. Failed or
+malformed reads likewise return no partial proposal. The original serialized
+inputs are not kept as an additional payload.
+
+These sequential reads are observations, not a filesystem snapshot or publication
+permission. Current-input checks, alias resolution and complete consumer discovery
+still belong to the applying host. The native execution regression now begins at
+this file-backed entry point and retains the same six expected activity outputs.
+
+### Embedded native contract sources
+
+Native declaration contracts have no executable entry point. The internal
+`sourcebundle` adapter reads an explicit ordered set of `.gooo` members, parses
+each with its physical filename, and lowers their declarations through the
+existing bidirectional and semantic validators. Every member must have the same
+package and namespace. Imports require the package compiler and are refused here.
+This adapter does not replace the workspace compiler or discover consumers.
+
+The operation-input contract is its first connected consumer. Its embedded family
+is `operation-input-contract*.gooo`; partitions within that family are read in
+lexical filename order. The existing native checks still require exactly four
+operations, six obligation activities, two policy activities and ten entities.
+Adding a file cannot add an unimplemented executor or bypass those checks.
+
+The bundle identity binds ordered filenames and exact bytes. It differs from the
+old single-file content hash even for one member, so old operation plans need
+fresh preparation. An extraction report with matching meaning but a different
+contract source reports `EXTRACTION_CONTRACT_SOURCE_MISMATCH`, directing the caller
+to prepare a new extraction. Historical observations retain their original identity.
+Semantic identity remains separate: moving a declaration to a
+different member preserves its stable ID and semantic hash while changing its
+physical origin. Admission exposes each member's content hash and byte length,
+plus all declaration IDs and physical spans; cached metadata is copied for callers.
+Existing serialized operation plans continue to carry the contract digests.
+
+The adapter also retains the physical origin of first-class `policy` declarations,
+which the semantic IR stores separately from the entity/activity graph. The public
+policy-compilation example is checked across a filename change: its meaning stays
+the same while its source identity and physical origin change. This general source
+support does not admit extra policies into the exact native operation ABI.
+
+The connected regression partitions the actual authored contract into ten entities
+and twelve activities, admits it through the native consumer, and checks all 22
+physical origins and unchanged native facts. Missing members, conflicting IDs,
+changed obligations, extra activities and unknown import scopes return no contract.
+Reads are bounded to 64 files, 1 MiB per file and 16 MiB in total; an I/O failure
+returns no partial source set. Mutable filesystem snapshots and publication remain
+the caller's responsibility. The production contract remains one small source file;
+repository-wide discovery and automatic embedded-consumer migration remain open.
+
+### Native entity identity across display renames
+
+The native operation-input contract binds its ten entity roles by explicit stable
+ID. Authored names remain visible in extraction reports. For example, the compiler
+now uses this declaration with its original identity:
+
+```gooo
+entity FunctionSource id "gooo://meta-operation-input-contract/entity/function-input"
+activity ExtractFunction(FunctionSource) -> OperationResult
+```
+
+Changing `FunctionInput` to `FunctionSource` preserves the semantic hash and native
+input role. It changes the source digest, so a previous plan still needs fresh
+preparation. Extraction reports carry both the authored `input_entity` and its
+`input_entity_id` through obligations, proof stages, preflight observations and
+preparation progress. The decoder checks both against the current source contract;
+proof stages also retain the previous stage's output identity as their input.
+Historical reports retain their original labels and source identity.
+
+All ten entity renames are covered at admission. Same labels with swapped,
+missing, duplicated or unknown IDs are rejected with no partial contract. Actual
+map-construction extraction and report decoding exercise the production rename,
+including rejection of altered type IDs and a disconnected proof edge. Source
+labels are not aliases for the host ABI vocabulary. Activity renames, executor
+discovery and publication of a repository-wide split remain separate work.
+
+### Observing Go embed consumers
+
+The native `sourcebundle/embeduse.Inspect` API observes one Go package and an
+optional proposed set of Gooo source members. It uses Go's own `list -test` and
+`-overlay` selection. It performs no source installation, test execution, model
+call or native ABI admission. The selected Go build context is retained alongside
+the requested directory and the physical directory used by the tool.
+
+A package's `EmbedFiles` is a union. Suppose one `embed.FS` variable reads
+`contract*.gooo`, while another `[]byte` variable reads `contract.gooo`. After a
+split, the union can include both parts while the second variable still receives
+only the original filename. The observer attributes selected members to each
+variable declaration. It keeps all proposed members visible, including those
+selected by no observed variable.
+
+Each query temporarily masks sibling embed directives, preserving offsets in the
+query source, and lets Go resolve the remaining directive. Directory patterns,
+`all:`, quoted names and test contexts use Go's resolver. Reports refer to the
+original Go file hash and physical declaration span, including when a `//line`
+directive supplies a different logical filename. Query overlays never become
+authored source origins. Go source and Gooo member records share one flat file
+table; consumer rows refer to its indices. Projected bytes are marked separately
+from bytes read from disk.
+
+The counterexample fixture compares all three contexts: production, internal
+tests and external tests. Its independent Gooo reader finds three declarations
+in the combined partition and only one in the single-file view, although both
+views are valid inputs. A separate native probe of the actual operation-input
+contract admits two projected members and preserves all 22 declaration origins,
+the semantic hash and six obligations while changing source identity.
+
+This is selected-context discovery of static embed bindings. Dynamic `ReadFile`
+calls, other build contexts and the consumer's later interpretation remain
+unobserved. Membership does not establish that a native consumer accepts a changed
+contract. Source bytes and package selection are reread before return; publication
+still requires its own current-input checks. Existing overlays supplied through
+`GOFLAGS` are refused rather than silently replaced. The observation is bounded to
+64 variables, 1,024 input files, 1 MiB per file, 16 MiB total and a 30-second query
+context. Failure returns no report, and owned query files are removed.
+
+### Planning a partition against each embedded source view
+
+`sourcebundle.PreparePartition(sources, filename, beforeID, into)` resolves a
+stable declaration ID in the original source set and proposes two source members.
+It shares the byte partitioner used by `package split-source`: original bodies,
+comments, line endings and bindings are copied with explicit input/output byte
+ranges. The package headers are duplicated. Both source sets are lowered and
+compared; a new file changes source identity while preserving the semantic image.
+Policy declaration IDs and their physical spans participate in this preparation.
+
+`embeduse.PreparePartition(ctx, directory, names, filename, beforeID, into)` adds
+the selected Go package's consumer observations to that proposal. `names` is the
+explicit original source set, and every member must have an observed input in
+that package. The destination must be absent. Each consumer that read the original
+member or starts selecting the new member receives a result:
+
+| State | Meaning in this observation |
+| --- | --- |
+| `PRESERVED` | Both selected source sets lower to the same semantic image. |
+| `CHANGED` | Both lower, but their images differ; missing and new declaration IDs remain visible. |
+| `UNASSESSED` | At least one selected source set cannot be lowered in this source-bundle scope; the reason and any available image remain visible. |
+
+For example, the single-file consumer in the earlier counterexample still parses
+successfully after the split. Its plan is `CHANGED` because two declaration IDs
+are missing. A wildcard consumer of the same file retains all three declarations.
+A previously unrelated wildcard that starts selecting the new member also appears
+in the plan. Mixed-package source sets, unresolved imports and incomplete fragments
+remain `UNASSESSED`; a lowerer error does not become an empty successful image.
+
+The actual operation-input contract regression takes the planned members selected
+by each variable into the native ABI reader. The family retains all 22 declaration
+origins, four operations, six obligations and two policy activities. The single-file
+reader loses twelve activities and is refused by the ABI reader. Image comparison
+and native admission are distinct checks. The shared workspace regression continues
+to execute and replay six independent expected activity outputs after partitioning.
+
+Planning rereads original inputs, binds proposed bytes to the after-observation,
+and rejects changed Go declarations, build context or unplanned source members.
+The complete call has a 30-second context, with the existing input and consumer
+bounds. A host error returns no plan; an assessable change or unsupported consumer
+scope stays in the returned plan. These observations are sequential reads, not an
+immutable filesystem snapshot. No files are written. Native ABI acceptance,
+dynamic readers, other packages/build contexts, current-input checks at publication
+and coordinated installation retain their own obligations. This native planning
+API adds no standalone CLI and does not grant the existing workspace apply command
+repository-wide consumer coverage.

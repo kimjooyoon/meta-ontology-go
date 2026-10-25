@@ -26,6 +26,13 @@ func TestDecodeExtractorReportAcceptsGeneratedMapConstructionProof(t *testing.T)
 	if !strings.Contains(decoded.Subjects[0].Evidence[0].ProofStages[3].Detail, "CALLEE_EFFECTS_UNPROVEN") {
 		t.Fatal("meta executor lost the previous strategy's unresolved cause")
 	}
+	evidence := decoded.Subjects[0].Evidence[0]
+	if evidence.ContractInputEntity != "FunctionSource" ||
+		evidence.ContractInputEntityID != "gooo://meta-operation-input-contract/entity/function-input" ||
+		evidence.ProofStages[0].InputEntity != evidence.ContractInputEntity ||
+		evidence.ProofStages[0].InputEntityID != evidence.ContractInputEntityID || len(evidence.PreflightObservations) == 0 {
+		t.Fatal("native execution did not preserve the renamed source label and stable type identity")
+	}
 }
 
 func TestDecodeExtractorReportRejectsTamperedGeneratedMapConstructionProof(t *testing.T) {
@@ -49,9 +56,16 @@ func TestDecodeExtractorReportRejectsTamperedGeneratedMapConstructionProof(t *te
 		{"missing-proof-stage", func(e *projectionextractor.StrategyEvidence) { e.ProofStages = e.ProofStages[:3] }},
 		{"refuted-obligation", func(e *projectionextractor.StrategyEvidence) { e.Obligations[3].Status = "REFUTED" }},
 		{"unbound-contract-digest", func(e *projectionextractor.StrategyEvidence) { e.ContractSemanticDigest = "not-bound" }},
+		{"wrong-contract-input-ID", func(e *projectionextractor.StrategyEvidence) { e.ContractInputEntityID = e.ContractOutputEntityID }},
+		{"missing-contract-output-ID", func(e *projectionextractor.StrategyEvidence) { e.ContractOutputEntityID = "" }},
+		{"wrong-obligation-ID", func(e *projectionextractor.StrategyEvidence) { e.ContractObligations[0].InputEntityID = "wrong" }},
+		{"wrong-stage-ID", func(e *projectionextractor.StrategyEvidence) { e.ProofStages[0].OutputEntityID = "wrong" }},
+		{"wrong-preflight-ID", func(e *projectionextractor.StrategyEvidence) { e.PreflightObservations[0].InputEntityID = "wrong" }},
+		{"old-source-label", func(e *projectionextractor.StrategyEvidence) { e.ContractInputEntity = "FunctionInput" }},
+		{"broken-proof-edge", func(e *projectionextractor.StrategyEvidence) { e.ProofStages[1].InputEvidenceID = "unrelated" }},
 	}
-	if len(cases) != 7 {
-		t.Fatalf("generated map proof rejection cohort changed: got=%d want=7", len(cases))
+	if len(cases) != 14 {
+		t.Fatalf("generated map proof rejection cohort changed: got=%d want=14", len(cases))
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

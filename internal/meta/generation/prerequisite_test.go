@@ -93,7 +93,7 @@ func TestSplitPrerequisitesAreBoundToGoooRelations(t *testing.T) {
 			t.Fatal("prerequisite is missing a PROV-O relation", obligation)
 		}
 	}
-	tampered := strings.Replace(string(operationInputContractSource),
+	tampered := strings.Replace(string(operationContractFixture(t)),
 		"InspectSplitTopology(SplitRenderingObservation)", "InspectSplitTopology(FileInput)", 1)
 	if _, err := parseOperationInputContract([]byte(tampered)); err == nil {
 		t.Fatal("broken prerequisite chain accepted")

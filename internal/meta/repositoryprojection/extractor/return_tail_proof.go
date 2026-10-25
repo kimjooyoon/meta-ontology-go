@@ -40,10 +40,14 @@ func (chain *returnTailProofChain) consume(index int, result returnTailPredicate
 		return fail("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_CHAIN_UNPROVEN", "DIRECT_MISSING", "restore-return-tail-proof", nil)
 	}
 	relation := chain.contract[index]
-	inputEvidenceID := proofEvidenceID(relation.InputEntity, "input", chain.sourceDigest, chain.candidateDigest, "", chain.sourceDigest, chain.contractSource, chain.contractSemantic)
+	if relation.InputEntityID == "" || relation.OutputEntityID == "" {
+		return fail("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_CHAIN_UNPROVEN", "DIRECT_MISSING", "restore-return-tail-proof", nil)
+	}
+	inputEvidenceID := proofEvidenceID(relation.InputEntityID, "input", chain.sourceDigest, chain.candidateDigest, "", chain.sourceDigest, chain.contractSource, chain.contractSemantic)
 	if index > 0 {
 		inputEvidenceID = chain.stages[index-1].OutputEvidenceID
-		if inputEvidenceID == "" || chain.stages[index-1].OutputEntity != relation.InputEntity {
+		if inputEvidenceID == "" || chain.stages[index-1].OutputEntity != relation.InputEntity ||
+			chain.stages[index-1].OutputEntityID != relation.InputEntityID {
 			return failWithDiagnostics("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_CHAIN_UNPROVEN", "DIRECT_MISSING", "restore-return-tail-proof", []string{"obligation=" + relation.Name})
 		}
 	}
@@ -64,9 +68,10 @@ func (chain *returnTailProofChain) consume(index int, result returnTailPredicate
 		return failWithDiagnostics("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_RESULT_MISSING", "DIRECT_MISSING", "restore-return-tail-proof", []string{"obligation=" + relation.Name})
 	}
 	payloadDigest := proofDigest(result.Payload)
-	outputEvidenceID := proofEvidenceID(relation.OutputEntity, relation.Activity, chain.sourceDigest, candidateDigest, inputEvidenceID, payloadDigest, chain.contractSource, chain.contractSemantic)
+	outputEvidenceID := proofEvidenceID(relation.OutputEntityID, relation.Activity, chain.sourceDigest, candidateDigest, inputEvidenceID, payloadDigest, chain.contractSource, chain.contractSemantic)
 	chain.stages = append(chain.stages, ProofStageEvidence{
 		Name: relation.Name, Activity: relation.Activity, InputEntity: relation.InputEntity, OutputEntity: relation.OutputEntity,
+		InputEntityID: relation.InputEntityID, OutputEntityID: relation.OutputEntityID,
 		Status: result.Status, SourceDigest: chain.sourceDigest, CandidateDigest: candidateDigest,
 		InputEvidenceID: inputEvidenceID, OutputEvidenceID: outputEvidenceID, PayloadDigest: payloadDigest,
 		PayloadBytes: len(result.Payload), Detail: result.Detail,

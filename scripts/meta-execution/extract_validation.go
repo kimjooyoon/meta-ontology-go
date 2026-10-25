@@ -87,8 +87,13 @@ func decodeExtractorReport(path, expectedSHA string) ([]byte, extractorReport, e
 	var presence extractorReportPresence
 	if err := decodeStrictBytes(raw, &report); err != nil ||
 		decodeStrictBytes(raw, &presence) != nil ||
-		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA ||
-		!validStrategyEvidenceReport(report, presence) {
+		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA {
+		return raw, extractorReport{}, fmt.Errorf("malformed extraction report")
+	}
+	if !validStrategyEvidenceReport(report, presence) {
+		if extractorContractSourceMismatch(report) {
+			return raw, extractorReport{}, errExtractorContractSourceMismatch
+		}
 		return raw, extractorReport{}, fmt.Errorf("malformed extraction report")
 	}
 	return raw, report, nil
@@ -139,7 +144,9 @@ type strategyEvidencePresence struct {
 	Operation                     string                                           `json:"operation"`
 	ContractActivity              string                                           `json:"contract_activity"`
 	ContractInputEntity           string                                           `json:"contract_input_entity"`
+	ContractInputEntityID         string                                           `json:"contract_input_entity_id"`
 	ContractOutputEntity          string                                           `json:"contract_output_entity"`
+	ContractOutputEntityID        string                                           `json:"contract_output_entity_id"`
 	ContractInputSubjectKind      string                                           `json:"contract_input_subject_kind"`
 	ContractSourceDigest          string                                           `json:"contract_source_digest"`
 	ContractSemanticDigest        string                                           `json:"contract_semantic_digest"`
@@ -172,6 +179,7 @@ type preparationProgressPresence struct {
 	Operation              *string `json:"operation"`
 	Activity               *string `json:"activity"`
 	InputEntity            *string `json:"input_entity"`
+	InputEntityID          *string `json:"input_entity_id"`
 	InputSubjectKind       *string `json:"input_subject_kind"`
 	ContractSourceDigest   *string `json:"contract_source_digest"`
 	ContractSemanticDigest *string `json:"contract_semantic_digest"`
@@ -195,7 +203,9 @@ type proofStagePresence struct {
 	Name             string `json:"name"`
 	Activity         string `json:"activity"`
 	InputEntity      string `json:"input_entity"`
+	InputEntityID    string `json:"input_entity_id"`
 	OutputEntity     string `json:"output_entity"`
+	OutputEntityID   string `json:"output_entity_id"`
 	Status           string `json:"status"`
 	SourceDigest     string `json:"source_digest"`
 	CandidateDigest  string `json:"candidate_digest"`
@@ -215,7 +225,7 @@ func failedExtractionError(root, reportName string, plan generation.Plan, action
 		if os.IsNotExist(err) {
 			return newOperationError("execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
 		}
-		return newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
+		return extractionReportDecodeError(err)
 	}
 	if failure := adjudicateExtractorReport(report); failure != nil {
 		failure.counterexample = extractionCounterexample(action.Subject)
@@ -439,7 +449,7 @@ func validStrategyEvidenceReport(report extractorReport, presence extractorRepor
 }
 
 func validPreparationProgressPresence(value *preparationProgressPresence) bool {
-	return value != nil && value.Operation != nil && value.Activity != nil && value.InputEntity != nil &&
+	return value != nil && value.Operation != nil && value.Activity != nil && value.InputEntity != nil && value.InputEntityID != nil &&
 		value.InputSubjectKind != nil && value.ContractSourceDigest != nil && value.ContractSemanticDigest != nil &&
 		value.Subject != nil && value.SourceDigest != nil && value.BeforeOverage != nil && value.AfterOverage != nil &&
 		value.Status != nil
@@ -471,12 +481,21 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 			}
 			if evidence.Operation != string(contract.Operation) || evidence.ContractActivity != contract.Activity ||
 				evidence.ContractInputEntity != contract.InputEntity || evidence.ContractOutputEntity != contract.OutputEntity ||
+				evidence.ContractInputEntityID != contract.InputEntityID || evidence.ContractOutputEntityID != contract.OutputEntityID ||
 				evidence.ContractInputSubjectKind != string(contract.InputSubjectKind) || evidence.ContractSourceDigest != contract.SourceDigest ||
 				evidence.ContractSemanticDigest != contract.SemanticDigest {
 				return false
 			}
 			if evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage || evidence.AfterRenderedCapacityOverage < 0 {
 				return false
+			}
+			for _, observation := range evidence.PreflightObservations {
+				if observation.InputEntityID != contract.InputEntityID || observation.InputEntity != contract.InputEntity ||
+					observation.Operation != string(contract.Operation) || observation.Activity != contract.Activity ||
+					observation.InputSubjectKind != string(contract.InputSubjectKind) ||
+					observation.ContractSourceDigest != contract.SourceDigest || observation.ContractSemanticDigest != contract.SemanticDigest {
+					return false
+				}
 			}
 			if evidence.PreparationProgress != nil {
 				progress := evidence.PreparationProgress
@@ -488,6 +507,7 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 					progress.BeforeOverage != evidence.BeforeRenderedCapacityOverage ||
 					progress.AfterOverage != evidence.AfterRenderedCapacityOverage || progress.Operation != evidence.Operation ||
 					progress.Activity != evidence.ContractActivity || progress.InputEntity != evidence.ContractInputEntity ||
+					progress.InputEntityID != evidence.ContractInputEntityID ||
 					progress.InputSubjectKind != evidence.ContractInputSubjectKind || progress.ContractSourceDigest != evidence.ContractSourceDigest ||
 					progress.ContractSemanticDigest != evidence.ContractSemanticDigest || progress.Subject != evidence.Subject {
 					return false
@@ -532,13 +552,18 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 				expected := contract.Obligations[index]
 				if obligation.Name != expected.Name || obligation.Activity != expected.Activity ||
 					obligation.InputEntity != expected.InputEntity || obligation.OutputEntity != expected.OutputEntity ||
+					obligation.InputEntityID != expected.InputEntityID || obligation.OutputEntityID != expected.OutputEntityID ||
 					!obligation.UsedInputFact || !obligation.GeneratedOutputFact {
 					return false
 				}
 			}
 			for index, stage := range evidence.ProofStages {
 				expected := evidence.ContractObligations[index]
+				if index > 0 && evidence.ProofStages[index-1].OutputEvidenceID != stage.InputEvidenceID {
+					return false
+				}
 				if stage.Name != expected.Name || stage.Activity != expected.Activity || stage.InputEntity != expected.InputEntity ||
+					stage.InputEntityID != expected.InputEntityID || stage.OutputEntityID != expected.OutputEntityID ||
 					stage.OutputEntity != expected.OutputEntity || stage.Status != strategyEvidencePassStatus || stage.SourceDigest == "" ||
 					stage.CandidateDigest == "" || stage.InputEvidenceID == "" || stage.OutputEvidenceID == "" ||
 					stage.PayloadDigest == "" || stage.PayloadBytes < 0 {
