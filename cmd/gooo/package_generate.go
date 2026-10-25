@@ -37,7 +37,8 @@ func runPackageGenerate(args []string, reader SourceReader, stdout, stderr io.Wr
 	fmt.Fprintf(&header, "// Workspace manifest: %s\n// Workspace image: %s\n", manifestDigest, program.Workspace.Digest)
 	for _, pkg := range program.Workspace.Packages {
 		for _, source := range pkg.Sources {
-			fmt.Fprintf(&header, "// Gooo source package=%q file=%q digest=%q\n", pkg.Path, source.Filename, source.SourceDigest)
+			fmt.Fprintf(&header, "// Gooo source package=%q file=%q source_json_string_sha256=%q\n",
+				pkg.Path, source.Filename, source.SourceDigest)
 		}
 	}
 	header.WriteString(source)

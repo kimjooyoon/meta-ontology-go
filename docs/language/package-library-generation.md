@@ -49,6 +49,10 @@ output bytes. Compiler source can be `UNBOUND_LOCAL_SOURCE` when build metadata
 cannot bind it; the command does not infer a producer from the current checkout.
 Hash the complete generated file separately when recording its consumer. A later
 commit with equal source bytes does not become the original generation producer.
+`source_json_string_sha256` uses the existing package image representation:
+`sha256(json.Marshal(source.Content))`, with Go `encoding/json` string escaping.
+The manifest and lowered-source hashes use their own raw bytes. Consumers can
+retain raw original-file hashes alongside the explicitly labeled string hashes.
 
 Generation typechecks the emitted Go in process. It neither invokes the Go
 toolchain nor executes the program, asks a model, or creates test expectations.

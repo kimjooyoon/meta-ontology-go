@@ -3,6 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -89,4 +92,30 @@ func TestPackageGenerateFailureHasNoSource(t *testing.T) {
 			t.Fatal("rejected generation emitted usable partial source", args, code, out.String(), diagnostics.String())
 		}
 	}
+}
+
+func TestPackageGenerateSourceDigestRepresentation(t *testing.T) {
+	root := t.TempDir()
+	source := libraryHygieneSource + "// 한국어 <>& \"quoted\"\n"
+	writeWorkspaceSource(t, root, "main.gooo", source)
+	manifest := writeWorkspaceManifest(t, root, `{"schema":"gooo/package-workspace-manifest/v1","entry":{"package_path":"hygiene","activity":"Keep"},"packages":[{"path":"hygiene","sources":["main.gooo"]}]}`)
+	generated := generateLibraryCommand(t, "hygiene", manifest)
+	encoded, err := json.Marshal(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := fmt.Sprintf("sha256:%x", sha256.Sum256(encoded))
+	raw := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(source)))
+	if want == raw {
+		t.Fatal("probe does not distinguish representations")
+	}
+	for _, line := range strings.Split(string(generated), "\n") {
+		if strings.HasPrefix(line, "// Gooo source package=") {
+			if !strings.Contains(line, fmt.Sprintf("source_json_string_sha256=%q", want)) || strings.Contains(line, raw) {
+				t.Fatal("source hash must identify its JSON-string representation", line)
+			}
+			return
+		}
+	}
+	t.Fatal("original source origin unavailable")
 }
