@@ -109,7 +109,7 @@ func TestPackageGenerateSourceDigestRepresentation(t *testing.T) {
 	if want == raw {
 		t.Fatal("probe does not distinguish representations")
 	}
-	for _, line := range strings.Split(string(generated), "\n") {
+	for line := range strings.SplitSeq(string(generated), "\n") {
 		if strings.HasPrefix(line, "// Gooo source package=") {
 			if !strings.Contains(line, fmt.Sprintf("source_json_string_sha256=%q", want)) || strings.Contains(line, raw) {
 				t.Fatal("source hash must identify its JSON-string representation", line)
