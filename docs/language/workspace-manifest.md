@@ -258,6 +258,10 @@ schema, source paths, file/count/byte limits and source-derived package metadata
 as the CLI. The external definition remains a source list; the returned
 `packageruntime.Manifest` contains the actual file bytes for semantic resolution.
 The host supplies `ReadFile` and owns filesystem access and file identities.
+Within one `Load`, each canonical source path is read once and its immutable
+content is shared by every declaring package. Every declared reference still
+counts toward the source-count and byte limits. A subsequent `Load` reads current
+bytes again; this observation scope does not establish a filesystem-wide snapshot.
 If a file fails to load, the reader returns an error and no executable partial
 manifest. The original definition still names the full requested source set.
 
@@ -275,9 +279,10 @@ For the existing [named-inputs program](../../examples/named-inputs/main.gooo),
 the boundary is `urn:gooo:example:named-inputs:net` and the destination can be
 `net.gooo`. The native caller uses the same operation as `package split-source`.
 
-The returned `Definition` appends the new source while retaining authored names,
-imports and entry. `Result` carries the exact output bytes, byte origins and
-semantic image already verified by `packageruntime.SplitSource`. Both outputs
+The returned `Definition` appends the new source to every package that declares
+the same canonical source address, retaining authored names, imports and entry.
+`Result` carries the exact output bytes, byte origins and
+semantic image already verified by the shared native partition operation. Both outputs
 are needed to install a proposal. Preparation leaves the input definition and
 reader unchanged; returned file lists do not alias caller-owned storage. Output
 source-set limits are checked before returning an installable proposal.
@@ -296,3 +301,35 @@ and rejects any JSON round-trip that changes authored values. `PrepareSplit`
 performs this check before returning a proposal; the CLI writer and installed
 manifest check use the same encoder. A valid source partition cannot leave an
 output file list that the shared reader refuses to reload.
+
+When several packages share the source within one definition, the native operation
+uses `packageruntime.SplitSharedSource`. It verifies every package's declaration
+interface before and after the common byte partition. A multi-package result uses
+`gooo/package-source-split/v2` and names all `affected_packages`; a single-package
+result retains the existing v1 representation. The saved CLI proposal includes this
+scope, and applying an old incomplete shared-source proposal is refused before writes.
+The ordinary `packageruntime.SplitSource` API retains package-local virtual filename
+semantics. Shared-source interpretation is explicit at the workspace boundary.
+
+The regression reloads the proposed external definition, requires its exact planned
+image, then executes the other package's entry through imported calls and bindings.
+Its four expected activity outputs and runtime replay retain their own denominator.
+Validity of the reloaded program alone cannot establish preservation: the original
+counterexample was valid while the other package's moved declaration had disappeared.
+
+Before publishing a saved split, the CLI reads the planned file replacements
+through the current filesystem addresses and reuses native image verification.
+This catches directory aliases and case-insensitive aliases that would otherwise
+change an unplanned package only after writes. The check runs after staging and
+the current-input recheck, including a same-byte directory-alias retarget.
+An unplanned effect retains the existing files and reports `PRE_STATE_RETAINED`;
+authoring canonical source paths lets the shared-package plan include those consumers.
+
+A hard link is a separate directory entry: replacing one entry keeps the other's
+old bytes. Equal content or inode alone therefore does not couple planned writes.
+Ambiguous entry resolution is reported before publication. Alias resolution keeps
+two name observations and reads directory entries in batches of 64, rather than
+retaining a full directory listing. This extra verification runs on explicit split
+application; ordinary package execution gains no new model or projection phase.
+The host's existing single-writer boundary still applies, including external edits
+after the last check and process interruption during publication.
