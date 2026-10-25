@@ -9,6 +9,7 @@ import (
 	"hash"
 	"io"
 	"io/fs"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -25,7 +26,7 @@ type goooSnapshotMember struct {
 func goooSnapshotMembers(gitDir, head string) (map[string]goooSnapshotMember, error) {
 	command := exec.Command("git", "--git-dir", gitDir, "ls-tree", "-r", "-l", "-z", "--full-tree", head)
 	var raw []byte
-	err := readGoooSnapshotCommand(command, func(input io.Reader) error {
+	err := readGoooSnapshotCommand(gitDir, command, func(input io.Reader) error {
 		var err error
 		raw, err = io.ReadAll(io.LimitReader(input, (16<<20)+1))
 		if len(raw) > 16<<20 {
@@ -86,7 +87,14 @@ func parseGoooSnapshotMember(entry []byte) (string, goooSnapshotMember, error) {
 	return name, goooSnapshotMember{mode, size, fields[2]}, nil
 }
 
-func readGoooSnapshotCommand(command *exec.Cmd, consume func(io.Reader) error) error {
+func readGoooSnapshotCommand(gitDir string, command *exec.Cmd, consume func(io.Reader) error) error {
+	// Git archive must address the complete bound tree, even when the caller is
+	// inside a subdirectory of a different work tree (as in materialized CI).
+	command.Dir = gitDir
+	command.Env = os.Environ()
+	for _, key := range []string{"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"} {
+		command.Env = replaceEnvironment(command.Env, key, "")
+	}
 	pipe, err := command.StdoutPipe()
 	if err != nil {
 		return err
