@@ -296,3 +296,30 @@ and rejects any JSON round-trip that changes authored values. `PrepareSplit`
 performs this check before returning a proposal; the CLI writer and installed
 manifest check use the same encoder. A valid source partition cannot leave an
 output file list that the shared reader refuses to reload.
+
+### One source with multiple workspace consumers
+
+Changing a shared source and only one source list can leave another workspace
+without its entry activity. `internal/packageruntime/workspacesplit.Prepare`
+constructs one joint draft for explicitly supplied `Owner` values. Each owner
+names its external definition address, authored definition and split request;
+the existing Gooo compiler verifies each workspace's semantic partition.
+The result contains two shared source writes and each updated definition with
+its encoded JSON and separate package-image/source-origin records. Different
+entry activities remain different consumer contexts.
+
+All owners must agree on the source and destination addresses, partition bytes
+and original byte ranges. Identical content at different addresses does not
+identify the same occurrence. Missing dependencies, conflicting destinations,
+duplicate definition addresses or changed shared bytes return an error and no
+partial plan. Preparation writes nothing and retains authored source spelling.
+It accepts at most 64 owners and bounds the aggregate proposed source payload
+by the shared reader's 16-MiB source-set limit, including repeated consumer views.
+
+Addresses are lexically normalized in the host reader's namespace. The host
+still owns filesystem alias/symlink identity, discovery of every affected
+consumer, current-input checks and atomic publication of the whole draft.
+Omitted workspaces and single-file/embed consumers remain obligations. The API
+provides no repository-wide coverage or execution authority. The joint native
+regression reloads both updated definitions and checks six expected activity
+outputs across their different entries, including runtime replay without a model.
