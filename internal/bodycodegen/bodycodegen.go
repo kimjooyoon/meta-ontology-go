@@ -121,11 +121,11 @@ func GenerateWithPlannerAndSampleSeed(ctx context.Context, filename string, sour
 	if err != nil {
 		return Result{}, err
 	}
-	choice, err := chooseBodyRoute(ctx, prepared, source, endpoint, apiKey, sampleSeed)
+	choice, err := chooseBodyRoute(ctx, prepared, digest(source), endpoint, apiKey, sampleSeed)
 	if err != nil {
 		return Result{}, err
 	}
-	return prepared.selectedResult(source, choice)
+	return prepared.selectedResult(digest(source), choice)
 }
 
 func goTypeForEntity(entity string) (string, bool) {

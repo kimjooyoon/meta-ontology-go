@@ -17,7 +17,7 @@ type bodyRouteChoice struct {
 	ids       []string
 }
 
-func chooseBodyRoute(ctx context.Context, p preparedBody, source []byte, endpoint, apiKey, seed string) (bodyRouteChoice, error) {
+func chooseBodyRoute(ctx context.Context, p preparedBody, sourceDigest string, endpoint, apiKey, seed string) (bodyRouteChoice, error) {
 	choice := bodyRouteChoice{selected: preserveRoute, receipt: decisionroute.Receipt{
 		Schema: decisionroute.ReceiptSchema, Mode: "deterministic_fallback", Selected: preserveRoute,
 		FallbackReason: "NO_ALTERNATIVE_ROUTE", Provider: "deterministic"},
@@ -37,7 +37,7 @@ func chooseBodyRoute(ctx context.Context, p preparedBody, source []byte, endpoin
 	if len(routes) == 1 {
 		return choice, nil
 	}
-	request := bodyRouteRequest(p, source, routes, shape)
+	request := bodyRouteRequest(p, sourceDigest, routes, shape)
 	started := time.Now()
 	decisionContext, cancel := context.WithTimeout(ctx, routeDecisionBudget)
 	choice.receipt, err = decisionroute.Resolve(decisionContext, request, endpoint, apiKey)
@@ -50,7 +50,7 @@ func chooseBodyRoute(ctx context.Context, p preparedBody, source []byte, endpoin
 	return choice, err
 }
 
-func bodyRouteRequest(p preparedBody, source []byte, routes []decisionroute.Option, shape string) decisionroute.Request {
+func bodyRouteRequest(p preparedBody, sourceDigest string, routes []decisionroute.Option, shape string) decisionroute.Request {
 	inputs := p.activity.Inputs
 	inputDescription := inputs[0].Name
 	if len(inputs) > 1 {
@@ -62,7 +62,7 @@ func bodyRouteRequest(p preparedBody, source []byte, routes []decisionroute.Opti
 	}
 	return decisionroute.Request{Schema: decisionroute.RequestSchema,
 		State: fmt.Sprintf("activity=%s; source_sha256=%s; program_sha256=%s; input=%s; output=%s; body_shape=%s; source_semantic_units=%d",
-			p.activity.Name, digest(source), digest([]byte(p.activity.ValueProgram)), inputDescription,
+			p.activity.Name, sourceDigest, digest([]byte(p.activity.ValueProgram)), inputDescription,
 			p.activity.Output, shape, p.base.report.SourceSemanticUnits),
 		Question: decisionroute.Question{ID: "body_codegen_route",
 			Instructions: "Choose one listed, semantics-preserving lowering route for the described Gooo activity shape. Do not invent code or routes. Prefer the route whose generated control flow is clearest for this shape.",

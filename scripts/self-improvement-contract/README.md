@@ -27,9 +27,11 @@ unsatisfied until this implementation gap is resolved; their acceptance rules
 have not been lowered. Candidate planning can still select other implemented
 operations while preserving this unresolved declaration.
 
-`gooo package split-source` can now propose a declaration-boundary partition
-for a V4 package workspace, retaining byte origins and its updated source list.
-That read-only proposal does not implement the repository-wide execution route:
-single-file and embedded Go consumers, atomic installation and successor
-projection still need their own verified integration. It therefore does not
-change the five-operation denominator or the `4/5` result.
+`gooo package split-source` can propose a declaration-boundary partition for a
+V4 package workspace, retaining byte origins and its updated source list. Its
+explicit workspace apply path can install prepared changes and revalidate the
+declared owners. Native APIs also inspect embedded consumers and predict syntax
+registration changes. The repository-wide execution route still needs to connect
+discovered consumers, native ABI checks, the whole write set and successor
+projection. These separate capabilities therefore do not change the
+five-operation denominator or the `4/5` result.
