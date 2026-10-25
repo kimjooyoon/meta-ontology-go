@@ -21,10 +21,9 @@ func TestCollapseFailureReleasesItsReadOnlyGitSnapshot(t *testing.T) {
 	registrationTestCommand(t, root, "git", "-c", "user.name=Gooo test", "-c", "user.email=test@example.invalid",
 		"-c", "commit.gpgsign=false", "commit", "--allow-empty", "--quiet", "-m", "fixture")
 	head := strings.TrimSpace(string(registrationTestCommand(t, root, "git", "rev-parse", "HEAD")))
-	gitDir, err := gitDirectory(root)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// CI's Git context belongs to the caller, not this newly created repository.
+	t.Setenv("GIT_DIR", filepath.Join(temporary, "caller.git"))
+	gitDir := strings.TrimSpace(string(registrationTestCommand(t, root, "git", "rev-parse", "--absolute-git-dir")))
 	plan := generation.Plan{HeadSHA: head}
 	subject := sourcepolicy.SourceSubject{Path: "missing.go", Line: 1, Name: "Missing"}
 	_, failure := materializeCollapse(root, gitDir, "", plan, generation.Action{}, subject, metaExecutionTrace{}, "first")
