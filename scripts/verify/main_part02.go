@@ -11,9 +11,9 @@ func run(root, storageRoot, from, to, head, base, branch, expectedHead string, c
 	if capsOnly {
 		return nil
 	}
-	// The lightweight CI preflight intentionally has no PR route inputs.
-	// Keep its identity checks fail-closed while deferring ownership and route
-	// checks to the later full scope gate.
+	// Callers without PR route inputs retain the identity-only observation.
+	// Feature preflight supplies head/base to reject invalid routes before work;
+	// the final CI gate independently checks the current route again.
 	if head == "" && base == "" {
 		identityOnly = true
 	}
