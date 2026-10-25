@@ -59,6 +59,7 @@ func TestGoooSplitExecutorUsesActualPublisherAndNativeOracles(t *testing.T) {
 		t.Fatal(err)
 	}
 	plan, action := goooSplitPlannerFixture(t, strings.TrimSpace(string(head)))
+	t.Setenv("GIT_WORK_TREE", repo)
 	before, err := os.ReadFile(filepath.Join(repo, action.Subject))
 	if err != nil {
 		t.Fatal(err)

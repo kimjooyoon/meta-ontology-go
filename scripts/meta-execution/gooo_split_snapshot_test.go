@@ -21,6 +21,13 @@ func splitSnapshotGit(t *testing.T, root string, args ...string) string {
 }
 
 func TestGoooSplitSnapshotPreservesCommittedInputAndRejectsArchiveProjection(t *testing.T) {
+	caller, err := filepath.Abs("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GIT_DIR", filepath.Join(caller, ".git"))
+	t.Setenv("GIT_WORK_TREE", caller)
+	t.Setenv("GIT_INDEX_FILE", filepath.Join(t.TempDir(), "caller-index"))
 	root, target := t.TempDir(), filepath.Join(t.TempDir(), "restored")
 	splitSnapshotGit(t, root, "init", "-q")
 	for _, attributes := range []string{"", "source.gooo export-ignore\n", "source.gooo export-subst\n"} {

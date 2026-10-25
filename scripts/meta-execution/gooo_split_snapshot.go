@@ -23,7 +23,7 @@ func restoreGoooSplitSnapshot(target, gitDir, head string) error {
 		return err
 	}
 	command := exec.Command("git", "--git-dir", gitDir, "archive", "--format=tar", head)
-	return readGoooSnapshotCommand(command, func(input io.Reader) error {
+	return readGoooSnapshotCommand(gitDir, command, func(input io.Reader) error {
 		return unpackGoooSplitSnapshot(target, tar.NewReader(input), head, members)
 	})
 }
