@@ -1,4 +1,4 @@
-package completion
+package sourcecompletion
 
 //gooo:generated:start id="gooo://source-split/completion/classify" kind="activity"
 func Classify(selected int64, applied int64, deferred int64, unhandled int64) string {

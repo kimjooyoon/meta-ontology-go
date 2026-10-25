@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter/completion"
+	completion "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcecompletion"
 )
 
 // This consumer checks the exact logical write set, not completed construction.

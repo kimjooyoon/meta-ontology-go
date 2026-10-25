@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence"
-	"github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter/completion"
+	completion "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcecompletion"
 )
 
 func TestBatchRetainsUnprojectableInputAndItsOrigin(t *testing.T) {

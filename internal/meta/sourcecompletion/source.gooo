@@ -1,4 +1,4 @@
-package completion
+package sourcecompletion
 namespace sourcesplitcompletion
 
 entity Integer id "urn:gooo:type:integer"

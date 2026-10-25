@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter/completion"
+	completion "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcecompletion"
 )
 
 func readLogicalSplitPlan(name string) (logicalSplitPlan, error) {

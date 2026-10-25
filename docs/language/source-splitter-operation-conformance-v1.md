@@ -120,7 +120,7 @@ A later behavioral corpus must bind real source bytes, Go build context, emitted
 ## Batch completion and remaining construction
 
 The logical batch report has a separate completion policy authored in
-[Gooo](../../scripts/source-splitter/completion/source.gooo). Existing code
+[Gooo](../../internal/meta/sourcecompletion/source.gooo). Existing code
 generation projects it to the native batch writer. The report retains the exact
 input-plan byte digest and policy-source digest alongside its repository origin.
 
@@ -144,3 +144,10 @@ progress receipt. Actual and declared path sets must still match independently.
 An unhandled subject never adds a writable path. Legacy exact receipts retain
 their original admission path; progress without the new source bindings is
 unresolved. Write-set acceptance does not mark the pending projection complete.
+
+This policy was registered through the existing Gooo case-composition and append
+constructor, from a compact `ordered-collections` case intent. It generated nine
+coordinated draft members, including denominator v100 (v99 remains intact),
+syntax capability coverage 135 → 136 and total corpus coverage 137 → 138.
+The registered source still runs its separate finite outcome and native consumer
+checks; syntax registration does not replace those behavioral expectations.

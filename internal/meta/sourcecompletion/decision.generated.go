@@ -1,4 +1,4 @@
-package completion
+package sourcecompletion
 
 //gooo:generated:start id="gooo://source-split/completion/decision" kind="activity"
 func Decision(reason string) string {

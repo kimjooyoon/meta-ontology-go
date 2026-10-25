@@ -1,4 +1,4 @@
-package completion
+package sourcecompletion
 
 var completionCases = []struct {
 	name                               string

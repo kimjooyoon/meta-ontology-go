@@ -1,4 +1,4 @@
-package completion
+package sourcecompletion
 
 //gooo:generated:start id="gooo://source-split/completion/resolution" kind="activity"
 func Resolution(reason string) string {

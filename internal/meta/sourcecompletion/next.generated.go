@@ -1,4 +1,4 @@
-package completion
+package sourcecompletion
 
 //gooo:generated:start id="gooo://source-split/completion/next-operation" kind="activity"
 func NextOperation(reason string) string {

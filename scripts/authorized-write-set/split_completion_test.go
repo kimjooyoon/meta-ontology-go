@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter/completion"
+	completion "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcecompletion"
 )
 
 func pendingSplitReceipt(t *testing.T) splitReport {
