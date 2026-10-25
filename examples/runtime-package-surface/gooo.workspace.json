@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "example/runtime-package-surface", "activity": "Inspect"},
+  "packages": [
+    {"path": "example/runtime-package-surface", "sources": ["contract.gooo", "inspect.gooo"]}
+  ]
+}
