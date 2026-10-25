@@ -2,6 +2,7 @@ package workspaceinput_test
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -35,9 +36,33 @@ func TestNativeConsumerLoadsSplitsAndExecutesWorkspaceWithoutCLI(t *testing.T) {
 	if definition.Packages[1].Name != "" || definition.Packages[1].Imports != nil {
 		t.Fatal("derived metadata rewrote the authored external definition")
 	}
-	split, err := packageruntime.SplitSource(loaded, "shared/app", "app.gooo", "urn:shared:run", "run.gooo")
+	proposal, err := workspaceinput.PrepareSplit(files, "workspace.json", definition, workspaceinput.SplitRequest{
+		PackagePath: "shared/app", Source: "app.gooo", BeforeID: "urn:shared:run", Into: "run.gooo"})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if len(definition.Packages[1].Sources) != 1 || proposal.Definition.Packages[1].Name != "" ||
+		proposal.Definition.Packages[1].Imports != nil {
+		t.Fatal("native source plan changed the authored definition")
+	}
+	for _, file := range proposal.Result.Files {
+		files[file.Filename] = &fstest.MapFile{Data: []byte(file.Source)}
+	}
+	afterBytes, err := json.Marshal(proposal.Definition)
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterDefinition, err := workspaceinput.Decode(afterBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after, err := workspaceinput.Load(files, "workspace.json", afterDefinition)
+	if err != nil {
+		t.Fatal(err)
+	}
+	view, err := packageruntime.Describe(after)
+	if err != nil || view.ImageDigest != proposal.Result.OutputImageDigest {
+		t.Fatal("authored output did not reconstruct the planned image", view.ImageDigest, err)
 	}
 	suite, err := bodyexecution.DecodeCompositionCases([]byte(`{"schema":"gooo/body-composition-cases/v1","cases":[
  {"inputs":{"shared/app:Credit":5},"expected":{"shared/app:Credit":12,"shared/app:Run":41}},
@@ -46,7 +71,7 @@ func TestNativeConsumerLoadsSplitsAndExecutesWorkspaceWithoutCLI(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, manifest := range map[string]packageruntime.Manifest{"loaded": loaded, "split": split.Manifest} {
+	for name, manifest := range map[string]packageruntime.Manifest{"loaded": loaded, "reloaded proposal": after} {
 		t.Run(name, func(t *testing.T) {
 			result, err := workspaceexecution.ExecuteWorkspace(context.Background(), manifest, suite, "", "")
 			if err != nil {

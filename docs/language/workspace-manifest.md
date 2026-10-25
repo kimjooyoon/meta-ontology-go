@@ -267,3 +267,23 @@ native consumer regression loads imported activities, splits at a stable ID,
 and executes both workspaces against the same independent expected values.
 Reading the definition is not execution or rewrite authority; consumers still
 validate the semantic image, current inputs and the operation's own preconditions.
+
+`workspaceinput.PrepareSplit(reader, manifestPath, definition, request)` also
+prepares the authored source list and normalized source partition together.
+`SplitRequest` names a package, source, stable boundary ID and destination.
+For the existing [named-inputs program](../../examples/named-inputs/main.gooo),
+the boundary is `urn:gooo:example:named-inputs:net` and the destination can be
+`net.gooo`. The native caller uses the same operation as `package split-source`.
+
+The returned `Definition` appends the new source while retaining authored names,
+imports and entry. `Result` carries the exact output bytes, byte origins and
+semantic image already verified by `packageruntime.SplitSource`. Both outputs
+are needed to install a proposal. Preparation leaves the input definition and
+reader unchanged; returned file lists do not alias caller-owned storage. Output
+source-set limits are checked before returning an installable proposal.
+
+The native regression serializes that authored definition, reloads the proposed
+files through the shared reader, checks the planned image, and executes both
+old and reloaded programs against independent expectations. Hosts still own
+current-input checks and filesystem writes. This API does not discover other
+single-file/embed consumers or establish repository-wide rewrite coverage.
