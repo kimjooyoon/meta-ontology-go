@@ -16,6 +16,7 @@ type metaBinding struct {
 }
 
 type subjectWitness struct {
+	ModuleRoot    string        `json:"module_root,omitempty"`
 	Space         string        `json:"space"`
 	Path          string        `json:"path"`
 	SubjectKind   string        `json:"subject_kind"`
@@ -28,7 +29,7 @@ type subjectWitness struct {
 func fileWitness(file fileMetric, binding metaBinding) subjectWitness {
 	witness := subjectWitness{
 		Space: "LOGICAL_FILE", Path: file.Path, SubjectKind: "FILE",
-		Language: file.Language, Metrics: []metricValue{{ID: "lines", Value: file.Lines}},
+		Language: file.Language, ModuleRoot: file.ModuleRoot, Metrics: []metricValue{{ID: "lines", Value: file.Lines}},
 		Meta: binding,
 	}
 	return sealWitness(witness)
