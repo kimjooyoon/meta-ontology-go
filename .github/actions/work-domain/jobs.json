@@ -1,0 +1,15 @@
+{
+  "work-domain": "Work domain preparation",
+  "format": "gofmt",
+  "vet": "go vet",
+  "test": "go test",
+  "race": "go test -race",
+  "semantic": "Semantic conformance",
+  "policy": "CI policy",
+  "evidence": "CI evidence",
+  "proof": "CI proof bundle",
+  "failure-report": "CI failure summary",
+  "feedback-predecessor": "Feedback predecessor",
+  "language-package-execution": "Language package execution",
+  "coherence-boundary-probe": "COHERENCE boundary probe"
+}

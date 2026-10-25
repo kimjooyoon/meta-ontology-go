@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -11,28 +10,19 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
 const (
 	packageResolveUsage       = "usage: gooo package <resolve|interface|inspect|origins|rename-activity|split-source|execute|replay|resume|construct> ..."
-	workspaceSchema           = "gooo/package-workspace-manifest/v1"
-	workspaceMaxSourceCount   = 512
-	workspaceMaxSourceBytes   = 1 << 20
-	workspaceMaxSourceSetSize = 16 << 20
+	workspaceSchema           = workspaceinput.Schema
+	workspaceMaxSourceCount   = workspaceinput.MaxSourceCount
+	workspaceMaxSourceBytes   = workspaceinput.MaxSourceBytes
+	workspaceMaxSourceSetSize = workspaceinput.MaxSourceSetBytes
 )
 
-type workspaceManifest struct {
-	Schema   string                   `json:"schema"`
-	Entry    packageruntime.EntrySpec `json:"entry"`
-	Packages []workspacePackage       `json:"packages"`
-}
-
-type workspacePackage struct {
-	Path    string   `json:"path"`
-	Name    string   `json:"name"`
-	Imports []string `json:"imports"`
-	Sources []string `json:"sources"`
-}
+type workspaceManifest = workspaceinput.Definition
+type workspacePackage = workspaceinput.Package
 
 type workspaceResolutionReceipt struct {
 	Schema         string                 `json:"schema"`
@@ -139,44 +129,11 @@ func runPackageCommand(args []string, reader SourceReader, stdout, stderr io.Wri
 }
 
 func decodeWorkspaceManifest(data []byte) (workspaceManifest, error) {
-	var manifest workspaceManifest
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&manifest); err != nil {
-		return workspaceManifest{}, fmt.Errorf("decode workspace manifest: %w", err)
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		if err == nil {
-			return workspaceManifest{}, fmt.Errorf("workspace manifest contains trailing JSON")
-		}
-		return workspaceManifest{}, fmt.Errorf("decode workspace manifest trailing data: %w", err)
-	}
-	if manifest.Schema != workspaceSchema {
-		return workspaceManifest{}, fmt.Errorf("workspace manifest schema must be %q", workspaceSchema)
-	}
-	if len(manifest.Packages) == 0 || len(manifest.Packages) > 64 {
-		return workspaceManifest{}, fmt.Errorf("workspace manifest must declare 1 to 64 packages")
-	}
-	for _, pkg := range manifest.Packages {
-		if len(pkg.Sources) == 0 || len(pkg.Sources) > workspaceMaxSourceCount {
-			return workspaceManifest{}, fmt.Errorf("package %q must declare 1 to %d source files", pkg.Path, workspaceMaxSourceCount)
-		}
-	}
-	return manifest, nil
+	return workspaceinput.Decode(data)
 }
 
 func workspaceSourcePath(source string) (string, error) {
-	if strings.TrimSpace(source) == "" || filepath.IsAbs(source) {
-		return "", fmt.Errorf("workspace source path %q must be relative", source)
-	}
-	clean := filepath.Clean(filepath.FromSlash(source))
-	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
-		return "", fmt.Errorf("workspace source path %q must stay inside the workspace", source)
-	}
-	if !strings.HasSuffix(clean, ".gooo") && !strings.HasSuffix(clean, ".gooo.fixture") {
-		return "", fmt.Errorf("workspace source path %q must name a .gooo source or .gooo.fixture", source)
-	}
-	return clean, nil
+	return workspaceinput.SourcePath(source)
 }
 
 func packageResolutionFailure(jsonMode bool, manifest string, cause error, stderr, stdout io.Writer) int {

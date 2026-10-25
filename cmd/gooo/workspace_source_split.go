@@ -8,23 +8,26 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceinput"
 )
 
-const workspaceSourceSplitUsage = "usage: gooo package split-source --package <path> --source <file> --before <declaration-id> --into <file.gooo> [--json] <workspace.json>"
+const workspaceSourceSplitUsage = "usage: gooo package split-source (--package <path> --source <file> --before <declaration-id> --into <file.gooo> | --apply <proposal.json>) [--json] <workspace.json>"
 
 type workspaceSourceSplitOptions struct {
 	packagePath, source, before, into, manifestPath string
+	applyReceipt                                    string
 	jsonMode                                        bool
 }
 
 type workspaceSourceSplitReceipt struct {
-	Schema           string                      `json:"schema"`
-	Decision         string                      `json:"decision"`
-	ManifestPath     string                      `json:"manifest_path"`
-	ManifestDigest   string                      `json:"manifest_digest,omitempty"`
-	UpdatedWorkspace *workspaceManifest          `json:"updated_workspace,omitempty"`
-	Result           *packageruntime.SourceSplit `json:"result,omitempty"`
-	Error            string                      `json:"error,omitempty"`
+	Schema           string                           `json:"schema"`
+	Decision         string                           `json:"decision"`
+	ManifestPath     string                           `json:"manifest_path"`
+	ManifestDigest   string                           `json:"manifest_digest,omitempty"`
+	UpdatedWorkspace *workspaceManifest               `json:"updated_workspace,omitempty"`
+	Result           *packageruntime.SourceSplit      `json:"result,omitempty"`
+	Error            string                           `json:"error,omitempty"`
+	Application      *workspaceSourceSplitApplication `json:"application,omitempty"`
 }
 
 func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -33,22 +36,28 @@ func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr 
 		fmt.Fprintln(stderr, workspaceSourceSplitUsage)
 		return exitUsage
 	}
-	receipt, err := prepareWorkspaceSourceSplit(options, reader)
+	var receipt workspaceSourceSplitReceipt
+	if options.applyReceipt != "" {
+		receipt, err = applyWorkspaceSourceSplit(options, defaultAtomicFileOps())
+	} else {
+		receipt, err = prepareWorkspaceSourceSplit(options, reader)
+	}
 	if err != nil {
 		receipt.Error = err.Error()
 	}
 	if options.jsonMode {
 		encoder := json.NewEncoder(stdout)
 		encoder.SetIndent("", "  ")
-		if writeErr := encoder.Encode(receipt); writeErr != nil {
+		if writeErr := encoder.Encode(sourceSplitPublicReceipt(receipt)); writeErr != nil {
 			fmt.Fprintln(stderr, "gooo package split-source:", writeErr)
 			return exitFailure
 		}
 	} else if err != nil {
 		fmt.Fprintln(stderr, "gooo package split-source:", err)
 	} else {
-		if _, err := fmt.Fprintf(stdout, "proposed %s: %s + %s before id=%s\nUse --json for sources, byte origins and the updated workspace.\n",
-			options.packagePath, options.source, options.into, options.before); err != nil {
+		r := receipt.Result
+		if _, err := fmt.Fprintf(stdout, "%s %s: %s + %s before id=%s\nUse --json for sources, byte origins and the updated workspace.\n",
+			strings.ToLower(receipt.Decision), r.PackagePath, r.InputFilename, r.Files[1].Filename, r.BeforeID); err != nil {
 			return exitFailure
 		}
 	}
@@ -56,6 +65,18 @@ func runWorkspaceSourceSplit(args []string, reader SourceReader, stdout, stderr 
 		return exitFailure
 	}
 	return exitOK
+}
+
+// The two changed files and external source list are the wire proposal. Keep
+// the runtime manifest available to Go callers without duplicating every
+// unchanged source in a saved CLI receipt. Legacy full manifests remain readable.
+func sourceSplitPublicReceipt(receipt workspaceSourceSplitReceipt) workspaceSourceSplitReceipt {
+	if receipt.Result != nil {
+		result := *receipt.Result
+		result.Manifest = packageruntime.Manifest{}
+		receipt.Result = &result
+	}
+	return receipt
 }
 
 func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSourceSplitOptions, error) {
@@ -66,19 +87,26 @@ func parseWorkspaceSourceSplit(args []string, stderr io.Writer) (workspaceSource
 	flags.StringVar(&options.source, "source", "", "source path relative to the workspace")
 	flags.StringVar(&options.before, "before", "", "stable ID of the first declaration to move")
 	flags.StringVar(&options.into, "into", "", "new source path relative to the workspace")
+	flags.StringVar(&options.applyReceipt, "apply", "", "apply a saved proposal after checking current inputs")
 	flags.BoolVar(&options.jsonMode, "json", false, "print the complete source proposal")
 	if err := flags.Parse(args); err != nil {
 		return options, err
-	}
-	for _, value := range []string{options.packagePath, options.source, options.before, options.into} {
-		if strings.TrimSpace(value) == "" {
-			return options, fmt.Errorf("package, source, boundary ID and destination are required")
-		}
 	}
 	if flags.NArg() != 1 {
 		return options, fmt.Errorf("one workspace manifest is required")
 	}
 	options.manifestPath = flags.Arg(0)
+	for _, value := range []string{options.packagePath, options.source, options.before, options.into} {
+		if options.applyReceipt != "" {
+			if value != "" {
+				return options, fmt.Errorf("--apply cannot be combined with proposal options")
+			}
+			continue
+		}
+		if strings.TrimSpace(value) == "" {
+			return options, fmt.Errorf("package, source, boundary ID and destination are required")
+		}
+	}
 	return options, nil
 }
 
@@ -90,36 +118,11 @@ func prepareWorkspaceSourceSplit(options workspaceSourceSplitOptions, reader Sou
 	if err != nil {
 		return receipt, err
 	}
-	sources, err := loadPackageSources(reader, options.manifestPath, manifest)
+	proposal, err := workspaceinput.PrepareSplit(reader, options.manifestPath, manifest, workspaceinput.SplitRequest{
+		PackagePath: options.packagePath, Source: options.source, BeforeID: options.before, Into: options.into})
 	if err != nil {
 		return receipt, err
 	}
-	result, err := packageruntime.SplitSource(sources, options.packagePath, options.source, options.before, options.into)
-	if err != nil {
-		return receipt, err
-	}
-	if err := checkSplitWorkspaceLimits(result.Manifest); err != nil {
-		return receipt, err
-	}
-	for i := range manifest.Packages {
-		if manifest.Packages[i].Path == options.packagePath {
-			manifest.Packages[i].Sources = append(manifest.Packages[i].Sources, options.into)
-		}
-	}
-	receipt.Decision, receipt.Result, receipt.UpdatedWorkspace = "PROPOSED", &result, &manifest
+	receipt.Decision, receipt.Result, receipt.UpdatedWorkspace = "PROPOSED", &proposal.Result, &proposal.Definition
 	return receipt, nil
-}
-
-func checkSplitWorkspaceLimits(manifest packageruntime.Manifest) error {
-	count, size := 0, 0
-	for _, pkg := range manifest.Packages {
-		for _, source := range pkg.Sources {
-			count++
-			size += len(source.Content)
-			if count > workspaceMaxSourceCount || len(source.Content) > workspaceMaxSourceBytes || size > workspaceMaxSourceSetSize {
-				return fmt.Errorf("split output exceeds the workspace source count or byte limit")
-			}
-		}
-	}
-	return nil
 }

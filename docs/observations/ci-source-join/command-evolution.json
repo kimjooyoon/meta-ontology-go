@@ -100,6 +100,86 @@
         "after_sha256": "5ffb6e4f403f51be11a9652e1a319102a8281f422c42109509e38d11d081de79",
         "operation": "verify_fresh_proof_with_bound_tool"
       }
+    ],
+    "policy": [
+      {
+        "original_index": 0,
+        "before_sha256": "b39099cfb084262ea9696885555ea990f9693b49ab096be91422d5988a50edf4",
+        "after_sha256": "b39099cfb084262ea9696885555ea990f9693b49ab096be91422d5988a50edf4",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 1,
+        "before_sha256": "d0f8ae2abbc17854dcf9ace0712d85c94fff3ded8863c0bf43e38de950442c23",
+        "after_sha256": "d0f8ae2abbc17854dcf9ace0712d85c94fff3ded8863c0bf43e38de950442c23",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 2,
+        "before_sha256": "07499d8ea32fefe4c4fb2a0abf1152e29b1f631bed404298f22583c9128b92cc",
+        "after_sha256": "07499d8ea32fefe4c4fb2a0abf1152e29b1f631bed404298f22583c9128b92cc",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 3,
+        "before_sha256": "d156fe8b9cc31f08185e9d80d6626882d3f44ee52b4a48c6e973c8f5ecaec802",
+        "after_sha256": "8e42f63ff0ced84c055daa054ab9be1bd8d0d20090a9de081f270c257bf351c0",
+        "operation": "check-feature-route-before-meta-execution"
+      },
+      {
+        "original_index": 4,
+        "before_sha256": "c5a58d84ec9cf4e2bafb4830f35068cbc17b8e8ea4c9015e2d297a8e21dc6355",
+        "after_sha256": "c5a58d84ec9cf4e2bafb4830f35068cbc17b8e8ea4c9015e2d297a8e21dc6355",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 5,
+        "before_sha256": "01c2a0203f3e4de19ed08a9782fcb630e8d23f9ae656c98e5555404d6570512c",
+        "after_sha256": "01c2a0203f3e4de19ed08a9782fcb630e8d23f9ae656c98e5555404d6570512c",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 6,
+        "before_sha256": "80c61029e6fccfa56a8eaa055d0a9c4b0b9deb6e40f3c54bd977c9f99152d0eb",
+        "after_sha256": "80c61029e6fccfa56a8eaa055d0a9c4b0b9deb6e40f3c54bd977c9f99152d0eb",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 7,
+        "before_sha256": "dc89bc85222181ea7c593d2ba84a24d3150c36e6b065d389befb97ee247f7f28",
+        "after_sha256": "dc89bc85222181ea7c593d2ba84a24d3150c36e6b065d389befb97ee247f7f28",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 8,
+        "before_sha256": "f5a8341030984772ef0f268ea22298b2631d7ad04d06ded727ccf30bd1446d56",
+        "after_sha256": "f5a8341030984772ef0f268ea22298b2631d7ad04d06ded727ccf30bd1446d56",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 9,
+        "before_sha256": "25dd5d286309adc4115675a4257e8b3a116985e6159e41b7459d24e7cdc090e9",
+        "after_sha256": "25dd5d286309adc4115675a4257e8b3a116985e6159e41b7459d24e7cdc090e9",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 10,
+        "before_sha256": "fcd14f3832dbe8a6bfdb00bfc83aede1caf7aa531c990b7d0d886cfbab24607d",
+        "after_sha256": "fcd14f3832dbe8a6bfdb00bfc83aede1caf7aa531c990b7d0d886cfbab24607d",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 11,
+        "before_sha256": "8e42f63ff0ced84c055daa054ab9be1bd8d0d20090a9de081f270c257bf351c0",
+        "after_sha256": "8e42f63ff0ced84c055daa054ab9be1bd8d0d20090a9de081f270c257bf351c0",
+        "operation": "retain-original-command"
+      },
+      {
+        "original_index": 12,
+        "before_sha256": "fcd14f3832dbe8a6bfdb00bfc83aede1caf7aa531c990b7d0d886cfbab24607d",
+        "after_sha256": "fcd14f3832dbe8a6bfdb00bfc83aede1caf7aa531c990b7d0d886cfbab24607d",
+        "operation": "retain-original-command"
+      }
     ]
   },
   "scope": "raw run-source extents under the existing recognizer; each original command retains exactly one descendant, additions are explicit; actual expanded commands retain their own work-shell receipts"

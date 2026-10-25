@@ -229,8 +229,9 @@ check is a runnable billing-fixture check. Static analysis, LSP behavior, cache
 conformance, generated-output snapshots, and automatic durable provenance
 publishing are not current guarantees.
 
-The six jobs are both the proof core and the complete required-context set for
-`dev` and `main`. A read-only CI observer records their runtime spread in the
+The six jobs are the proof core for both branches. The live `main` protection
+requires those six contexts; `dev` has no required status contexts. A read-only
+CI observer records their runtime spread in the
 `gate_bottleneck` field. Missing, stale, duplicate, or sub-second intervals are
 reported as `UNKNOWN`; the metric is descriptive and does not gate promotion.
 

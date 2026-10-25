@@ -249,3 +249,50 @@ EntityFields V3 currently covers required single string, boolean, and integer
 fields in the original record-flow example. The workspace runtime's V4 profile
 also supports optional single fields of those types. Repeated, nested, and
 arbitrary user-defined field types remain outside this support boundary.
+
+## Native workspace consumers
+
+Repository Go consumers can use
+`internal/packageruntime/workspaceinput.Decode` and `Load` for the same definition
+schema, source paths, file/count/byte limits and source-derived package metadata
+as the CLI. The external definition remains a source list; the returned
+`packageruntime.Manifest` contains the actual file bytes for semantic resolution.
+The host supplies `ReadFile` and owns filesystem access and file identities.
+If a file fails to load, the reader returns an error and no executable partial
+manifest. The original definition still names the full requested source set.
+
+This shared reader lets a metaprogram inspect and partition a package without
+importing the CLI or introducing a second interpretation of its manifest. A
+native consumer regression loads imported activities, splits at a stable ID,
+and executes both workspaces against the same independent expected values.
+Reading the definition is not execution or rewrite authority; consumers still
+validate the semantic image, current inputs and the operation's own preconditions.
+
+`workspaceinput.PrepareSplit(reader, manifestPath, definition, request)` also
+prepares the authored source list and normalized source partition together.
+`SplitRequest` names a package, source, stable boundary ID and destination.
+For the existing [named-inputs program](../../examples/named-inputs/main.gooo),
+the boundary is `urn:gooo:example:named-inputs:net` and the destination can be
+`net.gooo`. The native caller uses the same operation as `package split-source`.
+
+The returned `Definition` appends the new source while retaining authored names,
+imports and entry. `Result` carries the exact output bytes, byte origins and
+semantic image already verified by `packageruntime.SplitSource`. Both outputs
+are needed to install a proposal. Preparation leaves the input definition and
+reader unchanged; returned file lists do not alias caller-owned storage. Output
+source-set limits are checked before returning an installable proposal.
+
+The native regression serializes that authored definition, reloads the proposed
+files through the shared reader, checks the planned image, and executes both
+old and reloaded programs against independent expectations. Hosts still own
+current-input checks and filesystem writes. This API does not discover other
+single-file/embed consumers or establish repository-wide rewrite coverage.
+
+The requested source path uses the loader's canonical resolution, while authored
+paths such as `./main.gooo` remain unchanged in the returned definition. Use
+`workspaceinput.Encode(proposal.Definition)` to serialize it. The encoder retains
+the existing indented JSON plus final newline, checks the same 1-MiB reader limit,
+and rejects any JSON round-trip that changes authored values. `PrepareSplit`
+performs this check before returning a proposal; the CLI writer and installed
+manifest check use the same encoder. A valid source partition cannot leave an
+output file list that the shared reader refuses to reload.

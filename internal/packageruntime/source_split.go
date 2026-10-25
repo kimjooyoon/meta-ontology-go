@@ -35,7 +35,7 @@ type SourceSplit struct {
 	InputImageDigest  string            `json:"input_image_digest"`
 	OutputImageDigest string            `json:"output_image_digest"`
 	Files             []SplitSourceFile `json:"files"`
-	Manifest          Manifest          `json:"manifest"`
+	Manifest          Manifest          `json:"manifest,omitzero"`
 }
 
 // SplitSource proposes a package-aware source partition, without writing files.

@@ -1,5 +1,5 @@
 name: Bind Gooo command work domain
-description: Consume this run's prepared tool, common clock and prior command costs
+description: Consume this run's prepared tool, observed runner clock and prior command costs
 inputs:
   expected-sha:
     description: Exact current source head
@@ -16,6 +16,7 @@ runs:
       shell: bash
       env:
         EXPECTED_SOURCE_HEAD: ${{ inputs.expected-sha }}
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
         [[ "$GOOO_CI_DOMAIN_REVISION" =~ ^[0-9a-f]{40}$ ]]
@@ -29,14 +30,26 @@ runs:
              .clock_scope == "admitted_source_work" and
             .tool_revision == $revision' \
           "$root/origin.json" > /dev/null
-        started="$(jq -r .started_at "$root/origin.json")"
-        remaining=$((GOOO_CI_BUDGET_MS / 1000 - ($(date +%s) - $(date -d "$started" +%s))))
-        test "$remaining" -gt 0
         chmod u+x "$root/gooo-ci-domain"
-        mkdir -p "$RUNNER_TEMP/command-origins-$GITHUB_JOB"
-        cp "$root/origin.json" "$RUNNER_TEMP/command-origins-$GITHUB_JOB/scope-origin.json"
+        origins="$RUNNER_TEMP/command-origins-$GITHUB_JOB"
+        mkdir -p "$origins"
+        cp "$root/origin.json" "$origins/scope-origin.json"
+        timeout --signal=KILL 30s gh api \
+          "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$origins/workflow-run.json"
+        timeout --signal=KILL 30s gh api --paginate --slurp \
+          "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" \
+          > "$origins/attempt-job-pages.json"
+        jq -e '{total_count:.[0].total_count,jobs:[.[].jobs[]]}' \
+          "$origins/attempt-job-pages.json" > "$origins/attempt-jobs.json"
+        job_name="$(jq -er --arg job "$GITHUB_JOB" '.[$job]' "$GITHUB_ACTION_PATH/jobs.json")"
+        "$root/gooo-ci-domain" runner-clock --run-json "$origins/workflow-run.json" \
+          --jobs-json "$origins/attempt-jobs.json" --head "$EXPECTED_SOURCE_HEAD" \
+          --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --budget-ms "$GOOO_CI_BUDGET_MS" \
+          --job "$job_name" --producer 'Work domain preparation' > "$origins/runner-clock.json"
+        started="$(jq -er '.effective_started_at' "$origins/runner-clock.json")"
         {
           printf 'GOOO_CI_STARTED_AT=%s\n' "$started"
+          printf 'GOOO_CI_CLOCK_SCOPE=runner_active_union\n'
           printf 'GOOO_CI_WORKFLOW_CREATED_AT=%s\n' "$(jq -r .workflow_created_at "$root/origin.json")"
           printf 'GOOO_CI_SOURCE_HEAD=%s\n' "$EXPECTED_SOURCE_HEAD"
           printf 'GOOO_CI_DOMAIN=%s/gooo-ci-domain\n' "$root"
