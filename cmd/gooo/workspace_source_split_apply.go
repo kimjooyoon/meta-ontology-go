@@ -33,13 +33,16 @@ func applyWorkspaceSourceSplit(options workspaceSourceSplitOptions, ops atomicFi
 	proposalOptions := workspaceSourceSplitOptions{
 		packagePath: proposal.Result.PackagePath, source: proposal.Result.InputFilename,
 		before: proposal.Result.BeforeID, into: proposal.Result.Files[1].Filename, manifestPath: options.manifestPath}
+	for _, consumer := range proposal.Consumers {
+		proposalOptions.consumerWorkspaces = append(proposalOptions.consumerWorkspaces, consumer.ManifestPath)
+	}
 	current, err := currentWorkspaceSourceSplitProposal(proposalOptions, proposal)
 	if err != nil {
 		return receipt, err
 	}
 	current.ManifestPath, current.Application = options.manifestPath, receipt.Application
 	current.Decision = "FAIL_CLOSED"
-	writes, err := sourceSplitWrites(current)
+	writes, err := sourceSplitAllWrites(current)
 	if err != nil {
 		return current, err
 	}
@@ -86,8 +89,15 @@ func decodeWorkspaceSourceSplitProposal(raw []byte) (workspaceSourceSplitReceipt
 	}
 	if proposal.Schema != "gooo/workspace-source-split-receipt/v1" || proposal.Decision != "PROPOSED" ||
 		proposal.Application != nil || proposal.Error != "" || proposal.Result == nil ||
-		proposal.UpdatedWorkspace == nil || len(proposal.Result.Files) != 2 {
+		proposal.UpdatedWorkspace == nil || len(proposal.Result.Files) != 2 ||
+		len(proposal.Consumers) > maxSplitConsumerWorkspaces {
 		return proposal, fmt.Errorf("apply requires a complete, unapplied source split proposal")
+	}
+	for _, consumer := range proposal.Consumers {
+		if consumer.ManifestPath == "" || consumer.ManifestDigest == "" || consumer.UpdatedWorkspace == nil ||
+			consumer.Result == nil || len(consumer.Result.Files) != 2 {
+			return proposal, fmt.Errorf("apply requires complete consumer proposals")
+		}
 	}
 	return proposal, nil
 }
@@ -160,6 +170,19 @@ func verifyAppliedSourceSplit(receipt workspaceSourceSplitReceipt) error {
 }
 
 func verifySourceSplitOutput(receipt workspaceSourceSplitReceipt, reader SourceReader) (string, error) {
+	digest, err := verifySingleSourceSplitOutput(receipt, reader)
+	if err != nil {
+		return "", err
+	}
+	for _, consumer := range receipt.Consumers {
+		if _, err := verifySingleSourceSplitOutput(consumer.receipt(), reader); err != nil {
+			return "", fmt.Errorf("consumer workspace %q: %w", consumer.ManifestPath, err)
+		}
+	}
+	return digest, nil
+}
+
+func verifySingleSourceSplitOutput(receipt workspaceSourceSplitReceipt, reader SourceReader) (string, error) {
 	manifest, digest, err := loadWorkspaceRenameManifest(reader, receipt.ManifestPath)
 	if err != nil {
 		return "", err
