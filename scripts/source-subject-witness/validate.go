@@ -39,7 +39,7 @@ func validateSource(report sourceReport, expectedSHA string) error {
 			return err
 		}
 	}
-	return nil
+	return validateModuleOrigins(report)
 }
 
 func validateFiles(files []fileMetric) error {
