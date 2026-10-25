@@ -23,9 +23,6 @@ func compileContract(path string, source []byte) (contractModel, error) {
 		return contractModel{}, fmt.Errorf("validate semantic IR: %w", err)
 	}
 	nodes, facts := ir.Graph.Nodes(), ir.Graph.DeterministicFacts()
-	if len(nodes) != len(file.Decls) {
-		return contractModel{}, fmt.Errorf("contract declarations must own the complete semantic population")
-	}
 	model := contractModel{EntityByID: map[string]string{}, Activities: map[string]activitySignature{}, SemanticHash: ir.StableHash()}
 	for _, node := range nodes {
 		switch node.Kind {

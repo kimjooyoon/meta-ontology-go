@@ -40,3 +40,25 @@ func TestContractRejectsDuplicateAuthoredIdentities(t *testing.T) {
 		}
 	}
 }
+
+func TestContractRetainsPolicyDeclarationsOutsideTheEntityActivityGraph(t *testing.T) {
+	path, source := contractIdentitySource(t)
+	commit := strings.Repeat("a", 40)
+	baseline := buildReport(path, []byte(source), commit)
+	policy := `
+policy LocalChoice id "gooo://meta/local-choice" {
+    state "READY"
+}
+`
+	report := buildReport(path, []byte(source+policy), commit)
+	if report.Status != "PASS" || report.SemanticHash == baseline.SemanticHash ||
+		report.EntityCount != baseline.EntityCount || report.ActivityCount != baseline.ActivityCount || report.PromotionAuthorized {
+		t.Fatal("policy identity was lost or counted as an entity/activity", report)
+	}
+	renamed := renameContractLabels(t, source+policy, map[string]string{"LocalChoice": "지역선택"})
+	checkRenamedContract(t, path, renamed, report)
+	invalid := strings.Replace(policy, `state "READY"`, `transition "READY" -> "MISSING"`, 1)
+	if got := buildReport(path, []byte(source+invalid), commit); got.Status != "FAIL" {
+		t.Fatal("invalid policy bypassed semantic validation", got)
+	}
+}
