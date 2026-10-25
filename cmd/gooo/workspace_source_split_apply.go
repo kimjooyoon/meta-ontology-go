@@ -33,6 +33,9 @@ func applyWorkspaceSourceSplit(options workspaceSourceSplitOptions, ops atomicFi
 	proposalOptions := workspaceSourceSplitOptions{
 		packagePath: proposal.Result.PackagePath, source: proposal.Result.InputFilename,
 		before: proposal.Result.BeforeID, into: proposal.Result.Files[1].Filename, manifestPath: options.manifestPath}
+	if proposal.Registration != nil {
+		proposalOptions.registryRoot = proposal.Registration.Root
+	}
 	if proposal.Discovery != nil {
 		proposalOptions.discoveryRoot = proposal.Discovery.Root
 	} else {
@@ -178,6 +181,9 @@ func verifyAppliedSourceSplit(receipt workspaceSourceSplitReceipt) error {
 }
 
 func verifySourceSplitOutput(receipt workspaceSourceSplitReceipt, reader SourceReader) (string, error) {
+	if err := verifySplitRegistrationOutput(receipt.Registration, reader); err != nil {
+		return "", err
+	}
 	digest, err := verifySingleSourceSplitOutput(receipt, reader)
 	if err != nil {
 		return "", err

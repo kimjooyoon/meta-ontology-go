@@ -34,5 +34,5 @@ func sourceSplitAllWrites(receipt workspaceSourceSplitReceipt) ([]atomicWrite, e
 		}
 		writes = append(writes, candidate[2])
 	}
-	return writes, nil
+	return appendSplitRegistrationWrites(writes, receipt.Registration)
 }
