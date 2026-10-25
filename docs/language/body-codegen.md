@@ -22,6 +22,38 @@ may be assigned. See the
 [multiple-input example and case keys](../native-body-composition.md) and
 [record construction and actual value delivery](../native-record-values.md).
 
+### Generating a fixed body from several source members
+
+The internal `bodycodegen.GenerateSourceBundle` entry point accepts an explicit,
+ordered set of same-package `.gooo` members. An activity can use entity types and
+fixed pure callees declared in other members. Each member has its own package and
+namespace header; imports require the package compiler. The existing body parser,
+type resolver, call bounds, route equivalence and deterministic replay are shared
+with single-file generation. Required and optional record fields keep their
+existing profiles.
+
+For compiler development, the existing generator can select a source family:
+
+```sh
+# Run from internal/meta/executioncontinuation/policy:
+go run ../../../../scripts/transport-origin-codegen -sources 'source*.gooo' next.generated.go NextObservation
+```
+
+The pattern is relative to the working directory and uses `io/fs.Glob` ordering.
+Zero matches, invalid members, conflicting identities and unresolved callees
+return an error before writing the output. Existing single-file arguments still
+work, including absolute source paths. The policy's `go:generate` directives and
+embedded reader select the same family; its nine committed Go projections remain
+unchanged after dividing the Gooo source into decision and recovery members.
+
+Bundle results retain member hashes and physical declaration spans. Their source
+digest binds member names, order and bytes; moving a declaration or adding a
+comment changes this digest even when the generated Go is identical. The carrier
+has no invented physical filename. This API covers fixed body generation;
+`body-codegen` CLI assembly, fixed-value evaluation and expression-source binding
+still have their existing single-source inputs. Repository-wide discovery,
+partition installation and recovery are separate work.
+
 ### Ordered record collections
 
 Record fields can declare ordered scalar values with `many`. Gooo `for item in

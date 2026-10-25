@@ -1,0 +1,28 @@
+package policy
+namespace consumercontinuation
+
+activity MissingDependency(reason Text) -> Text
+    id "gooo://self-improvement/consumer/missing-dependency" computes `
+if reason == "SOURCE_RUN_UNAVAILABLE" || reason == "SOURCE_RUN_COMPLETION_UNKNOWN" || reason == "SOURCE_RUN_METADATA_UNKNOWN" || reason == "SOURCE_GRANT_JOB_UNAVAILABLE" { return "producer_run" }
+if reason == "SUBJECT_SOURCE_UNKNOWN" { return "subject_blob" }
+if reason == "GRANT_POLICY_UNAVAILABLE" { return "policy_source" }
+if reason == "SOURCE_ARTIFACT_EXPIRED" { return "expired_source_artifact" }
+if reason == "SOURCE_ARTIFACT_MISSING" || reason == "SOURCE_ARCHIVE_UNAVAILABLE" || reason == "SOURCE_MEMBER_MISSING" || reason == "ARTIFACT_POPULATION_UNKNOWN" || reason == "ARTIFACT_POPULATION_INCOMPLETE" { return "source_artifact" }
+if reason == "DISPATCH_RESPONSE_UNKNOWN" { return "dispatch_outcome" }
+if reason == "TARGET_REFERENCE_UNKNOWN" { return "target_run_reference" }
+if len(reason) >= 12 && reason[:12] == "RESERVATION_" { return "reservation_history" }
+return "target_run"
+`
+
+activity NextObservation(dependency Text) -> Text
+    id "gooo://self-improvement/consumer/next-observation" computes `
+if dependency == "producer_run" { return "observe_exact_source_run" }
+if dependency == "subject_blob" { return "observe_exact_subject_blob" }
+if dependency == "policy_source" { return "restore_policy_source" }
+if dependency == "expired_source_artifact" { return "produce_fresh_source_artifact" }
+if dependency == "source_artifact" { return "observe_exact_source_artifact" }
+if dependency == "dispatch_outcome" { return "observe_dispatch_outcome" }
+if dependency == "target_run_reference" { return "observe_dispatch_response" }
+if dependency == "reservation_history" { return "restore_retained_reservation_history" }
+return "observe_returned_target_run"
+`
