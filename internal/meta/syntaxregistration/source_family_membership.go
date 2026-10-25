@@ -9,32 +9,42 @@ import (
 )
 
 func bindNativeCaseSources(source *goSource, expected []languagesyntax.CaseSourceSet) error {
-	root, err := source.function("expectedRegistry")
+	groups, _, err := readNativeCaseSources(source)
 	if err != nil {
 		return err
-	}
-	leaves, err := source.registryFieldLeaves(root, "CaseSources", "CaseSourceSet", true)
-	if err != nil {
-		return err
-	}
-	var groups []languagesyntax.CaseSourceSet
-	for _, leaf := range leaves {
-		for _, element := range leaf.Elts {
-			literal, ok := element.(*ast.CompositeLit)
-			if !ok || (literal.Type != nil && !namedRegistryType(literal.Type, "CaseSourceSet")) {
-				return fmt.Errorf("native source family is not an explicit CaseSourceSet")
-			}
-			group, err := readCaseSourceLiteral(source, literal)
-			if err != nil {
-				return err
-			}
-			groups = append(groups, group)
-		}
 	}
 	if !reflect.DeepEqual(groups, expected) {
 		return fmt.Errorf("native source families differ from the corpus")
 	}
 	return nil
+}
+
+func readNativeCaseSources(source *goSource) ([]languagesyntax.CaseSourceSet, []*ast.CompositeLit, error) {
+	root, err := source.function("expectedRegistry")
+	if err != nil {
+		return nil, nil, err
+	}
+	origins, err := source.registryFieldOrigins(root, "CaseSources", "CaseSourceSet", true)
+	if err != nil {
+		return nil, nil, err
+	}
+	var groups []languagesyntax.CaseSourceSet
+	var literals []*ast.CompositeLit
+	for _, leaf := range origins.leaves {
+		for _, element := range leaf.Elts {
+			literal, err := origins.literal(element, "CaseSourceSet")
+			if err != nil {
+				return nil, nil, err
+			}
+			group, err := readCaseSourceLiteral(source, literal)
+			if err != nil {
+				return nil, nil, err
+			}
+			groups = append(groups, group)
+			literals = append(literals, literal)
+		}
+	}
+	return groups, literals, nil
 }
 
 func readCaseSourceLiteral(source *goSource, literal *ast.CompositeLit) (languagesyntax.CaseSourceSet, error) {

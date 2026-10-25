@@ -680,6 +680,32 @@ executions. The practical milestone is one source-owned change plan carrying all
 affected consumers into the existing publisher, without hand-maintained follow-up
 edits or a new capability for each file fragment.
 
+The next construction boundary is
+`syntaxregistration.PreparePartitionRegistrationCandidate(repository, directory,
+partition)`. Its `Outputs` contains the two exact Gooo fragments, the projected
+corpus, and every Go registry source that owns changed membership. `Inputs`
+retains the current corpus, the native registry package and all affected source
+members, including unchanged siblings. The continuation example produces five
+files because its family and meta-source memberships have separate Go owners;
+the single-case, meta-only and package examples each produce four.
+
+Native owners are resolved through the registry's finite expressions and physical
+declaration spans. Renaming an owner file does not change that binding. Direct
+slices, ordered helper assembly and explicit local row declarations are supported;
+arbitrary computation and reassignment remain unresolved. The existing case
+definitions, package entries, projection consumers and schema must match the
+corpus before construction. Re-reading the emitted Go checks the complete
+projected registry. Independent tests compile that Go and compare the resulting
+registry with the corpus, including a deliberately wrong expected value.
+
+Preparation rechecks the native file population and captured bytes. Validation
+reconstructs the whole candidate, so changing an output or an input invalidates
+the saved result. Each of the native and Gooo input sets is bounded to 1 MiB per
+file and 16 MiB total, with at most 1,024 observed files. Neither function writes
+the repository. The internal native edit label describes mechanical construction;
+binding the existing `SplitGoooSections` operation, admitting embedded/native
+consumers and publishing the joint write set are still executor obligations.
+
 ### One syntax case across physical source members
 
 The syntax corpus can associate an existing case with an ordered `case_sources`
