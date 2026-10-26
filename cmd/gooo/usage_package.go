@@ -69,10 +69,14 @@ and record field types, presence, and cardinality. See docs/language/package-int
 
 Generate an importable Go package from authored computes bodies:
   gooo package generate --go-package rules --out ./rules gooo.workspace.json
+  gooo package generate --go-package rules --export-stage Plan=urn:example:plan gooo.workspace.json
 
 Evaluate calls the entry and its bound producers. R_<record> and F_<field> expose
 source names; stable field IDs remain in gooo struct tags. Generation needs no
 cases, model, native build or program execution. Assembling contracts are unsupported.
+Repeat --export-stage Name=activity-id to expose planned stages by stable ID.
+Stage functions receive their own body inputs; Evaluate follows the declared binds.
+Public functions share the generated record types. Pure call helpers remain private.
 --out writes semantic.gooo.go after complete generation using the shared atomic
 writer. A failed generation preserves the previous file. Without --out, source
 is written to stdout. Keep handwritten host adapters in separate files.

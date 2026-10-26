@@ -40,6 +40,30 @@ producers, and returns the entry result. Comments identify every argument's
 activity, port and entity ID. Pure helper calls remain inside the generated code.
 Use `package inspect --json` to inspect the original package/activity mapping.
 
+A host can also read a source-owned plan before supplying its observations.
+Expose selected stages by their stable activity IDs:
+
+```sh
+gooo package generate --go-package named --out ./named \
+  --export-stage Credit=urn:gooo:example:named-inputs:credit \
+  --export-stage Net=urn:gooo:example:named-inputs:net \
+  examples/named-inputs/workspace.json
+```
+
+`Credit` and `Net` receive their own authored body inputs. `Credit(100)` returns
+123; `Net(100, 5)` returns 95. `Evaluate(100, 5)` follows the declared bind from
+`Credit` into `Net` and returns 118. All functions share the same generated
+record types and field IDs. This lets Go read a declared plan and pass its typed
+values to another stage without maintaining a second schema or copying fields.
+
+`--export-stage` may be repeated with distinct exported Go names and distinct
+planned activity IDs. A display rename of the source activity preserves this
+selection. The emitted comment binds each public name to its activity ID.
+Exports select activities in the entry's planned producer chain; a pure helper
+called inside a body stays an implementation detail. To evaluate another
+independent activity, choose it as the workspace entry. Invalid/ambiguous exports
+fail before publishing output, retaining the previous generated file.
+
 Records use `R_<source-name>` and exported fields use `F_<source-name>`.
 Keeping the spelling after a fixed prefix avoids guessing acronym casing or
 merging names such as `origin_ref` and `Origin_ref`. Conflicting record names
@@ -100,3 +124,9 @@ undeclared packages and missing origin: six independent expected outcomes, with
 zero handwritten consumer Go edits. This measures one same-schema policy change;
 new fields, renamed Go views and other consumers can still require integration
 work. The regression and generator have their own initial implementation cost.
+
+The stage-export regression checks three fixed inputs against public producer,
+public consumer and complete-graph results before and after an activity display
+rename: 18 independent expected outcomes with unchanged handwritten Go. It also
+checks the equivalent manual composition through their shared record type,
+11 invalid export requests, and preservation of prior output after rejection.

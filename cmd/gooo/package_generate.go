@@ -11,7 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodylibrary"
 )
 
-const packageGenerateUsage = "usage: gooo package generate --go-package <name> [--out <directory>] <workspace.json>"
+const packageGenerateUsage = "usage: gooo package generate --go-package <name> [--export-stage <Name=activity-id>] [--out <directory>] <workspace.json>"
 
 // Emit only complete source. Source loading and package resolution use the same
 // bounded workspace path as inspection, without compiling or executing a binary.
@@ -23,8 +23,8 @@ func runPackageGenerate(args []string, reader SourceReader, stdout, stderr io.Wr
 	program, manifestDigest, err := inspectWorkspaceSource(reader, options.manifest)
 	var source string
 	if err == nil {
-		source, err = bodylibrary.Generate(context.Background(), "workspace.gooo",
-			[]byte(program.Source), program.Entry.LoweredName, options.packageName)
+		source, err = bodylibrary.GenerateWithStageExports(context.Background(), "workspace.gooo",
+			[]byte(program.Source), program.Entry.LoweredName, options.packageName, options.exports)
 	}
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo package generate: %v\n", err)
