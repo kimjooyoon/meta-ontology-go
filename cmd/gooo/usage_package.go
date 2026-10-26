@@ -67,6 +67,14 @@ Export declaration shapes for documentation and API comparison tools:
 The interface includes imported packages, stable IDs, ordered activity inputs,
 and record field types, presence, and cardinality. See docs/language/package-interface.md.
 
+Generate an importable Go package from authored computes bodies:
+  gooo package generate --go-package rules gooo.workspace.json > rules_generated.go
+
+Evaluate calls the entry and its bound producers. R_<record> and F_<field> expose
+source names; stable field IDs remain in gooo struct tags. Generation needs no
+cases, model, native build or program execution. Assembling contracts are unsupported.
+See docs/language/package-library-generation.md for input and validation limits.
+
 Inspect the entry's prepared source calls before execution:
   gooo package inspect --json gooo.workspace.json
   gooo package inspect --inputs-template gooo.workspace.json > inputs.json
