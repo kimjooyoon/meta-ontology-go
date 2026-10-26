@@ -53,7 +53,7 @@ func TestPackageResumeContinuesImportedCalledHelper(t *testing.T) {
 	defer server.Close()
 	t.Setenv("GOOO_LAYA_URL", server.URL)
 	t.Setenv("GOOO_LAYA_API_KEY", "unused-local-test")
-	continued, raw := runSavedPackageFixture(t, "resume", "--json", "--receipt", path,
+	continued, raw := runSavedPackageFixture(t, "resume", "--timing", "--json", "--receipt", path,
 		"--cases", root+"cases.json", "--assembly-policy-workspace", policy+"gooo.workspace.json", root+"gooo.workspace.json")
 	if continued.Result.Runtime.FinitePassed != 4 || continued.Decision != "PASS" ||
 		continued.Result.Composition.Continuation == nil || continued.Result.Composition.Continuation.NewModelCalls != 0 {
