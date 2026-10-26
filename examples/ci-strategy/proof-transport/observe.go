@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mime"
+	"strings"
 	"time"
 )
 
@@ -47,14 +48,14 @@ func (w *wire) referrers(ctx context.Context, out *R_TransportObservation) error
 		return err
 	}
 	out.F_referrers_digest = digest(res.data)
-	out.F_next_link = res.header.Get("Link")
+	out.F_next_link = strings.Join(res.header.Values("Link"), ",")
 	out.F_referrers_media_type, _, _ = mime.ParseMediaType(res.header.Get("Content-Type"))
 	if res.status != 200 {
 		return nil
 	}
 	var index struct {
-		SchemaVersion int    `json:"schemaVersion"`
-		MediaType     string `json:"mediaType"`
+		SchemaVersion int             `json:"schemaVersion"`
+		MediaType     json.RawMessage `json:"mediaType"`
 		Manifests     *[]struct {
 			Digest string `json:"digest"`
 		} `json:"manifests"`
@@ -62,10 +63,19 @@ func (w *wire) referrers(ctx context.Context, out *R_TransportObservation) error
 	if err := json.Unmarshal(res.data, &index); err != nil {
 		return fmt.Errorf("invalid referrers JSON")
 	}
-	if index.SchemaVersion != 2 || index.MediaType != out.F_referrers_media_type || index.Manifests == nil {
+	if index.SchemaVersion != 2 || index.Manifests == nil {
 		return fmt.Errorf("incomplete referrers index")
 	}
+	if len(index.MediaType) != 0 {
+		var mediaType string
+		if json.Unmarshal(index.MediaType, &mediaType) != nil || mediaType != out.F_referrers_media_type {
+			return fmt.Errorf("invalid referrers media type")
+		}
+	}
 	for _, descriptor := range *index.Manifests {
+		if descriptor.Digest == "" {
+			return fmt.Errorf("incomplete referrer descriptor")
+		}
 		out.F_descriptors = append(out.F_descriptors, descriptor.Digest)
 	}
 	return nil

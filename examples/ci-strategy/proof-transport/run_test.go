@@ -2,6 +2,7 @@ package prooftransport
 
 import (
 	"context"
+	"net/http"
 	"sync"
 	"testing"
 )
@@ -72,5 +73,25 @@ func TestCancelledBeforeAdmissionRetainsValidMaterial(t *testing.T) {
 	got := run(ctx, "transport-original-build-proof", f.material, "", true, f)
 	if got.Decision.F_state != "REFRESH_OBSERVATION" || got.Write.Attempted || got.Requests != 0 {
 		t.Fatal(got)
+	}
+}
+
+func TestPostEffectCancellationRetainsAttemptAndUnknownReadback(t *testing.T) {
+	f := fixture(t, false)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	transport := roundTrip(func(r *http.Request) (*http.Response, error) {
+		res, err := f.RoundTrip(r)
+		if r.Method == http.MethodPut {
+			cancel()
+		}
+		return res, err
+	})
+	got := run(ctx, "transport-original-build-proof", f.material, "", true, transport)
+	if !got.Write.Attempted || f.puts != 1 || !f.present || got.After == nil || got.After.F_read_error == "" {
+		t.Fatal("lost attempted effect or unavailable readback", got)
+	}
+	if got.Next == nil || got.Next.F_state != "REFRESH_OBSERVATION" || got.Next.F_write_manifest {
+		t.Fatal("incomplete post-effect observation became a retry", got)
 	}
 }

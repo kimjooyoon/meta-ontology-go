@@ -79,3 +79,8 @@ source/run/attempt/artifact bindings and canonical operation identity; an
 unresolved origin produces no completed-effect IDs. The original selector above
 still accepts caller assertions. The new case records historical observations
 and keeps execution disabled while current operation authority remains open.
+
+The [proof-transport case](proof-transport/README.md) adds current registry
+observations and one source-selected manifest restoration. The Gooo plan owns
+the content identity, requirements and limits; Go performs bounded HTTP and
+retains an independent readback. Its default CLI mode reads and reports state.
