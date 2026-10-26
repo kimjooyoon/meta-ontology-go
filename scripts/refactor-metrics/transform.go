@@ -40,6 +40,9 @@ func transformCandidate(root string, candidate candidate, write bool) error {
 	if err != nil {
 		return err
 	}
+	if !linecaps.AllowsWholeFileGoRefactor(file) {
+		return fmt.Errorf("candidate %q is owned by generated source; change its owner and regenerate", candidate.raw)
+	}
 	matches, collapsible := 0, true
 	ast.Inspect(file, func(node ast.Node) bool {
 		name, line, ok := linecaps.FunctionIdentity(fset, node)
