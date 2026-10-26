@@ -29,13 +29,14 @@ func AnalyzeSource(path string, source []byte, limits Limits) ([]Finding, error)
 		sortFindings(findings)
 		return findings, nil
 	}
+	refactorOwned := AllowsWholeFileGoRefactor(file)
 	ast.Inspect(file, func(node ast.Node) bool {
 		finding, ok := functionFinding(fset, node, path, limits.MaxFunctionLines)
 		if ok {
 			findings = append(findings, finding)
 		}
 		refactorFinding, refactorOK := refactorCandidateFinding(fset, node, path)
-		if refactorOK {
+		if refactorOK && refactorOwned {
 			findings = append(findings, refactorFinding)
 		}
 		return true

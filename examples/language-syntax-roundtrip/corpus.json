@@ -1409,6 +1409,7 @@
     "examples/toolchain-version-impact/plan.gooo",
     "examples/direct-module-impact/plan.gooo",
     "examples/ci-strategy/strategy.gooo",
+    "examples/ci-strategy/recovery-origin/origin.gooo",
     "internal/meta/executioncontinuation/policy/source_recovery.gooo",
     "examples/runtime-package-surface/contract.gooo",
     "examples/runtime-package-surface/inspect.gooo",

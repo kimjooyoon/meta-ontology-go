@@ -1,0 +1,65 @@
+{
+  "repository": "kimjooyoon/gooo-go-ports",
+  "publication_run": 39672180710,
+  "readback_run": 39673212888,
+  "attempt": 1,
+  "source": "6ff4e3a6c3baf9b518838bd35d2429decdf991bf",
+  "later_recovery_is_not_an_input": 39687579594,
+  "archive_sha256": "a5142fa585b183dfc39b94ef497a2706aeebfb16c1df41da6320fb6ff7beacdf",
+  "records": [
+    {
+      "file": "workflow.source",
+      "retained_name": "original-workflow.source",
+      "bytes": 27356,
+      "sha256": "2c5d256d09f7e9fe708f4a809af772f418f59c54ca42d64b9c93d88ab6df4d5a"
+    },
+    {
+      "file": "publication-run.json",
+      "retained_name": "39672180710-run.json",
+      "bytes": 12870,
+      "sha256": "46aee089ad946b4bec92ec9118709f382ba11ed1bac8947279ed335994177057"
+    },
+    {
+      "file": "publication-jobs.json",
+      "retained_name": "39672180710-jobs.json",
+      "bytes": 7428,
+      "sha256": "765ac1d40c17f73db8aab04359b0c5dba9e4bdfb848ee16ff24d6e23a191ef73"
+    },
+    {
+      "file": "publication-artifact.json",
+      "retained_name": "12379113396-metadata.json",
+      "bytes": 791,
+      "sha256": "b815d59dc8ed84d643ecbd1b88259272a4c58654607f8dcedacd04280941b638"
+    },
+    {
+      "file": "publication.zip",
+      "retained_name": "12379113396.zip",
+      "bytes": 3916,
+      "sha256": "c35bb72cfc95e928a6c806d55f4eaa0667a030f2f65995c53a96a41a0ff16470"
+    },
+    {
+      "file": "readback-run.json",
+      "retained_name": "39673212888-run.json",
+      "bytes": 12870,
+      "sha256": "80315233adae9b08f873bf2dfe129fa920b81b75e2e22cc14ac1c66fa658ea02"
+    },
+    {
+      "file": "readback-jobs.json",
+      "retained_name": "39673212888-jobs.json",
+      "bytes": 4711,
+      "sha256": "ff9241a937b6fb02ba4053487d729a62c326f04c0af6f912f88209f499e319c1"
+    },
+    {
+      "file": "readback-artifact.json",
+      "retained_name": "12380732702-metadata.json",
+      "bytes": 799,
+      "sha256": "a2cbdc2f92f6327e038d26235e6ccb70151946d04881f538ec9c3363a3986d88"
+    },
+    {
+      "file": "readback.zip",
+      "retained_name": "12380732702.zip",
+      "bytes": 61328,
+      "sha256": "b31f81061d1fff3fd2be2ff20eed6b91ca3025b0a72c6326ad89b1c4f2cea3c8"
+    }
+  ]
+}
