@@ -20,7 +20,7 @@ func main() {
 	flag.StringVar(&opts.provenance, "provenance", "", "artifact provenance JSON")
 	flag.StringVar(&opts.contract, "contract", "", "Gooo contract report JSON")
 	flag.StringVar(&opts.output, "output", "", "JSON output path; stdout when empty")
-	flag.BoolVar(&opts.check, "check", false, "exit non-zero for an open envelope")
+	flag.BoolVar(&opts.check, "check", false, "exit non-zero for an invalid or unbound cycle observation")
 	flag.Parse()
 
 	in, err := loadInputs(opts)
@@ -41,7 +41,7 @@ func main() {
 	if err != nil {
 		exitError(err)
 	}
-	if opts.check && envelope.Status != "BOUND" {
+	if opts.check && !envelope.recordValid {
 		os.Exit(1)
 	}
 }
