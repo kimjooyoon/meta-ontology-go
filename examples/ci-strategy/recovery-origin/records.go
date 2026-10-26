@@ -10,7 +10,6 @@ type runRecord struct {
 	RunAttempt       int64  `json:"run_attempt"`
 	HeadSHA          string `json:"head_sha"`
 	Path, Conclusion string
-	UpdatedAt        time.Time `json:"updated_at"`
 	Repository       struct {
 		FullName string `json:"full_name"`
 	}
@@ -18,11 +17,12 @@ type runRecord struct {
 
 type jobRecords struct {
 	Jobs []struct {
-		ID         int64
-		RunID      int64  `json:"run_id"`
-		RunAttempt int64  `json:"run_attempt"`
-		HeadSHA    string `json:"head_sha"`
-		Steps      []struct {
+		ID          int64
+		RunID       int64     `json:"run_id"`
+		RunAttempt  int64     `json:"run_attempt"`
+		HeadSHA     string    `json:"head_sha"`
+		CompletedAt time.Time `json:"completed_at"`
+		Steps       []struct {
 			Number     int64
 			Conclusion string
 		}
@@ -43,9 +43,6 @@ func copyOrigin(run runRecord, jobs jobRecords, artifact artifactRecord, jobID i
 	out.F_workflow_path, out.F_conclusion = run.Path, run.Conclusion
 	out.F_plan_reference = fmt.Sprintf("https://github.com/%s/blob/%s/%s", run.Repository.FullName, run.HeadSHA, run.Path)
 	out.F_reference = fmt.Sprintf("https://github.com/%s/actions/runs/%d/job/%d", run.Repository.FullName, run.ID, jobID)
-	if !run.UpdatedAt.IsZero() {
-		out.F_completed_at = run.UpdatedAt.Unix()
-	}
 	out.F_artifact_run_id, out.F_artifact_source = artifact.WorkflowRun.ID, artifact.WorkflowRun.HeadSHA
 	out.F_artifact_sha256 = artifact.Digest
 	out.F_artifact_name = artifact.Name
@@ -57,6 +54,9 @@ func copyOrigin(run runRecord, jobs jobRecords, artifact artifactRecord, jobID i
 		found++
 		out.F_job_id, out.F_job_run_id = job.ID, job.RunID
 		out.F_job_attempt, out.F_job_source = job.RunAttempt, job.HeadSHA
+		if !job.CompletedAt.IsZero() {
+			out.F_completed_at = job.CompletedAt.Unix()
+		}
 		for _, step := range job.Steps {
 			out.F_step_numbers = append(out.F_step_numbers, step.Number)
 			out.F_step_conclusions = append(out.F_step_conclusions, step.Conclusion)

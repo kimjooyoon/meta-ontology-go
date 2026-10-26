@@ -39,6 +39,8 @@ artifact names, relevant steps and observation cutoff. Changing a run alone
 cannot reuse the prior scope. `observed_at` bounds this historical observation;
 it is not a freshness guarantee about the registry today. Step meanings are
 declared against that exact workflow, rather than guessed from display text.
+Ordering uses each selected job's `completed_at`; later run metadata updates
+do not move an original effect to another point in time.
 
 | Gooo result | Next action |
 | --- | --- |
@@ -64,7 +66,8 @@ from the generated implementation.
 | Wrong/missing/contradicted origin remains unresolved | 22 / 22 normalized counterexamples |
 | Same publication under different display names is rejected | 2 / 2 names |
 | Different subject or unknown operation cannot widen scope | 2 / 2 proposals |
-| Changed or missing raw input cannot become a completed effect | 6 / 6 reader counterexamples |
+| Changed or missing raw input cannot become a completed effect | 8 / 8 reader counterexamples |
+| Later run metadata update preserves original job completion | 1 / 1 timestamp regression |
 | Goal, plan, revision, activity and original observation IDs retained | 7 / 7 checked identities in the actual history |
 
 Initial implementation adds 180 authored Gooo lines, 206 handwritten production

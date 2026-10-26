@@ -5,10 +5,40 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
+func TestReaderUsesJobCompletionInsteadOfRunMetadataUpdate(t *testing.T) {
+	root, scope := historyFixture(t)
+	path := filepath.Join(root, "readback-run.json")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var run map[string]any
+	if err := json.Unmarshal(raw, &run); err != nil {
+		t.Fatal(err)
+	}
+	run["updated_at"] = time.Unix(scope.F_observed_at+3600, 0).UTC().Format(time.RFC3339)
+	raw, err = json.Marshal(run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	p, _ := Read(root, "publication", scope.F_publish_job)
+	r, _ := Read(root, "readback", scope.F_readback_job)
+	if got := Evaluate(scope, p, r); got.F_state != "PROPOSED_RECOVERY" {
+		t.Fatal("a later metadata update changed the original job completion", got)
+	}
+	if r.F_completed_at != 1792615620 { // 2026-10-21T20:47:00Z, original selected job.
+		t.Fatal("timestamp is not the original selected job completion", r.F_completed_at)
+	}
+}
+
 func TestReaderRejectsChangedOrMissingOriginals(t *testing.T) {
-	for _, change := range []string{"missing archive", "changed archive", "wrong run", "wrong attempt", "false completion", "oversized record"} {
+	for _, change := range []string{"missing archive", "changed archive", "wrong run", "wrong attempt", "false completion", "oversized record", "future completion", "missing completion"} {
 		t.Run(change, func(t *testing.T) {
 			root, scope := historyFixture(t)
 			changeRetainedInput(t, root, change)
@@ -34,7 +64,7 @@ func changeRetainedInput(t *testing.T, root, change string) {
 	if change == "changed archive" {
 		name = "publication.zip"
 	}
-	if change == "false completion" {
+	if change == "false completion" || change == "future completion" || change == "missing completion" {
 		name = "publication-jobs.json"
 	}
 	path := filepath.Join(root, name)
@@ -59,6 +89,10 @@ func changeRetainedInput(t *testing.T, root, change string) {
 		case "false completion":
 			job := record["jobs"].([]any)[1].(map[string]any)
 			job["steps"].([]any)[4].(map[string]any)["conclusion"] = "failure"
+		case "future completion":
+			record["jobs"].([]any)[1].(map[string]any)["completed_at"] = "2026-10-21T22:00:00Z"
+		case "missing completion":
+			delete(record["jobs"].([]any)[1].(map[string]any), "completed_at")
 		}
 		raw, err = json.Marshal(record)
 		if err != nil {
