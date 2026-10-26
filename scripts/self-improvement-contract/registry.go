@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 type RegistryBinding struct {
@@ -18,11 +19,14 @@ type RegistryBinding struct {
 }
 
 type ExecutorCoverage struct {
-	Operation  string `json:"operation"`
-	Executor   string `json:"executor"`
-	EntityID   string `json:"entity_id"`
-	EntityName string `json:"entity_name"`
-	Covered    bool   `json:"covered"`
+	Operation    string         `json:"operation"`
+	Executor     string         `json:"executor"`
+	EntityID     string         `json:"entity_id"`
+	EntityName   string         `json:"entity_name"`
+	Covered      bool           `json:"covered"`
+	ActivityID   string         `json:"activity_id"`
+	ActivityName string         `json:"activity_name"`
+	InputOrigin  *semantic.Span `json:"input_origin,omitempty"`
 }
 
 func registrySnapshot() []RegistryBinding {
