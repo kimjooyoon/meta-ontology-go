@@ -9,12 +9,18 @@ import (
 type packageGenerateOptions struct {
 	manifest, packageName, outputDir string
 	exports                          []bodylibrary.StageExport
+	embedOrigin                      bool
 }
 
 func parsePackageGenerateArgs(args []string) (options packageGenerateOptions, ok bool) {
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		switch arg {
+		case "--embed-origin":
+			if options.embedOrigin {
+				return options, false
+			}
+			options.embedOrigin = true
 		case "--export-stage":
 			if i+1 == len(args) {
 				return options, false

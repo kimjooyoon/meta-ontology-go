@@ -11,8 +11,8 @@ import (
 
 // StageExport selects semantic identity; Name is only the Go API presentation.
 type StageExport struct {
-	ActivityID string
-	Name       string
+	ActivityID string `json:"activity_id"`
+	Name       string `json:"name"`
 }
 
 func resolveStageExports(plan bodyexecution.CompositionPlan, exports []StageExport) (map[string]string, string, error) {
