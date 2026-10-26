@@ -80,9 +80,7 @@ func compositionArtifactKey(prior Composition, r *CompositionRuntime, goBinary s
 func compositionExecutableFor(ctx context.Context, prior Composition, goBinary string,
 	r *CompositionRuntime, owner *Executor) (root, executable string, release func(), err error) {
 	release = func() {}
-	phase := bodytiming.Start(ctx, "native_projection")
-	observed, err := observedCompositionLocalEvidence(prior)
-	phase.End(err == nil)
+	observed, err := timedCompositionLocalEvidence(ctx, prior)
 	projection, driver := observed.projection, observed.driver
 	if err != nil {
 		return "", "", release, err
@@ -101,7 +99,7 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 	if projection != prior.Source || driver != prior.Driver {
 		r.ObservedProjectionSHA256, r.ObservedDriverSHA256 = digest([]byte(projection)), digest([]byte(driver))
 	}
-	phase = bodytiming.Start(ctx, "executable_prepare")
+	phase := bodytiming.Start(ctx, "executable_prepare")
 	defer func() { phase.End(err == nil) }()
 	key := ""
 	if owner != nil {
@@ -147,6 +145,13 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 		}
 	}
 	return root, executable, release, nil
+}
+
+func timedCompositionLocalEvidence(ctx context.Context, prior Composition) (compositionObservedSource, error) {
+	phase := bodytiming.Start(ctx, "native_projection")
+	observed, err := observedCompositionLocalEvidence(prior)
+	phase.End(err == nil)
+	return observed, err
 }
 
 func bindCompositionBuild(r *CompositionRuntime) {
