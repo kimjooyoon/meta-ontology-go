@@ -60,7 +60,7 @@ func collectNamedCapacityFile(path, pkg string, wanted map[string]bool, found ma
 		return err
 	}
 	set := token.NewFileSet()
-	file, err := parser.ParseFile(set, path, source, 0)
+	file, err := parser.ParseFile(set, path, source, parser.ParseComments)
 	if err != nil {
 		return err
 	}
