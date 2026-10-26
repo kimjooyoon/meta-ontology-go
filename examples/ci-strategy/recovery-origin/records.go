@@ -41,6 +41,8 @@ func copyOrigin(run runRecord, jobs jobRecords, artifact artifactRecord, jobID i
 	out.F_repository, out.F_source = run.Repository.FullName, run.HeadSHA
 	out.F_run_id, out.F_attempt = run.ID, run.RunAttempt
 	out.F_workflow_path, out.F_conclusion = run.Path, run.Conclusion
+	out.F_plan_reference = fmt.Sprintf("https://github.com/%s/blob/%s/%s", run.Repository.FullName, run.HeadSHA, run.Path)
+	out.F_reference = fmt.Sprintf("https://github.com/%s/actions/runs/%d/job/%d", run.Repository.FullName, run.ID, jobID)
 	if !run.UpdatedAt.IsZero() {
 		out.F_completed_at = run.UpdatedAt.Unix()
 	}
@@ -58,11 +60,11 @@ func copyOrigin(run runRecord, jobs jobRecords, artifact artifactRecord, jobID i
 		for _, step := range job.Steps {
 			out.F_step_numbers = append(out.F_step_numbers, step.Number)
 			out.F_step_conclusions = append(out.F_step_conclusions, step.Conclusion)
+			out.F_step_references = append(out.F_step_references, fmt.Sprintf("%s#step:%d:1", out.F_reference, step.Number))
 		}
 	}
 	if found != 1 {
 		return fmt.Errorf("job %d: expected one record, found %d", jobID, found)
 	}
-	out.F_reference = fmt.Sprintf("https://github.com/%s/actions/runs/%d/job/%d", run.Repository.FullName, run.ID, jobID)
 	return nil
 }

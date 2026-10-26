@@ -61,14 +61,14 @@ from the generated implementation.
 | Observation | Denominator |
 | --- | --- |
 | Actual retained history yields the expected proposal | 1 / 1 history |
-| Wrong/missing/contradicted origin remains unresolved | 20 / 20 normalized counterexamples |
+| Wrong/missing/contradicted origin remains unresolved | 22 / 22 normalized counterexamples |
 | Same publication under different display names is rejected | 2 / 2 names |
 | Different subject or unknown operation cannot widen scope | 2 / 2 proposals |
 | Changed or missing raw input cannot become a completed effect | 6 / 6 reader counterexamples |
 | Goal, plan, revision, activity and original observation IDs retained | 7 / 7 checked identities in the actual history |
 
-Initial implementation adds 175 authored Gooo lines, 204 handwritten production
-Go lines for IO/decoding, and a 363-line generated projection. This is initial
+Initial implementation adds 180 authored Gooo lines, 206 handwritten production
+Go lines for IO/decoding, and a 368-line generated projection. This is initial
 adapter cost; it does not demonstrate a declining marginal Go cost yet. The
 existing recovery selector is reused unchanged. A separate consistency test
 regenerates the library from both Gooo sources and checks its source bindings.

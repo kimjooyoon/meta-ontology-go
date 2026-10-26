@@ -8,6 +8,8 @@ func TestOriginCounterexamples(t *testing.T) {
 		name   string
 		change mutate
 	}{
+		{"unrelated prior plan", func(s *R_RecoveryScope, p, r *R_ReceiptOrigin) { s.F_prior_plan_id = "urn:unrelated:plan" }},
+		{"unrelated failed activity", func(s *R_RecoveryScope, p, r *R_ReceiptOrigin) { s.F_failed_activity_id = "urn:unrelated:activity" }},
 		{"missing receipt", func(s *R_RecoveryScope, p, r *R_ReceiptOrigin) { r.F_read_error = "missing receipt" }},
 		{"wrong publication run", func(s *R_RecoveryScope, p, r *R_ReceiptOrigin) { p.F_run_id++ }},
 		{"wrong readback run", func(s *R_RecoveryScope, p, r *R_ReceiptOrigin) { r.F_run_id++ }},
@@ -24,6 +26,7 @@ func TestOriginCounterexamples(t *testing.T) {
 		{"duplicate step", func(s *R_RecoveryScope, p, r *R_ReceiptOrigin) {
 			p.F_step_numbers = append(p.F_step_numbers, 5)
 			p.F_step_conclusions = append(p.F_step_conclusions, "success")
+			p.F_step_references = append(p.F_step_references, p.F_step_references[4])
 		}},
 		{"same run is not independent readback", func(s *R_RecoveryScope, p, r *R_ReceiptOrigin) {
 			r.F_run_id = p.F_run_id
@@ -39,8 +42,10 @@ func TestOriginCounterexamples(t *testing.T) {
 			r.F_image_ids = append(r.F_image_ids, r.F_image_ids[0])
 		}},
 	}
+	observed, passed := 0, 0
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			observed++
 			root, scope := historyFixture(t)
 			p, _ := Read(root, "publication", scope.F_publish_job)
 			r, _ := Read(root, "readback", scope.F_readback_job)
@@ -50,9 +55,10 @@ func TestOriginCounterexamples(t *testing.T) {
 				len(got.F_completed_effect_ids) != 0 || got.F_execution_authorized {
 				t.Fatalf("unbound history became completed effect: %+v", got)
 			}
+			passed++
 		})
 	}
-	t.Logf("independently specified origin counterexamples=%d/%d", len(cases), len(cases))
+	t.Logf("independently specified origin counterexamples=%d/%d executed; full population=%d", passed, observed, len(cases))
 }
 
 func TestEffectIdentitySurvivesPresentationChanges(t *testing.T) {

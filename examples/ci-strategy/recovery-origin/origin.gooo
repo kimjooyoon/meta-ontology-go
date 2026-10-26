@@ -10,6 +10,7 @@ entity ReceiptOrigin id "gooo://ci-strategy/receipt-origin" fields {
     field attempt id "gooo://ci-strategy/receipt-origin/attempt" type integer required one
     field workflow_path id "gooo://ci-strategy/receipt-origin/workflow-path" type string required one
     field workflow_sha256 id "gooo://ci-strategy/receipt-origin/workflow-sha256" type string required one
+    field plan_reference id "gooo://ci-strategy/receipt-origin/plan-reference" type string required one
     field conclusion id "gooo://ci-strategy/receipt-origin/conclusion" type string required one
     field completed_at id "gooo://ci-strategy/receipt-origin/completed-at" type integer required one
     field job_run_id id "gooo://ci-strategy/receipt-origin/job-run-id" type integer required one
@@ -18,6 +19,7 @@ entity ReceiptOrigin id "gooo://ci-strategy/receipt-origin" fields {
     field job_id id "gooo://ci-strategy/receipt-origin/job-id" type integer required one
     field step_numbers id "gooo://ci-strategy/receipt-origin/step-numbers" type integer required many
     field step_conclusions id "gooo://ci-strategy/receipt-origin/step-conclusions" type string required many
+    field step_references id "gooo://ci-strategy/receipt-origin/step-references" type string required many
     field artifact_run_id id "gooo://ci-strategy/receipt-origin/artifact-run-id" type integer required one
     field artifact_source id "gooo://ci-strategy/receipt-origin/artifact-source" type string required one
     field artifact_name id "gooo://ci-strategy/receipt-origin/artifact-name" type string required one
@@ -83,6 +85,7 @@ return record.read_error == "" && scope.repository != "" && scope.source != "" &
     scope.workflow_path != "" && scope.workflow_sha256 != "" &&
     record.repository == scope.repository && record.source == scope.source &&
     record.workflow_path == scope.workflow_path && record.workflow_sha256 == scope.workflow_sha256 &&
+    scope.prior_plan_id != "" && record.plan_reference == scope.prior_plan_id &&
     record.run_id > 0 && record.attempt > 0 && record.job_id > 0 &&
     record.job_run_id == record.run_id && record.job_attempt == record.attempt &&
     record.job_source == record.source && record.artifact_run_id == record.run_id &&
@@ -91,9 +94,10 @@ return record.read_error == "" && scope.repository != "" && scope.source != "" &
     record.completed_at > 0 && record.completed_at <= scope.observed_at
 `
 
-activity StepMatches(record ReceiptOrigin, number OriginInteger, conclusion OriginText) -> OriginBoolean
+activity StepMatches(record ReceiptOrigin, number OriginInteger, conclusion OriginText, reference OriginText) -> OriginBoolean
 id "gooo://ci-strategy/step-matches" computes `
-if len(record.step_numbers) != len(record.step_conclusions) || len(record.step_numbers) > 64 {
+if len(record.step_numbers) != len(record.step_conclusions) ||
+   len(record.step_numbers) != len(record.step_references) || len(record.step_numbers) > 64 {
     return false
 }
 let found = 0
@@ -102,7 +106,8 @@ let index = 0
 for step in record.step_numbers {
     if step == number {
         found = found + 1
-        matched = record.step_conclusions[index] == conclusion
+        matched = record.step_conclusions[index] == conclusion &&
+            (reference == "" || record.step_references[index] == reference)
     }
     index = index + 1
 }
@@ -120,9 +125,9 @@ let bound = OriginMatches(scope, published) && OriginMatches(scope, readback) &&
     readback.run_id != published.run_id && readback.completed_at > published.completed_at &&
     published.conclusion == "failure" && readback.conclusion == "success" &&
     scope.publish_step > 0 && scope.failed_step > scope.publish_step && scope.readback_step > 0 &&
-    StepMatches(published, scope.publish_step, "success") &&
-    StepMatches(published, scope.failed_step, "failure") &&
-    StepMatches(readback, scope.readback_step, "success")
+    StepMatches(published, scope.publish_step, "success", "") && scope.failed_activity_id != "" &&
+    StepMatches(published, scope.failed_step, "failure", scope.failed_activity_id) &&
+    StepMatches(readback, scope.readback_step, "success", "")
 let effects = false
 if len(published.subjects) == 1 && len(readback.subjects) == 1 &&
    len(published.image_ids) == 1 && len(readback.image_ids) == 1 {
