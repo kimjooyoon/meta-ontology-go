@@ -11,19 +11,20 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodylibrary"
 )
 
-const packageGenerateUsage = "usage: gooo package generate --go-package <name> <workspace.json>"
+const packageGenerateUsage = "usage: gooo package generate --go-package <name> [--out <directory>] <workspace.json>"
 
 // Emit only complete source. Source loading and package resolution use the same
 // bounded workspace path as inspection, without compiling or executing a binary.
 func runPackageGenerate(args []string, reader SourceReader, stdout, stderr io.Writer) int {
-	if len(args) != 3 || args[0] != "--go-package" {
+	options, ok := parsePackageGenerateArgs(args)
+	if !ok {
 		return reportUsage(false, stdout, stderr, "package generate", packageGenerateUsage)
 	}
-	program, manifestDigest, err := inspectWorkspaceSource(reader, args[2])
+	program, manifestDigest, err := inspectWorkspaceSource(reader, options.manifest)
 	var source string
 	if err == nil {
 		source, err = bodylibrary.Generate(context.Background(), "workspace.gooo",
-			[]byte(program.Source), program.Entry.LoweredName, args[1])
+			[]byte(program.Source), program.Entry.LoweredName, options.packageName)
 	}
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo package generate: %v\n", err)
@@ -42,6 +43,17 @@ func runPackageGenerate(args []string, reader SourceReader, stdout, stderr io.Wr
 		}
 	}
 	header.WriteString(source)
+	if options.outputDir != "" {
+		output, err := writePackageLibrary(options, program, []byte(header.String()))
+		if err != nil {
+			fmt.Fprintf(stderr, "gooo package generate: %v\n", err)
+			return exitFailure
+		}
+		if _, err := fmt.Fprintf(stdout, "generated: %s\n", output); err != nil {
+			return exitFailure
+		}
+		return exitOK
+	}
 	_, err = io.WriteString(stdout, header.String())
 	if err != nil {
 		return exitFailure
