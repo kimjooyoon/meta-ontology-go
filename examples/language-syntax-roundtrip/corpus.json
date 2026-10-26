@@ -1411,7 +1411,8 @@
     "examples/ci-strategy/strategy.gooo",
     "internal/meta/executioncontinuation/policy/source_recovery.gooo",
     "examples/runtime-package-surface/contract.gooo",
-    "examples/runtime-package-surface/inspect.gooo"
+    "examples/runtime-package-surface/inspect.gooo",
+    "internal/meta/cyclecontext/policy.gooo"
   ],
   "case_sources": [
     {

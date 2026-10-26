@@ -54,7 +54,7 @@ jobs:
           github-token: ${{ github.token }}
           run-id: ${{ env.CI_RUN_ID }}
 
-      - name: Bind and replay the complete cycle
+      - name: Record and replay cycle observations
         shell: bash
         run: |
           set -euo pipefail
