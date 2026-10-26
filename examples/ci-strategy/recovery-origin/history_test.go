@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"testing"
 )
@@ -45,7 +46,11 @@ func historyFixture(t *testing.T) (string, R_RecoveryScope) {
 	if err != nil || json.Unmarshal(raw, &scope) != nil {
 		t.Fatal("declared historical scope", err)
 	}
-	return root, scope
+	declared := DeclaredScope("transport-original-build-proof")
+	if !reflect.DeepEqual(declared, scope) {
+		t.Fatal("source plan differs from independent retained scope", declared, scope)
+	}
+	return root, declared
 }
 
 func TestRetainedHistory(t *testing.T) {
@@ -55,7 +60,7 @@ func TestRetainedHistory(t *testing.T) {
 	if published.F_read_error != "" || readback.F_read_error != "" {
 		t.Fatal(published.F_read_error, readback.F_read_error)
 	}
-	got := Evaluate(scope, published, readback)
+	got := Evaluate("transport-original-build-proof", published, readback)
 	if got.F_state != "PROPOSED_RECOVERY" || got.F_binding_state != "BOUND_HISTORICAL_OBSERVATION" {
 		t.Fatalf("actual retained inputs: %+v", got)
 	}
@@ -76,4 +81,24 @@ func TestRetainedHistory(t *testing.T) {
 		t.Fatal("raw observation digests missing")
 	}
 	t.Log("retained history cases=1/1; preserved goal/plan/activity/observation identities=7/7; execution_authorized=false")
+}
+
+func TestHistoricalPlanOwnsScopeAndPermittedProposals(t *testing.T) {
+	root, scope := historyFixture(t)
+	p, _ := Read(root, "publication", scope.F_publish_job)
+	r, _ := Read(root, "readback", scope.F_readback_job)
+	for _, row := range []struct{ operation, state, plan string }{
+		{"transport-original-build-proof", "PROPOSED_RECOVERY", "urn:gooo:oci-history:plan:transport-original-proof"},
+		{"publish-image", "REJECTED_REPLAY", "urn:gooo:oci-history:plan:republish"},
+		{"unknown-operation", "INVALID_PROPOSAL", ""},
+	} {
+		got := Evaluate(row.operation, p, r)
+		if got.F_state != row.state || got.F_recovery_plan_id != row.plan || got.F_execution_authorized {
+			t.Fatal("source-owned proposal", row.operation, got)
+		}
+	}
+	scope.F_subject = "a caller's edited view"
+	if DeclaredScope("transport-original-build-proof").F_subject == scope.F_subject {
+		t.Fatal("editing a returned plan changed the source-owned scope")
+	}
 }

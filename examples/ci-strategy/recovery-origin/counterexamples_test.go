@@ -50,7 +50,7 @@ func TestOriginCounterexamples(t *testing.T) {
 			p, _ := Read(root, "publication", scope.F_publish_job)
 			r, _ := Read(root, "readback", scope.F_readback_job)
 			tc.change(&scope, &p, &r)
-			got := Evaluate(scope, p, r)
+			got := Decide(scope, p, r)
 			if got.F_state != "UNRESOLVED_ORIGIN" || got.F_binding_state != "REFRESH_ORIGIN" ||
 				len(got.F_completed_effect_ids) != 0 || got.F_execution_authorized {
 				t.Fatalf("unbound history became completed effect: %+v", got)
@@ -67,18 +67,18 @@ func TestEffectIdentitySurvivesPresentationChanges(t *testing.T) {
 	r, _ := Read(root, "readback", scope.F_readback_job)
 	for _, label := range []string{"publish again", "새로운 이름으로 재시도"} {
 		scope.F_proposed_display_name, scope.F_proposed_operation = label, "publish-image"
-		got := Evaluate(scope, p, r)
+		got := Decide(scope, p, r)
 		if got.F_state != "REJECTED_REPLAY" || got.F_binding_state != "BOUND_HISTORICAL_OBSERVATION" || got.F_execution_authorized {
 			t.Fatal("display name hid an already observed effect", got)
 		}
 	}
 	scope.F_proposed_operation = "transport-original-build-proof"
 	scope.F_proposed_subject = "different-subject"
-	if got := Evaluate(scope, p, r); got.F_state != "INSUFFICIENT_EVIDENCE" || got.F_binding_state != "REVISE_SCOPE" {
+	if got := Decide(scope, p, r); got.F_state != "INSUFFICIENT_EVIDENCE" || got.F_binding_state != "REVISE_SCOPE" {
 		t.Fatal("proposal widened declared subject", got)
 	}
 	scope.F_proposed_subject, scope.F_proposed_operation = scope.F_subject, "arbitrary-operation"
-	if got := Evaluate(scope, p, r); got.F_state != "INVALID_PROPOSAL" || got.F_binding_state != "REVISE_SCOPE" {
+	if got := Decide(scope, p, r); got.F_state != "INVALID_PROPOSAL" || got.F_binding_state != "REVISE_SCOPE" {
 		t.Fatal("unknown effect acquired a canonical identity", got)
 	}
 }

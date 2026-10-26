@@ -39,7 +39,10 @@ func TestGeneratedRecoveryMatchesAuthoredSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := bodylibrary.Generate(context.Background(), "workspace.gooo", []byte(program.Source), program.Entry.LoweredName, "recoveryorigin")
+	generated, err := bodylibrary.GenerateWithStageExports(context.Background(), "workspace.gooo", []byte(program.Source), program.Entry.LoweredName, "recoveryorigin", []bodylibrary.StageExport{
+		{Name: "DeclaredScope", ActivityID: "gooo://ci-strategy/historical-scope"},
+		{Name: "Decide", ActivityID: "gooo://ci-strategy/bind-recovery"},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
