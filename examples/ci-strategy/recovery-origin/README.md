@@ -77,6 +77,19 @@ existing recovery selector is reused unchanged. A separate consistency test
 regenerates the library from both Gooo sources and checks its source bindings.
 No new grammar capability is counted and no timing improvement is claimed.
 
+The original [PR #1822 policy run](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/40373461422/job/121751081237)
+found a source-ownership defect: its Go refactoring candidate changed the generated
+`Evaluate` wrapper, and source regeneration correctly rejected the result. Go
+refactoring now checks standard generated headers and Gooo region comments both
+when collecting candidates and immediately before applying a retained candidate.
+Because that transformation formats the whole file, mixed-ownership files also
+require a change through their source owner. File and function size observations
+remain measured. A smaller writable-candidate count is an ownership correction,
+not a reduction in source complexity. Seven ownership cases and four retained
+candidate check/apply attempts cover the boundary; ordinary handwritten Go stays
+eligible. An automatic source-level repair for generated wrappers remains future
+work.
+
 `testdata/history.zip` losslessly retains nine original files (132,069 expanded
 bytes, 65,767 archive bytes). `testdata/origins.json` records their original names
 and SHA-256 values. The test pins the whole retained archive independently.
