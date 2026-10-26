@@ -70,3 +70,11 @@ Regression coverage imports generated libraries into a fresh Go module, checks
 the existing fourteen runtime-package-surface expectations, optional-record
 presence and exact integers, and ordered cross-activity inputs. These finite
 cases establish the tested behaviors, not equivalence for all possible inputs.
+
+A second regression changes the runtime surface declaration by adding one package
+while preserving its record schema. The exact same Go consumer is compiled before
+and after regeneration. Three fixed inputs per revision check missing packages,
+undeclared packages and missing origin: six independent expected outcomes, with
+zero handwritten consumer Go edits. This measures one same-schema policy change;
+new fields, renamed Go views and other consumers can still require integration
+work. The regression and generator have their own initial implementation cost.
