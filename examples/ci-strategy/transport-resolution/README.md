@@ -10,6 +10,18 @@ whether to collect another report. For this case, the next operation is
 `read-current-effect`: call the existing `prooftransport.Run` with `apply=false`,
 serialize its report, and query the pair. The queries themselves read saved bytes.
 
+The existing transport command also reads saved files:
+
+```sh
+go run ./examples/ci-strategy/proof-transport/cmd -reassess prior.json
+go run ./examples/ci-strategy/proof-transport/cmd -reassess prior.json -read-report read.json
+```
+
+Both commands print the Gooo result as JSON. A successful query exits with zero;
+the earlier operation's failure remains in `prior_command_failed`. Query mode
+uses the source's report byte bound and requires no registry token. `-apply`
+selects the transport operation and cannot be combined with `-reassess`.
+
 The result retains both exact report digests, the prior state and failure flag,
 and this query program's immutable generation context. An observed effect in
 the read report leaves the old command failure intact. An absent effect leads
