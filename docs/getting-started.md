@@ -188,6 +188,7 @@ same input bytes:
 | `manifest_digest`, `inputs_digest`, `cases_digest` | The bytes of the corresponding supplied file, when that input mode is present. |
 | `gooo package resolve --json`: `result.image.packages[].sources[].source_digest` | SHA-256 of `json.Marshal(source.Content)`, where `Content` is the source string loaded from the file. |
 | `result.program.workspace_image.packages[].sources[].source_digest` | The stored source string serialized by Go `json.Marshal`, including JSON quoting and escaping. This is different from hashing the raw `.gooo` file. |
+| `result.program.activity_origins[].input_source.source_sha256` | Raw UTF-8 bytes of the complete workspace source file named by `package_path` and `filename`. The accompanying byte offsets select a region within that file; the digest does not hash only that region. |
 | `result.program.workspace_image.packages[].sources[].semantic_digest` | The compiler's semantic IR digest for that source entry. |
 | `result.composition.steps[].generation.report.source_digest` | SHA-256 of the raw Gooo source bytes passed to that generation step. Earlier fills or selected source checkpoints can change these bytes between steps. A direct generation report uses `report.source_digest` for its own input bytes. |
 | `result.composition.steps[].generation.report.body_fill.original_source_digest` or `.body_search.original_source_digest` | SHA-256 of the raw Gooo bytes supplied to that fill or search operation, before its own choice is applied. “Original” is relative to that operation. |
