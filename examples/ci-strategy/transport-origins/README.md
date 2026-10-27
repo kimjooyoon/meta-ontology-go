@@ -29,6 +29,11 @@ from different invocations, and a recorded readback can exist even when
 cancellation prevented a network dispatch. A proposed next operation stays
 `PROPOSED`.
 
+The decision record links to both of its source inputs: the report's `/scope`
+and `/before` records. A recorded readback selection links to that same scope
+and the `/after` record. These are dependencies within the source-checked saved
+content. They remain visible even in a read-only report with no write attempt.
+
 Reported generation-context identifiers hash the decoded UTF-8 string values in
 `generation_origin` and `outcome_generation_origin`. They identify reported
 metadata. The view's own `GoooGenerationOrigin` separately records the compiler

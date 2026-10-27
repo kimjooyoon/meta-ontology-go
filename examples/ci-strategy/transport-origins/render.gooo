@@ -19,6 +19,8 @@ let report = base + ">"
 let general_view = base + ":view>"
 let projection = base + ":view:" + frame.projection_generation_sha256 + ">"
 let projection_context = "<urn:gooo:projection-generation-context:" + frame.projection_generation_sha256 + ">"
+let scope_record = base + ":scope-record>"
+let initial = base + ":before-record>"
 let selected = base + ":decision-record>"
 let response = base + ":write-record>"
 let readback = base + ":after-record>"
@@ -50,12 +52,20 @@ view.lines = filter_values([]string{
     prior + kind + "<http://www.w3.org/ns/prov#Plan> .",
     plan + own + "goal> " + goal + " .",
     plan + own + "priorPlan> " + prior + " .",
+    scope_record + kind + entity,
+    scope_record + own + "recordedIn> " + report + " .",
+    scope_record + own + "recordPath> \"/scope\" .",
+    initial + kind + entity,
+    initial + own + "recordedIn> " + report + " .",
+    initial + own + "recordPath> \"/before\" .",
     selected + kind + entity,
     selected + own + "recordedIn> " + report + " .",
     selected + own + "recordPath> \"/decision\" .",
     selected + own + "sourceActivity> <gooo://ci-strategy/transport-next> .",
     selected + own + "targetEffect> " + effect + " .",
     selected + own + "plan> " + plan + " .",
+    selected + prov + "wasDerivedFrom> " + scope_record + " .",
+    selected + prov + "wasDerivedFrom> " + initial + " .",
     response + kind + entity,
     response + own + "recordedIn> " + report + " .",
     response + own + "recordPath> \"/write\" .",
@@ -81,6 +91,7 @@ view.lines = filter_values([]string{
     When(frame.after_present,classified + own + "recordedIn> " + report + " ."),
     When(frame.after_present,classified + own + "recordPath> \"/next\" ."),
     When(frame.after_present,classified + own + "sourceActivity> <gooo://ci-strategy/transport-next> ."),
+    When(frame.after_present,classified + prov + "wasDerivedFrom> " + scope_record + " ."),
     When(frame.after_present,classified + prov + "wasDerivedFrom> " + readback + " ."),
     When(frame.after_present,assessment + prov + "wasDerivedFrom> " + classified + " ."),
     When(has_decision_context,decision_context + kind + entity),
