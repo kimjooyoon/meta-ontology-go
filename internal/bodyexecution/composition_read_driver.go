@@ -66,6 +66,7 @@ func observedReadDriverWithObserver(source, prefix string, prior Composition, ob
 		return "", err
 	}
 	registrations := readDriverRegistrations(prior, prefix)
+	expectedInputs := len(registrations)
 	ranges, encoders, inputs := 0, 0, 0
 	var failure error
 	ast.Inspect(file, func(node ast.Node) bool {
@@ -109,7 +110,7 @@ func observedReadDriverWithObserver(source, prefix string, prior Composition, ob
 	if failure != nil {
 		return "", failure
 	}
-	if ranges != 1 || encoders != 1 || inputs == 0 || len(registrations) != 0 {
+	if ranges != 1 || encoders != 1 || inputs != expectedInputs || len(registrations) != 0 {
 		return "", fmt.Errorf("collection observation driver differs from its decoded input slots")
 	}
 	var out bytes.Buffer

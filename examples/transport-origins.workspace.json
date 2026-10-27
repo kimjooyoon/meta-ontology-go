@@ -1,0 +1,41 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "examples/transportorigins",
+    "activity": "ProjectReport"
+  },
+  "packages": [
+    {
+      "path": "examples/transportorigins",
+      "imports": [
+        "examples/cistrategy",
+        "examples/transportoutcome",
+        "origin/recordeduse"
+      ],
+      "sources": [
+        "ci-strategy/transport-origins/origins.gooo"
+      ]
+    },
+    {
+      "path": "examples/transportoutcome",
+      "sources": [
+        "ci-strategy/transport-outcome/outcome.gooo"
+      ]
+    },
+    {
+      "path": "origin/recordeduse",
+      "sources": [
+        "recorded-use-origins/inspect.gooo"
+      ]
+    },
+    {
+      "path": "examples/cistrategy",
+      "sources": [
+        "ci-strategy/strategy.gooo",
+        "ci-strategy/recovery-origin/origin.gooo",
+        "ci-strategy/recovery-origin/plan.gooo",
+        "ci-strategy/proof-transport/transport.gooo"
+      ]
+    }
+  ]
+}

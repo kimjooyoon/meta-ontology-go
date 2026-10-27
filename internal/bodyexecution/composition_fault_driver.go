@@ -26,7 +26,7 @@ func arithmeticCompositionDriver(prior Composition) (string, error) {
 	source.WriteString(compositionNativePreamble(graph))
 	fmt.Fprintf(&source, "var in [][%d]json.RawMessage;if json.NewDecoder(os.Stdin).Decode(&in)!=nil||len(in)>128{os.Exit(2)}\n", roots)
 	fmt.Fprintf(&source, "out:=make([][%d]json.RawMessage,len(in));faults:=make([][%d]*%sFault,len(in));blocked:=make([][%d][]string,len(in))\n", graph.count, graph.count, prefix, graph.count)
-	fmt.Fprintf(&source, "for c,row:=range in{%sCase=c;%sCount=0\n", prefix, prefix)
+	fmt.Fprintf(&source, "for %s:=range in{%sCase=c;%sCount=0\n", compositionRowVariables(roots), prefix, prefix)
 	root := 0
 	for i, node := range graph.nodes[:graph.count] {
 		root = writeArithmeticDriverStep(&source, graph, node, i, root, prefix)

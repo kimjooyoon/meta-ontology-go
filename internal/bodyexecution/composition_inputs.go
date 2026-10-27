@@ -9,6 +9,9 @@ import (
 )
 
 func (node CompositionActivity) inputSlots() []CompositionInput {
+	if node.ZeroInputs {
+		return nil
+	}
 	if len(node.Inputs) > 0 {
 		return node.Inputs
 	}
@@ -32,10 +35,13 @@ func (graph compositionGraph) bindActivityInputs(file *syntax.File, node *Compos
 		if !ok || activity.Name != node.Name {
 			continue
 		}
-		if len(activity.Inputs) < 1 || len(activity.Inputs) > compositionLimit || !activity.ValueProgramPresent {
-			return fmt.Errorf("composition activity %q requires 1..16 inputs and a computes body", node.Name)
+		if len(activity.Inputs) > compositionLimit || !activity.ValueProgramPresent {
+			return fmt.Errorf("composition activity %q requires 0..16 inputs and a computes body", node.Name)
 		}
-		node.InputType, node.OutputType = activity.Inputs[0].Name, activity.Output
+		node.ZeroInputs, node.OutputType = len(activity.Inputs) == 0, activity.Output
+		if !node.ZeroInputs {
+			node.InputType = activity.Inputs[0].Name
+		}
 		node.Assembling = activity.Assembly != nil
 		if len(activity.Inputs) > 1 {
 			node.Inputs = make([]CompositionInput, len(activity.Inputs))
@@ -46,7 +52,7 @@ func (graph compositionGraph) bindActivityInputs(file *syntax.File, node *Compos
 				node.Inputs[p] = CompositionInput{Port: fmt.Sprintf("input%d", p), Type: input.Name, From: -1}
 			}
 		}
-		if graph.valueGoType(node.InputType) == "" || graph.valueGoType(node.OutputType) == "" {
+		if !node.ZeroInputs && graph.valueGoType(node.InputType) == "" || graph.valueGoType(node.OutputType) == "" {
 			return fmt.Errorf("composition activity %q requires a scalar or declared record", node.Name)
 		}
 		if graphEntry && node.Assembling && !bodycodegen.IsRecordAssembly(&activity.Assembly.Spec) &&

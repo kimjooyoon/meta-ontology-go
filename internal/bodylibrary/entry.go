@@ -30,7 +30,7 @@ func libraryEntry(plan bodyexecution.CompositionPlan, source string) (string, er
 		}
 		signature := function.Type().(*types.Signature)
 		inputs := node.Inputs
-		if len(inputs) == 0 {
+		if len(inputs) == 0 && !node.ZeroInputs {
 			inputs = []bodyexecution.CompositionInput{{Port: "input", EntityID: node.InputEntityID, From: node.InputFrom}}
 		}
 		if signature.Params().Len() != len(inputs) || signature.Results().Len() != 1 {
