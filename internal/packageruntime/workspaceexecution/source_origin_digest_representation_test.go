@@ -67,6 +67,9 @@ func TestPrepareKeepsRawActivityOriginsSeparateFromJSONStringImageDigests(t *tes
 			imageDigests[key] = source.Digest
 		}
 	}
+	if len(imageDigests) != len(originals) {
+		t.Fatal("workspace image source entries missing", len(imageDigests), len(originals))
+	}
 	if len(wire.Origins) != 2 {
 		t.Fatal("reachable source origins missing", len(wire.Origins))
 	}
