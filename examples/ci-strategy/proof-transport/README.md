@@ -19,6 +19,7 @@ From the repository root:
 ```sh
 go run ./cmd/gooo package generate --go-package prooftransport \
   --export-stage Plan=gooo://ci-strategy/transport-plan \
+  --embed-origin \
   --out examples/ci-strategy/proof-transport \
   examples/ci-strategy/proof-transport.workspace.json
 go test ./examples/ci-strategy/proof-transport/...
@@ -36,6 +37,13 @@ record type. `Evaluate(operation, observation)` composes that plan with the Gooo
 decision. `Run` reads its own plan instead of accepting a caller-modified scope.
 The prior plan, new plan and canonical effect keep distinct identities. Stage
 comments, field tags and source digests preserve the generation correspondence.
+The report's `generation_origin` string retains the compiler-generated JSON
+constant, including all four original Gooo source-file hashes. Reading it needs
+no source files or current-checkout lookup. It identifies the program's generation
+inputs; the report's observations and attempted effect describe this invocation
+separately. The example adds one report field and one assignment in Go to carry
+this view; the shared compiler implementation and regression tests have their
+own initial cost. Existing Gooo policy and record declarations are unchanged.
 The report is typed execution data; a PROV-O graph export remains separate work.
 
 | Source result | Next operation |

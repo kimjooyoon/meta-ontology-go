@@ -46,9 +46,11 @@ func TestGeneratedTransportMatchesAuthoredSource(t *testing.T) {
 		t.Fatal(err)
 	}
 	stored, err := os.ReadFile("semantic.gooo.go")
-	if err != nil || !strings.HasSuffix(string(stored), generated) {
+	core, _, hasOrigin := strings.Cut(string(stored), "\n//gooo:generated:start id=\"urn:gooo:library:generation-origin:")
+	if err != nil || !hasOrigin || !strings.HasSuffix(strings.TrimSpace(core), strings.TrimSpace(generated)) {
 		t.Fatal("regenerate the source-owned library", err)
 	}
+	checkTransportGenerationOrigin(t, raw, program, string(stored))
 	for _, binding := range []string{
 		fmt.Sprintf("// Workspace manifest: sha256:%x\n", sha256.Sum256(raw)),
 		"// Workspace image: " + program.Workspace.Digest + "\n",
