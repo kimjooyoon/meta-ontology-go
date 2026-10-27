@@ -1,0 +1,69 @@
+package transportorigins
+namespace transportorigins
+import cistrategy "examples/cistrategy"
+import outcome "examples/transportoutcome"
+import rdf "origin/recordeduse"
+
+entity OriginView id "gooo://transport-origins/view" fields {
+    field status id "gooo://transport-origins/view/status" type string required one
+    field reason id "gooo://transport-origins/view/reason" type string required one
+    field report_sha256 id "gooo://transport-origins/view/report" type string required one
+    field lines id "gooo://transport-origins/view/lines" type string required many
+}
+entity WriteRecord id "gooo://transport-origins/write-record" fields {
+    field attempted id "gooo://transport-origins/write-record/attempted" type boolean required one
+    field status id "gooo://transport-origins/write-record/status" type integer required one
+    field error id "gooo://transport-origins/write-record/error" type string required one
+}
+entity SavedFrame id "gooo://transport-origins/saved-frame" fields {
+    field report_sha256 id "gooo://transport-origins/saved-frame/report" type string required one
+    field report_bytes id "gooo://transport-origins/saved-frame/bytes" type integer required one
+    field fields_complete id "gooo://transport-origins/saved-frame/complete" type boolean required one
+    field after_present id "gooo://transport-origins/saved-frame/after" type boolean required one
+    field next_present id "gooo://transport-origins/saved-frame/next" type boolean required one
+    field decision_generation_sha256 id "gooo://transport-origins/saved-frame/decision-generation" type string required one
+    field outcome_generation_sha256 id "gooo://transport-origins/saved-frame/outcome-generation" type string required one
+    field projection_generation_sha256 id "gooo://transport-origins/saved-frame/projection-generation" type string required one
+}
+
+activity ReportByteLimit() -> rdf.Integer id "gooo://transport-origins/report-byte-limit" computes `
+return 262144
+`
+
+# A historical content view: source checks compare this report's own observations.
+# Reading the view does not dispatch a request or allocate an execution identity.
+activity ProjectReport(scope cistrategy.TransportScope, before cistrategy.TransportObservation,
+    decision cistrategy.TransportStep, write WriteRecord, after cistrategy.TransportObservation,
+    next cistrategy.TransportStep, claim outcome.Outcome, frame SavedFrame, byte_limit rdf.Integer) -> OriginView
+id "gooo://transport-origins/project-report" computes `
+let view = OriginView{status:"UNRESOLVED_ORIGINS",reason:"REPORT_BYTES_OUTSIDE_PROFILE",
+    report_sha256:frame.report_sha256,lines:[]string{}}
+if frame.report_bytes < 1 || frame.report_bytes > byte_limit || !rdf.IsSHA256(frame.report_sha256) { return view }
+view.reason = "PROJECTION_CONTEXT_REQUIRED"
+if !rdf.IsSHA256(frame.projection_generation_sha256) { return view }
+view.reason = "READBACK_PAIR_REQUIRED"
+if frame.after_present != frame.next_present { return view }
+view.reason = "REPORT_FIELDS_MISSING"
+if !frame.fields_complete { return view }
+view.reason = "SCOPE_DEFINITION_CONFLICT"
+if scope != cistrategy.TransportPlan(scope.operation) { return view }
+view.reason = "DECISION_SOURCE_CONFLICT"
+if decision != cistrategy.TransportNext(scope,before) { return view }
+view.reason = "READBACK_SOURCE_CONFLICT"
+if frame.after_present && next != cistrategy.TransportNext(scope,after) { return view }
+let observation = outcome.Observation{
+    effect_id:scope.effect_id,decision_effect_id:decision.effect_id,
+    decision_state:decision.state,decision_next:decision.next_operation,
+    write_attempted:write.attempted,response_status:write.status,response_error:write.error,
+    readback_recorded:frame.after_present,readback_effect_id:"",readback_state:""}
+if frame.after_present {
+    observation.readback_effect_id = next.effect_id
+    observation.readback_state = next.state
+}
+let assessed = outcome.Assess(observation)
+view.reason = "RETAINED_ASSESSMENT_CONFLICT"
+if claim != assessed || assessed.state == "INCONSISTENT_OBSERVATION" { return view }
+return RenderReport(scope,write,assessed,frame)
+`
+
+bind ReportByteLimit.result -> ProjectReport.input8

@@ -35,8 +35,12 @@ func emitCompositionProjection(steps []CompositionStep, graph compositionGraph) 
 	if err != nil {
 		return "", err
 	}
-	if _, err := new(types.Config).Check("gooo.observed.composition", fset, []*ast.File{file}, nil); err != nil {
+	information := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}
+	if _, err := new(types.Config).Check("gooo.observed.composition", fset, []*ast.File{file}, information); err != nil {
 		return "", fmt.Errorf("composition projection typecheck: %w", err)
+	}
+	if err := bodycodegen.ValidateRecordUseBudget(information, graph.plan.Records, true); err != nil {
+		return "", err
 	}
 	return string(raw), nil
 }
@@ -68,7 +72,7 @@ func compositionDriver(graph compositionGraph) (string, error) {
 		}
 	}
 	fmt.Fprintf(&source, "var in [][%d]json.RawMessage; if json.NewDecoder(os.Stdin).Decode(&in)!=nil||len(in)>128{os.Exit(2)}\n", roots)
-	fmt.Fprintf(&source, "out:=make([][%d]json.RawMessage,len(in));for c,row:=range in{\n", graph.count)
+	fmt.Fprintf(&source, "out:=make([][%d]json.RawMessage,len(in));for %s:=range in{\n", graph.count, compositionRowVariables(roots))
 	root := 0
 	for i, node := range graph.nodes[:graph.count] {
 		arguments := make([]string, 0, len(node.inputSlots()))
@@ -88,4 +92,11 @@ func compositionDriver(graph compositionGraph) (string, error) {
 	source.WriteString("};if json.NewEncoder(os.Stdout).Encode(out)!=nil{os.Exit(3)}}\n")
 	raw, err := format.Source([]byte(source.String()))
 	return string(raw), err
+}
+
+func compositionRowVariables(roots int) string {
+	if roots == 0 {
+		return "c"
+	}
+	return "c,row"
 }

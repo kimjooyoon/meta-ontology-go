@@ -41,12 +41,19 @@ func prepareCompositionGraphForEntry(ctx context.Context, filename string, sourc
 		EntryActivity:   entry,
 		TypedPlanSHA256: typed.Digest(), SemanticFingerprint: bidir.SemanticFingerprint(model),
 		Edges: make([]CompositionEdge, 0, len(typed.Edges))}
-	graph.plan.Records, err = bodycodegen.RecordTypesFromModel(model)
+	graph.plan.Records, err = bodycodegen.DeclaredRecordTypesFromModel(model)
 	if err != nil {
 		return graph, err
 	}
 	graph.scalarKinds = bodycodegen.ScalarKindsFromSource(file)
 	if err := graph.bindNodes(file, model, typed); err != nil {
+		return graph, err
+	}
+	roots := make([]string, graph.count)
+	for index, node := range graph.nodes[:graph.count] {
+		roots[index] = node.Name
+	}
+	if _, err := bodycodegen.SelectActivityRecords(file, graph.plan.Records, roots); err != nil {
 		return graph, err
 	}
 	if err := graph.bindEdges(typed); err != nil {

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -27,17 +25,9 @@ func PlanCallConstruction(ctx context.Context, filename string, source []byte, r
 	if diagnostics.HasErrors() || file == nil {
 		return result, fmt.Errorf("call construction source has syntax errors")
 	}
-	p := callConstructionPlanner{activities: map[string]*syntax.ActivityDecl{}, heights: map[string]int{},
-		visiting: map[string]bool{}, visited: map[string]bool{}, assemblingBelow: map[string]bool{}, called: map[string]bool{}}
-	for _, declaration := range file.Declarations {
-		if activity, ok := declaration.(*syntax.ActivityDecl); ok {
-			p.activities[activity.Name] = activity
-		}
-	}
-	for _, root := range roots {
-		if err := p.visit(root, 0); err != nil {
-			return result, err
-		}
+	p, err := planCallConstructionFile(file, roots)
+	if err != nil {
+		return result, err
 	}
 	for _, name := range p.order {
 		if p.called[name] && p.activities[name].Assembly != nil {
@@ -51,6 +41,22 @@ func PlanCallConstruction(ctx context.Context, filename string, source []byte, r
 		return result, fmt.Errorf("call construction exceeds 32 assembled helpers")
 	}
 	return result, nil
+}
+
+func planCallConstructionFile(file *syntax.File, roots []string) (callConstructionPlanner, error) {
+	p := callConstructionPlanner{activities: map[string]*syntax.ActivityDecl{}, heights: map[string]int{},
+		visiting: map[string]bool{}, visited: map[string]bool{}, assemblingBelow: map[string]bool{}, called: map[string]bool{}}
+	for _, declaration := range file.Declarations {
+		if activity, ok := declaration.(*syntax.ActivityDecl); ok {
+			p.activities[activity.Name] = activity
+		}
+	}
+	for _, root := range roots {
+		if err := p.visit(root, 0); err != nil {
+			return p, err
+		}
+	}
+	return p, nil
 }
 
 type callConstructionPlanner struct {
@@ -101,36 +107,12 @@ func (p *callConstructionPlanner) visit(name string, depth int) error {
 }
 
 func activityConstructionCalls(activity *syntax.ActivityDecl) ([]string, error) {
-	surfaces := []string{activity.ValueProgram}
-	if activity.Assembly != nil {
-		spec := activity.Assembly.Spec
-		surfaces = append(surfaces, spec.Baseline)
-		for _, choice := range spec.Choices {
-			if choice.Kind == "field_value" || choice.Kind == "field_update" {
-				surfaces = append(surfaces, "return "+choice.Alternative)
-			}
-		}
-		if spec.FillPlan != nil {
-			for _, candidate := range spec.FillPlan.Candidates {
-				for _, fill := range candidate.Fills {
-					surfaces = append(surfaces, "return "+fill.Expression)
-				}
-			}
-		}
+	bodies, err := activityConstructionSyntax(activity)
+	if err != nil {
+		return nil, err
 	}
 	set := map[string]bool{}
-	for _, surface := range surfaces {
-		if surface == "" {
-			continue
-		}
-		body, err := rewriteLetDeclarations(surface)
-		if err != nil {
-			return nil, err
-		}
-		file, err := parser.ParseFile(token.NewFileSet(), "calls.go", "package p\nvar _ = func(){\n"+body+"\n}", 0)
-		if err != nil {
-			return nil, err
-		}
+	for _, file := range bodies {
 		ast.Inspect(file, func(node ast.Node) bool {
 			if call, ok := node.(*ast.CallExpr); ok {
 				if ident, ok := call.Fun.(*ast.Ident); ok && ident.Obj == nil {

@@ -42,6 +42,9 @@ func newCriteriaTupleEvaluator(ctx context.Context, source []byte, activity stri
 	if _, err := new(types.Config).Check(file.Name.Name, fset, []*ast.File{file}, &information); err != nil {
 		return nil, err
 	}
+	if err := ValidateRecordUseBudget(&information, records, false); err != nil {
+		return nil, err
+	}
 	p := &criteriaTupleEvaluator{function: function, records: records,
 		output: information.Types[function.Type.Results.List[0].Type].Type,
 		evaluator: integerBodyEvaluator{context: ctx, information: information,

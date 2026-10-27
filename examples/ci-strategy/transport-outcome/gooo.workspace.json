@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "examples/transportoutcome", "activity": "Assess"},
+  "packages": [{"path": "examples/transportoutcome", "sources": ["outcome.gooo"]}]
+}

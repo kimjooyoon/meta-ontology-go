@@ -54,7 +54,7 @@ func routeEquivalenceWithCalls(packageName, activityName string, parameters []In
 	for _, call := range calls {
 		sourceText.WriteString(call.declaration())
 	}
-	withSignature := len(parameters) > 1 || len(records) > 0
+	withSignature := len(parameters) != 1 || len(records) > 0
 	sourceForm, err := canonicalizeRouteProjection(packageName, activityName, []byte(sourceText.String()), true, withSignature, calls, records)
 	if err != nil {
 		return RouteEquivalenceReceipt{}, err

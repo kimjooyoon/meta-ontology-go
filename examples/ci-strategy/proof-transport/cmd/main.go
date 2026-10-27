@@ -51,8 +51,8 @@ func execute() error {
 	if err := json.NewEncoder(os.Stdout).Encode(report); err != nil {
 		return err
 	}
-	if report.Write.Attempted && (report.Write.Error != "" || report.Write.Status < 200 || report.Write.Status > 299) {
-		return fmt.Errorf("manifest write did not return success; retain the separate readback result")
+	if report.Outcome.F_command_failed {
+		return fmt.Errorf("operation outcome %s; retain the separate response and readback", report.Outcome.F_state)
 	}
 	return nil
 }
