@@ -28,8 +28,7 @@ func projectReportJSON(raw []byte, shape reflect.Type) (json.RawMessage, bool, e
 	}
 	known := make(map[string]json.RawMessage, shape.NumField())
 	complete := true
-	for index := range shape.NumField() {
-		field := shape.Field(index)
+	for field := range shape.Fields() {
 		if field.PkgPath != "" {
 			continue
 		}
