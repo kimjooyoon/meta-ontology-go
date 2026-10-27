@@ -121,6 +121,13 @@ not embedded in the JSON.
 
 Generation typechecks the emitted Go in process. It neither invokes the Go
 toolchain nor executes the program, asks a model, or creates test expectations.
+The sixteen-record body budget applies to the union of selected bind stages,
+called helpers and permitted construction alternatives. Every declared layout
+is still validated, and the complete source identity, semantic fingerprint and
+public record declarations remain available. Adding an unrelated valid record
+can change that source identity while preserving the same importing Go program.
+Realized candidates are checked again through their typed uses before scoring
+or projection, including types absent from an original body hole.
 The current route rejects every `assembling` contract, including a saved selection
 checkpoint that still retains that contract. Existing workspace
 and body-profile bounds apply, including the 256 KiB projection bound.

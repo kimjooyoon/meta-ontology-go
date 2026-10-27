@@ -51,6 +51,9 @@ func prepareActivityBodyFile(file *syntax.File, activityName string) (preparedBo
 	if err != nil {
 		return p, err
 	}
+	if _, err := SelectActivityRecords(file, records, []string{activityName}); err != nil {
+		return p, err
+	}
 	p.parameters, err = sourceBodyParameters(p.activity, records, file)
 	if err != nil {
 		return p, err

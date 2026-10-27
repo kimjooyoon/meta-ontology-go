@@ -35,8 +35,12 @@ func emitCompositionProjection(steps []CompositionStep, graph compositionGraph) 
 	if err != nil {
 		return "", err
 	}
-	if _, err := new(types.Config).Check("gooo.observed.composition", fset, []*ast.File{file}, nil); err != nil {
+	information := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}
+	if _, err := new(types.Config).Check("gooo.observed.composition", fset, []*ast.File{file}, information); err != nil {
 		return "", fmt.Errorf("composition projection typecheck: %w", err)
+	}
+	if err := bodycodegen.ValidateRecordUseBudget(information, graph.plan.Records, true); err != nil {
+		return "", err
 	}
 	return string(raw), nil
 }

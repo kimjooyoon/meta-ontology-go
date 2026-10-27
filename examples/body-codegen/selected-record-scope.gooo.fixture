@@ -1,0 +1,75 @@
+package recordscope
+namespace recordscope
+
+entity Request id "urn:gooo:record-scope:Request" fields {
+    field value id "urn:gooo:record-scope:Request:value" type integer required one
+}
+entity Result id "urn:gooo:record-scope:Result" fields {
+    field value id "urn:gooo:record-scope:Result:value" type integer required one
+}
+entity Scratch id "urn:gooo:record-scope:Scratch" fields {
+    field value id "urn:gooo:record-scope:Scratch:value" type integer required one
+}
+entity Unused00 id "urn:gooo:record-scope:Unused00" fields {
+    field value id "urn:gooo:record-scope:Unused00:value" type integer required one
+}
+entity Unused01 id "urn:gooo:record-scope:Unused01" fields {
+    field value id "urn:gooo:record-scope:Unused01:value" type integer required one
+}
+entity Unused02 id "urn:gooo:record-scope:Unused02" fields {
+    field value id "urn:gooo:record-scope:Unused02:value" type integer required one
+}
+entity Unused03 id "urn:gooo:record-scope:Unused03" fields {
+    field value id "urn:gooo:record-scope:Unused03:value" type integer required one
+}
+entity Unused04 id "urn:gooo:record-scope:Unused04" fields {
+    field value id "urn:gooo:record-scope:Unused04:value" type integer required one
+}
+entity Unused05 id "urn:gooo:record-scope:Unused05" fields {
+    field value id "urn:gooo:record-scope:Unused05:value" type integer required one
+}
+entity Unused06 id "urn:gooo:record-scope:Unused06" fields {
+    field value id "urn:gooo:record-scope:Unused06:value" type integer required one
+}
+entity Unused07 id "urn:gooo:record-scope:Unused07" fields {
+    field value id "urn:gooo:record-scope:Unused07:value" type integer required one
+}
+entity Unused08 id "urn:gooo:record-scope:Unused08" fields {
+    field value id "urn:gooo:record-scope:Unused08:value" type integer required one
+}
+entity Unused09 id "urn:gooo:record-scope:Unused09" fields {
+    field value id "urn:gooo:record-scope:Unused09:value" type integer required one
+}
+entity Unused10 id "urn:gooo:record-scope:Unused10" fields {
+    field value id "urn:gooo:record-scope:Unused10:value" type integer required one
+}
+entity Unused11 id "urn:gooo:record-scope:Unused11" fields {
+    field value id "urn:gooo:record-scope:Unused11:value" type integer required one
+}
+entity Unused12 id "urn:gooo:record-scope:Unused12" fields {
+    field value id "urn:gooo:record-scope:Unused12:value" type integer required one
+}
+entity Unused13 id "urn:gooo:record-scope:Unused13" fields {
+    field value id "urn:gooo:record-scope:Unused13:value" type integer required one
+}
+entity Unused14 id "urn:gooo:record-scope:Unused14" fields {
+    field value id "urn:gooo:record-scope:Unused14:value" type integer required one
+}
+entity Unused15 id "urn:gooo:record-scope:Unused15" fields {
+    field value id "urn:gooo:record-scope:Unused15:value" type integer required one
+}
+entity Unused16 id "urn:gooo:record-scope:Unused16" fields {
+    field value id "urn:gooo:record-scope:Unused16:value" type integer required one
+}
+
+activity Triple(Request) -> Result id "urn:gooo:record-scope:triple" computes `
+let scratch = Scratch{value: input.value * 3}
+return Result{value: scratch.value}
+`
+activity Evaluate(Request) -> Result id "urn:gooo:record-scope:evaluate" computes `
+let Unused00 = input.value < 0
+let next = Triple(input)
+if Unused00 { next.value = 0 }
+next.value = next.value + 1
+return next
+`
