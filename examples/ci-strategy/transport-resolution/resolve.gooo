@@ -1,0 +1,76 @@
+package transportresolution
+namespace transportresolution
+import cistrategy "examples/cistrategy"
+import outcome "examples/transportoutcome"
+import origins "examples/transportorigins"
+import rdf "origin/recordeduse"
+
+entity PairFrame id "gooo://transport-resolution/pair-frame" fields {
+    field generation_sha256 id "gooo://transport-resolution/pair-frame/generation" type string required one
+    field prior_operation id "gooo://transport-resolution/pair-frame/prior-operation" type string required one
+    field current_operation id "gooo://transport-resolution/pair-frame/current-operation" type string required one
+    field current_present id "gooo://transport-resolution/pair-frame/current-present" type boolean required one
+    field current_apply_requested id "gooo://transport-resolution/pair-frame/apply" type boolean required one
+    field current_write_attempted id "gooo://transport-resolution/pair-frame/write" type boolean required one
+    field current_readback_present id "gooo://transport-resolution/pair-frame/readback" type boolean required one
+}
+
+entity Resolution id "gooo://transport-resolution/resolution" fields {
+    field effect_id id "gooo://transport-resolution/resolution/effect" type string required one
+    field generation_sha256 id "gooo://transport-resolution/resolution/generation" type string required one
+    field prior_report_sha256 id "gooo://transport-resolution/resolution/prior-report" type string required one
+    field current_report_sha256 id "gooo://transport-resolution/resolution/current-report" type string required one
+    field prior_state id "gooo://transport-resolution/resolution/prior-state" type string required one
+    field prior_command_failed id "gooo://transport-resolution/resolution/prior-command-failed" type boolean required one
+    field state id "gooo://transport-resolution/resolution/state" type string required one
+    field current_state id "gooo://transport-resolution/resolution/current-state" type string required one
+    field next_operation id "gooo://transport-resolution/resolution/next" type string required one
+    field observation_needed id "gooo://transport-resolution/resolution/observation-needed" type boolean required one
+    field read_report_effect_observed id "gooo://transport-resolution/resolution/read-effect-observed" type boolean required one
+}
+
+activity Reassess(prior outcome.Outcome, current cistrategy.TransportObservation,
+    prior_view origins.OriginView, current_view origins.OriginView, frame PairFrame) -> Resolution
+id "gooo://transport-resolution/reassess" computes `
+let scope = cistrategy.TransportPlan("transport-original-build-proof")
+let result = Resolution{effect_id:scope.effect_id,generation_sha256:frame.generation_sha256,
+    prior_report_sha256:prior_view.report_sha256,
+    current_report_sha256:current_view.report_sha256,prior_state:prior.state,
+    prior_command_failed:prior.command_failed,state:"UNRESOLVED_SOURCE_PAIR",current_state:"",
+    next_operation:"collect-source-correspondence",observation_needed:false,read_report_effect_observed:false}
+if !rdf.IsSHA256(frame.generation_sha256) || !rdf.IsSHA256(prior_view.report_sha256) ||
+    prior_view.status != "RECORDED_REPORT_ORIGINS" || frame.prior_operation != scope.operation { return result }
+if prior.effect_id != scope.effect_id { return result }
+if prior.state == "EFFECT_OBSERVED" || prior.state == "EFFECT_OBSERVED_WITH_WRITE_FAILURE" ||
+    prior.state == "NO_WRITE_ATTEMPT" {
+    result.state = "RETAIN_PRIOR_ASSESSMENT"
+    result.next_operation = "retain-prior-observation"
+    return result
+}
+result.state = "PRIOR_ASSESSMENT_UNRESOLVED"
+if prior.state != "UNRESOLVED_EFFECT" && prior.state != "EFFECT_NOT_OBSERVED" && prior.state != "WRITE_NOT_SENT" { return result }
+result.state = "OBSERVATION_REQUIRED"
+result.next_operation = "read-current-effect"
+result.observation_needed = true
+if !frame.current_present { return result }
+result.state = "READ_REPORT_SOURCE_UNRESOLVED"
+if current_view.status != "RECORDED_REPORT_ORIGINS" || !rdf.IsSHA256(current_view.report_sha256) ||
+    frame.current_operation != scope.operation { return result }
+result.state = "READ_ONLY_REPORT_REQUIRED"
+if frame.current_apply_requested || frame.current_write_attempted || frame.current_readback_present { return result }
+let decision = cistrategy.TransportNext(scope,current)
+result.current_state = decision.state
+result.state = "READ_REPORT_UNRESOLVED"
+result.next_operation = decision.next_operation
+if decision.state == "ALREADY_PRESENT" {
+    result.state = "READ_REPORT_EFFECT_OBSERVED"
+    result.next_operation = "retain-current-observation"
+    result.observation_needed = false
+    result.read_report_effect_observed = true
+} else if decision.state == "READY_TO_RESTORE" {
+    result.state = "READ_REPORT_EFFECT_NOT_OBSERVED"
+    result.next_operation = "revise-before-new-attempt"
+    result.observation_needed = false
+}
+return result
+`
