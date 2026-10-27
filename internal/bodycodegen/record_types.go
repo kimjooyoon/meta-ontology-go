@@ -36,6 +36,16 @@ type RecordField struct {
 // RecordTypesFromModel accepts a model already validated under the body profile.
 // Native value construction additionally requires names usable in body syntax.
 func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
+	return recordTypesFromModel(model, true)
+}
+
+// DeclaredRecordTypesFromModel validates every source layout. Execution callers
+// apply the type-count budget to SelectActivityRecords, not this declaration view.
+func DeclaredRecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
+	return recordTypesFromModel(model, false)
+}
+
+func recordTypesFromModel(model bidir.Model, countAll bool) ([]RecordType, error) {
 	var result []RecordType
 	for _, node := range model.Nodes {
 		if node.Kind != bidir.EntityKind || len(node.Fields) == 0 {
@@ -50,7 +60,7 @@ func RecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 		if len(node.Fields) > RecordFieldLimit {
 			return nil, fmt.Errorf("record %q (%s) declares %d fields; body profile supports 1..%d", node.Name, node.ID, len(node.Fields), RecordFieldLimit)
 		}
-		if len(result) >= recordTypeLimit {
+		if countAll && len(result) >= recordTypeLimit {
 			return nil, fmt.Errorf("record %q (%s) is record %d; body profile supports at most %d", node.Name, node.ID, len(result)+1, recordTypeLimit)
 		}
 		record := RecordType{Name: node.Name, ID: string(node.ID), GoName: recordGoName("Record", string(node.ID))}
@@ -140,7 +150,7 @@ func resolveBodyModel(file *syntax.File) (bidir.Model, []RecordType, error) {
 	if err != nil {
 		return model, nil, fmt.Errorf("resolve activity identity: %w", err)
 	}
-	records, err := RecordTypesFromModel(model)
+	records, err := DeclaredRecordTypesFromModel(model)
 	return model, records, err
 }
 

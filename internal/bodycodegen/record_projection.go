@@ -149,6 +149,9 @@ func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.Fi
 	if _, err := checkBodyTypes(packageName, file, fset, information); err != nil {
 		return fmt.Errorf("typecheck record bodies: %w", err)
 	}
+	if err := ValidateRecordUseBudget(information, records, false); err != nil {
+		return err
+	}
 	for _, conditions := range origins {
 		captureConditionFields(file, information, records, conditions)
 	}

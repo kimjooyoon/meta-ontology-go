@@ -75,6 +75,9 @@ func (graph compositionGraph) inputRows(suite CompositionCases) ([][]json.RawMes
 
 func (graph compositionGraph) inputRow(test CompositionCase, requireExpectation bool,
 	display *CompositionCaseDisplay) ([]json.RawMessage, error) {
+	if test.Inputs == nil {
+		return nil, fmt.Errorf("composition inputs require an explicit object, including for zero caller inputs")
+	}
 	var storage [compositionLimit * compositionLimit]json.RawMessage
 	roots, expected := 0, 0
 	for _, node := range graph.nodes[:graph.count] {
@@ -110,7 +113,7 @@ func (graph compositionGraph) inputRow(test CompositionCase, requireExpectation 
 	if roots != len(test.Inputs) || expected != len(test.Expected) || requireExpectation && expected == 0 {
 		return nil, fmt.Errorf("inputs and nonempty expectations must name declared activities")
 	}
-	return append([]json.RawMessage(nil), storage[:roots]...), nil
+	return append(make([]json.RawMessage, 0, roots), storage[:roots]...), nil
 }
 
 func canonicalScalar(raw []byte, entity string) (json.RawMessage, error) {

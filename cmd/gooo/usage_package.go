@@ -77,6 +77,8 @@ cases, model, native build or program execution. Assembling contracts are unsupp
 Repeat --export-stage Name=activity-id to expose planned stages by stable ID.
 Stage functions receive their own body inputs; Evaluate follows the declared binds.
 Public functions share the generated record types. Pure call helpers remain private.
+--embed-origin adds the immutable GoooGenerationOrigin JSON string constant.
+It records generation inputs for callers; reading it does not execute an activity.
 --out writes semantic.gooo.go after complete generation using the shared atomic
 writer. A failed generation preserves the previous file. Without --out, source
 is written to stdout. Keep handwritten host adapters in separate files.

@@ -17,6 +17,12 @@ func Generate(ctx context.Context, filename string, source []byte, entry, packag
 // GenerateWithStageExports gives selected pure stages public names. Evaluate
 // still composes the complete entry graph; a stage receives its own body inputs.
 func GenerateWithStageExports(ctx context.Context, filename string, source []byte, entry, packageName string, exports []StageExport) (string, error) {
+	return GenerateWithOptions(ctx, filename, source, entry, packageName, GenerationOptions{StageExports: exports})
+}
+
+// GenerateWithOptions can retain the generation inputs as an immutable constant.
+// Reading that optional view does not evaluate a Gooo activity.
+func GenerateWithOptions(ctx context.Context, filename string, source []byte, entry, packageName string, options GenerationOptions) (string, error) {
 	if !token.IsIdentifier(packageName) || packageName == "_" || packageName == "main" {
 		return "", fmt.Errorf("library generation requires an importable Go package name")
 	}
@@ -24,7 +30,7 @@ func GenerateWithStageExports(ctx context.Context, filename string, source []byt
 	if err != nil {
 		return "", err
 	}
-	names, origins, err := resolveStageExports(projection.Plan, exports)
+	names, origins, err := resolveStageExports(projection.Plan, options.StageExports)
 	if err != nil {
 		return "", err
 	}
@@ -35,6 +41,12 @@ func GenerateWithStageExports(ctx context.Context, filename string, source []byt
 	generated, err := nameLibraryProjection(projection.Source+wrapper, packageName, projection.SourceSHA256, projection.Plan, names)
 	if err != nil {
 		return "", err
+	}
+	if options.Origin != nil {
+		generated, err = appendGenerationOrigin(generated, projection.SourceSHA256, projection.Plan, options)
+		if err != nil {
+			return "", err
+		}
 	}
 	if len(origins)+len(generated) > maxLibraryProjectionBytes {
 		return "", fmt.Errorf("library projection exceeds 256 KiB")
