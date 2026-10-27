@@ -14,7 +14,9 @@ The later readback observed the same manifest subject and image configuration.
 The [original workflow](https://github.com/kimjooyoon/gooo-go-ports/blob/6ff4e3a6c3baf9b518838bd35d2429decdf991bf/.github/workflows/service-grant-mcp-oci.yml)
 remains the prior-plan reference. The goal and proposed revision IDs in
 `testdata/scope.json` are authored retrospective annotations, not IDs that the
-old workflow emitted. The successful recovery run 39687579594 is **not an input**.
+old workflow emitted. `plan.gooo` owns that scope and the two proposed operations;
+`testdata/scope.json` retains an independent expected view. The successful
+recovery run 39687579594 is **not an input**.
 
 ## Run and change the policy
 
@@ -22,13 +24,23 @@ From the repository root:
 
 ```sh
 go run ./cmd/gooo package generate --go-package recoveryorigin \
+  --export-stage DeclaredScope=gooo://ci-strategy/historical-scope \
+  --export-stage Decide=gooo://ci-strategy/bind-recovery \
   --out examples/ci-strategy/recovery-origin \
   examples/ci-strategy/recovery-origin.workspace.json
 go test ./examples/ci-strategy/recovery-origin -v
 ```
 
-The generated `Evaluate(scope, published, readback)` entry is an ordinary Go
-library. `Read(directory, role, jobID)` reads the retained API snapshots and ZIP
+The generated `Evaluate(operation, published, readback)` entry is an ordinary Go
+library. It runs `HistoricalScope` before `BindRecovery` through the authored
+bind. A host first calls `DeclaredScope("transport-original-build-proof")` to
+obtain the source-owned coordinates for collection; editing that returned view
+does not change the plan used by `Evaluate`. The alternative `publish-image`
+is rejected as a replay over the retained history. An unknown operation is an
+invalid proposal. `Decide` exposes the binding stage for independently supplied
+scope observations and regression cases; it receives its own body inputs.
+
+`Read(directory, role, jobID)` reads the retained API snapshots and ZIP
 members, hashes their original bytes and exposes typed observations. Gooo owns
 the origin joins, bounded step lookup, effect identity, revision and next action.
 The Go reader only decodes records, reads bounded files and copies fields. It
@@ -69,12 +81,15 @@ from the generated implementation.
 | Changed or missing raw input cannot become a completed effect | 8 / 8 reader counterexamples |
 | Later run metadata update preserves original job completion | 1 / 1 timestamp regression |
 | Goal, plan, revision, activity and original observation IDs retained | 7 / 7 checked identities in the actual history |
+| Source-owned proof transport, republish and unknown proposals | 3 / 3 operation choices over the same historical records |
 
-Initial implementation adds 180 authored Gooo lines, 206 handwritten production
-Go lines for IO/decoding, and a 368-line generated projection. This is initial
-adapter cost; it does not demonstrate a declining marginal Go cost yet. The
-existing recovery selector is reused unchanged. A separate consistency test
-regenerates the library from both Gooo sources and checks its source bindings.
+The original binding adapter required 180 authored Gooo lines and 206 handwritten
+production Go lines for IO/decoding. The new source-owned plan is an additional
+Gooo declaration; exposing and composing it required **zero changes to those Go
+reader files**. Tests and the regenerated library changed. This is one bounded
+integration observation, alongside the separate initial compiler cost of stage
+exports. The existing recovery selector is reused unchanged. A consistency test
+regenerates the library from all three Gooo sources and checks their bindings.
 No new grammar capability is counted and no timing improvement is claimed.
 
 The original [PR #1822 policy run](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/40373461422/job/121751081237)

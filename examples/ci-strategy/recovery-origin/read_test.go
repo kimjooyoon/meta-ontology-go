@@ -29,7 +29,7 @@ func TestReaderUsesJobCompletionInsteadOfRunMetadataUpdate(t *testing.T) {
 	}
 	p, _ := Read(root, "publication", scope.F_publish_job)
 	r, _ := Read(root, "readback", scope.F_readback_job)
-	if got := Evaluate(scope, p, r); got.F_state != "PROPOSED_RECOVERY" {
+	if got := Decide(scope, p, r); got.F_state != "PROPOSED_RECOVERY" {
 		t.Fatal("a later metadata update changed the original job completion", got)
 	}
 	if r.F_completed_at != 1792615620 { // 2026-10-21T20:47:00Z, original selected job.
@@ -44,7 +44,7 @@ func TestReaderRejectsChangedOrMissingOriginals(t *testing.T) {
 			changeRetainedInput(t, root, change)
 			p, _ := Read(root, "publication", scope.F_publish_job)
 			r, _ := Read(root, "readback", scope.F_readback_job)
-			got := Evaluate(scope, p, r)
+			got := Decide(scope, p, r)
 			if got.F_state != "UNRESOLVED_ORIGIN" || len(got.F_completed_effect_ids) != 0 || got.F_execution_authorized {
 				t.Fatalf("changed input was accepted: %+v", got)
 			}

@@ -2,6 +2,7 @@
   "schema": "gooo/package-workspace-manifest/v1",
   "entry": {"package_path": "examples/cistrategy", "activity": "BindRecovery"},
   "packages": [
-    {"path": "examples/cistrategy", "sources": ["strategy.gooo", "recovery-origin/origin.gooo"]}
+    {"path": "examples/cistrategy",
+     "sources": ["strategy.gooo", "recovery-origin/origin.gooo", "recovery-origin/plan.gooo"]}
   ]
 }

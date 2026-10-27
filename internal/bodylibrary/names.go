@@ -14,7 +14,7 @@ import (
 
 // Change typed objects, including keyed literals and selectors. Equal spellings
 // in another scope and source string values are never treated as references.
-func nameLibraryProjection(source, packageName, sourceDigest string, plan bodyexecution.CompositionPlan) (string, error) {
+func nameLibraryProjection(source, packageName, sourceDigest string, plan bodyexecution.CompositionPlan, exports map[string]string) (string, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "library.go", source, parser.ParseComments)
 	if err != nil {
@@ -25,12 +25,7 @@ func nameLibraryProjection(source, packageName, sourceDigest string, plan bodyex
 	if err != nil {
 		return "", fmt.Errorf("library bridge typecheck: %w", err)
 	}
-	names, identities := map[types.Object]string{}, map[types.Object]string{}
-	for _, declaration := range file.Decls {
-		if function, ok := declaration.(*ast.FuncDecl); ok && function.Name.Name != "Evaluate" {
-			names[info.Defs[function.Name]] = "g" + function.Name.Name[1:]
-		}
-	}
+	names, identities := libraryFunctionNames(file, info, exports), map[types.Object]string{}
 	for _, record := range plan.Records {
 		object := pkg.Scope().Lookup(record.GoName)
 		if object == nil {
