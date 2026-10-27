@@ -16,6 +16,7 @@ type metaBinding struct {
 }
 
 type subjectWitness struct {
+	GeneratorOwned       bool          `json:"generator_owned,omitempty"`
 	ModuleBoundaryReason string        `json:"module_boundary_reason,omitempty"`
 	ModuleRoot           string        `json:"module_root,omitempty"`
 	Space                string        `json:"space"`
@@ -29,7 +30,8 @@ type subjectWitness struct {
 
 func fileWitness(file fileMetric, binding metaBinding) subjectWitness {
 	witness := subjectWitness{
-		Space: "LOGICAL_FILE", Path: file.Path, SubjectKind: "FILE",
+		GeneratorOwned: file.GeneratorOwned,
+		Space:          "LOGICAL_FILE", Path: file.Path, SubjectKind: "FILE",
 		Language: file.Language, ModuleBoundaryReason: file.ModuleBoundaryReason, ModuleRoot: file.ModuleRoot, Metrics: []metricValue{{ID: "lines", Value: file.Lines}},
 		Meta: binding,
 	}

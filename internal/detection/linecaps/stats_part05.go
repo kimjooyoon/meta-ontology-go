@@ -26,6 +26,7 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 		if file.Language == FileLanguageGo {
 			observation.ModuleRoot = file.ModuleRoot
 			observation.ModuleBoundaryReason = file.ModuleBoundaryReason
+			observation.GeneratorOwned = file.GeneratorOwned
 		}
 		observations = append(observations, observation)
 	}

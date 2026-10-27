@@ -104,6 +104,9 @@ func isLineCapMetric(metric string) bool {
 
 func validateLineCapIndicator(row sourceIndicator) error {
 	contract, known := lineCapContract(row.MetricID)
+	if generatedOwnerIndicator(row) {
+		return nil
+	}
 	if row.Applicability == "NOT_APPLICABLE" {
 		return validateModuleLineCap(row, contract, known)
 	}

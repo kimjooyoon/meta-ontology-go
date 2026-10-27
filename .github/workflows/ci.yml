@@ -47,7 +47,7 @@ env:
   # One allowance charges the union of exact-attempt runner intervals, including
   # setup, running barriers and proof. Runner-free gaps retain their own origin.
   GOOO_CI_BUDGET_MS: 3000000
-  GOOO_CI_DOMAIN_REVISION: 13648d87660e1e59556b15f559d69aad5c15d5b8
+  GOOO_CI_DOMAIN_REVISION: 4127a10602537f05f9bf9cd8869bf39acb71bf86
 
 jobs:
   work-domain:
@@ -909,6 +909,7 @@ jobs:
           node scripts/ci-proof/failure_capture_test.js
           node scripts/ci-proof/tool_origin_test.js
           node scripts/ci-proof/canonical_join_test.js
+          node scripts/ci-proof/runner_clock_snapshot_test.js
       - name: Collect terminal canonical job evidence
         uses: actions/github-script@v9.0.0
         with:

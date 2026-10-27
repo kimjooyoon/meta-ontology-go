@@ -17,6 +17,7 @@ func bindModuleObservation(observation sourcepolicy.Observation, paths []string,
 			return observation
 		}
 		file := files[fileIndex]
+		observation.GeneratorOwned = observation.GeneratorOwned || file.GeneratorOwned
 		if index == 0 {
 			observation.ModuleRoot = file.ModuleRoot
 		} else if file.ModuleRoot != observation.ModuleRoot {

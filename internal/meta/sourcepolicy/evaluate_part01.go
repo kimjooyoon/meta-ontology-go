@@ -1,6 +1,10 @@
 package sourcepolicy
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourceownership"
+)
 
 // Evaluate turns observations into deterministic, actionable indicators.
 func Evaluate(policy Policy, observations []Observation) (Report, error) {
@@ -40,6 +44,13 @@ func evaluateObservation(policy Policy, observation Observation) (Indicator, err
 		applicability = ApplicabilityNotApplicable
 		applicabilityRule = ApplicabilityRuleGoModuleBoundary
 		applicabilityReason = observation.ModuleBoundaryReason
+		definition.blocking = false
+	}
+	permission := sourceownership.Evaluate(observation.GeneratorOwned)
+	if isGoRewriteDimension(observation.Dimension) && !permission.F_may_rewrite_go {
+		applicability = ApplicabilityNotApplicable
+		applicabilityRule = permission.F_rule_id
+		applicabilityReason = ApplicabilityReason(permission.F_reason)
 		definition.blocking = false
 	}
 	satisfied := true
