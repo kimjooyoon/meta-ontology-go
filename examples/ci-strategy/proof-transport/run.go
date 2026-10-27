@@ -5,6 +5,8 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/kimjooyoon/meta-ontology-go/examples/ci-strategy/transport-outcome"
 )
 
 // One process serializes write attempts. Registry content addresses, rather
@@ -18,16 +20,18 @@ type WriteObservation struct {
 }
 
 type Report struct {
-	GenerationOrigin string                  `json:"generation_origin"`
-	ApplyRequested   bool                    `json:"apply_requested"`
-	Scope            R_TransportScope        `json:"scope"`
-	Before           R_TransportObservation  `json:"before"`
-	Decision         R_TransportStep         `json:"decision"`
-	Write            WriteObservation        `json:"write"`
-	After            *R_TransportObservation `json:"after,omitempty"`
-	Next             *R_TransportStep        `json:"next,omitempty"`
-	Requests         int64                   `json:"requests"`
-	ResponseBytes    int64                   `json:"response_bytes"`
+	Outcome                 transportoutcome.R_Outcome `json:"outcome"`
+	OutcomeGenerationOrigin string                     `json:"outcome_generation_origin"`
+	GenerationOrigin        string                     `json:"generation_origin"`
+	ApplyRequested          bool                       `json:"apply_requested"`
+	Scope                   R_TransportScope           `json:"scope"`
+	Before                  R_TransportObservation     `json:"before"`
+	Decision                R_TransportStep            `json:"decision"`
+	Write                   WriteObservation           `json:"write"`
+	After                   *R_TransportObservation    `json:"after,omitempty"`
+	Next                    *R_TransportStep           `json:"next,omitempty"`
+	Requests                int64                      `json:"requests"`
+	ResponseBytes           int64                      `json:"response_bytes"`
 }
 
 // Run consumes a registry bearer token owned by the calling runtime. Apply
@@ -36,12 +40,13 @@ func Run(ctx context.Context, operation string, material []byte, token string, a
 	return run(ctx, operation, material, token, apply, http.DefaultTransport)
 }
 
-func run(ctx context.Context, operation string, material []byte, token string, apply bool, transport http.RoundTripper) Report {
+func run(ctx context.Context, operation string, material []byte, token string, apply bool, transport http.RoundTripper) (result Report) {
 	scope := Plan(operation)
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(scope.F_deadline_ms)*time.Millisecond)
 	defer cancel()
 	w := &wire{scope: scope, token: token, client: &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}
-	result := Report{GenerationOrigin: GoooGenerationOrigin, Scope: scope, ApplyRequested: apply}
+	result = Report{GenerationOrigin: GoooGenerationOrigin, Scope: scope, ApplyRequested: apply}
+	defer result.assessOutcome()
 	result.Before = R_TransportObservation{F_base_url: scope.F_base_url}
 	if int64(len(material)) <= scope.F_max_response_bytes {
 		material = bytes.Clone(material)
