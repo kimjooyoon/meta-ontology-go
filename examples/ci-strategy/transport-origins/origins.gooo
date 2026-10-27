@@ -23,6 +23,7 @@ entity SavedFrame id "gooo://transport-origins/saved-frame" fields {
     field next_present id "gooo://transport-origins/saved-frame/next" type boolean required one
     field decision_generation_sha256 id "gooo://transport-origins/saved-frame/decision-generation" type string required one
     field outcome_generation_sha256 id "gooo://transport-origins/saved-frame/outcome-generation" type string required one
+    field projection_generation_sha256 id "gooo://transport-origins/saved-frame/projection-generation" type string required one
 }
 
 activity ReportByteLimit() -> rdf.Integer id "gooo://transport-origins/report-byte-limit" computes `
@@ -38,6 +39,8 @@ id "gooo://transport-origins/project-report" computes `
 let view = OriginView{status:"UNRESOLVED_ORIGINS",reason:"REPORT_BYTES_OUTSIDE_PROFILE",
     report_sha256:frame.report_sha256,lines:[]string{}}
 if frame.report_bytes < 1 || frame.report_bytes > byte_limit || !rdf.IsSHA256(frame.report_sha256) { return view }
+view.reason = "PROJECTION_CONTEXT_REQUIRED"
+if !rdf.IsSHA256(frame.projection_generation_sha256) { return view }
 view.reason = "READBACK_PAIR_REQUIRED"
 if frame.after_present != frame.next_present { return view }
 view.reason = "REPORT_FIELDS_MISSING"
@@ -68,7 +71,9 @@ let effect = IRITerm(scope.effect_id)
 if goal == "" || plan == "" || prior == "" || effect == "" { return view }
 let base = "<urn:gooo:transport-report:" + frame.report_sha256
 let report = base + ">"
-let projection = base + ":view>"
+let general_view = base + ":view>"
+let projection = base + ":view:" + frame.projection_generation_sha256 + ">"
+let projection_context = "<urn:gooo:projection-generation-context:" + frame.projection_generation_sha256 + ">"
 let selected = base + ":decision-record>"
 let response = base + ":write-record>"
 let readback = base + ":after-record>"
@@ -87,7 +92,11 @@ let decision_context = "<urn:gooo:generation-context:" + frame.decision_generati
 let outcome_context = "<urn:gooo:generation-context:" + frame.outcome_generation_sha256 + ">"
 view.lines = filter_values([]string{
     report + kind + entity,
+    general_view + kind + entity,
     projection + kind + entity,
+    projection + prov + "specializationOf> " + general_view + " .",
+    projection_context + kind + entity,
+    projection + own + "projectionGenerationContext> " + projection_context + " .",
     projection + kind + "<gooo://transport-origins/TransportReportProjection> .",
     projection + prov + "wasDerivedFrom> " + report + " .",
     projection + own + "executionIdentity> \"UNOBSERVED\" .",

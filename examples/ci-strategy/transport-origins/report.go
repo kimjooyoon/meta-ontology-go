@@ -30,8 +30,9 @@ func FromSavedReport(raw []byte) (R_OriginView, error) {
 	}
 	frame := R_SavedFrame{F_report_sha256: contentDigest(raw), F_report_bytes: int64(len(raw)),
 		F_fields_complete: complete, F_after_present: report.After != nil, F_next_present: report.Next != nil,
-		F_decision_generation_sha256: contextDigest(report.GenerationOrigin),
-		F_outcome_generation_sha256:  contextDigest(report.OutcomeGenerationOrigin)}
+		F_decision_generation_sha256:   contextDigest(report.GenerationOrigin),
+		F_outcome_generation_sha256:    contextDigest(report.OutcomeGenerationOrigin),
+		F_projection_generation_sha256: contextDigest(GoooGenerationOrigin)}
 	var after R_TransportObservation
 	var next R_TransportStep
 	if report.After != nil {

@@ -3,10 +3,43 @@ package transportorigins
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 )
+
+func TestProjectionKeepsItsCompiledOriginApartFromReportedMetadata(t *testing.T) {
+	report, _, wire := runSavedReport(t, false, 201, false, false)
+	requests := wire.requests
+	own := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(GoooGenerationOrigin)))
+	for _, reported := range []string{report.GenerationOrigin, "different reported metadata"} {
+		report.GenerationOrigin = reported
+		raw, err := json.Marshal(report)
+		if err != nil {
+			t.Fatal(err)
+		}
+		result, err := FromSavedReport(raw)
+		if err != nil || result.F_status != "RECORDED_REPORT_ORIGINS" {
+			t.Fatal("compiled projection lost its source context", err, result)
+		}
+		reportID := fmt.Sprintf("sha256:%x", sha256.Sum256(raw))
+		projection := "<urn:gooo:transport-report:" + reportID + ":view:" + own + ">"
+		text := strings.Join(result.F_lines, "\n")
+		for _, required := range []string{
+			projection + " <http://www.w3.org/ns/prov#specializationOf> <urn:gooo:transport-report:" + reportID + ":view> .",
+			projection + " <gooo://transport-origins/projectionGenerationContext> <urn:gooo:projection-generation-context:" + own + "> .",
+			fmt.Sprintf("<gooo://transport-origins/reportedGenerationContext> <urn:gooo:generation-context:sha256:%x> .", sha256.Sum256([]byte(reported))),
+		} {
+			if !strings.Contains(text, required) {
+				t.Fatal("compiled and reported origins were mixed", required, text)
+			}
+		}
+	}
+	if wire.requests != requests {
+		t.Fatal("origin projection dispatched work")
+	}
+}
 
 func TestSavedReportUsesActualRuntimeRecordsAndNoFurtherRequests(t *testing.T) {
 	for _, row := range []struct {

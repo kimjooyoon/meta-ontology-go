@@ -32,7 +32,12 @@ cancellation prevented a network dispatch. A proposed next operation stays
 Reported generation-context identifiers hash the decoded UTF-8 string values in
 `generation_origin` and `outcome_generation_origin`. They identify reported
 metadata. The view's own `GoooGenerationOrigin` separately records the compiler
-and seven source files that produced this projection.
+and seven source files that produced this projection. A concrete projection
+identifier binds that immutable context as well as the report bytes. It
+specializes the generic report view, so changing the view generator cannot
+silently merge concrete projections. This uses the fixed-aspect distinction in
+[PROV-DM specialization](https://www.w3.org/TR/prov-dm/#term-specialization);
+it does not assert a unique physical execution.
 
 To regenerate from the repository root using a compiler that supports zero-input
 composition stages:
