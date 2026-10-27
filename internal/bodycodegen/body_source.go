@@ -95,8 +95,8 @@ func sourceBodyActivity(file *syntax.File, name string) (*syntax.ActivityDecl, e
 }
 
 func sourceBodyParameters(activity *syntax.ActivityDecl, records []RecordType, files ...*syntax.File) ([]InputParameter, error) {
-	if len(activity.Inputs) < 1 || len(activity.Inputs) > 16 {
-		return nil, fmt.Errorf("activity %q requires 1..16 inputs, got %d", activity.Name, len(activity.Inputs))
+	if len(activity.Inputs) > 16 {
+		return nil, fmt.Errorf("activity %q requires 0..16 inputs, got %d", activity.Name, len(activity.Inputs))
 	}
 	parameters := make([]InputParameter, len(activity.Inputs))
 	names, err := syntax.ActivityInputNames(activity)

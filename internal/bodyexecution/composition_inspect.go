@@ -119,7 +119,8 @@ func (r *CompositionInspection) addAssembly(ctx context.Context, filename string
 // CompositionInputTemplate emits one type-shaped input row, with no expectations.
 // Zeros are editable placeholders; they are not inferred caller or source cases.
 func CompositionInputTemplate(plan CompositionInspection) ([]byte, error) {
-	if plan.Schema != "gooo/body-composition-inspection/v1" || len(plan.CallerInputs) < 1 ||
+	if plan.Schema != "gooo/body-composition-inspection/v1" || plan.CallerInputs == nil ||
+		len(plan.CallerInputs) == 0 && !declaredZeroCallerScope(plan.Plan) ||
 		len(plan.CallerInputs) > compositionLimit*compositionLimit {
 		return nil, fmt.Errorf("input template requires a bounded composition inspection")
 	}
@@ -142,6 +143,29 @@ func CompositionInputTemplate(plan CompositionInspection) ([]byte, error) {
 		err = checkCompositionInputSize(raw, "input template")
 	}
 	return raw, err
+}
+
+// An empty caller list is known only when the source plan supplies its values.
+// Omitted legacy input metadata still denotes the existing single-input shape.
+func declaredZeroCallerScope(plan CompositionPlan) bool {
+	if len(plan.Activities) == 0 || len(plan.Activities) > compositionLimit {
+		return false
+	}
+	zero := false
+	for index, activity := range plan.Activities {
+		if activity.ZeroInputs {
+			if activity.InputType != "" || activity.InputEntityID != "" || len(activity.Inputs) != 0 || activity.InputFrom != -1 {
+				return false
+			}
+			zero = true
+		}
+		for _, input := range activity.inputSlots() {
+			if input.From < 0 || input.From >= index {
+				return false
+			}
+		}
+	}
+	return zero
 }
 
 func compositionInputPlaceholder(input CompositionCallerInput, records []bodycodegen.RecordType) (any, error) {

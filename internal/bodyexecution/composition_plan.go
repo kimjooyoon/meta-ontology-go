@@ -19,6 +19,7 @@ type CompositionActivity struct {
 	InputFrom      int                `json:"input_from"`
 	Assembling     bool               `json:"assembling"`
 	Prepared       bool               `json:"prepared,omitempty"`
+	ZeroInputs     bool               `json:"zero_inputs,omitempty"`
 	Inputs         []CompositionInput `json:"inputs,omitempty"`
 }
 
