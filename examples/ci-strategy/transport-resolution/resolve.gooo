@@ -25,6 +25,7 @@ entity Resolution id "gooo://transport-resolution/resolution" fields {
     field state id "gooo://transport-resolution/resolution/state" type string required one
     field current_state id "gooo://transport-resolution/resolution/current-state" type string required one
     field next_operation id "gooo://transport-resolution/resolution/next" type string required one
+    field read_operation id "gooo://transport-resolution/resolution/read-operation" type string required one
     field observation_needed id "gooo://transport-resolution/resolution/observation-needed" type boolean required one
     field read_report_effect_observed id "gooo://transport-resolution/resolution/read-effect-observed" type boolean required one
 }
@@ -37,7 +38,7 @@ let result = Resolution{effect_id:scope.effect_id,generation_sha256:frame.genera
     prior_report_sha256:prior_view.report_sha256,
     current_report_sha256:current_view.report_sha256,prior_state:prior.state,
     prior_command_failed:prior.command_failed,state:"UNRESOLVED_SOURCE_PAIR",current_state:"",
-    next_operation:"collect-source-correspondence",observation_needed:false,read_report_effect_observed:false}
+    next_operation:"collect-source-correspondence",read_operation:"",observation_needed:false,read_report_effect_observed:false}
 if !rdf.IsSHA256(frame.generation_sha256) || !rdf.IsSHA256(prior_view.report_sha256) ||
     prior_view.status != "RECORDED_REPORT_ORIGINS" || frame.prior_operation != scope.operation { return result }
 if prior.effect_id != scope.effect_id { return result }
@@ -52,6 +53,7 @@ if prior.state != "UNRESOLVED_EFFECT" && prior.state != "EFFECT_NOT_OBSERVED" &&
 result.state = "OBSERVATION_REQUIRED"
 result.next_operation = "read-current-effect"
 result.observation_needed = true
+result.read_operation = scope.operation
 if !frame.current_present { return result }
 result.state = "READ_REPORT_SOURCE_UNRESOLVED"
 if current_view.status != "RECORDED_REPORT_ORIGINS" || !rdf.IsSHA256(current_view.report_sha256) ||
@@ -66,11 +68,13 @@ if decision.state == "ALREADY_PRESENT" {
     result.state = "READ_REPORT_EFFECT_OBSERVED"
     result.next_operation = "retain-current-observation"
     result.observation_needed = false
+    result.read_operation = ""
     result.read_report_effect_observed = true
 } else if decision.state == "READY_TO_RESTORE" {
     result.state = "READ_REPORT_EFFECT_NOT_OBSERVED"
     result.next_operation = "revise-before-new-attempt"
     result.observation_needed = false
+    result.read_operation = ""
 }
 return result
 `
