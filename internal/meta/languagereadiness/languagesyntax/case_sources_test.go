@@ -19,8 +19,11 @@ func TestRegisteredSourceFamilyRetainsCapabilityAndFileDenominators(t *testing.T
 		t.Fatal(err)
 	}
 	registry, err := decodeRegistry(raw)
-	if err != nil || len(registry.CaseSources) != 1 || len(registry.Cases) != 139 || FixedCapabilityTotal != 137 {
+	if err != nil || len(registry.CaseSources) != 1 || len(registry.Cases) != FixedTotal {
 		t.Fatal("physical grouping changed capability population", err)
+	}
+	if FixedCapabilityTotal+FixedGovernanceTotal != FixedTotal {
+		t.Fatal("capability and governance populations do not partition the registry")
 	}
 	prior := registry
 	prior.CaseSources = nil

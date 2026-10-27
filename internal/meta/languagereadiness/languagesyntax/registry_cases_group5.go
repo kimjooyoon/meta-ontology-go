@@ -71,5 +71,7 @@ func expectedSyntaxCaseGroup5() []CaseDefinition {
 		{ID: "source-split-completion-policy", Path: "internal/meta/sourcecompletion/source.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
 
 		{ID: "shared-workspace-source-consumers", Path: "examples/shared-source-consumers/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false},
+
+		{ID: "source-owned-record-collections", Path: "examples/record-collections/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 	}
 }

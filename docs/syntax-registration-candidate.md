@@ -209,7 +209,7 @@ export only `PROPOSAL_ONLY` / `UNASSESSED` artifacts outside the input project.
 
 Selectors are `ordinary`, `text-fields`, `implicit-ports`,
 `ordered-collections`, or an exact
-`gooo.entityfields.go-projection.v1` through `.v6` profile ID. Use the exact
+`gooo.entityfields.go-projection.v1` through `.v7` profile ID. Use the exact
 profile supported by the source; the compact intent does not infer one from
 the file even when a profile hint was requested. An explicit `base_version`
 remains available and must equal the
@@ -242,7 +242,8 @@ Existing output directories and parents resolving inside the input are rejected.
 It does not apply the candidate to the project.
 
 Draft request example; select the latest existing denominator version in the
-input snapshot (v99 at this revision). `--inspect` fills the observation fields
+input snapshot, obtained through the compact intent inspection above. The numeric
+value below illustrates the request shape; use the observed value. `--inspect` fills the observation fields
 before generation:
 
 ~~~json

@@ -70,12 +70,6 @@ func (graph compositionGraph) nativeReadFile(raw []byte, suite CompositionCases,
 	rows := make([][]CompositionReadObservation, cases)
 	summary := &CompositionReadSummary{Schema: "gooo/native-read-summary/v1", Status: "COMPLETE", RecordedReads: len(file.Reads), SHA256: digest(raw),
 		Scope: "successful scalar collection index and range reads; input element identity is preserved through slice views, record copies, binds and helper calls; constructed collections remain unresolved; scalar arithmetic is not tracked as element identity"}
-	for _, site := range sites {
-		if site.ElementType != "int64" && site.ElementType != "bool" && site.ElementType != "string" {
-			summary.Scope = "successful scalar or source-declared record collection reads; original input backing elements and indexes are retained; complete nested-field dynamic dependencies are outside this observation"
-			break
-		}
-	}
 	var construction *compositionConstructionContext
 	if len(constructions) > 0 {
 		construction = constructions[0]
@@ -88,6 +82,12 @@ func (graph compositionGraph) nativeReadFile(raw []byte, suite CompositionCases,
 		summary.Scope = "successful scalar collection reads and source-owned constructions; input backing elements and constructed elements have separate identities; element read ranges describe reads during evaluation, not complete scalar data dependencies"
 	} else if file.Constructions != nil || file.ConstructionDropped != nil || construction != nil && len(construction.sites) > 0 {
 		return fail(fmt.Errorf("construction protocol version differs"))
+	}
+	for _, site := range sites {
+		if site.ElementType != "int64" && site.ElementType != "bool" && site.ElementType != "string" {
+			summary.Scope += "; source-declared record elements retain original input backing indexes; complete nested-field dynamic dependencies remain outside this observation"
+			break
+		}
 	}
 	lastCase, lastRoot := -1, -1
 	for _, event := range file.Reads {
