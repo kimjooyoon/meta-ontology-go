@@ -64,6 +64,21 @@ called inside a body stays an implementation detail. To evaluate another
 independent activity, choose it as the workspace entry. Invalid/ambiguous exports
 fail before publishing output, retaining the previous generated file.
 
+An authored `computes` activity can have zero inputs, including a bound producer
+or the workspace entry. A source constant can therefore supply another stage:
+
+```gooo
+activity Limit() -> Integer id "urn:example:limit" computes "return 262144"
+activity Check(limit Integer, observed Integer) -> Boolean computes "return observed <= limit"
+bind Limit.result -> Check.input0
+```
+
+Exporting `Limit=urn:example:limit` exposes `Limit()`; the entry receives only
+the unbound observation in `Evaluate(observed)`. A workspace consisting of a
+constant entry exports `Evaluate()` and its composition input template contains
+an explicit empty object, `{}`. Plans record `zero_inputs: true` for those
+activities. Missing/null caller input data retains its incomplete meaning.
+
 Records use `R_<source-name>` and exported fields use `F_<source-name>`.
 Keeping the spelling after a fixed prefix avoids guessing acronym casing or
 merging names such as `origin_ref` and `Origin_ref`. Conflicting record names
