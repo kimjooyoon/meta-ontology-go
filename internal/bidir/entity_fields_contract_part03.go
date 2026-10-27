@@ -8,8 +8,7 @@ import (
 )
 
 func classifyEntityFieldsModelError(err error, span SourceSpan) error {
-	var located *EntityFieldsError
-	if errors.As(err, &located) {
+	if _, ok := errors.AsType[*EntityFieldsError](err); ok {
 		return err
 	}
 	message := err.Error()
@@ -55,8 +54,7 @@ func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistr
 	return nil
 }
 func classifyEntityFieldsTypeError(field Field, err error) error {
-	var located *EntityFieldsError
-	if errors.As(err, &located) {
+	if _, ok := errors.AsType[*EntityFieldsError](err); ok {
 		return err
 	}
 	message := err.Error()
