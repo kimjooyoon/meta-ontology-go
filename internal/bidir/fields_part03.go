@@ -45,7 +45,7 @@ func normalizeField(field Field, owner ID, kind Kind, registry semantic.TypeRegi
 	}
 	definition, err := resolveFieldType(normalized.TypeRef, use, registry)
 	if err != nil {
-		return Field{}, fmt.Errorf("%w: type ref: %v", ErrInvalidField, err)
+		return Field{}, classifyEntityFieldsTypeError(field, fmt.Errorf("%w: type ref: %w", ErrInvalidField, err))
 	}
 	result := field.clone()
 	result.TypeRefUse = use
