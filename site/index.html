@@ -190,8 +190,11 @@ gooo package replay --receipt execution.json --inputs inputs.json gooo.workspace
           <p>A browser interface over Gooo rules and generated Go execution, with replayable observations.</p>
         </a>
       </div>
-      <p class="small">Gooo is experimental. Current pure bodies cover bounded scalar and record programs.
-      General loops, collections, and unrestricted Go-library compatibility are outside this profile.
+      <p class="small">Gooo is experimental. Current pure bodies cover bounded scalar and record programs,
+      counted loops, and scalar collections. The published 0.6.38-dev profile supports
+      <a href="https://github.com/kimjooyoon/meta-ontology-go/blob/32ac61006761f8759468436e7cdd91883cf24431/examples/collection-map/README.md">mapping</a>
+      and <a href="https://github.com/kimjooyoon/meta-ontology-go/blob/32ac61006761f8759468436e7cdd91883cf24431/examples/collection-filter/README.md">filtering</a>
+      up to 256 Integer, Text or Boolean values. Each feature has explicit type and execution limits.
       Finite examples measure the supplied cases; they do not prove behavior for all inputs.</p>
     </section>
 
