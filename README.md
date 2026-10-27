@@ -290,6 +290,8 @@ computes bodies. Generation requires no cases, model or native execution; the Go
 application keeps its input boundary and independent behavior tests.
 `--export-stage Name=activity-id` also exposes selected stages through the same
 typed records, so a host can query a Gooo-owned plan before supplying observations.
+`--embed-origin` optionally carries generation inputs in an immutable JSON string
+constant, available to an importing program without reading source files.
 Development source also supports [named activity inputs](docs/language/named-inputs.ko.md),
 such as `Difference(minuend Integer, subtrahend Integer)`. The body uses those
 names, while input wiring keeps its source positions and the origin view retains

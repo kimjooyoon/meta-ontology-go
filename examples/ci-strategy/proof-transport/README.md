@@ -19,6 +19,7 @@ From the repository root:
 ```sh
 go run ./cmd/gooo package generate --go-package prooftransport \
   --export-stage Plan=gooo://ci-strategy/transport-plan \
+  --embed-origin \
   --out examples/ci-strategy/proof-transport \
   examples/ci-strategy/proof-transport.workspace.json
 go test ./examples/ci-strategy/proof-transport/...
@@ -36,6 +37,13 @@ record type. `Evaluate(operation, observation)` composes that plan with the Gooo
 decision. `Run` reads its own plan instead of accepting a caller-modified scope.
 The prior plan, new plan and canonical effect keep distinct identities. Stage
 comments, field tags and source digests preserve the generation correspondence.
+The report's `generation_origin` string retains the compiler-generated JSON
+constant, including all four original Gooo source-file hashes. Reading it needs
+no source files or current-checkout lookup. It identifies the program's generation
+inputs; the report's observations and attempted effect describe this invocation
+separately. The example adds one report field and one assignment in Go to carry
+this view; the shared compiler implementation and regression tests have their
+own initial cost. Existing Gooo policy and record declarations are unchanged.
 The report is typed execution data; a PROV-O graph export remains separate work.
 
 | Source result | Next operation |
@@ -77,6 +85,11 @@ can accompany an applied effect; an expired readback remains unresolved. A
 failed write response keeps a nonzero CLI exit even when readback sees the
 attachment. A read-only decision can contain a proposed write while
 `write.attempted` stays false. Consumers should inspect both fields.
+
+The separate [Gooo outcome program](../transport-outcome/README.md) assesses the
+response and readback, retaining their common effect identity. `Run` evaluates
+it on every return path and includes its result and generation origin. The CLI
+uses its `command_failed` field; HTTP status classification belongs to Gooo.
 
 The library's request/byte counters cover its registry observations and write.
 CLI anonymous authentication is one separately bounded prerequisite request,

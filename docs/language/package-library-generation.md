@@ -115,8 +115,34 @@ commit with equal source bytes does not become the original generation producer.
 The manifest and lowered-source hashes use their own raw bytes. Consumers can
 retain raw original-file hashes alongside the explicitly labeled string hashes.
 
+Add `--embed-origin` when the importing program needs this generation context
+at runtime. The optional `GoooGenerationOrigin` string constant contains JSON
+with schema `gooo/library-generation-origin/v1`, the entry's stable activity ID,
+lowered-source and typed-plan hashes, selected stage IDs and public names, and
+the compiler/workspace/original-source observations described above. For example:
+
+```go
+report.GenerationOrigin = surface.GoooGenerationOrigin
+```
+
+Reading the constant requires no file access, source parsing or Gooo evaluation.
+The caller can retain it as a string or decode it using its ordinary JSON tools.
+Its context belongs to the generator build, even when imported by another module;
+it does not identify that module's execution or authenticate the producer.
+The ordinary output remains unchanged when the flag is absent. The additional
+constant shares the 256 KiB projection limit and rejects a conflicting public
+export name before publication. Source input contents are represented by hashes,
+not embedded in the JSON.
+
 Generation typechecks the emitted Go in process. It neither invokes the Go
 toolchain nor executes the program, asks a model, or creates test expectations.
+The sixteen-record body budget applies to the union of selected bind stages,
+called helpers and permitted construction alternatives. Every declared layout
+is still validated, and the complete source identity, semantic fingerprint and
+public record declarations remain available. Adding an unrelated valid record
+can change that source identity while preserving the same importing Go program.
+Realized candidates are checked again through their typed uses before scoring
+or projection, including types absent from an original body hole.
 The current route rejects every `assembling` contract, including a saved selection
 checkpoint that still retains that contract. Existing workspace
 and body-profile bounds apply, including the 256 KiB projection bound.
@@ -145,3 +171,10 @@ public consumer and complete-graph results before and after an activity display
 rename: 18 independent expected outcomes with unchanged handwritten Go. It also
 checks the equivalent manual composition through their shared record type,
 11 invalid export requests, and preservation of prior output after rejection.
+
+The embedded-origin regression imports one generated program into a separate
+module, reads its origin without evaluating a zero divisor, and checks two
+independent arithmetic expectations. It also checks original-source hashes,
+stage identity, duplicate flags, a name conflict, default omission and the
+shared output limit. These establish this optional interface's boundaries;
+they do not increase the number of supported Gooo grammar constructs.

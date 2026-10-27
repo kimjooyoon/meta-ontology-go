@@ -236,6 +236,9 @@ func evaluateRecordAssemblyRecorded(ctx context.Context, source []byte, activity
 	if _, err = new(types.Config).Check(file.Name.Name, fset, []*ast.File{file}, &e.information); err != nil {
 		return nil, err
 	}
+	if err := ValidateRecordUseBudget(&e.information, records, false); err != nil {
+		return nil, err
+	}
 	e.functions = pureEvaluatorFunctions(file, e.information)
 	var inputs []types.Object
 	for _, parameter := range function.Type.Params.List {

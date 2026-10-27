@@ -1,0 +1,64 @@
+package transportoutcome
+namespace transportoutcome
+
+entity Observation id "gooo://transport-outcome/observation" fields {
+    field effect_id id "gooo://transport-outcome/observation/effect" type string required one
+    field decision_effect_id id "gooo://transport-outcome/observation/decision-effect" type string required one
+    field decision_state id "gooo://transport-outcome/observation/decision-state" type string required one
+    field decision_next id "gooo://transport-outcome/observation/decision-next" type string required one
+    field write_attempted id "gooo://transport-outcome/observation/attempted" type boolean required one
+    field response_status id "gooo://transport-outcome/observation/response-status" type integer required one
+    field response_error id "gooo://transport-outcome/observation/response-error" type string required one
+    field readback_recorded id "gooo://transport-outcome/observation/readback-recorded" type boolean required one
+    field readback_effect_id id "gooo://transport-outcome/observation/readback-effect" type string required one
+    field readback_state id "gooo://transport-outcome/observation/readback-state" type string required one
+}
+
+entity Outcome id "gooo://transport-outcome/outcome" fields {
+    field effect_id id "gooo://transport-outcome/outcome/effect" type string required one
+    field state id "gooo://transport-outcome/outcome/state" type string required one
+    field next_operation id "gooo://transport-outcome/outcome/next" type string required one
+    field command_failed id "gooo://transport-outcome/outcome/command-failed" type boolean required one
+    field response_failed id "gooo://transport-outcome/outcome/response-failed" type boolean required one
+    field effect_observed id "gooo://transport-outcome/outcome/effect-observed" type boolean required one
+}
+
+# Classifies this report's observations; presence does not establish causation.
+# A proposal and an attempted write remain different facts.
+activity Assess(Observation) -> Outcome id "gooo://transport-outcome/assess" computes `
+let result = Outcome{effect_id:input.effect_id,state:"INCONSISTENT_OBSERVATION",
+    next_operation:"retain-and-reconcile-records",command_failed:true,
+    response_failed:false,effect_observed:false}
+if input.effect_id == "" || input.decision_effect_id != input.effect_id { return result }
+if input.readback_recorded {
+    if input.readback_effect_id != input.effect_id { return result }
+} else if input.readback_effect_id != "" || input.readback_state != "" { return result }
+if !input.write_attempted {
+    if input.response_status != 0 { return result }
+    result.state = "NO_WRITE_ATTEMPT"
+    result.next_operation = input.decision_next
+    result.command_failed = false
+    if input.response_error != "" {
+        result.state = "WRITE_NOT_SENT"
+        result.next_operation = "refresh-before-new-attempt"
+        result.command_failed = true
+    }
+    return result
+}
+if input.decision_state != "READY_TO_RESTORE" { return result }
+result.response_failed = input.response_status < 200 || input.response_status > 299 || input.response_error != ""
+result.command_failed = result.response_failed
+result.state = "UNRESOLVED_EFFECT"
+result.next_operation = "read-current-effect"
+if !input.readback_recorded { return result }
+if input.readback_state == "ALREADY_PRESENT" {
+    result.state = "EFFECT_OBSERVED"
+    result.effect_observed = true
+    result.next_operation = "retain-current-observation"
+    if result.response_failed { result.state = "EFFECT_OBSERVED_WITH_WRITE_FAILURE" }
+} else if input.readback_state == "READY_TO_RESTORE" {
+    result.state = "EFFECT_NOT_OBSERVED"
+    result.next_operation = "revise-before-new-attempt"
+}
+return result
+`

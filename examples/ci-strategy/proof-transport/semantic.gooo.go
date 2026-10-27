@@ -1,4 +1,4 @@
-// Compiler version="0.6.38-dev" source="542c4f925b960204d15d951e3d16f5285a569408" source_status="CLEAN_VCS" go="go1.27.3"
+// Compiler version="0.6.38-dev" source="d5cd2eeec2b47cd8ca51408ecf7665079c486eec" source_status="CLEAN_VCS" go="go1.27.3"
 // Workspace manifest: sha256:776c7896fe9bd74896a6d302c0749ef73270ec4595047e48ae0901450f950f61
 // Workspace image: sha256:c526d7c9debeaed252fee153a6c246e87a07d0b58043fab7b88bf5fecadfd7db
 // Gooo source package="examples/cistrategy" file="proof-transport/transport.gooo" source_json_string_sha256="sha256:5e2ccf9b4bbe9cdea9bb725040d0753ddebe41581aa93f3ff8d315735fda9d2b"
@@ -371,3 +371,8 @@ func Evaluate(input0 string, input1 R_TransportObservation) R_TransportStep {
 }
 
 //gooo:generated:end id="gooo://ci-strategy/transport-next" kind="library-entry"
+
+//gooo:generated:start id="urn:gooo:library:generation-origin:2db8d12e9c36bb3f31beb5fde78919db3cc79a52770bd0d18634212e83a1c771" kind="generation-origin"
+const GoooGenerationOrigin = "{\"schema\":\"gooo/library-generation-origin/v1\",\"entry_activity_id\":\"gooo://ci-strategy/transport-next\",\"lowered_source_sha256\":\"sha256:f36d857d3ce49aa2e863e07aca373c5958403990c827b80b09baf570cc77f2dc\",\"typed_plan_sha256\":\"sha256:ab1e09179ebf8e28971885f19f522740c8d21508bef0c84bdd47cfd0a285d202\",\"context\":{\"compiler_version\":\"0.6.38-dev\",\"compiler_source_sha\":\"d5cd2eeec2b47cd8ca51408ecf7665079c486eec\",\"compiler_source_status\":\"CLEAN_VCS\",\"go_version\":\"go1.27.3\",\"workspace_manifest_sha256\":\"sha256:776c7896fe9bd74896a6d302c0749ef73270ec4595047e48ae0901450f950f61\",\"workspace_image_sha256\":\"sha256:c526d7c9debeaed252fee153a6c246e87a07d0b58043fab7b88bf5fecadfd7db\",\"sources\":[{\"package_path\":\"examples/cistrategy\",\"filename\":\"proof-transport/transport.gooo\",\"source_json_string_sha256\":\"sha256:5e2ccf9b4bbe9cdea9bb725040d0753ddebe41581aa93f3ff8d315735fda9d2b\"},{\"package_path\":\"examples/cistrategy\",\"filename\":\"recovery-origin/origin.gooo\",\"source_json_string_sha256\":\"sha256:10087766ff8af5a819b389b931bef5c650193b172e6ffae2cea3d741eb5b4f58\"},{\"package_path\":\"examples/cistrategy\",\"filename\":\"recovery-origin/plan.gooo\",\"source_json_string_sha256\":\"sha256:ede663e20f6e5a3644bbda89844fdb3abdba2de2c339caef96481094506376f0\"},{\"package_path\":\"examples/cistrategy\",\"filename\":\"strategy.gooo\",\"source_json_string_sha256\":\"sha256:0d6c6c83898198ed6c1f6bc9b7eb005da2d644be35eaacb7b07a24b93b423bc4\"}]},\"stage_exports\":[{\"activity_id\":\"gooo://ci-strategy/transport-plan\",\"name\":\"Plan\"}]}"
+
+//gooo:generated:end id="urn:gooo:library:generation-origin:2db8d12e9c36bb3f31beb5fde78919db3cc79a52770bd0d18634212e83a1c771" kind="generation-origin"
