@@ -17,9 +17,9 @@ type FileOwner struct {
 // DefinitionObservation records the exact serialized input, including formatting.
 // ManifestPath retains the caller's reader address, as in OwnedProposal.
 type DefinitionObservation struct {
-	ManifestPath string
-	SHA256       string
-	ByteLength   int
+	ManifestPath string `json:"manifest_path"`
+	SHA256       string `json:"sha256"`
+	ByteLength   int    `json:"byte_length"`
 }
 
 var ErrDefinitionChanged = errors.New("workspace definition changed during preparation")

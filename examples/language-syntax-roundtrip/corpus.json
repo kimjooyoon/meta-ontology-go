@@ -1408,6 +1408,23 @@
     "examples/toolchain-version-impact/impact.gooo",
     "examples/toolchain-version-impact/plan.gooo",
     "examples/direct-module-impact/plan.gooo",
-    "examples/ci-strategy/strategy.gooo"
+    "examples/ci-strategy/strategy.gooo",
+    "examples/ci-strategy/recovery-origin/origin.gooo",
+    "examples/ci-strategy/recovery-origin/plan.gooo",
+    "examples/ci-strategy/proof-transport/transport.gooo",
+    "internal/meta/sourceownership/policy.gooo",
+    "internal/meta/executioncontinuation/policy/source_recovery.gooo",
+    "examples/runtime-package-surface/contract.gooo",
+    "examples/runtime-package-surface/inspect.gooo",
+    "internal/meta/cyclecontext/policy.gooo"
+  ],
+  "case_sources": [
+    {
+      "case_id": "explicit-consumer-continuation",
+      "members": [
+        "internal/meta/executioncontinuation/policy/source.gooo",
+        "internal/meta/executioncontinuation/policy/source_recovery.gooo"
+      ]
+    }
   ]
 }

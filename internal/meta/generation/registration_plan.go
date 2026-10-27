@@ -5,9 +5,15 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspacesplit"
 )
 
 const ReasonRegistrationInput Reason = "REGISTRATION_INPUT_UNBOUND"
+
+type OperationInputs struct {
+	Registrations   map[string]syntaxregistration.Request
+	WorkspaceSplits map[string]workspacesplit.Request
+}
 
 func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 	return BuildWithRegistrationInputs(baseSHA, headSHA, report, nil)
@@ -17,13 +23,23 @@ func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 // Input digests are already part of the source indicators and canonical input.
 func BuildWithRegistrationInputs(baseSHA, headSHA string, report sourcepolicy.Report,
 	inputs map[string]syntaxregistration.Request) Plan {
+	return BuildWithOperationInputs(baseSHA, headSHA, report, OperationInputs{Registrations: inputs})
+}
+
+func BuildWithOperationInputs(baseSHA, headSHA string, report sourcepolicy.Report, inputs OperationInputs) Plan {
 	plan := buildWithoutRegistrationInputs(baseSHA, headSHA, report)
-	failures := registrationInputFailures(report.Indicators, inputs)
+	registrationFailures := registrationInputFailures(report.Indicators, inputs.Registrations)
+	operationFailures := workspaceSplitInputFailures(report.Indicators, inputs.WorkspaceSplits)
+	failures := append(append([]OperationInputFailure{}, registrationFailures...), operationFailures...)
+	sortOperationInputFailures(failures)
 	if len(failures) != 0 {
 		plan.Decision, plan.Reason = DecisionUnknown, ReasonRegistrationInput
 		plan.Selected = []Action{}
 		plan.IndicatorDecisionLedger = nil
-		plan.RegistrationInputFailures = failures
+		plan.RegistrationInputFailures, plan.OperationInputFailures = registrationFailures, operationFailures
+		if len(operationFailures) != 0 {
+			plan.Reason = "OPERATION_INPUT_UNBOUND"
+		}
 		for _, failure := range failures {
 			if failure.State == "REFUTED" {
 				plan.Decision = DecisionRejected
@@ -39,8 +55,13 @@ func BuildWithRegistrationInputs(baseSHA, headSHA string, report sourcepolicy.Re
 	for index := range plan.Selected {
 		action := &plan.Selected[index]
 		if action.Operation == sourcepolicy.OperationRegisterSyntax {
-			request := inputs[action.SourceIndicator.OperationInputDigest]
+			request := inputs.Registrations[action.SourceIndicator.OperationInputDigest]
 			action.RegistrationRequest = cloneRegistrationRequest(&request)
+			changed = true
+		}
+		if action.Operation == sourcepolicy.OperationSplitGooo && action.SourceIndicator.OperationInputDigest != "" {
+			request := inputs.WorkspaceSplits[action.SourceIndicator.OperationInputDigest]
+			action.WorkspaceSplitRequest = cloneWorkspaceSplitRequest(&request)
 			changed = true
 		}
 	}
@@ -54,6 +75,9 @@ func registrationInputFailures(indicators []sourcepolicy.Indicator, inputs map[s
 	var failures []RegistrationInputFailure
 	used := make(map[string]bool)
 	for _, indicator := range indicators {
+		if indicator.Operation == sourcepolicy.OperationSplitGooo {
+			continue
+		}
 		if indicator.Operation != sourcepolicy.OperationRegisterSyntax {
 			if indicator.OperationInputDigest != "" {
 				failures = append(failures, registrationInputFailure(indicatorID(indicator),
@@ -82,12 +106,16 @@ func registrationInputFailures(indicators []sourcepolicy.Indicator, inputs map[s
 				"REFUTED", "UNREFERENCED_REGISTRATION_REQUEST", ""))
 		}
 	}
+	sortOperationInputFailures(failures)
+	return failures
+}
+
+func sortOperationInputFailures(failures []OperationInputFailure) {
 	sort.Slice(failures, func(left, right int) bool {
 		a, b := failures[left], failures[right]
 		return a.IndicatorID+"\x00"+a.RequestDigest+"\x00"+a.Reason <
 			b.IndicatorID+"\x00"+b.RequestDigest+"\x00"+b.Reason
 	})
-	return failures
 }
 
 func registrationInputFailure(indicatorID, requestDigest, state, reason, class string) RegistrationInputFailure {

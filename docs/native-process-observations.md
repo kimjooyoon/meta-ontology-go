@@ -1,5 +1,67 @@
 # Native process observations
 
+## Optional package wall diagnostics
+
+`gooo package execute`, `replay` and `resume` accept `--timing`. The option writes
+one `gooo/package-wall-diagnostic/v1` JSON line to stderr after the ordinary stdout
+result is published. It reuses the bounded wall recorder used by body-path files.
+The default path allocates no recorder and the phase hooks read no clock. Timing
+does not enter the execution receipt, source identity, selection or admission.
+Diagnostic writer errors leave the original execution outcome unchanged.
+
+```sh
+gooo package execute --timing --json --receipt-compression gzip \
+  --cases examples/assembly-explainer/cases.json \
+  examples/assembly-explainer/gooo.workspace.json \
+  > /tmp/execution.json.gz 2> /tmp/execution-diagnostics.jsonl
+```
+
+The line binds the current execution source, manifest and case/input digests
+when those are available. Read its `wall.phases`, `wall.capture_ns` and
+`wall.unassigned_ns` separately from the primary receipt's execution decision.
+stderr can also contain ordinary errors; only the line with this schema is the
+timing observation. A later replay records fresh intervals rather than accepting
+the saved execution's timings.
+
+| Phase | Observed work |
+| --- | --- |
+| `composition_receipt` | Initial runtime identities and source/suite digests |
+| `source_replay` | Reconstructing and verifying the saved composition |
+| `composition_call_context` | Binding an explicit joint-call context, when present |
+| `runtime_suite_prepare` | Resolving current native input rows |
+| `go_tool_hash`, `toolchain_bind` | Binding the selected Go executable and toolchain |
+| `native_projection` | Constructing source-backed native observation code |
+| `executable_prepare` | Preparing or reusing the owned executable, including a build when needed |
+| `native_prepare_1`, `native_prepare_2` | Resetting each execution's observation files |
+| `native_run_1`, `native_run_2` | Waiting for each actual native execution |
+| `runtime_decode_1`, `runtime_decode_2` | Reading, decoding, binding and comparing current native observations |
+| `input_separation` | Comparing runtime inputs with previously observed selection inputs |
+| `executor_gate` | Waiting for an owned executor, when that API is used |
+
+Intervals are sequential wall observations, including scheduling and contention.
+Existing process start/wait/build intervals are contained within these phases;
+adding both would double-count time. Unassigned time includes workspace generation,
+workspace-origin binding, receipt encoding/publication and bookkeeping. It is
+measured remainder, with no claim that all of it can be removed. CPU and memory
+retain their existing independent observations.
+
+The recorder retains at most 32 phases. Multiple sequential compositions can
+repeat phase names. Overflow, overlapping intervals or invalid measurements yield
+`INCOMPLETE`; absent phases are unobserved. This diagnostic status does not change
+program behavior or lower a required check. Phase outcome `completed` means the
+measured operation returned normally, including a classification of `UNKNOWN`;
+it does not establish correctness of all inputs. CLI argument rejection happens
+before an execution diagnostic is produced.
+
+Consumers keep diagnostic parsing and storage failures separate from the command's
+exit status and primary stdout publication. An unavailable timing view remains an
+unobserved diagnostic; it must not replace the actual execution result. With
+Unix interrupt/termination cancellation, the view retains the interrupted tool
+phase and the current source/input bindings while the primary receipt remains
+`FAIL_CLOSED`. The command still joins its owned child before publishing that result.
+
+## Individual native processes
+
 Development source records process creation and termination waiting separately.
 Each newly executed toolchain/build/native process has an optional `timing`
 object alongside its existing total, CPU, output-digest and failure fields:
@@ -24,6 +86,12 @@ Total wall time includes both phases. Cancellation still calls Wait to join a
 successfully created child, and a completed wait stops its timer.
 Cancellation and pipe cleanup can make observed Wait time exceed its requested
 budget; the observation retains that elapsed time.
+
+On Unix, `package execute`, `replay` and `resume` propagate a caught interrupt
+or SIGTERM through their execution context. Owned tool processes are terminated
+and joined before the command returns. With `--json` and a writable output,
+interrupted execution publishes a `FAIL_CLOSED` receipt and a failure exit code;
+any earlier construction observations remain partial results.
 
 This separates host creation from the native execution interval. Go's Start
 call can itself return after a caller deadline; the context at return records

@@ -1,0 +1,129 @@
+package cistrategy
+namespace cistrategy
+
+// Restore one exact, already signed manifest only when its blobs remain present.
+// The historical proposal and this current-state operation keep separate IDs.
+entity TransportScope id "gooo://ci-strategy/transport-scope" fields {
+    field goal_id id "gooo://ci-strategy/transport-scope/goal" type string required one
+    field plan_id id "gooo://ci-strategy/transport-scope/plan" type string required one
+    field prior_plan_id id "gooo://ci-strategy/transport-scope/prior-plan" type string required one
+    field effect_id id "gooo://ci-strategy/transport-scope/effect" type string required one
+    field operation id "gooo://ci-strategy/transport-scope/operation" type string required one
+    field base_url id "gooo://ci-strategy/transport-scope/base-url" type string required one
+    field token_url id "gooo://ci-strategy/transport-scope/anonymous-token-url" type string required one
+    field subject_digest id "gooo://ci-strategy/transport-scope/subject" type string required one
+    field manifest_digest id "gooo://ci-strategy/transport-scope/manifest" type string required one
+    field payload_digest id "gooo://ci-strategy/transport-scope/payload" type string required one
+    field config_digest id "gooo://ci-strategy/transport-scope/config" type string required one
+    field referrers_url id "gooo://ci-strategy/transport-scope/referrers" type string required one
+    field fallback_url id "gooo://ci-strategy/transport-scope/fallback" type string required one
+    field max_requests id "gooo://ci-strategy/transport-scope/requests" type integer required one
+    field max_response_bytes id "gooo://ci-strategy/transport-scope/response-bytes" type integer required one
+    field max_total_bytes id "gooo://ci-strategy/transport-scope/total-bytes" type integer required one
+    field deadline_ms id "gooo://ci-strategy/transport-scope/deadline" type integer required one
+    field max_age_seconds id "gooo://ci-strategy/transport-scope/age" type integer required one
+}
+
+entity TransportObservation id "gooo://ci-strategy/transport-observation" fields {
+    field base_url id "gooo://ci-strategy/transport-observation/base-url" type string required one
+    field material_digest id "gooo://ci-strategy/transport-observation/material" type string required one
+    field observed_at id "gooo://ci-strategy/transport-observation/time" type integer required one
+    field now id "gooo://ci-strategy/transport-observation/now" type integer required one
+    field read_error id "gooo://ci-strategy/transport-observation/read-error" type string required one
+    field subject_status id "gooo://ci-strategy/transport-observation/subject-status" type integer required one
+    field subject_digest id "gooo://ci-strategy/transport-observation/subject" type string required one
+    field manifest_status id "gooo://ci-strategy/transport-observation/manifest-status" type integer required one
+    field manifest_digest id "gooo://ci-strategy/transport-observation/manifest" type string required one
+    field payload_status id "gooo://ci-strategy/transport-observation/payload-status" type integer required one
+    field payload_digest id "gooo://ci-strategy/transport-observation/payload" type string required one
+    field config_status id "gooo://ci-strategy/transport-observation/config-status" type integer required one
+    field config_digest id "gooo://ci-strategy/transport-observation/config" type string required one
+    field referrers_status id "gooo://ci-strategy/transport-observation/referrers-status" type integer required one
+    field referrers_url id "gooo://ci-strategy/transport-observation/referrers-url" type string required one
+    field referrers_digest id "gooo://ci-strategy/transport-observation/referrers-digest" type string required one
+    field referrers_media_type id "gooo://ci-strategy/transport-observation/referrers-type" type string required one
+    field next_link id "gooo://ci-strategy/transport-observation/next-link" type string required one
+    field descriptors id "gooo://ci-strategy/transport-observation/descriptors" type string required many
+}
+
+entity TransportStep id "gooo://ci-strategy/transport-step" fields {
+    field goal_id id "gooo://ci-strategy/transport-step/goal" type string required one
+    field plan_id id "gooo://ci-strategy/transport-step/plan" type string required one
+    field effect_id id "gooo://ci-strategy/transport-step/effect" type string required one
+    field state id "gooo://ci-strategy/transport-step/state" type string required one
+    field next_operation id "gooo://ci-strategy/transport-step/next" type string required one
+    field manifest_digest id "gooo://ci-strategy/transport-step/manifest" type string required one
+    field write_manifest id "gooo://ci-strategy/transport-step/write" type boolean required one
+}
+
+activity TransportPlan(operation OriginText) -> TransportScope id "gooo://ci-strategy/transport-plan" computes `
+let previous = HistoricalScope(operation)
+let digest = previous.subject[len("ghcr.io/kimjooyoon/gooo-service-grant-mcp@") :]
+let base = "https://ghcr.io/v2/kimjooyoon/gooo-service-grant-mcp"
+return TransportScope{
+    goal_id: previous.goal_id, plan_id: "urn:gooo:oci-history:plan:restore-original-manifest",
+    prior_plan_id: previous.recovery_plan_id,
+    effect_id: "urn:gooo:effect:oci-original-build-proof:"+previous.subject+":"+previous.source,
+    operation: operation, base_url: base, subject_digest: digest,
+    token_url: "https://ghcr.io/token?service=ghcr.io&scope=repository:kimjooyoon/gooo-service-grant-mcp:pull",
+    manifest_digest: "sha256:c547c3a3f101f7a16c3372ddf4731943785d81a8cc03e9e955fa2565eff18bec",
+    payload_digest: "sha256:e8c5f6936322a1e3a6e61c953b4f2b2454589087ef7e9c8f6ef8d41f6164c83f",
+    config_digest: "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    referrers_url: base+"/referrers/"+digest,
+    fallback_url: base+"/manifests/sha256-"+digest[len("sha256:"):],
+    max_requests:32, max_response_bytes:65536, max_total_bytes:262144,
+    deadline_ms:30000, max_age_seconds:60,
+}
+`
+
+activity TransportNext(scope TransportScope, observation TransportObservation) -> TransportStep
+id "gooo://ci-strategy/transport-next" computes `
+let result = TransportStep{goal_id:scope.goal_id,plan_id:scope.plan_id,
+    effect_id:scope.effect_id,
+    state:"REFRESH_OBSERVATION",next_operation:"read-current-registry",
+    manifest_digest:scope.manifest_digest,write_manifest:false}
+if scope.operation != "transport-original-build-proof" {
+    result.state = "INVALID_PROPOSAL"
+    result.next_operation = "revise-operation"
+    return result
+}
+if observation.base_url != scope.base_url || observation.material_digest != scope.manifest_digest {
+    result.state = "REFUTED_MATERIAL"
+    result.next_operation = "restore-pinned-material"
+    return result
+}
+if observation.read_error != "" || observation.observed_at <= 0 ||
+   observation.now < observation.observed_at || observation.now-observation.observed_at > scope.max_age_seconds {
+    return result
+}
+if observation.subject_status != 200 || observation.subject_digest != scope.subject_digest ||
+   observation.payload_status != 200 || observation.payload_digest != scope.payload_digest ||
+   observation.config_status != 200 || observation.config_digest != scope.config_digest {
+    result.state = "UNRESOLVED_MATERIAL"
+    result.next_operation = "collect-required-content"
+    return result
+}
+if observation.referrers_status != 200 || observation.referrers_digest == "" ||
+   observation.referrers_media_type != "application/vnd.oci.image.index.v1+json" ||
+   (observation.referrers_url != scope.referrers_url && observation.referrers_url != scope.fallback_url) {
+    return result
+}
+let found = false
+for digest in observation.descriptors { if digest == scope.manifest_digest { found = true } }
+if observation.manifest_status == 200 && observation.manifest_digest == scope.manifest_digest && found {
+    result.state = "ALREADY_PRESENT"
+    result.next_operation = "retain-current-observation"
+} else if observation.manifest_status == 404 && !found && observation.next_link == "" &&
+          observation.referrers_url == scope.referrers_url {
+    result.state = "READY_TO_RESTORE"
+    result.next_operation = "put-pinned-manifest-once"
+    result.write_manifest = true
+} else if observation.manifest_status == 200 && observation.manifest_digest == scope.manifest_digest &&
+          !found && observation.next_link == "" {
+    result.state = "REVISE_DISCOVERY"
+    result.next_operation = "reconcile-referrer-discovery"
+}
+return result
+`
+
+bind TransportPlan.result -> TransportNext.input0

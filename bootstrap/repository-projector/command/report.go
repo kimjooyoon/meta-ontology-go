@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	projectionevidence "github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence"
+	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
 )
 
 func buildManifest(sha string, files []trackedFile,
@@ -23,6 +24,7 @@ func buildManifest(sha string, files []trackedFile,
 			ObjectSHA: file.objectSHA, ContentSHA: contentHash(file.data),
 			Kind: file.kind, Language: file.language,
 			Mode: file.mode, Lines: file.lines,
+			GeneratorOwned: file.language == "go" && linecaps.SourceHasGeneratorOwner(file.logical, file.data),
 		})
 	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].Logical < entries[j].Logical })

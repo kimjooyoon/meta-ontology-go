@@ -1,0 +1,31 @@
+package cyclecontext
+namespace cyclecontext
+
+entity Observation id "urn:gooo:self-improvement-cycle:observation" fields {
+    field conclusion id "urn:gooo:self-improvement-cycle:source-conclusion" type string required one
+    field bindings_valid id "urn:gooo:self-improvement-cycle:bindings-valid" type boolean required one
+}
+entity State id "urn:gooo:self-improvement-cycle:state" fields {
+    field conclusion_supported id "urn:gooo:self-improvement-cycle:conclusion-supported" type boolean required one
+    field record_valid id "urn:gooo:self-improvement-cycle:record-valid" type boolean required one
+    field status id "urn:gooo:self-improvement-cycle:status" type string required one
+    field reason id "urn:gooo:self-improvement-cycle:reason" type string required one
+}
+
+// Binding a valid observation does not complete its source CI or authorize work.
+activity Classify(Observation) -> State id "urn:gooo:self-improvement-cycle:classify" computes `
+let supported = input.conclusion == "success" || input.conclusion == "failure" || input.conclusion == "cancelled"
+let valid = supported && input.bindings_valid
+let status = "OPEN"
+let reason = "SELF_IMPROVEMENT_CYCLE_OPEN"
+if valid {
+    if input.conclusion == "cancelled" {
+        status = "INTERRUPTED"
+        reason = "SOURCE_CI_CANCELLED"
+    } else {
+        status = "BOUND"
+        reason = "SELF_IMPROVEMENT_CYCLE_BOUND"
+    }
+}
+return State{conclusion_supported: supported, record_valid: valid, status: status, reason: reason}
+`

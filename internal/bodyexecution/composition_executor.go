@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"sort"
 	"time"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
 )
 
 // ExecuteComposition retains one compiled graph in this executor. Each call
@@ -21,7 +23,9 @@ func (e *Executor) ExecuteComposition(ctx context.Context, filename string, sour
 func (e *Executor) executeWithJointCalls(ctx context.Context, filename string, source []byte,
 	prior Composition, suite CompositionCases, goBinary string, calls *jointCallContext) (CompositionRuntime, error) {
 	started := time.Now()
+	gatePhase := bodytiming.Start(ctx, "executor_gate")
 	reject := func(err error) (CompositionRuntime, error) {
+		gatePhase.End(false)
 		r := initialCompositionRuntime(source, prior, suite)
 		r.Schema, r.Stage = "gooo/body-composition-runtime/v2", "EXECUTOR_GATE"
 		r.Failure, r.ElapsedNS = err.Error(), time.Since(started).Nanoseconds()
@@ -47,6 +51,7 @@ func (e *Executor) executeWithJointCalls(ctx context.Context, filename string, s
 		return reject(ErrExecutorClosed)
 	}
 	wait := time.Since(started).Nanoseconds()
+	gatePhase.End(true)
 	stop := context.AfterFunc(e.lifetime, cancel)
 	defer stop()
 	r, err := executeComposition(ctx, filename, source, prior, suite, goBinary, e, calls)
@@ -75,7 +80,7 @@ func compositionArtifactKey(prior Composition, r *CompositionRuntime, goBinary s
 func compositionExecutableFor(ctx context.Context, prior Composition, goBinary string,
 	r *CompositionRuntime, owner *Executor) (root, executable string, release func(), err error) {
 	release = func() {}
-	observed, err := observedCompositionLocalEvidence(prior)
+	observed, err := timedCompositionLocalEvidence(ctx, prior)
 	projection, driver := observed.projection, observed.driver
 	if err != nil {
 		return "", "", release, err
@@ -94,6 +99,8 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 	if projection != prior.Source || driver != prior.Driver {
 		r.ObservedProjectionSHA256, r.ObservedDriverSHA256 = digest([]byte(projection)), digest([]byte(driver))
 	}
+	phase := bodytiming.Start(ctx, "executable_prepare")
+	defer func() { phase.End(err == nil) }()
 	key := ""
 	if owner != nil {
 		key = compositionArtifactKey(prior, r, goBinary)
@@ -138,6 +145,13 @@ func compositionExecutableFor(ctx context.Context, prior Composition, goBinary s
 		}
 	}
 	return root, executable, release, nil
+}
+
+func timedCompositionLocalEvidence(ctx context.Context, prior Composition) (compositionObservedSource, error) {
+	phase := bodytiming.Start(ctx, "native_projection")
+	observed, err := observedCompositionLocalEvidence(prior)
+	phase.End(err == nil)
+	return observed, err
 }
 
 func bindCompositionBuild(r *CompositionRuntime) {

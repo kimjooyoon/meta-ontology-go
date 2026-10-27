@@ -89,6 +89,9 @@ func measureFileMetric(fullPath, relative, extension string) (FileMetric, error)
 		return FileMetric{}, err
 	}
 	metric.Lines = lineCount(source)
+	if metric.Language == FileLanguageGo {
+		metric.GeneratorOwned = SourceHasGeneratorOwner(fullPath, source)
+	}
 	return metric, nil
 }
 

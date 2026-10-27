@@ -129,6 +129,9 @@ func KnownPhase(name string) bool {
 		"executable_hash_2", "native_run_1", "native_run_2", "runtime_decode_1", "runtime_decode_2",
 		"runtime_receipt", "artifact_save", "artifact_bind":
 		return true
+	case "composition_receipt", "composition_call_context", "native_projection",
+		"native_prepare_1", "native_prepare_2", "input_separation":
+		return true
 	}
 	return false
 }

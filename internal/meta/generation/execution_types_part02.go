@@ -3,6 +3,7 @@ package generation
 import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspacesplit"
 )
 
 type ExecutionStep struct {
@@ -35,7 +36,8 @@ type ExecutionStep struct {
 	WorkspaceMode               WorkspaceMode                    `json:"workspace_mode"`
 	WriteBoundary               WriteBoundary                    `json:"write_boundary"`
 
-	RegistrationRequest *syntaxregistration.Request `json:"registration_request,omitempty"`
+	RegistrationRequest   *syntaxregistration.Request `json:"registration_request,omitempty"`
+	WorkspaceSplitRequest *workspacesplit.Request     `json:"workspace_split_request,omitempty"`
 }
 
 type ExecutionManifest struct {

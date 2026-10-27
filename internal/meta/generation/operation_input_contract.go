@@ -61,6 +61,7 @@ var nativeContractPolicies = []nativeContractPolicy{
 
 type operationInputContractBinding struct {
 	InputSubjectKind sourcepolicy.SubjectKind
+	ActivityID       string
 }
 
 type operationInputContractFacts struct {
@@ -85,6 +86,7 @@ type operationInputContract struct {
 type OperationInputContractEvidence struct {
 	Operation           sourcepolicy.Operation
 	Activity            string
+	ActivityID          string `json:"ActivityID,omitempty"`
 	InputEntity         string
 	OutputEntity        string
 	InputEntityID       string
@@ -207,7 +209,8 @@ func parseOperationInputContractSources(sources []sourcebundle.Source) (operatio
 			return operationInputContract{}, err
 		}
 		expectedActivities[native.Activity] = true
-		bindings[native.Operation] = operationInputContractBinding{InputSubjectKind: inputKind}
+		activity, _ := ir.Graph.NodeByName(ir.Namespace, native.Activity) // relation validation resolved this node above
+		bindings[native.Operation] = operationInputContractBinding{InputSubjectKind: inputKind, ActivityID: activity.ID.String()}
 		facts[native.Operation] = observed
 	}
 	for _, obligation := range nativeOperationObligations {

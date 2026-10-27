@@ -2,7 +2,7 @@ package bodycodegen
 
 import "fmt"
 
-func (p preparedBody) selectedResult(source []byte, choice bodyRouteChoice) (Result, error) {
+func (p preparedBody) selectedResult(sourceDigest string, choice bodyRouteChoice) (Result, error) {
 	result := p.base
 	if choice.selected != preserveRoute {
 		candidate, err := p.generate(choice.selected)
@@ -25,7 +25,7 @@ func (p preparedBody) selectedResult(source []byte, choice bodyRouteChoice) (Res
 		r.SourceSemanticUnits != next.SourceSemanticUnits || r.LoweredSemanticUnits != next.LoweredSemanticUnits {
 		return Result{}, fmt.Errorf("internal error: replay construct count changed")
 	}
-	result.report.SourceDigest, result.report.ProgramDigest = digest(source), digest([]byte(p.activity.ValueProgram))
+	result.report.SourceDigest, result.report.ProgramDigest = sourceDigest, digest([]byte(p.activity.ValueProgram))
 	result.report.GeneratedDigest, result.report.ReplayDigest = digest(result.source), digest(replay.source)
 	result.report.Route, result.report.RouteDecision, result.report.RouteSelection = choice.selected, choice.receipt, choice.selection
 	result.report.RouteDecisionLatencyMS, result.report.CandidateRoutes = choice.latencyMS, choice.ids

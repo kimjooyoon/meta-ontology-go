@@ -1,0 +1,180 @@
+package cistrategy
+namespace cistrategy
+
+// Observations are copied from retained GitHub API records and artifact bytes.
+// Their collector/original file references remain separate from a proposed plan.
+entity ReceiptOrigin id "gooo://ci-strategy/receipt-origin" fields {
+    field repository id "gooo://ci-strategy/receipt-origin/repository" type string required one
+    field source id "gooo://ci-strategy/receipt-origin/source" type string required one
+    field run_id id "gooo://ci-strategy/receipt-origin/run-id" type integer required one
+    field attempt id "gooo://ci-strategy/receipt-origin/attempt" type integer required one
+    field workflow_path id "gooo://ci-strategy/receipt-origin/workflow-path" type string required one
+    field workflow_sha256 id "gooo://ci-strategy/receipt-origin/workflow-sha256" type string required one
+    field plan_reference id "gooo://ci-strategy/receipt-origin/plan-reference" type string required one
+    field conclusion id "gooo://ci-strategy/receipt-origin/conclusion" type string required one
+    field completed_at id "gooo://ci-strategy/receipt-origin/completed-at" type integer required one
+    field job_run_id id "gooo://ci-strategy/receipt-origin/job-run-id" type integer required one
+    field job_attempt id "gooo://ci-strategy/receipt-origin/job-attempt" type integer required one
+    field job_source id "gooo://ci-strategy/receipt-origin/job-source" type string required one
+    field job_id id "gooo://ci-strategy/receipt-origin/job-id" type integer required one
+    field step_numbers id "gooo://ci-strategy/receipt-origin/step-numbers" type integer required many
+    field step_conclusions id "gooo://ci-strategy/receipt-origin/step-conclusions" type string required many
+    field step_references id "gooo://ci-strategy/receipt-origin/step-references" type string required many
+    field artifact_run_id id "gooo://ci-strategy/receipt-origin/artifact-run-id" type integer required one
+    field artifact_source id "gooo://ci-strategy/receipt-origin/artifact-source" type string required one
+    field artifact_name id "gooo://ci-strategy/receipt-origin/artifact-name" type string required one
+    field artifact_sha256 id "gooo://ci-strategy/receipt-origin/artifact-sha256" type string required one
+    field archive_sha256 id "gooo://ci-strategy/receipt-origin/archive-sha256" type string required one
+    field subjects id "gooo://ci-strategy/receipt-origin/subjects" type string required many
+    field image_ids id "gooo://ci-strategy/receipt-origin/image-ids" type string required many
+    field reference id "gooo://ci-strategy/receipt-origin/reference" type string required one
+    field read_error id "gooo://ci-strategy/receipt-origin/read-error" type string required one
+}
+
+// The source owner declares this scope. An observation cannot widen it.
+entity RecoveryScope id "gooo://ci-strategy/recovery-scope" fields {
+    field revision_id id "gooo://ci-strategy/recovery-scope/revision-id" type string required one
+    field goal_id id "gooo://ci-strategy/recovery-scope/goal-id" type string required one
+    field prior_plan_id id "gooo://ci-strategy/recovery-scope/prior-plan-id" type string required one
+    field recovery_plan_id id "gooo://ci-strategy/recovery-scope/recovery-plan-id" type string required one
+    field failed_activity_id id "gooo://ci-strategy/recovery-scope/failed-activity-id" type string required one
+    field repository id "gooo://ci-strategy/recovery-scope/repository" type string required one
+    field source id "gooo://ci-strategy/recovery-scope/source" type string required one
+    field workflow_path id "gooo://ci-strategy/recovery-scope/workflow-path" type string required one
+    field workflow_sha256 id "gooo://ci-strategy/recovery-scope/workflow-sha256" type string required one
+    field publish_run id "gooo://ci-strategy/recovery-scope/publish-run" type integer required one
+    field publish_attempt id "gooo://ci-strategy/recovery-scope/publish-attempt" type integer required one
+    field publish_job id "gooo://ci-strategy/recovery-scope/publish-job" type integer required one
+    field publish_artifact_name id "gooo://ci-strategy/recovery-scope/publish-artifact-name" type string required one
+    field publish_step id "gooo://ci-strategy/recovery-scope/publish-step" type integer required one
+    field failed_step id "gooo://ci-strategy/recovery-scope/failed-step" type integer required one
+    field readback_run id "gooo://ci-strategy/recovery-scope/readback-run" type integer required one
+    field readback_attempt id "gooo://ci-strategy/recovery-scope/readback-attempt" type integer required one
+    field readback_job id "gooo://ci-strategy/recovery-scope/readback-job" type integer required one
+    field readback_artifact_name id "gooo://ci-strategy/recovery-scope/readback-artifact-name" type string required one
+    field readback_step id "gooo://ci-strategy/recovery-scope/readback-step" type integer required one
+    field observed_at id "gooo://ci-strategy/recovery-scope/observed-at" type integer required one
+    field subject id "gooo://ci-strategy/recovery-scope/subject" type string required one
+    field proposed_subject id "gooo://ci-strategy/recovery-scope/proposed-subject" type string required one
+    field proposed_operation id "gooo://ci-strategy/recovery-scope/proposed-operation" type string required one
+    field proposed_display_name id "gooo://ci-strategy/recovery-scope/proposed-display-name" type string required one
+}
+
+entity OriginRevision id "gooo://ci-strategy/origin-revision" fields {
+    field revision_id id "gooo://ci-strategy/origin-revision/revision-id" type string required one
+    field goal_id id "gooo://ci-strategy/origin-revision/goal-id" type string required one
+    field prior_plan_id id "gooo://ci-strategy/origin-revision/prior-plan-id" type string required one
+    field recovery_plan_id id "gooo://ci-strategy/origin-revision/recovery-plan-id" type string required one
+    field failed_activity_id id "gooo://ci-strategy/origin-revision/failed-activity-id" type string required one
+    field failure_observation_id id "gooo://ci-strategy/origin-revision/failure-observation-id" type string required one
+    field readback_observation_id id "gooo://ci-strategy/origin-revision/readback-observation-id" type string required one
+    field completed_effect_ids id "gooo://ci-strategy/origin-revision/completed-effect-ids" type string required many
+    field recovery_effect_ids id "gooo://ci-strategy/origin-revision/recovery-effect-ids" type string required many
+    field binding_state id "gooo://ci-strategy/origin-revision/binding-state" type string required one
+    field state id "gooo://ci-strategy/origin-revision/state" type string required one
+    field execution_authorized id "gooo://ci-strategy/origin-revision/execution-authorized" type boolean required one
+}
+
+entity OriginBoolean id "urn:gooo:type:boolean"
+entity OriginInteger id "urn:gooo:type:integer"
+entity OriginText id "urn:gooo:type:string"
+
+activity OriginMatches(scope RecoveryScope, record ReceiptOrigin) -> OriginBoolean
+id "gooo://ci-strategy/origin-matches" computes `
+return record.read_error == "" && scope.repository != "" && scope.source != "" &&
+    scope.workflow_path != "" && scope.workflow_sha256 != "" &&
+    record.repository == scope.repository && record.source == scope.source &&
+    record.workflow_path == scope.workflow_path && record.workflow_sha256 == scope.workflow_sha256 &&
+    scope.prior_plan_id != "" && record.plan_reference == scope.prior_plan_id &&
+    record.run_id > 0 && record.attempt > 0 && record.job_id > 0 &&
+    record.job_run_id == record.run_id && record.job_attempt == record.attempt &&
+    record.job_source == record.source && record.artifact_run_id == record.run_id &&
+    record.artifact_source == record.source && record.artifact_sha256 != "" &&
+    record.artifact_sha256 == record.archive_sha256 && record.reference != "" &&
+    record.completed_at > 0 && record.completed_at <= scope.observed_at
+`
+
+activity StepMatches(record ReceiptOrigin, number OriginInteger, conclusion OriginText, reference OriginText) -> OriginBoolean
+id "gooo://ci-strategy/step-matches" computes `
+if len(record.step_numbers) != len(record.step_conclusions) ||
+   len(record.step_numbers) != len(record.step_references) || len(record.step_numbers) > 64 {
+    return false
+}
+let found = 0
+let matched = false
+let index = 0
+for step in record.step_numbers {
+    if step == number {
+        found = found + 1
+        matched = record.step_conclusions[index] == conclusion &&
+            (reference == "" || record.step_references[index] == reference)
+    }
+    index = index + 1
+}
+return found == 1 && matched
+`
+
+activity BindRecovery(scope RecoveryScope, published ReceiptOrigin, readback ReceiptOrigin) -> OriginRevision
+id "gooo://ci-strategy/bind-recovery" computes `
+let bound = OriginMatches(scope, published) && OriginMatches(scope, readback) &&
+    published.run_id == scope.publish_run && published.attempt == scope.publish_attempt &&
+    published.job_id == scope.publish_job && readback.run_id == scope.readback_run &&
+    scope.publish_artifact_name != "" && published.artifact_name == scope.publish_artifact_name &&
+    scope.readback_artifact_name != "" && readback.artifact_name == scope.readback_artifact_name &&
+    readback.attempt == scope.readback_attempt && readback.job_id == scope.readback_job &&
+    readback.run_id != published.run_id && readback.completed_at > published.completed_at &&
+    published.conclusion == "failure" && readback.conclusion == "success" &&
+    scope.publish_step > 0 && scope.failed_step > scope.publish_step && scope.readback_step > 0 &&
+    StepMatches(published, scope.publish_step, "success", "") && scope.failed_activity_id != "" &&
+    StepMatches(published, scope.failed_step, "failure", scope.failed_activity_id) &&
+    StepMatches(readback, scope.readback_step, "success", "")
+let effects = false
+if len(published.subjects) == 1 && len(readback.subjects) == 1 &&
+   len(published.image_ids) == 1 && len(readback.image_ids) == 1 {
+    effects = scope.subject != "" && published.subjects[0] == scope.subject &&
+        readback.subjects[0] == scope.subject && published.image_ids[0] != "" &&
+        published.image_ids[0] == readback.image_ids[0]
+}
+let completed = "urn:gooo:effect:oci-publish:" + scope.subject
+let proposed = ""
+if scope.proposed_operation == "publish-image" {
+    proposed = "urn:gooo:effect:oci-publish:" + scope.proposed_subject
+} else if scope.proposed_operation == "transport-original-build-proof" {
+    proposed = "urn:gooo:effect:oci-original-build-proof:" + scope.proposed_subject + ":" + scope.source
+}
+let closed = bound && effects && proposed != "" && scope.proposed_subject == scope.subject
+let binding = "REFRESH_ORIGIN"
+if bound && effects { binding = "BOUND_HISTORICAL_OBSERVATION" }
+if proposed == "" || scope.proposed_subject != scope.subject { binding = "REVISE_SCOPE" }
+let completed_ids = []string{}
+if bound && effects { completed_ids = []string{completed} }
+let revision = ProposeRecovery(RecoveryRequest{
+    revision_id: scope.revision_id,
+    goal_id: scope.goal_id,
+    prior_plan_id: scope.prior_plan_id,
+    recovery_plan_id: scope.recovery_plan_id,
+    failed_activity_id: scope.failed_activity_id,
+    failure_observation_id: published.reference,
+    completed_effect_ids: completed_ids,
+    recovery_effect_ids: []string{proposed},
+    failure_observed: bound,
+    completed_effects_observed: effects && bound,
+    scope_closed: closed,
+})
+let state = revision.state
+if !bound || !effects { state = "UNRESOLVED_ORIGIN" }
+return OriginRevision{
+    revision_id: revision.revision_id,
+    goal_id: revision.goal_id,
+    prior_plan_id: revision.prior_plan_id,
+    recovery_plan_id: revision.recovery_plan_id,
+    failed_activity_id: revision.failed_activity_id,
+    failure_observation_id: revision.failure_observation_id,
+    readback_observation_id: readback.reference,
+    completed_effect_ids: revision.completed_effect_ids,
+    recovery_effect_ids: revision.recovery_effect_ids,
+    binding_state: binding,
+    state: state,
+    execution_authorized: revision.execution_authorized,
+}
+`

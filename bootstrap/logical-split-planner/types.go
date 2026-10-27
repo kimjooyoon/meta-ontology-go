@@ -7,12 +7,13 @@ type projectionEvidence struct {
 }
 
 type inputSubject struct {
-	Indicator string `json:"indicator"`
-	Logical   string `json:"logical"`
-	Value     int    `json:"value"`
-	Limit     int    `json:"limit"`
-	Consumer  string `json:"consumer"`
-	Operation string `json:"meta_operation"`
+	Indicator     string `json:"indicator"`
+	Logical       string `json:"logical"`
+	Value         int    `json:"value"`
+	Limit         int    `json:"limit"`
+	Consumer      string `json:"consumer"`
+	Operation     string `json:"meta_operation"`
+	Applicability string `json:"applicability,omitempty"`
 }
 
 type declarationAtom struct {

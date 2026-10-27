@@ -19,17 +19,17 @@ func readProfileNativeCases(source *goSource) ([]profileNativeCase, error) {
 	if err != nil {
 		return nil, err
 	}
-	leaves, err := source.registryCaseLeaves(root)
+	origins, err := source.registryFieldOrigins(root, "Cases", "CaseDefinition", false)
 	if err != nil {
 		return nil, err
 	}
 	var result []profileNativeCase
 	ids, paths := map[string]bool{}, map[string]bool{}
-	for _, leaf := range leaves {
+	for _, leaf := range origins.leaves {
 		for _, element := range leaf.Elts {
-			literal, ok := element.(*ast.CompositeLit)
-			if !ok || (literal.Type != nil && !namedRegistryType(literal.Type, "CaseDefinition")) {
-				return nil, fmt.Errorf("PROFILE_NATIVE_CASE_SHAPE_UNRESOLVED")
+			literal, err := origins.literal(element, "CaseDefinition")
+			if err != nil {
+				return nil, err
 			}
 			definition, err := readProfileCaseLiteral(source, literal)
 			if err != nil {

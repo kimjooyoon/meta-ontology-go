@@ -2,16 +2,39 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspacesplit"
 )
 
 func emitGenerationPlan(opts options, report sourcepolicy.Report) error {
 	if opts.baseSHA == "" {
 		return fmt.Errorf("base-sha is required when plan is set")
 	}
-	plan := generation.Build(opts.baseSHA, opts.sha, report)
+	inputs := generation.OperationInputs{}
+	if opts.workspaceSplits != "" {
+		file, err := os.Open(opts.workspaceSplits)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		raw, err := io.ReadAll(io.LimitReader(file, (1<<20)+1))
+		if err != nil {
+			return err
+		}
+		requests, err := workspacesplit.DecodeRequests(raw)
+		if err != nil {
+			return err
+		}
+		report, inputs, err = generation.BindWorkspaceSplitInputs(report, requests)
+		if err != nil {
+			return err
+		}
+	}
+	plan := generation.BuildWithOperationInputs(opts.baseSHA, opts.sha, report, inputs)
 	payload, err := generation.Encode(plan)
 	if err != nil {
 		return fmt.Errorf("encode generation plan: %w", err)

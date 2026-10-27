@@ -16,14 +16,15 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
 )
 
-const packageReplayUsage = "usage: gooo package replay [--json [--receipt-compression gzip]] --receipt <execution.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
-const packageResumeUsage = "usage: gooo package resume [--json [--receipt-compression gzip]] --receipt <execution.json> --assembly-policy-workspace <policy.workspace.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
+const packageReplayUsage = "usage: gooo package replay [--timing] [--json [--receipt-compression gzip]] --receipt <execution.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
+const packageResumeUsage = "usage: gooo package resume [--timing] [--json [--receipt-compression gzip]] --receipt <execution.json> --assembly-policy-workspace <policy.workspace.json> (--cases <cases.json> | --inputs <inputs.json>) [--go <go-binary>] <gooo.workspace.json>"
 
 func runPackageReplay(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	return runPackageSaved(args, reader, stdout, stderr, false)
 }
 
 func runPackageSaved(args []string, reader SourceReader, stdout, stderr io.Writer, resume bool) int {
+	ctx, args, timing := packageTimingContext(context.Background(), args)
 	args, jsonMode := parseJSONFlag(args)
 	flags, manifestPath, err := parsePackageSavedArgs(args, resume)
 	if err == nil {
@@ -37,7 +38,7 @@ func runPackageSaved(args []string, reader SourceReader, stdout, stderr io.Write
 		fmt.Fprintln(stderr, usage)
 		return exitUsage
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	receipt, err := executePackageSaved(ctx, reader, manifestPath, flags, resume)
 	if err != nil {
@@ -47,6 +48,7 @@ func runPackageSaved(args []string, reader SourceReader, stdout, stderr io.Write
 	if resume {
 		operation = "resume"
 	}
+	defer writePackageTiming(stderr, timing, operation, receipt)
 	if jsonMode {
 		if writeErr := writePackageReceiptJSON(stdout, receipt, flags["--receipt-compression"]); writeErr != nil {
 			return writePackageReceiptFailure(stderr, operation, err, writeErr)

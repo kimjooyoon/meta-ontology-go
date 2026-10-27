@@ -27,6 +27,7 @@ type Registry struct {
 	Cases           []CaseDefinition       `json:"cases"`
 	PackageUnits    []PackageDefinition    `json:"package_units"`
 	MetaSources     []string               `json:"meta_sources"`
+	CaseSources     []CaseSourceSet        `json:"case_sources,omitempty"`
 	ProjectionUnits []ProjectionDefinition `json:"projection_units"`
 }
 
@@ -43,6 +44,14 @@ type CaseDefinition struct {
 	EntityFields          bool   `json:"entity_fields,omitempty"`
 	ImplicitActivityPorts bool   `json:"implicit_activity_ports,omitempty"`
 	EntityFieldsProfile   string `json:"entity_fields_profile,omitempty"`
+}
+
+// CaseSourceSet keeps physical source membership separate from capability cases.
+// The first member is the case's existing path; members are ordered, explicit
+// same-package sources, never glob results inferred during evaluation.
+type CaseSourceSet struct {
+	CaseID  string   `json:"case_id"`
+	Members []string `json:"members"`
 }
 
 type PackageDefinition struct {
@@ -68,6 +77,7 @@ type Source struct {
 	UnregisteredGooo        []string                 `json:"unregistered_gooo"`
 	MissingRegistered       []string                 `json:"missing_registered"`
 	PackageUnits            []PackageDefinition      `json:"package_units"`
+	CaseSources             []CaseSourceSet          `json:"case_sources,omitempty"`
 	ConceptRepositoryWrites int                      `json:"concept_repository_writes"`
 }
 

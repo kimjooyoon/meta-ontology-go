@@ -11,6 +11,7 @@ type compilationCapture struct {
 	imports         *moduleImporter
 	inputs          map[string]moduleCompiledInput
 	bytes           int64
+	packageBytes    int64
 	files, external int
 }
 
@@ -41,6 +42,7 @@ func (capture *compilationCapture) packageInput(pkg moduleCompiledPackage) error
 	}
 	pkg.Dir = directory
 	input := moduleCompiledInput{Package: pkg}
+	capture.packageBytes = 0
 	names := compilationFileNames(pkg)
 	if err := capture.reserveFiles(pkg.ImportPath, len(names)); err != nil {
 		return err
@@ -104,9 +106,13 @@ func (capture *compilationCapture) sourceInput(pkg moduleCompiledPackage, name s
 	if err != nil {
 		return moduleSourceInput{}, err
 	}
+	if int64(len(data)) > moduleSourceMax-capture.packageBytes {
+		return moduleSourceInput{}, moduleFailure(moduleCauseSourceLimit)
+	}
+	capture.packageBytes += int64(len(data))
 	if _, retained := capture.imports.compilationInputs[pkg.ImportPath]; !retained {
-		if int64(len(data)) > moduleSourceMax-capture.bytes {
-			return moduleSourceInput{}, moduleFailure(moduleCauseSourceLimit)
+		if int64(len(data)) > moduleStageSourceMax-capture.bytes {
+			return moduleSourceInput{}, moduleFailure(moduleCauseStageSourceLimit)
 		}
 		capture.bytes += int64(len(data))
 	}

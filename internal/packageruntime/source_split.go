@@ -6,24 +6,13 @@ import (
 	"path"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/sourcepartition"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-// SourceSlice records exact bytes copied from the original source. Header
-// duplication is explicit; declaration bodies and comments are never formatted.
-type SourceSlice struct {
-	InputStart  int `json:"input_start_byte"`
-	InputEnd    int `json:"input_end_byte"`
-	OutputStart int `json:"output_start_byte"`
-	OutputEnd   int `json:"output_end_byte"`
-}
-
-type SplitSourceFile struct {
-	Filename string        `json:"filename"`
-	SHA256   string        `json:"sha256"`
-	Source   string        `json:"source"`
-	Origins  []SourceSlice `json:"origins"`
-}
+// SourceSlice and SplitSourceFile retain the source partition wire contract.
+type SourceSlice = sourcepartition.Slice
+type SplitSourceFile = sourcepartition.File
 
 type SourceSplit struct {
 	Schema            string            `json:"schema"`
@@ -131,50 +120,13 @@ func splitSourceBytes(source Source, view Interface, packagePath, beforeID, into
 		}
 	}
 	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(source.Filename, source.Content, syntax.EntityFieldsV4Support())
-	if file == nil || diagnostics.HasErrors() || len(file.Decls) < 2 || name == "" {
-		return nil, fmt.Errorf("split needs a resolved declaration ID and at least two declarations")
+	if file == nil || diagnostics.HasErrors() || name == "" {
+		return nil, fmt.Errorf("split needs a resolved declaration ID and valid source")
 	}
-	header, cut := file.Decls[0].SourceSpan().Start.Offset, -1
-	for i, declaration := range file.Decls {
-		declName := ""
-		switch value := declaration.(type) {
-		case *syntax.EntityDecl:
-			declName = value.Name
-		case *syntax.ActivityDecl:
-			declName = value.Name
-		}
-		if i > 0 && declName == name {
-			cut = declaration.SourceSpan().Start.Offset
+	for _, declaration := range file.Decls {
+		if splitDeclarationName(declaration) == name {
+			return sourcepartition.SplitAt(source.Filename, source.Content, into, declaration.SourceSpan().Start.Offset)
 		}
 	}
-	if err := validateSplitHeader(file, header, cut, len(source.Content)); err != nil {
-		return nil, err
-	}
-	left, right := source.Content[:cut], source.Content[:header]+source.Content[cut:]
-	return []SplitSourceFile{
-		{Filename: source.Filename, SHA256: splitSourceDigest(left), Source: left,
-			Origins: []SourceSlice{{0, cut, 0, cut}}},
-		{Filename: into, SHA256: splitSourceDigest(right), Source: right,
-			Origins: []SourceSlice{{0, header, 0, header}, {cut, len(source.Content), header, len(right)}}},
-	}, nil
-}
-
-func validateSplitHeader(file *syntax.File, header, cut, length int) error {
-	if header <= 0 || cut <= header || cut >= length {
-		return fmt.Errorf("split boundary must precede a non-first declaration")
-	}
-	if file.Package == nil || file.Namespace == nil || file.Package.Span.End.Offset > header || file.Namespace.Span.End.Offset > header {
-		return fmt.Errorf("split requires a leading package and namespace header")
-	}
-	for _, imp := range file.Imports {
-		if imp.Span.End.Offset > header {
-			return fmt.Errorf("split requires imports before declarations to retain file-local aliases")
-		}
-	}
-	for _, binding := range file.Bindings {
-		if binding.Span.Start.Offset < header {
-			return fmt.Errorf("split cannot duplicate a binding in the source header")
-		}
-	}
-	return nil
+	return nil, fmt.Errorf("resolved split declaration is absent from source")
 }
