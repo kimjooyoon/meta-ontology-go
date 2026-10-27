@@ -1,0 +1,29 @@
+package transportorigins
+namespace transportorigins
+import cistrategy "examples/cistrategy"
+import outcome "examples/transportoutcome"
+import rdf "origin/recordeduse"
+
+# Bounded ASCII IRIREFs for this example's identifier schemes.
+activity IRITerm(rdf.Text) -> rdf.Text id "gooo://transport-origins/iri-term" computes `
+if len(input) < 4 || len(input) > 512 { return "" }
+let scheme = input[:4] == "urn:"
+if len(input) >= 7 && input[:7] == "gooo://" { scheme = true }
+if len(input) >= 8 && input[:8] == "https://" { scheme = true }
+if !scheme { return "" }
+for let index = 0; index < 512; index = index + 1 {
+    if index >= int64(len(input)) { return "<" + input + ">" }
+    let code = int64(input[index])
+    if code <= 32 || code >= 127 || code == 34 || code == 60 || code == 62 ||
+       code == 92 || code == 94 || code == 96 || code == 123 || code == 124 || code == 125 { return "" }
+}
+return "<" + input + ">"
+`
+
+activity When(enabled rdf.Boolean, text rdf.Text) -> rdf.Text id "gooo://transport-origins/when" computes `
+if enabled { return text }
+return ""
+`
+activity NonEmpty(rdf.Text) -> rdf.Boolean id "gooo://transport-origins/non-empty" computes `
+return input != ""
+`

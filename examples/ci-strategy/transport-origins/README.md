@@ -8,7 +8,7 @@ optional view makes no registry request and does not change the execution path.
 view, err := transportorigins.FromSavedReport(raw)
 ```
 
-The source in `origins.gooo` owns the decisions: compare the reported plan,
+The source in `origins.gooo` owns the consistency decisions: compare the reported plan,
 initial selection, readback selection, and outcome with the existing Gooo
 definitions; retain unresolved observations when they disagree. Its zero-input
 `ReportByteLimit()` stage supplies the byte bound before JSON decoding and also
@@ -32,7 +32,7 @@ cancellation prevented a network dispatch. A proposed next operation stays
 Reported generation-context identifiers hash the decoded UTF-8 string values in
 `generation_origin` and `outcome_generation_origin`. They identify reported
 metadata. The view's own `GoooGenerationOrigin` separately records the compiler
-and seven source files that produced this projection. A concrete projection
+and nine source files that produced this projection. A concrete projection
 identifier binds that immutable context as well as the report bytes. It
 specializes the generic report view, so changing the view generator cannot
 silently merge concrete projections. This uses the fixed-aspect distinction in
@@ -60,3 +60,9 @@ effect, and cancelled readback. The view must leave bytes and request counters
 unchanged. Contradictory records yield no statements; a retained older report
 with missing later fields stays unresolved. These finite cases do not establish
 remote registry availability, invocation identity, or an RDF reasoner's results.
+
+The source package separates three responsibilities: `origins.gooo` admits a
+consistent report, `render.gooo` describes its RDF view, and `terms.gooo` owns
+bounded term formatting. The Go adapter stays unchanged. A rendering definition
+can be read separately from the report-admission logic; the package loader keeps
+their exact source origins and stable activity IDs together.

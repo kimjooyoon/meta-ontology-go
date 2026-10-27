@@ -13,7 +13,9 @@
         "origin/recordeduse"
       ],
       "sources": [
-        "ci-strategy/transport-origins/origins.gooo"
+        "ci-strategy/transport-origins/origins.gooo",
+        "ci-strategy/transport-origins/render.gooo",
+        "ci-strategy/transport-origins/terms.gooo"
       ]
     },
     {

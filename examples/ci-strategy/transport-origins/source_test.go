@@ -21,7 +21,7 @@ func (directory exampleSources) ReadFile(name string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(string(directory), name))
 }
 
-func TestGeneratedReportViewMatchesItsSevenSourcesAndOriginalCompiler(t *testing.T) {
+func TestGeneratedReportViewMatchesItsSourcePartitionsAndOriginalCompiler(t *testing.T) {
 	const manifest = "transport-origins.workspace.json"
 	sources := exampleSources("../..")
 	raw, err := sources.ReadFile(manifest)
@@ -59,7 +59,7 @@ func TestGeneratedReportViewMatchesItsSevenSourcesAndOriginalCompiler(t *testing
 		t.Fatal(err)
 	}
 	if origin.Context.CompilerSourceSHA != "ba353f5af2e94389cae3af05470ae09e83109141" ||
-		origin.Context.CompilerSourceStatus != "CLEAN_VCS" || len(origin.Context.Sources) != 7 ||
+		origin.Context.CompilerSourceStatus != "CLEAN_VCS" || len(origin.Context.Sources) != 9 ||
 		origin.Context.WorkspaceManifestSHA != fmt.Sprintf("sha256:%x", sha256.Sum256(raw)) ||
 		origin.Context.WorkspaceImageSHA != program.Workspace.Digest || strings.Count(generated, "type R_") != 20 {
 		t.Fatal("original producer or source scope changed", origin.Context)

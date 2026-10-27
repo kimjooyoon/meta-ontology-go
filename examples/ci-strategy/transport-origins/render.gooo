@@ -1,0 +1,98 @@
+package transportorigins
+namespace transportorigins
+import cistrategy "examples/cistrategy"
+import outcome "examples/transportoutcome"
+import rdf "origin/recordeduse"
+
+# Project only a source-consistent report; ProjectReport owns admission.
+activity RenderReport(scope cistrategy.TransportScope, write WriteRecord, assessed outcome.Outcome, frame SavedFrame) -> OriginView
+id "gooo://transport-origins/render-report" computes `
+let view = OriginView{status:"UNRESOLVED_ORIGINS",reason:"IDENTITY_PROFILE_UNSUPPORTED",
+    report_sha256:frame.report_sha256,lines:[]string{}}
+let goal = IRITerm(scope.goal_id)
+let plan = IRITerm(scope.plan_id)
+let prior = IRITerm(scope.prior_plan_id)
+let effect = IRITerm(scope.effect_id)
+if goal == "" || plan == "" || prior == "" || effect == "" { return view }
+let base = "<urn:gooo:transport-report:" + frame.report_sha256
+let report = base + ">"
+let general_view = base + ":view>"
+let projection = base + ":view:" + frame.projection_generation_sha256 + ">"
+let projection_context = "<urn:gooo:projection-generation-context:" + frame.projection_generation_sha256 + ">"
+let selected = base + ":decision-record>"
+let response = base + ":write-record>"
+let readback = base + ":after-record>"
+let classified = base + ":next-record>"
+let assessment = base + ":outcome-record>"
+let proposal = base + ":next-proposal>"
+let kind = " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "
+let prov = " <http://www.w3.org/ns/prov#"
+let own = " <gooo://transport-origins/"
+let entity = "<http://www.w3.org/ns/prov#Entity> ."
+let attempted = "false"
+if write.attempted { attempted = "true" }
+let has_decision_context = rdf.IsSHA256(frame.decision_generation_sha256)
+let has_outcome_context = rdf.IsSHA256(frame.outcome_generation_sha256)
+let decision_context = "<urn:gooo:generation-context:" + frame.decision_generation_sha256 + ">"
+let outcome_context = "<urn:gooo:generation-context:" + frame.outcome_generation_sha256 + ">"
+view.lines = filter_values([]string{
+    report + kind + entity,
+    general_view + kind + entity,
+    projection + kind + entity,
+    projection + prov + "specializationOf> " + general_view + " .",
+    projection_context + kind + entity,
+    projection + own + "projectionGenerationContext> " + projection_context + " .",
+    projection + kind + "<gooo://transport-origins/TransportReportProjection> .",
+    projection + prov + "wasDerivedFrom> " + report + " .",
+    projection + own + "executionIdentity> \"UNOBSERVED\" .",
+    goal + kind + entity,
+    plan + kind + "<http://www.w3.org/ns/prov#Plan> .",
+    prior + kind + "<http://www.w3.org/ns/prov#Plan> .",
+    plan + own + "goal> " + goal + " .",
+    plan + own + "priorPlan> " + prior + " .",
+    selected + kind + entity,
+    selected + own + "recordedIn> " + report + " .",
+    selected + own + "recordPath> \"/decision\" .",
+    selected + own + "sourceActivity> <gooo://ci-strategy/transport-next> .",
+    selected + own + "targetEffect> " + effect + " .",
+    selected + own + "plan> " + plan + " .",
+    response + kind + entity,
+    response + own + "recordedIn> " + report + " .",
+    response + own + "recordPath> \"/write\" .",
+    response + own + "reportedAttempted> \"" + attempted + "\"^^<http://www.w3.org/2001/XMLSchema#boolean> .",
+    assessment + kind + entity,
+    assessment + own + "recordedIn> " + report + " .",
+    assessment + own + "recordPath> \"/outcome\" .",
+    assessment + own + "sourceActivity> <gooo://transport-outcome/assess> .",
+    assessment + prov + "wasDerivedFrom> " + selected + " .",
+    assessment + prov + "wasDerivedFrom> " + response + " .",
+    assessment + own + "state> " + rdf.RDFLiteral(assessed.state) + " .",
+    proposal + kind + "<http://www.w3.org/ns/prov#Plan> .",
+    proposal + own + "recordedIn> " + report + " .",
+    proposal + own + "recordPath> \"/outcome/next_operation\" .",
+    proposal + prov + "wasDerivedFrom> " + plan + " .",
+    proposal + prov + "wasDerivedFrom> " + assessment + " .",
+    proposal + own + "status> \"PROPOSED\" .",
+    proposal + own + "operation> " + rdf.RDFLiteral(assessed.next_operation) + " .",
+    When(frame.after_present,readback + kind + entity),
+    When(frame.after_present,readback + own + "recordedIn> " + report + " ."),
+    When(frame.after_present,readback + own + "recordPath> \"/after\" ."),
+    When(frame.after_present,classified + kind + entity),
+    When(frame.after_present,classified + own + "recordedIn> " + report + " ."),
+    When(frame.after_present,classified + own + "recordPath> \"/next\" ."),
+    When(frame.after_present,classified + own + "sourceActivity> <gooo://ci-strategy/transport-next> ."),
+    When(frame.after_present,classified + prov + "wasDerivedFrom> " + readback + " ."),
+    When(frame.after_present,assessment + prov + "wasDerivedFrom> " + classified + " ."),
+    When(has_decision_context,decision_context + kind + entity),
+    When(has_decision_context,decision_context + own + "recordedIn> " + report + " ."),
+    When(has_decision_context,decision_context + own + "recordPath> \"/generation_origin\" ."),
+    When(has_decision_context,selected + own + "reportedGenerationContext> " + decision_context + " ."),
+    When(has_outcome_context,outcome_context + kind + entity),
+    When(has_outcome_context,outcome_context + own + "recordedIn> " + report + " ."),
+    When(has_outcome_context,outcome_context + own + "recordPath> \"/outcome_generation_origin\" ."),
+    When(has_outcome_context,assessment + own + "reportedGenerationContext> " + outcome_context + " ."),
+},NonEmpty)
+view.status = "RECORDED_REPORT_ORIGINS"
+view.reason = "SAVED_REPORT_CONTENTS"
+return view
+`
