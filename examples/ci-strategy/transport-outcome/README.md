@@ -30,7 +30,7 @@ effect completion. The original decision, response/error and readback remain in
 the report. Generation origin for this assessment library is retained separately
 from the registry policy's origin.
 
-Independent expected results cover 11 response/readback combinations, three
+Independent expected results cover 12 response/readback combinations, three
 HTTP status boundaries and seven inconsistent phase/effect records. Integration
 reuses three existing local registry outcomes, one early return and one orphan
 readback decision. Generated-source consistency is
@@ -38,3 +38,9 @@ checked against the authored workspace and original compiler. These are finite
 regressions for one operation, with no general recovery accuracy or speed claim.
 The case adds source-level behavior using existing grammar. A full PROV-O
 responsibility graph and independent reader implementation remain later work.
+
+A native cancellation regression stops immediately after preflight. No PUT is
+sent, its error is retained, and a subsequent expired read is still a legitimate
+observation. It classifies as `WRITE_NOT_SENT`, preserving both phases. This
+counterexample first failed under the original rule; the correction belongs to
+Gooo source and is regenerated through the original compiler.

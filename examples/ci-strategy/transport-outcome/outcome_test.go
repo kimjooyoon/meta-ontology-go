@@ -11,6 +11,7 @@ func TestSourceOwnedWriteAndReadbackAssessment(t *testing.T) {
 		{"read-only-proposal", "READY_TO_RESTORE", "", "", "NO_WRITE_ATTEMPT", "put-pinned-manifest-once", false, false, false, false, 0},
 		{"already-present", "ALREADY_PRESENT", "", "", "NO_WRITE_ATTEMPT", "retain-current-observation", false, false, false, false, 0},
 		{"not-sent", "READY_TO_RESTORE", "", "cancelled before send", "WRITE_NOT_SENT", "refresh-before-new-attempt", false, false, true, false, 0},
+		{"not-sent-with-later-observation", "READY_TO_RESTORE", "REFRESH_OBSERVATION", "request deadline", "WRITE_NOT_SENT", "refresh-before-new-attempt", false, true, true, false, 0},
 		{"observed", "READY_TO_RESTORE", "ALREADY_PRESENT", "", "EFFECT_OBSERVED", "retain-current-observation", true, true, false, true, 201},
 		{"effect-with-http-failure", "READY_TO_RESTORE", "ALREADY_PRESENT", "", "EFFECT_OBSERVED_WITH_WRITE_FAILURE", "retain-current-observation", true, true, true, true, 500},
 		{"effect-with-client-error", "READY_TO_RESTORE", "ALREADY_PRESENT", "response interrupted", "EFFECT_OBSERVED_WITH_WRITE_FAILURE", "retain-current-observation", true, true, true, true, 201},

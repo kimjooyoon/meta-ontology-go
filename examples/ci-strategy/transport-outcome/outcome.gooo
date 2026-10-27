@@ -31,7 +31,7 @@ let result = Outcome{effect_id:input.effect_id,state:"INCONSISTENT_OBSERVATION",
     response_failed:false,effect_observed:false}
 if input.effect_id == "" || input.decision_effect_id != input.effect_id { return result }
 if input.readback_recorded {
-    if !input.write_attempted || input.readback_effect_id != input.effect_id { return result }
+    if input.readback_effect_id != input.effect_id { return result }
 } else if input.readback_effect_id != "" || input.readback_state != "" { return result }
 if !input.write_attempted {
     if input.response_status != 0 { return result }
