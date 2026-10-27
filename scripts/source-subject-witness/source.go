@@ -20,6 +20,7 @@ type sourceReport struct {
 }
 
 type fileMetric struct {
+	GeneratorOwned       bool   `json:"generator_owned,omitempty"`
 	ModuleBoundaryReason string `json:"module_boundary_reason,omitempty"`
 	ModuleRoot           string `json:"module_root,omitempty"`
 	Path                 string `json:"path"`

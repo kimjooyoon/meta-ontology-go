@@ -14,6 +14,12 @@ for artifact in "$metrics" "$binding" "$actionability" "$plan" "$execution" "$re
 	test -s "$artifact"
 done
 
+# Reuse the native witness consumer for source-owned applicability and raw
+# file/indicator correspondence. The JSON assertions below check report shape.
+go run ./scripts/source-subject-witness \
+	-input "$metrics" -output "$metrics_dir/source-subject-witness.json" \
+	-expected-sha "${GOOO_CI_SOURCE_HEAD:-$(git rev-parse HEAD)}"
+
 jq -e '
   (.root | type == "string") and
   (.files | type == "array") and
@@ -27,7 +33,7 @@ jq -e '
   (.meta.policy.exempt_project_root_readme == true) and
   (.meta.indicators | type == "array") and
   all(.meta.indicators[]; (.metric_id | type == "string") and (.subject | type == "string") and (.value | type == "number") and (.limit | type == "number")) and
-  all(.meta.indicators[] | select(.metric_id == "gooo.metric.source.go-file-lines.v1" or .metric_id == "gooo.metric.source.gooo-file-lines.v1" or .metric_id == "gooo.metric.source.function-lines.v1"); .applicability == "APPLICABLE" and .relation == "less_or_equal" and .blocking == false and .role == "DRIVER" and .enforcement_effect == "NO_EFFECT") and
+  all(.meta.indicators[] | select(.metric_id == "gooo.metric.source.go-file-lines.v1" or .metric_id == "gooo.metric.source.gooo-file-lines.v1" or .metric_id == "gooo.metric.source.function-lines.v1"); .relation == "less_or_equal" and .blocking == false and .role == "DRIVER" and .enforcement_effect == "NO_EFFECT") and
   ([.meta.indicators[] | select(.metric_id == "gooo.metric.documentation.root-readme-presence.v1")] | length) == 1 and
   ([.meta.indicators[] | select(.metric_id == "gooo.metric.documentation.root-readme-presence.v1")][0] | .applicability == "NOT_APPLICABLE" and .applicability_reason == "ROOT_README_EXEMPT" and .blocking == false)
 ' "$metrics" >/dev/null
