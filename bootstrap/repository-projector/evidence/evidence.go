@@ -1,5 +1,7 @@
 package evidence
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourceownership"
+
 const (
 	directIndicator          = "storage.direct-entry"
 	directObservedIndicator  = "storage.direct-entry-observed"
@@ -22,11 +24,17 @@ func Build(sha string, entries []Entry, objects, loss int, topology Topology) Re
 		// have their own parser and must not be classified as Go split debt.
 		if entry.Language == "go" && entry.Lines > 75 {
 			lineDebt++
-			subjects = append(subjects, subject{
+			item := subject{
 				Indicator: "source.line-cap-debt", Logical: entry.Logical,
 				Value: entry.Lines, Limit: 75, Consumer: "logical-source-splitter",
 				Operation: "split-before-storage",
-			})
+			}
+			permission := sourceownership.Evaluate(entry.GeneratorOwned)
+			if !permission.F_may_rewrite_go {
+				item.Applicability, item.ApplicabilityReason = "NOT_APPLICABLE", permission.F_reason
+				item.Operation, item.Consumer = permission.F_next_operation, "source-generator"
+			}
+			subjects = append(subjects, item)
 		}
 	}
 	proof := topologyProof
