@@ -87,6 +87,7 @@ let decision_context = "<urn:gooo:generation-context:" + frame.decision_generati
 let outcome_context = "<urn:gooo:generation-context:" + frame.outcome_generation_sha256 + ">"
 view.lines = filter_values([]string{
     report + kind + entity,
+    projection + kind + entity,
     projection + kind + "<gooo://transport-origins/TransportReportProjection> .",
     projection + prov + "wasDerivedFrom> " + report + " .",
     projection + own + "executionIdentity> \"UNOBSERVED\" .",
