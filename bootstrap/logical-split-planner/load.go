@@ -31,7 +31,7 @@ func loadSubjects(name, expectedSHA string) ([]inputSubject, error) {
 	selected := make([]inputSubject, 0, len(evidence.Subjects))
 	seen := make(map[string]bool)
 	for _, subject := range evidence.Subjects {
-		if subject.Indicator != "source.line-cap-debt" {
+		if subject.Indicator != "source.line-cap-debt" || subject.Applicability == "NOT_APPLICABLE" {
 			continue
 		}
 		if seen[subject.Logical] {

@@ -1,0 +1,22 @@
+package sourceownership
+namespace sourceownership
+
+entity Boolean id "urn:gooo:type:boolean"
+entity Permission id "gooo://source-ownership/permission" fields {
+    field may_rewrite_go id "gooo://source-ownership/permission/rewrite" type boolean required one
+    field reason id "gooo://source-ownership/permission/reason" type string required one
+    field rule_id id "gooo://source-ownership/permission/rule" type string required one
+    field next_operation id "gooo://source-ownership/permission/next" type string required one
+}
+
+# Generated structure belongs to its source generator. Size stays observable.
+activity Resolve(Boolean) -> Permission id "gooo://source-ownership/resolve" computes `
+let result = Permission{may_rewrite_go:true,reason:"HANDWRITTEN_GO_SOURCE",
+    rule_id:"gooo://source-ownership/resolve",next_operation:"rewrite-go-view"}
+if input {
+    result.may_rewrite_go = false
+    result.reason = "GENERATED_SOURCE_OWNER_REQUIRED"
+    result.next_operation = "regenerate-source-owner"
+}
+return result
+`

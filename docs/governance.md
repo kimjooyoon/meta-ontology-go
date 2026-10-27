@@ -192,6 +192,10 @@ the only intentional handwritten region inside that boundary. Regeneration must
 preserve slot bodies, reject malformed or duplicate markers, and keep unrelated
 text stable. Generated output is not a place to fix a source-model problem.
 
+The [source-ownership rule](source-ownership.md) retains generated-size
+observations while routing generic Go transformations to their source generator.
+Canonical regeneration and program checks continue to verify those artifacts.
+
 ## 6. Agent roles and separation of duties
 
 The system evaluates the exact source revision, scope, stable IDs, provenance,

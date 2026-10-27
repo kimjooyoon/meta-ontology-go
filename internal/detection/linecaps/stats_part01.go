@@ -14,9 +14,10 @@ const (
 
 // FileMetric is a per-file line-count metric for recognized source files.
 type FileMetric struct {
-	Path     string       `json:"path"`
-	Language FileLanguage `json:"language"`
-	Lines    int          `json:"lines"`
+	Path           string       `json:"path"`
+	Language       FileLanguage `json:"language"`
+	Lines          int          `json:"lines"`
+	GeneratorOwned bool         `json:"generator_owned,omitempty"`
 	// ModuleRoot is the repository-relative owning go.mod directory. Empty
 	// means the repository root (including the legacy no-manifest fallback).
 	ModuleRoot string `json:"module_root,omitempty"`
