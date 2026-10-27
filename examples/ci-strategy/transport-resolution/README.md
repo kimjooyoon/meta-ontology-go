@@ -10,6 +10,25 @@ whether to collect another report. For this case, the next operation is
 `read-current-effect`: call the existing `prooftransport.Run` with `apply=false`,
 serialize its report, and query the pair. The queries themselves read saved bytes.
 
+An agent can also call the existing source policy through one collection step:
+
+```go
+readReport, decision, err := transportorigins.ObserveForReassessment(ctx, priorReport, manifest, token)
+```
+
+Gooo selects `observation_needed` and `read_operation`. The native adapter passes
+that selected operation to the existing read-only runner and sends the new report
+back to `Reassess`. It collects at most one report per call, within the runner's
+source-owned request/byte/deadline limits. The caller owns the token and retains
+both original and returned bytes. A nil returned report means no collection was
+selected. The adapter never applies a write or retries the collection.
+
+Cancellation returns the retained read report and an unresolved source result;
+a report can be constructed before a request is dispatched. The original failure
+and both report digests remain separate. Concurrent collections have separate
+runner budgets and do not acquire the write-attempt slot. The existing CLI below
+continues to query saved reports locally.
+
 The existing transport command also reads saved files:
 
 ```sh
