@@ -46,6 +46,12 @@ func DeclaredRecordTypesFromModel(model bidir.Model) ([]RecordType, error) {
 }
 
 func recordTypesFromModel(model bidir.Model, countAll bool) ([]RecordType, error) {
+	declared := map[string]bool{}
+	for _, node := range model.Nodes {
+		if node.Kind == bidir.EntityKind && len(node.Fields) != 0 {
+			declared[string(node.ID)] = true
+		}
+	}
 	var result []RecordType
 	for _, node := range model.Nodes {
 		if node.Kind != bidir.EntityKind || len(node.Fields) == 0 {
@@ -72,7 +78,7 @@ func recordTypesFromModel(model bidir.Model, countAll bool) ([]RecordType, error
 			if typeID == "" {
 				typeID = string(field.TypeRefUse.ResolvedID)
 			}
-			if typeID != string(semantic.BuiltinStringTypeID) && typeID != string(semantic.BuiltinBooleanTypeID) && typeID != string(semantic.BuiltinIntegerTypeID) {
+			if !declared[typeID] && typeID != string(semantic.BuiltinStringTypeID) && typeID != string(semantic.BuiltinBooleanTypeID) && typeID != string(semantic.BuiltinIntegerTypeID) {
 				return nil, fmt.Errorf("record %q field %q has unsupported type %q", node.Name, field.Name, typeID)
 			}
 			if field.TextBound.Validate() != nil || field.TextBound.IsSet() && typeID != string(semantic.BuiltinStringTypeID) {

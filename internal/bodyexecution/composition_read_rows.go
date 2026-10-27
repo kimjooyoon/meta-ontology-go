@@ -70,6 +70,12 @@ func (graph compositionGraph) nativeReadFile(raw []byte, suite CompositionCases,
 	rows := make([][]CompositionReadObservation, cases)
 	summary := &CompositionReadSummary{Schema: "gooo/native-read-summary/v1", Status: "COMPLETE", RecordedReads: len(file.Reads), SHA256: digest(raw),
 		Scope: "successful scalar collection index and range reads; input element identity is preserved through slice views, record copies, binds and helper calls; constructed collections remain unresolved; scalar arithmetic is not tracked as element identity"}
+	for _, site := range sites {
+		if site.ElementType != "int64" && site.ElementType != "bool" && site.ElementType != "string" {
+			summary.Scope = "successful scalar or source-declared record collection reads; original input backing elements and indexes are retained; complete nested-field dynamic dependencies are outside this observation"
+			break
+		}
+	}
 	var construction *compositionConstructionContext
 	if len(constructions) > 0 {
 		construction = constructions[0]

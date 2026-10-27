@@ -6,6 +6,11 @@ import (
 )
 
 func (p *compositionFieldProjection) collectLocalRecordWrite(n ast.Node, value ast.Node, binding int, objects map[*ast.Object]int, functions map[string]int, fset *token.FileSet, source string) {
+	if loop, ok := n.(*ast.RangeStmt); ok {
+		first := p.addSites(binding, "record_assignment", "shared_rhs", loop.Value, fset, source)
+		p.addNode(loop, loop.Body, "range_record_write", binding, first, 0, fset)
+		return
+	}
 	first := p.addSites(binding, "record_assignment", "shared_rhs", value, fset, source)
 	i := p.addNode(n, value, "record_write", binding, first, 0, fset)
 	p.nodes[i].parents = []int{-1}

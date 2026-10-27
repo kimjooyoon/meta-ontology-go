@@ -22,6 +22,10 @@ func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, do
 	if err != nil {
 		return semantic.IR{}, err
 	}
+	registry, _, err = documentRecordRegistry(document, registry, support)
+	if err != nil {
+		return semantic.IR{}, err
+	}
 	if err := validateEntityFieldsDocument(document, namespace.String(), registry, support); err != nil {
 		return semantic.IR{}, err
 	}

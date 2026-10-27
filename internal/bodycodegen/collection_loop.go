@@ -54,7 +54,8 @@ func validateCollectionLoopTypes(file *ast.File, info *types.Info) error {
 			err = fmt.Errorf("collection iteration requires a declared repeated scalar field")
 			return false
 		}
-		if _, optional, kindErr := recordBodyScalarKind(sequence.Elem()); kindErr != nil || optional {
+		_, recordElement := sequence.Elem().Underlying().(*types.Struct)
+		if _, optional, kindErr := recordBodyScalarKind(sequence.Elem()); (kindErr != nil && !recordElement) || optional {
 			err = fmt.Errorf("collection elements must be Integer, Text or Boolean values")
 		}
 		return err == nil

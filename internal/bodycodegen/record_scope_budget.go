@@ -24,6 +24,7 @@ func ValidateRecordUseBudget(information *types.Info, records []RecordType, nati
 }
 
 func checkedRecordScope(declarations []RecordType, used map[string]bool, scope string, native bool) ([]RecordType, error) {
+	closeRecordTypeUses(declarations, used, native)
 	var selected []RecordType
 	for _, record := range declarations {
 		name := record.Name
@@ -40,4 +41,36 @@ func checkedRecordScope(declarations []RecordType, used map[string]bool, scope s
 		selected = append(selected, record)
 	}
 	return selected, nil
+}
+
+func closeRecordTypeUses(declarations []RecordType, used map[string]bool, native bool) {
+	byID := make(map[string]RecordType, len(declarations))
+	for _, record := range declarations {
+		byID[record.ID] = record
+	}
+	for changed := true; changed; {
+		changed = false
+		for _, record := range declarations {
+			name := record.Name
+			if native {
+				name = record.GoName
+			}
+			if !used[name] {
+				continue
+			}
+			for _, field := range record.Fields {
+				target, ok := byID[field.TypeID]
+				if !ok {
+					continue
+				}
+				targetName := target.Name
+				if native {
+					targetName = target.GoName
+				}
+				if !used[targetName] {
+					used[targetName], changed = true, true
+				}
+			}
+		}
+	}
 }

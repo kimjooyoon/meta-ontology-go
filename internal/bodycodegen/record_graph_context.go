@@ -79,10 +79,15 @@ func recordGraphInputType(body preparedBody, node RecordFlowNode) string {
 		for _, record := range body.allRecords {
 			for _, field := range record.Fields {
 				if field.ID == node.FieldID {
-					if field.Presence == "optional" {
+					if field.Presence == "optional" || field.Cardinality == "many" {
 						return ""
 					}
-					return recordGoType(field.TypeID)
+					switch field.TypeID {
+					case "urn:gooo:type:string", "urn:gooo:type:boolean", "urn:gooo:type:integer":
+						return recordGoType(field.TypeID)
+					default:
+						return ""
+					}
 				}
 			}
 		}
