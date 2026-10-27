@@ -1414,6 +1414,8 @@
     "examples/ci-strategy/proof-transport/transport.gooo",
     "examples/ci-strategy/transport-outcome/outcome.gooo",
     "examples/ci-strategy/transport-origins/origins.gooo",
+    "examples/ci-strategy/transport-origins/render.gooo",
+    "examples/ci-strategy/transport-origins/terms.gooo",
     "internal/meta/sourceownership/policy.gooo",
     "internal/meta/executioncontinuation/policy/source_recovery.gooo",
     "examples/runtime-package-surface/contract.gooo",
