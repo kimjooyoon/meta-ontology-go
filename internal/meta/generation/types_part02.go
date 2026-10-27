@@ -3,6 +3,7 @@ package generation
 import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspacesplit"
 )
 
 type Binding struct {
@@ -49,7 +50,8 @@ type Action struct {
 	ReceiptRequired             bool                             `json:"receipt_required"`
 	Priority                    uint32                           `json:"priority"`
 
-	RegistrationRequest *syntaxregistration.Request `json:"registration_request,omitempty"`
+	RegistrationRequest   *syntaxregistration.Request `json:"registration_request,omitempty"`
+	WorkspaceSplitRequest *workspacesplit.Request     `json:"workspace_split_request,omitempty"`
 }
 
 // Counterexample preserves a typed planner contradiction without turning it
@@ -96,6 +98,7 @@ type Plan struct {
 	ReplayDigest              string                   `json:"replay_digest"`
 
 	RegistrationInputFailures []RegistrationInputFailure `json:"registration_input_failures,omitempty"`
+	OperationInputFailures    []OperationInputFailure    `json:"operation_input_failures,omitempty"`
 }
 
 // PromotionAuthorizedByPlan is always false: CI remains the authority.

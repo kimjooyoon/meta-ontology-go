@@ -13,13 +13,53 @@ func TestRegistryOriginCapacity29111(t *testing.T) {
 	targets := []string{
 		"internal/meta/syntaxregistration#generateRegistry",
 		"internal/meta/syntaxregistration#goSource.registryCaseTail",
+		"internal/meta/syntaxregistration#goSource.registryCaseLeaves",
+		"internal/meta/syntaxregistration#goSource.registryFieldLeaves",
+		"internal/meta/syntaxregistration#goSource.registryFieldOrigins",
+		"internal/meta/syntaxregistration#registryOrigins.literal",
+		"internal/meta/syntaxregistration#registryReturnLiteral",
+		"internal/meta/syntaxregistration#registryLiteralField",
 		"internal/meta/syntaxregistration#namedRegistryType",
-		"internal/meta/syntaxregistration#caseRegistrySlice",
+		"internal/meta/syntaxregistration#registryOriginWalk.sliceType",
 		"internal/meta/syntaxregistration#registryOriginWalk.expression",
 		"internal/meta/syntaxregistration#registryOriginWalk.helper",
 		"internal/meta/syntaxregistration#registryOriginWalk.appended",
+		"internal/meta/syntaxregistration#registryOriginWalk.localElements",
 		"internal/meta/syntaxregistration#goSource.registryTailNeedsComma",
+		"internal/meta/syntaxregistration#bindNativeCaseSources",
+		"internal/meta/syntaxregistration#readCaseSourceLiteral",
+		"internal/meta/syntaxregistration#readNativeCaseSources",
+		"internal/meta/syntaxregistration#generatePartitionNative",
+		"internal/meta/syntaxregistration#bindPartitionNative",
+		"internal/meta/syntaxregistration#bindPartitionRegistryRemainder",
+		"internal/meta/syntaxregistration#readPartitionRecord",
+		"internal/meta/syntaxregistration#editPartitionFamilies",
+		"internal/meta/syntaxregistration#editPartitionPackages",
+		"internal/meta/syntaxregistration#readPartitionNamedInputs",
+		"internal/meta/syntaxregistration#capturePartitionSources",
+		"internal/meta/syntaxregistration#PreparePartitionRegistrationCandidate",
 	}
 	requireNamedCapacities(t, root, targets)
-	t.Log("all8 changed production declarations for source-owned registry origins;unchanged75-line rendered helper cap;parent38 unchanged and retained;producer/model0")
+	t.Logf("%d required registry-origin declarations; unchanged 75-line rendered helper cap; producer/model 0", len(targets))
+}
+
+func TestPartitionOracleRenderedCapacity(t *testing.T) {
+	root := os.Getenv("GOOO_FRESH_FIELD_ROOT")
+	if root == "" {
+		root = "../../../.."
+	}
+	targets := []string{
+		"internal/meta/syntaxregistration#assertCompiledPartitionRegistry",
+		"internal/meta/syntaxregistration#compiledPartitionRegistry",
+		"internal/meta/syntaxregistration#compiledPartitionOverlay",
+		"internal/meta/syntaxregistration#checkCompiledPartitionRun",
+		"internal/meta/syntaxregistration#partitionNativeSource",
+		"internal/meta/syntaxregistration#partitionNativeFieldOwner",
+		"internal/meta/syntaxregistration#partitionNativeCounterexampleOwner",
+	}
+	observed, err := collectNamedCapacityFiles(root, targets, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireObservedCapacities(t, targets, observed)
 }

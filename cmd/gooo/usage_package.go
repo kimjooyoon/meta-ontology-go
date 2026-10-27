@@ -51,6 +51,7 @@ also inspects callers outside the entry closure and leaves source files intact.
 See docs/language/workspace-activity-refactoring.ko.md.
 
 Propose a source split at a stable declaration ID:
+  gooo package split-source --boundaries --package named/inputs --source main.gooo --json workspace.json
   gooo package split-source --package named/inputs --source main.gooo --before urn:gooo:example:named-inputs:net --into net.gooo --json workspace.json
 
 The proposal includes both sources, their original byte ranges and the updated
@@ -65,6 +66,21 @@ Export declaration shapes for documentation and API comparison tools:
 
 The interface includes imported packages, stable IDs, ordered activity inputs,
 and record field types, presence, and cardinality. See docs/language/package-interface.md.
+
+Generate an importable Go package from authored computes bodies:
+  gooo package generate --go-package rules --out ./rules gooo.workspace.json
+  gooo package generate --go-package rules --export-stage Plan=urn:example:plan gooo.workspace.json
+
+Evaluate calls the entry and its bound producers. R_<record> and F_<field> expose
+source names; stable field IDs remain in gooo struct tags. Generation needs no
+cases, model, native build or program execution. Assembling contracts are unsupported.
+Repeat --export-stage Name=activity-id to expose planned stages by stable ID.
+Stage functions receive their own body inputs; Evaluate follows the declared binds.
+Public functions share the generated record types. Pure call helpers remain private.
+--out writes semantic.gooo.go after complete generation using the shared atomic
+writer. A failed generation preserves the previous file. Without --out, source
+is written to stdout. Keep handwritten host adapters in separate files.
+See docs/language/package-library-generation.md for input and validation limits.
 
 Inspect the entry's prepared source calls before execution:
   gooo package inspect --json gooo.workspace.json

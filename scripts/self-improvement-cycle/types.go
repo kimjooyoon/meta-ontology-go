@@ -18,6 +18,9 @@ type Indicator struct {
 }
 
 type Envelope struct {
+	// Local publication outcome; public lifecycle and source conclusion are
+	// recorded separately. This flag is not a serialized authority claim.
+	recordValid            bool
 	Schema                 string         `json:"schema"`
 	Metaprogram            string         `json:"metaprogram"`
 	BaseSHA                string         `json:"base_sha"`

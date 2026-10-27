@@ -156,6 +156,11 @@ func validateCase(repository fs.FS, request Request, inputs map[string][]byte) e
 			return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
 		}
 	}
+	for _, group := range registry.CaseSources {
+		if slices.Contains(group.Members, definition.Path) {
+			return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
+		}
+	}
 	observed := languagesyntax.ReplayCase(repository, definition)
 	if !observed.ASTReplayed || !observed.ByteReplayed || !observed.SemanticReplayed || !observed.GetPut || !observed.PutGet {
 		return failure("REFUTED", "replay-source", "REGISTRATION_SOURCE_CONFORMANCE_FAILED", "", "report-source-counterexample")

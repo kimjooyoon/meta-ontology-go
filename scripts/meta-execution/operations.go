@@ -266,6 +266,9 @@ func observationFailure(action generation.Action, stage, step, reason, class, ne
 }
 
 func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
+	if action.Operation == sourcepolicy.OperationSplitGooo {
+		return executeGoooSplit(workspace, gitDir, plan, action, trace)
+	}
 	if action.Operation == sourcepolicy.OperationRegisterSyntax {
 		return executeNativeRegistration(workspace, plan, action)
 	}

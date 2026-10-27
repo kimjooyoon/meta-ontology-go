@@ -181,7 +181,7 @@
       "generated_or_changed_artifact": "scripts/self-improvement-contract/README.md",
       "terminal_decision": "ELIGIBLE AFTER OBSERVATION",
       "next_consumer": "promotion controller",
-      "evidence": [{"path": "docs/deterministic-ci-evolution.md", "digest": "sha256:f437f80bb35165eda9b40dd02bf570007dfb733ec3b7b67f244eb6f44c804a55", "receipt_path": "scripts/self-improvement-contract/README.md", "receipt_digest": "sha256:197f7e8035f6da622711e38588dc48ce15daf65505777fbf95456d98b232b7af"}],
+      "evidence": [{"path": "docs/deterministic-ci-evolution.md", "digest": "sha256:f437f80bb35165eda9b40dd02bf570007dfb733ec3b7b67f244eb6f44c804a55", "receipt_path": "scripts/self-improvement-contract/README.md", "receipt_digest": "sha256:fe50c45709386f5c6372d0f7e3b310f34970ebc424eb7cce15f38dac3de83692"}],
       "binding": {"nodes": ["observation", "meta-rule", "exact-head-ci", "dev", "post-adoption", "main-eligibility"], "edges": ["observe", "change", "verify", "adopt", "promote"], "transitions": ["bug", "rule", "ci", "dev", "receipt", "eligible"]}
     },
     {

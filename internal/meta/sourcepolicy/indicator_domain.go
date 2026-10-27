@@ -1,5 +1,7 @@
 package sourcepolicy
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourceownership"
+
 const (
 	ApplicabilityRuleDefault               = "gooo.catalog.source-policy.default-applicability.v1"
 	ApplicabilityRuleProjectRootTopology   = "gooo.catalog.source-policy.project-root-topology.v1"
@@ -23,6 +25,16 @@ func isGoRewriteDimension(dimension Dimension) bool {
 // ValidModuleBoundaryShape checks the original catalog meaning even when a
 // module boundary prevents selecting its rewrite operation.
 func ValidModuleBoundaryShape(indicator Indicator) bool {
+	return validGoRewriteShape(indicator)
+}
+
+func ValidGeneratedOwnershipShape(indicator Indicator) bool {
+	permission := sourceownership.Evaluate(true)
+	return validGoRewriteShape(indicator) && indicator.ApplicabilityRule == permission.F_rule_id &&
+		indicator.ApplicabilityReason == ApplicabilityReason(permission.F_reason)
+}
+
+func validGoRewriteShape(indicator Indicator) bool {
 	if !isGoRewriteDimension(indicator.MetricID) {
 		return false
 	}

@@ -2,8 +2,8 @@
   "schema": "gooo/ci-command-evolution/v1",
   "baseline_file": "docs/observations/ci-command-domain/predecessor-command-population.json",
   "baseline_sha256": "8f25e279421b3268df6d73641755ab37f06d1af7311bc62a3c88a520300fc97e",
-  "changed_workflow_source_head": "16f8f7655c0381dd2ddc59eecd0aace401b9f878",
-  "workflow_sha256": "b5e2b6350e2cc5cb9e8f1c90dbf57be5e6b7e13db495871fc3dbc33f1b8a07a0",
+  "changed_workflow_source_head": "642327c19ff947d18765ee10ad904122b553268c",
+  "workflow_sha256": "13f3c343f15925f386c3d7bf33fb7e4e2651e437691cddaf6d43647cf9017051",
   "jobs": {
     "format": [
       {
@@ -47,8 +47,8 @@
       {
         "original_index": 0,
         "before_sha256": "74520b64bbadcd0407812cd72046b8b86f98559bd5be541cf3415d41c49c7f9e",
-        "after_sha256": "2ac5529e270e39d04d7965f1a383808dc9d972ae2f821936bf2953ff78c3dca4",
-        "operation": "extend_origin_contracts"
+        "after_sha256": "332cdcbb193f701fc5dcdb1d7d5a20ca0a9f00e625f66f37ba21a7664b281169",
+        "operation": "extend_origin_contracts_with_clock_acquisition"
       },
       {
         "original_index": 1,
@@ -182,5 +182,10 @@
       }
     ]
   },
-  "scope": "raw run-source extents under the existing recognizer; each original command retains exactly one descendant, additions are explicit; actual expanded commands retain their own work-shell receipts"
+  "scope": "raw run-source extents under the existing recognizer; each original command retains exactly one descendant, additions are explicit; actual expanded commands retain their own work-shell receipts",
+  "previous_evolution": {
+    "source_head": "9092f911647d7d4974e6e808c1fca1ff669f2bb4",
+    "path": "docs/observations/ci-source-join/command-evolution.json",
+    "sha256": "1e18e322228ba2bf70526ed56447e39889a721b3afa98ca9fd6017ca3ee9e148"
+  }
 }

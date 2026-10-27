@@ -3,9 +3,11 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
+	"github.com/kimjooyoon/meta-ontology-go/internal/sourcebundle"
 )
 
 func main() {
@@ -16,20 +18,49 @@ func main() {
 }
 
 func generate() error {
-	if len(os.Args) != 3 && len(os.Args) != 4 {
-		return fmt.Errorf("usage: transport-origin-codegen source.gooo output.go [activity]")
+	return generateArgs(os.Args[1:])
+}
+
+func generateArgs(args []string) error {
+	bundle := len(args) > 0 && args[0] == "-sources"
+	if bundle {
+		args = args[1:]
 	}
-	source, err := os.ReadFile(os.Args[1])
-	if err != nil {
-		return err
+	if len(args) != 2 && len(args) != 3 {
+		return fmt.Errorf("usage: transport-origin-codegen [-sources] source.gooo-or-pattern output.go [activity]")
 	}
 	activity := "BindProducerRun"
-	if len(os.Args) == 4 {
-		activity = os.Args[3]
+	if len(args) == 3 {
+		activity = args[2]
 	}
-	result, err := bodycodegen.Generate(os.Args[1], source, activity)
+	result, err := projection(args[0], activity, bundle)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(os.Args[2], []byte(result.Source), 0644)
+	return os.WriteFile(args[1], []byte(result), 0644)
+}
+
+func projection(name, activity string, bundle bool) (string, error) {
+	if bundle {
+		return bundleProjection(os.DirFS("."), name, activity)
+	}
+	source, err := os.ReadFile(name)
+	if err != nil {
+		return "", err
+	}
+	result, err := bodycodegen.Generate(name, source, activity)
+	return result.Source, err
+}
+
+func bundleProjection(fsys fs.FS, pattern, activity string) (string, error) {
+	names, err := fs.Glob(fsys, pattern)
+	if err != nil {
+		return "", err
+	}
+	sources, err := sourcebundle.Read(fsys, names)
+	if err != nil {
+		return "", err
+	}
+	result, err := bodycodegen.GenerateSourceBundle(sources, activity)
+	return result.Source, err
 }

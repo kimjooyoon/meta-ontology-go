@@ -50,6 +50,9 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 		if indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleGoModuleBoundary {
 			return validModuleBoundaryIndicator(indicator)
 		}
+		if sourcepolicy.ValidGeneratedOwnershipShape(indicator) {
+			return true
+		}
 		if indicator.Operation == sourcepolicy.OperationPreserveWorkflow {
 			return indicator.Subject == ".github/workflows" && indicator.SubjectKind == sourcepolicy.SubjectKindDirectory &&
 				indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleWorkflowDiscovery &&

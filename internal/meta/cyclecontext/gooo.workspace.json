@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "gooo/self-improvement-cycle", "activity": "Classify"},
+  "packages": [
+    {"path": "gooo/self-improvement-cycle", "sources": ["policy.gooo"]}
+  ]
+}

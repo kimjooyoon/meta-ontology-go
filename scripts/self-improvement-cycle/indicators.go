@@ -32,13 +32,15 @@ func cycleDigestIndicator(id, value string, pass bool) Indicator {
 }
 
 func finishEnvelope(envelope *Envelope) {
-	envelope.Status, envelope.Reason = "BOUND", "SELF_IMPROVEMENT_CYCLE_BOUND"
+	bindingsValid := true
 	for _, indicator := range envelope.Indicators {
 		if indicator.Verdict != "PASS" {
-			envelope.Status, envelope.Reason = "OPEN", "SELF_IMPROVEMENT_CYCLE_OPEN"
-			return
+			bindingsValid = false
 		}
 	}
+	state := classifyCycle(envelope.CIConclusion, bindingsValid)
+	envelope.Status, envelope.Reason = state.F_status, state.F_reason
+	envelope.recordValid = state.F_record_valid
 }
 
 func verdict(pass bool) string {

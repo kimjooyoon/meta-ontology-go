@@ -430,20 +430,6 @@ go run ./scripts/source-splitter \
   -output "$projection_work/split-report.json"
 
 last_extraction="$projection_work/extraction-report.json"
-post_split_metrics="$projection_work/split-source-metrics-projected.json"
-go run ./scripts/line-metrics \
-  -root "$repo_root" \
-  -storage-root "$storage_root" \
-  -json > "$post_split_metrics"
-set +e
-run_projected_compile
-compile_status=$?
-set -e
-if [[ "$compile_status" -ne 0 ]]; then
-  write_extraction_result "$last_extraction" "$projection_work/projected-compile-failure.json" "PROJECTED_COMPILE_FAILED" "$post_split_metrics"
-  cat "$projection_work/projected-compile-failure.json"
-  exit "$compile_status"
-fi
 
 # Re-observe the active materialized workspace after each projection pass.
 # The fixed point is a bounded metaprogram operation: generated helpers are
@@ -476,12 +462,6 @@ for iteration in 1 2 3 4 5 6 7 8; do
     break
   fi
   if [[ "$previous_blocking" -ge 0 && "$blocking" -ge "$previous_blocking" ]]; then
-    write_extraction_result "$last_extraction" "$projection_work/fixed-point-unknown.json" "NO_PROGRESS_FIXED_POINT" "$last_metrics"
-    jq --arg blocking "$blocking" --arg iteration "$iteration" \
-      '. + {diagnostics:{blocking_residual:($blocking|tonumber), iteration:($iteration|tonumber)}}' \
-      "$projection_work/fixed-point-unknown.json" \
-      > "$projection_work/fixed-point-unknown.sealed.json"
-    mv "$projection_work/fixed-point-unknown.sealed.json" "$projection_work/fixed-point-unknown.json"
     partial_progress_receipt="$projection_work/fixed-point-unknown.json"
     partial_progress_iteration="$iteration"
     partial_progress_blocking="$blocking"
@@ -532,6 +512,25 @@ if [[ "$fixed_point_closed" != true && -z "$partial_progress_receipt" ]]; then
   mv "$projection_work/fixed-point-unknown.sealed.json" "$projection_work/fixed-point-unknown.json"
   cat "$projection_work/fixed-point-unknown.json"
   exit 1
+fi
+
+# Check the program after the final transformation, once. Earlier projected
+# bytes cannot provide a passing observation for later fixed-point writes.
+set +e
+run_projected_compile
+compile_status=$?
+set -e
+if [[ "$compile_status" -ne 0 ]]; then
+  write_extraction_result "$last_extraction" "$projection_work/projected-compile-failure.json" "PROJECTED_COMPILE_FAILED" "$last_metrics"
+  cat "$projection_work/projected-compile-failure.json"
+  exit "$compile_status"
+fi
+if [[ -n "$partial_progress_receipt" ]]; then
+  write_extraction_result "$last_extraction" "$partial_progress_receipt" "NO_PROGRESS_FIXED_POINT" "$last_metrics"
+  jq --arg blocking "$partial_progress_blocking" --arg iteration "$partial_progress_iteration" \
+    '. + {diagnostics:{blocking_residual:($blocking|tonumber), iteration:($iteration|tonumber)}}' \
+    "$partial_progress_receipt" > "$partial_progress_receipt.sealed"
+  mv "$partial_progress_receipt.sealed" "$partial_progress_receipt"
 fi
 
 # Stage 0 keeps the deterministic Go verifier as the baseline while gooo is

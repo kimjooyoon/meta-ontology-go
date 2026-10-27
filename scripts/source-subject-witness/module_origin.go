@@ -38,6 +38,12 @@ func validateModuleOrigins(report sourceReport) error {
 			return sourceValidationFailure("SOURCE_MODULE_OWNER_CONTRADICTION", "KNOWN_CONTRADICTION", "report-counterexample")
 		}
 		if isLineCapMetric(row.MetricID) {
+			if owners[path].GeneratorOwned || generatedOwnerIndicator(row) {
+				if !owners[path].GeneratorOwned || !generatedOwnerIndicator(row) {
+					return sourceValidationFailure("SOURCE_GENERATOR_OWNER_CONTRADICTION", "KNOWN_CONTRADICTION", "report-counterexample")
+				}
+				continue
+			}
 			if err := validateRecordedModuleBoundary(owners[path], row); err != nil {
 				return err
 			}

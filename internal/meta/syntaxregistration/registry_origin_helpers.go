@@ -18,10 +18,17 @@ func (walk *registryOriginWalk) helper(name string) ([]*ast.CompositeLit, error)
 	if function.Body == nil || function.Type.TypeParams != nil ||
 		function.Type.Params.NumFields() != 0 || function.Type.Results.NumFields() != 1 ||
 		len(function.Type.Results.List[0].Names) != 0 ||
-		!caseRegistrySlice(function.Type.Results.List[0].Type) {
+		!walk.sliceType(function.Type.Results.List[0].Type) {
 		return nil, fmt.Errorf("native case helper has an unsupported signature: %s", name)
 	}
 	body := function.Body.List
+	if len(body) >= 2 {
+		if first, ok := body[0].(*ast.AssignStmt); ok && len(first.Rhs) == 1 {
+			if literal, ok := first.Rhs[0].(*ast.CompositeLit); ok && namedRegistryType(literal.Type, walk.elementType) {
+				return walk.localElements(body)
+			}
+		}
+	}
 	if len(body) == 1 {
 		returned, ok := body[0].(*ast.ReturnStmt)
 		if !ok || len(returned.Results) != 1 {

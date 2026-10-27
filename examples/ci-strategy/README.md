@@ -72,3 +72,15 @@ The recovery booleans and effect IDs are also caller assertions. Their presence
 does not prove that an external effect occurred or that a retry is idempotent.
 An execution adapter must bind those claims to independent receipts and check
 current scope before it can grant any effect authority.
+
+The [recovery-origin case](recovery-origin/README.md) now connects this selector
+to retained publication and independent readback records. Gooo checks their
+source/run/attempt/artifact bindings and canonical operation identity; an
+unresolved origin produces no completed-effect IDs. The original selector above
+still accepts caller assertions. The new case records historical observations
+and keeps execution disabled while current operation authority remains open.
+
+The [proof-transport case](proof-transport/README.md) adds current registry
+observations and one source-selected manifest restoration. The Gooo plan owns
+the content identity, requirements and limits; Go performs bounded HTTP and
+retains an independent readback. Its default CLI mode reads and reports state.

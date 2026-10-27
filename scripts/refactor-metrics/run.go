@@ -13,6 +13,7 @@ import (
 type options struct {
 	root, metrics, sha, subject string
 	baseSHA, plan               string
+	workspaceSplits             string
 	check                       bool
 }
 
@@ -22,6 +23,9 @@ type candidate struct {
 }
 
 func run(opts options) error {
+	if opts.workspaceSplits != "" && opts.plan == "" {
+		return fmt.Errorf("workspace split inputs require an output plan")
+	}
 	if opts.root == "" || opts.metrics == "" || opts.sha == "" {
 		return fmt.Errorf("root, metrics, and sha are required")
 	}
