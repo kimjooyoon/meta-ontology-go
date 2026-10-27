@@ -1,0 +1,5 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {"package_path": "meta/sourceownership", "activity": "Resolve"},
+  "packages": [{"path": "meta/sourceownership", "sources": ["policy.gooo"]}]
+}

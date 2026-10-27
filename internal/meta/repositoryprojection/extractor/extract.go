@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/moduleboundary"
 )
 
@@ -52,6 +53,13 @@ func readParsedSource(root, logical string) ([]byte, *token.FileSet, *ast.File, 
 	file, err := parser.ParseFile(fset, logical, source, parser.ParseComments)
 	if err != nil {
 		return nil, nil, nil, fail("observe-plan", "parse-source", "PARSER_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-parser-evidence", nil)
+	}
+	permission := linecaps.GoSourceRewritePermission(file)
+	if !permission.F_may_rewrite_go {
+		return nil, nil, nil, fail("observe-plan", "resolve-source-owner", permission.F_reason, "DIRECT_MISSING", permission.F_next_operation, nil)
+	}
+	if err := bindDefaultImportAliases(root, logical, file); err != nil {
+		return nil, nil, nil, err
 	}
 	return source, fset, file, nil
 }

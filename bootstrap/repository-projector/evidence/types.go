@@ -1,14 +1,15 @@
 package evidence
 
 type Entry struct {
-	Logical    string `json:"logical"`
-	Backing    string `json:"backing"`
-	ObjectSHA  string `json:"object_sha256"`
-	ContentSHA string `json:"content_sha256"`
-	Kind       string `json:"kind"`
-	Language   string `json:"language,omitempty"`
-	Mode       uint32 `json:"mode"`
-	Lines      int    `json:"lines,omitempty"`
+	Logical        string `json:"logical"`
+	Backing        string `json:"backing"`
+	ObjectSHA      string `json:"object_sha256"`
+	ContentSHA     string `json:"content_sha256"`
+	Kind           string `json:"kind"`
+	Language       string `json:"language,omitempty"`
+	Mode           uint32 `json:"mode"`
+	Lines          int    `json:"lines,omitempty"`
+	GeneratorOwned bool   `json:"generator_owned,omitempty"`
 }
 
 type Indicator struct {
