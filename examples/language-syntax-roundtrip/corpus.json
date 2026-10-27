@@ -1412,6 +1412,7 @@
     "examples/ci-strategy/recovery-origin/origin.gooo",
     "examples/ci-strategy/recovery-origin/plan.gooo",
     "examples/ci-strategy/proof-transport/transport.gooo",
+    "examples/ci-strategy/transport-outcome/outcome.gooo",
     "internal/meta/executioncontinuation/policy/source_recovery.gooo",
     "examples/runtime-package-surface/contract.gooo",
     "examples/runtime-package-surface/inspect.gooo",

@@ -86,6 +86,11 @@ failed write response keeps a nonzero CLI exit even when readback sees the
 attachment. A read-only decision can contain a proposed write while
 `write.attempted` stays false. Consumers should inspect both fields.
 
+The separate [Gooo outcome program](../transport-outcome/README.md) assesses the
+response and readback, retaining their common effect identity. `Run` evaluates
+it on every return path and includes its result and generation origin. The CLI
+uses its `command_failed` field; HTTP status classification belongs to Gooo.
+
 The library's request/byte counters cover its registry observations and write.
 CLI anonymous authentication is one separately bounded prerequisite request,
 outside those counters but inside the parent deadline. Counters describe HTTP
