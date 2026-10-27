@@ -50,7 +50,8 @@ func validateFiles(files []fileMetric) error {
 	languages := map[string]bool{"go": true, "gooo": true, "other": true}
 	for _, file := range files {
 		invalidOther := file.Language == "other" && file.Lines != 0
-		if !validPath(file.Path, false) || seen[file.Path] || file.Lines < 0 || !languages[file.Language] || invalidOther {
+		if !validPath(file.Path, false) || seen[file.Path] || file.Lines < 0 || !languages[file.Language] || invalidOther ||
+			(file.GeneratorOwned && file.Language != "go") {
 			return sourceValidationFailure("SOURCE_FILE_OBSERVATION_INVALID", "MALFORMED_EVIDENCE", "restore-source-metrics")
 		}
 		seen[file.Path] = true

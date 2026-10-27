@@ -24,6 +24,12 @@ projection size-debt observation also remains visible. Generic Go rewriting is
 handwritten-code transformation. This does not assert freshness, reduce an
 observed size, relax the compiler's output bound or establish a speed improvement.
 Canonical regeneration and independent program tests still check the artifact.
+A source-subject witness retains the observed `generator_owned` flag in its
+identity and checks its correspondence with the indicator through the shared
+source-policy validator. The CI observation gate uses that existing native
+consumer before checking JSON shape. It accepts neither an unbound exemption nor
+an owner flag that contradicts an ordinary rewrite indicator. Historical reports
+without the optional flag keep their existing representation.
 A direct or stale extraction request is rejected before generating replacement
 files. Mixed files containing Gooo-owned regions require an owner-aware route.
 
