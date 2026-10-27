@@ -45,7 +45,7 @@ func checkTransportGenerationOrigin(t *testing.T, manifest []byte, program works
 	if origin.Context.Manifest != fmt.Sprintf("sha256:%x", sha256.Sum256(manifest)) || origin.Context.Image != program.Workspace.Digest || len(origin.Context.Sources) != 4 {
 		t.Fatal("workspace binding lost", origin.Context)
 	}
-	if origin.Context.Compiler != "d5cd2eeec2b47cd8ca51408ecf7665079c486eec" || origin.Context.Status != "CLEAN_VCS" {
+	if origin.Context.Compiler != "ba353f5af2e94389cae3af05470ae09e83109141" || origin.Context.Status != "CLEAN_VCS" {
 		t.Fatal("original compiler producer relabeled", origin.Context)
 	}
 	if len(origin.Stages) != 1 || origin.Stages[0].Name != "Plan" || origin.Stages[0].ID != "gooo://ci-strategy/transport-plan" {

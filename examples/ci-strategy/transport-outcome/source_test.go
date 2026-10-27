@@ -49,7 +49,7 @@ func TestGeneratedOutcomeMatchesSourceAndOriginalCompiler(t *testing.T) {
 	for _, value := range []string{
 		fmt.Sprintf("sha256:%x", sha256.Sum256(manifest)), program.Workspace.Digest,
 		fmt.Sprintf("sha256:%x", sha256.Sum256(encoded)), "gooo://transport-outcome/assess",
-		`"compiler_source_sha":"b58dbc25d2616c7f32f11818be201a096229c5fa"`, `"compiler_source_status":"CLEAN_VCS"`,
+		`"compiler_source_sha":"ba353f5af2e94389cae3af05470ae09e83109141"`, `"compiler_source_status":"CLEAN_VCS"`,
 	} {
 		if !strings.Contains(GoooGenerationOrigin, value) {
 			t.Fatal("origin changed", value)

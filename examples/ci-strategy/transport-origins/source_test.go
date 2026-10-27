@@ -58,7 +58,7 @@ func TestGeneratedReportViewMatchesItsSevenSourcesAndOriginalCompiler(t *testing
 	if err := json.Unmarshal([]byte(GoooGenerationOrigin), &origin); err != nil {
 		t.Fatal(err)
 	}
-	if origin.Context.CompilerSourceSHA != "5a15ed6b9f14dd524e3de3c2a39a72db1a8a55bc" ||
+	if origin.Context.CompilerSourceSHA != "ba353f5af2e94389cae3af05470ae09e83109141" ||
 		origin.Context.CompilerSourceStatus != "CLEAN_VCS" || len(origin.Context.Sources) != 7 ||
 		origin.Context.WorkspaceManifestSHA != fmt.Sprintf("sha256:%x", sha256.Sum256(raw)) ||
 		origin.Context.WorkspaceImageSHA != program.Workspace.Digest || strings.Count(generated, "type R_") != 20 {
