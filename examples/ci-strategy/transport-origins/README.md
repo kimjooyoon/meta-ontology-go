@@ -50,7 +50,7 @@ gooo package generate --go-package transportorigins --embed-origin \
 ```
 
 The checked-in projection was produced by clean development compiler
-`5a15ed6b9f14dd524e3de3c2a39a72db1a8a55bc`. Its recorded producer remains that
+`ba353f5af2e94389cae3af05470ae09e83109141`. Its recorded producer remains that
 revision when this example is delivered in a later commit.
 
 Functional tests run the production transport runner with controlled HTTP

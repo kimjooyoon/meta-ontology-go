@@ -178,3 +178,10 @@ independent arithmetic expectations. It also checks original-source hashes,
 stage identity, duplicate flags, a name conflict, default omission and the
 shared output limit. These establish this optional interface's boundaries;
 they do not increase the number of supported Gooo grammar constructs.
+
+Generated packages expose an API introduction to standard `go doc` and package
+documentation sites. Compiler, workspace, source and typed-plan observations
+remain in a separate comment group. Standard generated-file recognition and the
+source-defined computation are preserved when the introduction changes. Existing
+artifacts retain their recorded producer until a real regeneration creates a new
+artifact; the current delivery commit does not replace that producer identity.
