@@ -23,3 +23,10 @@ are recorded alongside these observations.
 The original source's other workflows continue to their terminal results.
 The successor keeps every earlier language feature and requires its own original
 six/native/proof and full source-workflow results before dev integration.
+
+Clock-acquisition regressions extend the evidence job's existing contract command
+with one additional test invocation. The current ledger retains the immutable
+baseline, identifies the workflow source that introduced this addition, and links
+the prior ledger's exact Git source, path and byte hash in `previous_evolution`.
+The before/after comparison confirms one appended invocation and identical other
+command bodies. This source record does not replace either original CI result.
