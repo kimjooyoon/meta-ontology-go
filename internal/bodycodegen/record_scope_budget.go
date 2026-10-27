@@ -10,7 +10,7 @@ import (
 // alone are not uses. The naming view must match the checked projection so a
 // source display name cannot impersonate another record's generated name.
 func ValidateRecordUseBudget(information *types.Info, records []RecordType, native bool) error {
-	if information == nil {
+	if information == nil || information.Types == nil {
 		return fmt.Errorf("record budget requires typed use information")
 	}
 	used := map[string]bool{}

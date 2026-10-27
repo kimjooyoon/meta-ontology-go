@@ -54,3 +54,11 @@ func TestRecordScopeSeparatesSourceAndNativeNamingViews(t *testing.T) {
 		}
 	}
 }
+
+func TestRecordScopeRequiresObservedTypedUses(t *testing.T) {
+	for _, information := range []*types.Info{nil, {}} {
+		if err := ValidateRecordUseBudget(information, nil, false); err == nil {
+			t.Fatal("missing typed observations became a zero-record scope")
+		}
+	}
+}
