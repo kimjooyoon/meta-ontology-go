@@ -29,10 +29,14 @@ from different invocations, and a recorded readback can exist even when
 cancellation prevented a network dispatch. A proposed next operation stays
 `PROPOSED`.
 
-The decision record links to both of its source inputs: the report's `/scope`
-and `/before` records. A recorded readback selection links to that same scope
-and the `/after` record. These are dependencies within the source-checked saved
-content. They remain visible even in a read-only report with no write attempt.
+The `gooo://transport-origins/sourceInput` relation describes dependencies in
+the checked Gooo definitions. The decision record links to `/scope` and
+`/before`; a recorded readback selection links to that same scope and `/after`.
+These inputs remain visible in a read-only report with no write attempt.
+Each extracted record uses `prov:wasDerivedFrom` to name the saved report that
+actually supplied its content. The view keeps source-defined dependencies and
+historical generation separate, following the
+[PROV-DM derivation definition](https://www.w3.org/TR/prov-dm/#term-Derivation).
 
 Reported generation-context identifiers hash the decoded UTF-8 string values in
 `generation_origin` and `outcome_generation_origin`. They identify reported
