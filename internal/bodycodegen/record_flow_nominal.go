@@ -28,6 +28,10 @@ func (c *recordFlowBuilder) inputRecordFields(record int, span RecordFlowSpan, l
 		}
 		node := c.add("input", [2]uint16{parent}, span, field.ID, local, "")
 		value.fields[i] = node
+		if field.Cardinality != "" {
+			c.sequenceValue(node, field.TypeID)
+			continue
+		}
 		for j, child := range c.body.records {
 			if child.ID == field.TypeID {
 				c.inputRecordFields(j, span, local, node)

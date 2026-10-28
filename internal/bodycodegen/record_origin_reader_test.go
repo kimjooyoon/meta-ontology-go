@@ -58,7 +58,7 @@ func readerProbeGraph(t *testing.T, r TypedValueOrigins, root TypedValueOutput, 
 	for _, l := range r.Flow.RecordLayouts {
 		fields := []any{}
 		for _, f := range l.Fields {
-			fields = append(fields, map[string]any{"field_id": f.ID, "type_id": f.TypeID})
+			fields = append(fields, map[string]any{"field_id": f.ID, "type_id": f.TypeID, "cardinality": f.Cardinality})
 		}
 		layouts = append(layouts, map[string]any{"type_id": l.ID, "members": fields})
 	}
@@ -72,7 +72,23 @@ func readerProbeGraph(t *testing.T, r TypedValueOrigins, root TypedValueOutput, 
 	}
 	flow, _ := json.Marshal(r.Flow)
 	report, _ := json.Marshal(r)
-	graph := map[string]any{"schema": "gooo/record-origin-graph/v1", "source_sha256": r.SourceSHA256, "flow_sha256": digest(flow), "report_sha256": digest(report), "activity_id": r.ActivityID, "field_id": root.FieldID, "root": root.Root, "count": len(nodes), "value_count": len(payloads), "control": control, "history": history, "pages": pages, "layouts": layouts, "value_pages": valuePages}
+	graph := map[string]any{"schema": "gooo/record-origin-graph/v2", "source_sha256": r.SourceSHA256, "flow_sha256": digest(flow), "report_sha256": digest(report), "activity_id": r.ActivityID, "field_id": root.FieldID, "root": root.Root, "count": len(nodes), "value_count": len(payloads), "control": control, "history": history, "pages": pages, "layouts": layouts, "value_pages": valuePages}
+	loops := []any{}
+	for _, l := range r.Flow.Loops {
+		loops = append(loops, map[string]any{"number": l.ID, "parent": l.Parent, "collection": l.Collection,
+			"sequence_type": l.SequenceType, "index": l.Index, "element": l.Element, "entry": l.Entry,
+			"done": l.Done, "continues": l.Continues, "index_kind": l.IndexKind, "source_activity": l.Span.ActivityID, "source_view": l.Span.View, "source_start": l.Span.Start, "source_end": l.Span.End})
+	}
+	sequences := []string{}
+	for _, sequence := range r.Flow.SequenceTypes {
+		sequences = append(sequences, sequence.ElementTypeID)
+	}
+	carryPages := []any{}
+	for first := 0; first < len(r.Flow.LoopCarries); first += 256 {
+		carryPages = append(carryPages, map[string]any{"first": first + 1, "carries": r.Flow.LoopCarries[first:min(first+256, len(r.Flow.LoopCarries))]})
+	}
+	graph["loops"], graph["sequence_types"], graph["carry_count"] = loops, sequences, len(r.Flow.LoopCarries)
+	graph["carry_pages"] = carryPages
 	raw, err := json.Marshal(graph)
 	if err != nil {
 		t.Fatal(err)
@@ -84,20 +100,7 @@ func readerProbeGraph(t *testing.T, r TypedValueOrigins, root TypedValueOutput, 
 // and independently from the Gooo implementation or its generated source.
 func readerProbeOracle(t *testing.T, r TypedValueOrigins, root uint16, control, history bool) []string {
 	t.Helper()
-	seen := make([]bool, len(r.Flow.Nodes)+1)
-	seen[root] = true
-	for _, n := range slices.Backward(r.Flow.Nodes) {
-		if !seen[n.ID] {
-			continue
-		}
-		seen[n.Parents[0]], seen[n.Parents[1]] = true, true
-		if control {
-			seen[n.Guard], seen[n.Condition] = true, true
-		}
-		if history {
-			seen[n.RecordVersion] = true
-		}
-	}
+	seen := readerProbeAncestors(r, root, control, history)
 	containers := map[uint16]bool{}
 	for _, v := range r.Flow.RecordVersions {
 		containers[v.Node] = true
@@ -122,6 +125,35 @@ func readerProbeOracle(t *testing.T, r TypedValueOrigins, root uint16, control, 
 	}
 	slices.Sort(paths)
 	return paths
+}
+
+// A stack over the original report is independent of the source reader's
+// descending sweeps, sparse-table lookup and paged wire representation.
+func readerProbeAncestors(r TypedValueOrigins, root uint16, control, history bool) []bool {
+	seen := make([]bool, len(r.Flow.Nodes)+1)
+	pending := []uint16{root}
+	for len(pending) > 0 {
+		id := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+		if id == 0 || seen[id] {
+			continue
+		}
+		seen[id] = true
+		n := r.Flow.Nodes[id-1]
+		pending = append(pending, n.Parents[0], n.Parents[1])
+		if control {
+			pending = append(pending, n.Guard, n.Condition)
+		}
+		if history {
+			pending = append(pending, n.RecordVersion)
+		}
+		for _, carry := range r.Flow.LoopCarries {
+			if carry.Header == id {
+				pending = append(pending, carry.Yield)
+			}
+		}
+	}
+	return seen
 }
 
 func readerProbeInputs(values ...json.RawMessage) string {
@@ -303,18 +335,18 @@ func TestOriginalOriginPaths(t *testing.T) {
   for {
    raw,err:=json.Marshal(cursor);if err!=nil {t.Fatal(err)}
    var state struct{Status string;Steps int;StepBudget int `+"`json:\"step_budget\"`"+`};if err:=json.Unmarshal(raw,&state);err!=nil {t.Fatal(err)}
-   if state.Status!="MORE" {if state.Status!="RESOLVED"||state.Steps!=state.StepBudget||calls!=state.StepBudget {t.Fatal(c.Name,state,calls)};break}
+   if state.Status!="MORE" {if state.Status!="RESOLVED"||state.Steps>state.StepBudget||calls!=state.Steps {t.Fatal(c.Name,state,calls)};break}
    if calls>=260 {t.Fatal("native source work did not terminate")};cursor=Step(graph,cursor);calls++
   }
-  raw,err:=json.Marshal(Finish(cursor));if err!=nil {t.Fatal(err)};var result struct{Status string;Paths string};if err:=json.Unmarshal(raw,&result);err!=nil {t.Fatal(err)}
+  raw,err:=json.Marshal(Finish(cursor));if err!=nil {t.Fatal(err)};var result struct{Status string;Paths string;Nodes json.RawMessage};if err:=json.Unmarshal(raw,&result);err!=nil {t.Fatal(err)}
   paths:=[]string{};if result.Paths!="" {paths=strings.Split(strings.TrimSuffix(result.Paths,";"),";")};slices.Sort(paths)
   if result.Status!="RESOLVED"||!reflect.DeepEqual(paths,c.Paths) {t.Fatal(c.Name,paths,c.Paths)}
-  if c.Words!=nil {raw,err:=json.Marshal(cursor);if err!=nil {t.Fatal(err)};var state struct{Mask json.RawMessage};if err:=json.Unmarshal(raw,&state);err!=nil {t.Fatal(err)};if words:=nativeWords(t,state.Mask);!reflect.DeepEqual(words,c.Words) {t.Fatal(c.Name,"native visited words differ",words,c.Words)}}
+  if c.Words!=nil {if words:=nativeWords(t,result.Nodes);!reflect.DeepEqual(words,c.Words) {t.Fatal(c.Name,"native final original nodes differ",words,c.Words)};raw,err:=json.Marshal(cursor);if err!=nil {t.Fatal(err)};var state struct{Mask json.RawMessage};if err:=json.Unmarshal(raw,&state);err!=nil {t.Fatal(err)};if words:=nativeWords(t,state.Mask);!reflect.DeepEqual(words,c.Words) {t.Fatal(c.Name,"native visited words differ",words,c.Words)}}
   after,_:=json.Marshal(graph);if !bytes.Equal(before,after) {t.Fatal(c.Name,"native query mutated original graph")}
  }
 }
 func nativeWords(t *testing.T, raw json.RawMessage) []int64 {
- t.Helper();var node map[string]json.RawMessage;if err:=json.Unmarshal(raw,&node);err!=nil {t.Fatal(err)}
+ t.Helper();var scalar int64;if json.Unmarshal(raw,&scalar)==nil {return []int64{scalar}};var node map[string]json.RawMessage;if err:=json.Unmarshal(raw,&node);err!=nil {t.Fatal(err)}
  if raw,ok:=node["bits"];ok {var word int64;if err:=json.Unmarshal(raw,&word);err!=nil {t.Fatal(err)};return []int64{word}}
  return append(nativeWords(t,node["left"]),nativeWords(t,node["right"])...)
 }

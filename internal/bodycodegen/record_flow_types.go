@@ -8,6 +8,7 @@ import (
 
 const recordFlowSchema = "gooo/record-value-flow/v1"
 const recordVersionFlowSchema = "gooo/record-value-flow/v2"
+const recordLoopFlowSchema = "gooo/record-value-flow/v3"
 const recordFlowNodeLimit = 512
 const recordFlowLocalLimit = 64
 
@@ -26,6 +27,9 @@ type RecordValueFlow struct {
 	RecordLayouts  []RecordFlowRecordLayout  `json:"record_layouts,omitempty"`
 	RecordValues   []RecordFlowRecordValue   `json:"record_values,omitempty"`
 	RecordVersions []RecordFlowRecordVersion `json:"record_versions,omitempty"`
+	Loops          []RecordFlowLoop          `json:"loops,omitempty"`
+	LoopCarries    []RecordFlowLoopCarry     `json:"loop_carries,omitempty"`
+	SequenceTypes  []RecordFlowSequenceType  `json:"sequence_types,omitempty"`
 	Scope          string                    `json:"scope"`
 }
 
@@ -62,9 +66,10 @@ type RecordFlowChoice struct {
 }
 
 type flowValue struct {
-	record int
-	scalar uint16
-	fields [RecordFieldLimit]uint16
+	record   int
+	scalar   uint16
+	sequence uint16
+	fields   [RecordFieldLimit]uint16
 }
 
 type flowBinding struct {
@@ -106,6 +111,8 @@ type recordFlowBuilder struct {
 	returns          *recordFlowReturns
 	returnSuppressed bool
 	compactRecords   bool
+	loopData         *recordFlowLoopData
+	sequenceTypes    []RecordFlowSequenceType
 }
 
 func flowScalar(root uint16) flowValue { return flowValue{record: -1, scalar: root} }

@@ -29,6 +29,9 @@ type SourceControlColumns struct {
 }
 
 func TypedSourceControlInputs(r TypedValueOrigins, target string) ([]byte, error) {
+	if r.Flow != nil && (r.Flow.Schema == recordLoopFlowSchema || len(r.Flow.Loops) != 0 || len(r.Flow.LoopCarries) != 0 || len(r.Flow.SequenceTypes) != 0) {
+		return nil, fmt.Errorf("symbolic loop origins require explicit recurrence tables; flat control columns cannot retain them")
+	}
 	if r.Flow != nil && len(r.Flow.RecordVersions) != 0 {
 		return nil, fmt.Errorf("record-version origins require their layout, value and version tables; flat columns cannot retain them")
 	}

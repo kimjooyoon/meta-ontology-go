@@ -67,6 +67,10 @@ func InspectTypedValueOrigins(filename string, source []byte, activity string) (
 		r.Scope = "source may-dependence; no input values, runtime path, candidate selection or model call; required scalar or nominal record fields with source events and immutable field-root versions; collections/optional fields unresolved; 512 nodes, 64 live bindings, branch/helper depth 16"
 		flow.Scope += "; record layouts, symbolic values and source versions retain separate identities"
 	}
+	if len(c.sequenceTypes) != 0 || c.loopData != nil {
+		r.Schema, flow.Schema = "gooo/typed-value-origins/v3", recordLoopFlowSchema
+		r.Scope = "source may-dependence with symbolic collection positions and explicit loop-carry relations; no input values or native occurrence indices;512nodes64bindings16loop/branch depth"
+	}
 	if err != nil {
 		r.Reason, flow.Reason = err.Error(), err.Error()
 		return r, nil
@@ -94,6 +98,7 @@ func (c *recordFlowBuilder) finishTypedOrigins(source []byte, r TypedValueOrigin
 	flow := r.Flow
 	r.Outputs = c.typedOriginOutputs(value)
 	c.exportRecordVersions(flow)
+	c.exportLoops(flow)
 	if c.err != nil {
 		r.Outputs = nil
 		r.Reason = c.err.Error()
@@ -127,7 +132,7 @@ func (c *recordFlowBuilder) finishTypedOrigins(source []byte, r TypedValueOrigin
 func (c *recordFlowBuilder) validateOriginFile(file *ast.File) error {
 	for _, record := range c.body.records {
 		for _, field := range record.Fields {
-			if field.Presence != "" || field.Cardinality != "" {
+			if field.Presence != "" {
 				return fmt.Errorf("FLOW_REQUIRES_REQUIRED_SCALAR_FIELDS")
 			}
 		}

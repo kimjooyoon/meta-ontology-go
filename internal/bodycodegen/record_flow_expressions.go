@@ -35,6 +35,8 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 	case *ast.UnaryExpr:
 		a := c.expression(e.X, state, selected)
 		return flowScalar(c.add("expression", [2]uint16{a.scalar}, c.span(e), "", 0, e.Op.String()))
+	case *ast.IndexExpr:
+		return c.indexedSequence(e, state, selected)
 	case *ast.CompositeLit:
 		return c.constructor(e, state)
 	case *ast.CallExpr:
@@ -78,7 +80,7 @@ func (c *recordFlowBuilder) selector(e *ast.SelectorExpr, state *flowState) flow
 	if c.err != nil {
 		return flowScalar(0)
 	}
-	if c.compactRecords {
+	if c.compactRecords || value.sequence != 0 {
 		return value
 	}
 	if value.record >= 0 {
@@ -158,4 +160,24 @@ func (c *recordFlowBuilder) choice(i int, node ast.Expr, state *flowState) flowV
 		First: first, Second: second, Result: result, Span: span, Guard: c.guardRoot}
 	c.choiceSeen[i] = true
 	return flowScalar(result)
+}
+
+func (c *recordFlowBuilder) indexedSequence(index *ast.IndexExpr, state *flowState, selected bool) flowValue {
+	sequence := c.expression(index.X, state, selected)
+	if c.err != nil {
+		return flowScalar(0)
+	}
+	if sequence.sequence == 0 {
+		c.err = fmt.Errorf("FLOW_INDEX_SEQUENCE_UNRESOLVED")
+		return flowScalar(0)
+	}
+	position := c.expression(index.Index, state, selected)
+	if c.err != nil {
+		return flowScalar(0)
+	}
+	value := c.sequenceElement(sequence, position.scalar, c.span(index))
+	if value.scalar != 0 {
+		c.nodes[value.scalar-1].Operator = "source_index"
+	}
+	return value
 }

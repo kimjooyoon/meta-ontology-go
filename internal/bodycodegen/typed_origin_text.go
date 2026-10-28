@@ -38,7 +38,7 @@ func WriteTypedOriginText(w io.Writer, report TypedValueOrigins, source []byte) 
 			return err
 		}
 	}
-	return nil
+	return writeOriginLoopText(w, report.Flow)
 }
 
 func writeOriginTextNode(w io.Writer, report TypedValueOrigins, node RecordFlowNode, location BodyExpressionSource, source []byte) error {

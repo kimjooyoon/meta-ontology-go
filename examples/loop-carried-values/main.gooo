@@ -1,0 +1,22 @@
+package carryprobe
+namespace carryprobe
+entity Integer id "urn:gooo:type:integer"
+entity Item id "urn:carryprobe:item" fields {
+ field value id "urn:carryprobe:value" type integer required one
+ field ignored id "urn:carryprobe:ignored" type integer required one
+}
+entity State id "urn:carryprobe:state" fields {
+ field left id "urn:carryprobe:left" type integer required one
+ field right id "urn:carryprobe:right" type integer required one
+ field items id "urn:carryprobe:items" type Item required many
+}
+activity Shift(State) -> Integer id "urn:carryprobe:shift" computes `
+ let left = input.left
+ let right = input.right
+ for item in input.items {
+  let previous = left
+  left = right
+  right = previous + item.value
+ }
+ return left
+`

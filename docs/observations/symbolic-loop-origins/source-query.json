@@ -1,0 +1,70 @@
+{
+  "schema": "gooo/record-origin-query/v2",
+  "reader_source_sha256": "sha256:fe70b0418c820b34d639e6928f3e67bda0864583f98e06fba7eaf9f8db9e0a88",
+  "steps": 8,
+  "step_budget": 9,
+  "result": {
+    "activity_id": "urn:carryprobe:shift",
+    "contributors": 3,
+    "field_id": "",
+    "flow_sha256": "sha256:b421497d600c2da343a8a23248832678d8c4ea9d384473d6b93724fe221a5a20",
+    "nodes": {
+      "left": {
+        "left": {
+          "left": {
+            "left": 872316159,
+            "right": 0
+          },
+          "right": {
+            "left": 0,
+            "right": 0
+          }
+        },
+        "right": {
+          "left": {
+            "left": 0,
+            "right": 0
+          },
+          "right": {
+            "left": 0,
+            "right": 0
+          }
+        }
+      },
+      "right": {
+        "left": {
+          "left": {
+            "left": 0,
+            "right": 0
+          },
+          "right": {
+            "left": 0,
+            "right": 0
+          }
+        },
+        "right": {
+          "left": {
+            "left": 0,
+            "right": 0
+          },
+          "right": {
+            "left": 0,
+            "right": 0
+          }
+        }
+      }
+    },
+    "paths": "input:urn:carryprobe:left;input:urn:carryprobe:right;input:urn:carryprobe:items;",
+    "reachable": 24,
+    "report_sha256": "sha256:6a1454c8286bae6e3e588daa5f11e0d4e39feb6fa8603d25179f512b9a4b2694",
+    "source_sha256": "sha256:0d5c79dd58e463358f89585fa487b8503bdf3de82857aa81b4659ead693e64fe",
+    "status": "RESOLVED",
+    "total": 30,
+    "versions": 1
+  },
+  "activity_projections": {
+    "reader://activity/Begin": "sha256:c304cfb8bcee62ab5320e5c2cbe2a1362060ac8e14cab9bfb531dcc095f07e73",
+    "reader://activity/Finish": "sha256:159f80be41b6c8c29935153c5c8fc1356f5ad740c7efae3d8f8e83c39e7f2c90",
+    "reader://activity/Step": "sha256:0188937f113de28ad7043362eb3a34588a216427f4ed1afec3b7bc73ea231408"
+  }
+}
