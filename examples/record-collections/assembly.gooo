@@ -1,0 +1,25 @@
+package nestedassembly
+namespace nestedassembly
+entity Integer id "urn:gooo:type:integer"
+entity Line id "urn:nested-assembly:line" fields {
+ field quantity id "urn:nested-assembly:quantity" type integer required one
+ field price id "urn:nested-assembly:price" type integer required one
+}
+entity Basket id "urn:nested-assembly:basket" fields {
+ field items id "urn:nested-assembly:items" type Line required many
+}
+entity Receipt id "urn:nested-assembly:receipt" fields {
+ field total id "urn:nested-assembly:total" type integer required one
+}
+activity Total(Basket) -> Receipt id "urn:nested-assembly:compute" computes `
+ let total = 0
+ for item in input.items { total = total + item.quantity * item.price }
+ return Receipt{total: total}
+` assembling {
+ choice "amount" field_value at "0" alternative "total + 1" intent "Keep the sum from the ordered items. 순서대로 계산한 합계를 유지한다."
+ value_case "[{\"items\":[]}]" -> "{\"total\":0}"
+ value_case "[{\"items\":[{\"quantity\":2,\"price\":7}]}]" -> "{\"total\":14}"
+ value_case "[{\"items\":[{\"quantity\":2,\"price\":7},{\"quantity\":2,\"price\":7}]}]" -> "{\"total\":28}"
+ value_case "[{\"items\":[{\"quantity\":1,\"price\":9007199254740993}]}]" -> "{\"total\":9007199254740993}"
+ attempts "2"
+}

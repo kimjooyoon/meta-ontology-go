@@ -30,6 +30,11 @@ func expectedSyntaxCaseGroup5Part0() []CaseDefinition {
 	}
 }
 func expectedSyntaxCaseGroup5Part1() []CaseDefinition {
+	cases := expectedSyntaxCaseGroup5Part1Part0()
+	cases = append(cases, expectedSyntaxCaseGroup5Part1Part1()...)
+	return cases
+}
+func expectedSyntaxCaseGroup5Part1Part0() []CaseDefinition {
 	return []CaseDefinition{
 		{ID: "source-owned-else-policy", Path: "internal/meta/bodysurface/else.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
 		{ID: "else-layout-original-source", Path: "examples/else-layout/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
@@ -53,5 +58,10 @@ func expectedSyntaxCaseGroup5Part1() []CaseDefinition {
 		{ID: "source-split-completion-policy", Path: "internal/meta/sourcecompletion/source.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
 		{ID: "shared-workspace-source-consumers", Path: "examples/shared-source-consumers/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false},
 		{ID: "source-owned-record-collections", Path: "examples/record-collections/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
+	}
+}
+func expectedSyntaxCaseGroup5Part1Part1() []CaseDefinition {
+	return []CaseDefinition{
+		{ID: "source-owned-nominal-record-assembly", Path: "examples/record-collections/assembly.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 	}
 }

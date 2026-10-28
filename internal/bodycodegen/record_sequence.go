@@ -12,8 +12,9 @@ import (
 // Collections are immutable scalar sequences. Record copies can share their
 // backing values because source bodies cannot assign elements or grow a slice.
 type recordBodySequence struct {
-	Kind   uint8
-	Values []recordBodyScalar
+	Kind    uint8
+	Element string
+	Values  []recordBodyScalar
 }
 
 func (s *recordBodySequence) MarshalJSON() ([]byte, error) {
@@ -32,6 +33,11 @@ func decodeRecordSequence(raw []byte, sequence *types.Slice, records []RecordTyp
 }
 
 func decodeRecordSequenceWithBound(raw []byte, sequence *types.Slice, records []RecordType, bound textbound.UTF8) (*recordBodySequence, error) {
+	decoder := newRecordCaseDecoder(sequence, records)
+	return decoder.sequence(raw, sequence, bound)
+}
+
+func (d recordCaseDecoder) sequence(raw []byte, sequence *types.Slice, bound textbound.UTF8) (*recordBodySequence, error) {
 	if bound.Validate() != nil || bound.IsSet() && sequence.Elem() != types.Typ[types.String] {
 		return nil, fmt.Errorf("max_utf8_bytes requires Text collection elements")
 	}
@@ -40,8 +46,8 @@ func decodeRecordSequenceWithBound(raw []byte, sequence *types.Slice, records []
 		return nil, fmt.Errorf("repeated field requires an ordered array")
 	}
 	kind, optional, err := recordBodyScalarKind(sequence.Elem())
-	if err != nil || optional || kind > 3 {
-		return nil, fmt.Errorf("repeated field requires scalar elements")
+	if err != nil || optional || !recordBodyElementKind(kind) {
+		return nil, fmt.Errorf("repeated field requires declared scalar or record elements")
 	}
 	var encoded []json.RawMessage
 	if err := json.Unmarshal(raw, &encoded); err != nil {
@@ -50,9 +56,14 @@ func decodeRecordSequenceWithBound(raw []byte, sequence *types.Slice, records []
 	if len(encoded) > RepeatedFieldLimit {
 		return nil, fmt.Errorf("repeated field exceeds %d elements", RepeatedFieldLimit)
 	}
-	result := &recordBodySequence{Kind: kind, Values: make([]recordBodyScalar, len(encoded))}
+	if kind != recordBodyRecordKind {
+		if err := d.charge(len(encoded)); err != nil {
+			return nil, err
+		}
+	}
+	result := &recordBodySequence{Kind: kind, Element: recordBodyElementName(sequence.Elem()), Values: make([]recordBodyScalar, len(encoded))}
 	for i, raw := range encoded {
-		value, err := decodeRecordCaseField(raw, sequence.Elem(), records, bound)
+		value, err := d.field(raw, sequence.Elem(), bound)
 		if err != nil {
 			return nil, fmt.Errorf("element %d: %w", i, err)
 		}
@@ -66,18 +77,24 @@ func decodeRecordSequenceWithBound(raw []byte, sequence *types.Slice, records []
 
 func equalRecordBodyScalar(a, b recordBodyScalar) bool {
 	left, right := a.Collection, b.Collection
-	a.Collection, b.Collection = nil, nil
+	first, second := a.Record, b.Record
+	a.Collection, b.Collection, a.Record, b.Record = nil, nil, nil, nil
 	if a != b {
 		return false
+	}
+	if first != nil || second != nil {
+		if first == nil || second == nil || !equalRecordBodyValue(*first, *second) {
+			return false
+		}
 	}
 	if left == nil || right == nil {
 		return left == right
 	}
-	if left.Kind != right.Kind || len(left.Values) != len(right.Values) {
+	if left.Kind != right.Kind || left.Element != right.Element || len(left.Values) != len(right.Values) {
 		return false
 	}
 	for i, value := range left.Values {
-		if value != right.Values[i] {
+		if !equalRecordBodyScalar(value, right.Values[i]) {
 			return false
 		}
 	}
@@ -85,10 +102,13 @@ func equalRecordBodyScalar(a, b recordBodyScalar) bool {
 }
 
 func equalRecordBodyValue(a, b recordBodyValue) bool {
-	if a.Type != b.Type || a.Count != b.Count {
+	if a.Type != b.Type || a.Count != b.Count || a.Count < 1 || a.Count > RecordFieldLimit {
 		return false
 	}
-	for i := range a.Values {
+	if validateRecordBodyValueBudget(a) != nil || validateRecordBodyValueBudget(b) != nil {
+		return false
+	}
+	for i := 0; i < a.Count; i++ {
 		if !equalRecordBodyScalar(a.Values[i], b.Values[i]) {
 			return false
 		}
@@ -98,7 +118,7 @@ func equalRecordBodyValue(a, b recordBodyValue) bool {
 
 // Scalar labels keep their existing representation; arrays use ordered JSON.
 func recordScalarDisplay(value recordBodyScalar) string {
-	if value.Kind >= 4 && value.Kind <= 6 {
+	if recordBodyCollectionKind(value.Kind) || value.Kind == recordBodyRecordKind {
 		raw, err := json.Marshal(recordBodyScalarValue(value))
 		if err == nil {
 			return string(raw)

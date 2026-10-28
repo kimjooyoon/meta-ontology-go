@@ -14,8 +14,8 @@ func validateSequenceLiteral(literal *ast.CompositeLit) error {
 		return fmt.Errorf("collection literal requires at most %d scalar elements", RepeatedFieldLimit)
 	}
 	element, ok := sequence.Elt.(*ast.Ident)
-	if !ok || element.Name != "int64" && element.Name != "bool" && element.Name != "string" {
-		return fmt.Errorf("collection literal requires []int64, []bool or []string")
+	if !ok || element.Name != "int64" && element.Name != "bool" && element.Name != "string" && (!recordIdentifier(element.Name) || types.Universe.Lookup(element.Name) != nil) {
+		return fmt.Errorf("collection literal requires a declared scalar or record element type")
 	}
 	for _, value := range literal.Elts {
 		if _, keyed := value.(*ast.KeyValueExpr); keyed {
@@ -33,10 +33,10 @@ func (e *integerBodyEvaluator) evaluateSequenceLiteral(literal *ast.CompositeLit
 		return nil, err
 	}
 	kind, optional, err := recordBodyScalarKind(sequence.Elem())
-	if err != nil || optional || kind > 3 {
+	if err != nil || optional || !recordBodyElementKind(kind) {
 		return nil, fmt.Errorf("collection literal requires scalar elements")
 	}
-	result := &recordBodySequence{Kind: kind, Values: make([]recordBodyScalar, len(literal.Elts))}
+	result := &recordBodySequence{Kind: kind, Element: recordBodyElementName(sequence.Elem()), Values: make([]recordBodyScalar, len(literal.Elts))}
 	for i, element := range literal.Elts {
 		value, err := e.evaluateExpression(element)
 		if err != nil {
