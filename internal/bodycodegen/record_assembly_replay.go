@@ -53,6 +53,7 @@ func bindRecordAssemblyScope(common *CompletenessReceipt, result Report) {
 			common.Scope["decision_mode"] = "local_source_graph_prediction_then_finite_tdd"
 		}
 	}
+	bindNominalRecordAssemblyScope(common, result)
 }
 
 // Replay reconstructs recorded selections and finite observations. The model

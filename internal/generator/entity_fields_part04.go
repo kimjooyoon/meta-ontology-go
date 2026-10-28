@@ -10,7 +10,7 @@ import (
 )
 
 func validateSupportedField(entity Entity, index int, field Field, used, seenNames map[string]string,
-	sourceURI string, previousStart int, hasPrevious bool, capabilities syntax.EntityFieldsCapabilities) error {
+	sourceURI string, previousStart int, hasPrevious bool, capabilities syntax.EntityFieldsCapabilities, types map[string]string) error {
 	context := fmt.Sprintf("entity %q field %d", entity.ID, index)
 	if field.ID == "" || field.Name == "" || field.Parent == "" || field.TypeRefID == "" || field.Presence == "" || field.Cardinality == "" {
 		return entityFieldsError(entityFieldsIncompleteDiagnostic, field, context+" is missing a required identity, name, type, shape, or parent")
@@ -35,18 +35,11 @@ func validateSupportedField(entity Entity, index int, field Field, used, seenNam
 	if field.GoName != "" && field.GoName != field.Name {
 		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "Go name must be exactly Field.Name")
 	}
-	expectedGoType := "string"
-	if field.TypeRefID == entityFieldsBooleanTypeID && capabilities.Boolean {
-		expectedGoType = "bool"
-	} else if field.TypeRefID == entityFieldsIntegerTypeID && capabilities.Integer {
-		expectedGoType = "int64"
+	base, allowed := types[field.TypeRefID]
+	if !allowed {
+		return entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, field, fmt.Sprintf("resolved type %q is not in the bound profile", field.TypeRefID))
 	}
-	if field.Cardinality == "many" && capabilities.Many {
-		expectedGoType = "[]" + expectedGoType
-	}
-	if field.Presence == "optional" && capabilities.Optional {
-		expectedGoType = "*" + expectedGoType
-	}
+	expectedGoType := projectedEntityFieldType(field, base, capabilities)
 	if field.GoType != "" && field.GoType != expectedGoType {
 		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "Go type is derived from the profile and cannot be overridden")
 	}
@@ -57,9 +50,6 @@ func validateSupportedField(entity Entity, index int, field Field, used, seenNam
 		return entityFieldsError(entityFieldsGoNameCollisionDiagnostic, field, fmt.Sprintf("Go name is already used by field %q", previous))
 	}
 	seenNames[field.Name] = field.ID
-	if field.TypeRefID != entityFieldsStringTypeID && !(capabilities.Boolean && field.TypeRefID == entityFieldsBooleanTypeID) && !(capabilities.Integer && field.TypeRefID == entityFieldsIntegerTypeID) {
-		return entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, field, fmt.Sprintf("resolved type %q is not in the bound profile", field.TypeRefID))
-	}
 	if field.TextBound.Validate() != nil || field.TextBound.IsSet() && (!capabilities.TextBound || field.TypeRefID != entityFieldsStringTypeID) {
 		return entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, field, "max_utf8_bytes requires Text under V6")
 	}

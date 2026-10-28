@@ -8,6 +8,7 @@ type EntityFieldsCapabilities struct {
 	Optional  bool
 	Many      bool
 	TextBound bool
+	Record    bool
 }
 
 func (p EntityFieldsProfile) Capabilities() (EntityFieldsCapabilities, error) {
@@ -16,7 +17,7 @@ func (p EntityFieldsProfile) Capabilities() (EntityFieldsCapabilities, error) {
 	}
 	return EntityFieldsCapabilities{
 		Boolean: p.Version >= 2, Integer: p.Version >= 3, Optional: p.Version >= 4,
-		Many: p.Version >= 5, TextBound: p.Version >= 6,
+		Many: p.Version >= 5, TextBound: p.Version >= 6, Record: p.Version >= 7,
 	}, nil
 }
 

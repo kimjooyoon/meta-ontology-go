@@ -61,7 +61,9 @@ func exportRecordAssemblyContext(ctx context.Context, filename string, source []
 		flow = recordValueFlow(plan)
 	}
 	var modelContext *RecordOrdinalContext
-	if plan.scalar != nil {
+	if recordPlanHasNominalFields(plan) {
+		modelContext = declinedNominalRecordContext(plan, version)
+	} else if plan.scalar != nil {
 		modelContext = recordPlanModelContext(plan, version)
 	} else if version == jointdecision.RecordOriginSharedFeatureVersion {
 		modelContext = recordOriginContext(plan.choices, flow)

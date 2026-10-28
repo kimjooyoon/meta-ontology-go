@@ -102,6 +102,8 @@ func (r compositionFieldRenderer) node(n compositionFieldNode) string {
 		return r.scope(n)
 	case "return_write":
 		return r.returnWrite(n)
+	case "range_record_write":
+		return r.rangeRecordWrite(n)
 	case "record_write":
 		return r.recordWrite(n)
 	case "write", "part":
@@ -191,4 +193,13 @@ func (r compositionFieldRenderer) helperCall(n compositionFieldNode) string {
 func (r compositionFieldRenderer) sourceOffsets(n ast.Node) (int, int) {
 	// The one-file parser starts token positions at one.
 	return int(n.Pos()) - 1, int(n.End()) - 1
+}
+
+func (r compositionFieldRenderer) rangeRecordWrite(n compositionFieldNode) string {
+	loop := n.node.(*ast.RangeStmt)
+	name := loop.Value.(*ast.Ident).Name
+	typeName := r.plan.inventory.bindings[n.binding].Record.GoName
+	assignment := r.call("FieldAssignRecord", strconv.Itoa(n.first), r.fieldCount(n.binding), r.prefix+"FieldScope",
+		"&"+r.slot(n.binding), r.slot(-1), "0", "func() "+typeName+" {return "+name+"}")
+	return "{" + name + "=" + assignment + ";" + r.render(n.start+1, n.end-1, n.node) + "}"
 }

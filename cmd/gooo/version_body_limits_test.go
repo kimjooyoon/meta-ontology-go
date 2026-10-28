@@ -23,6 +23,7 @@ func TestVersionBuildReportsCompiledPureBodyLimits(t *testing.T) {
 			t.Fatal(err)
 		}
 		want := map[string]int{
+			"max_record_reference_depth": 8, "max_nested_record_value_nodes": 8192,
 			"max_record_types": 16, "max_fields_per_record": 32, "max_elements_per_collection": 256,
 			"max_activity_calls_per_invocation": 4096, "max_iterations_per_counted_loop": 1024,
 			"max_activities_per_call_closure": 32, "max_activity_call_depth": 16,

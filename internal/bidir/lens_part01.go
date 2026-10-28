@@ -63,6 +63,10 @@ func getWithTypesAndEntityFieldsSupport(document Document, registry semantic.Typ
 		return Model{}, err
 	}
 	model.Normalize()
+	registry, err = modelRecordRegistry(model.Namespace, model.Nodes, registry, support)
+	if err != nil {
+		return Model{}, err
+	}
 	if err := normalizeModelFields(&model, registry); err != nil {
 		return Model{}, classifyEntityFieldsModelError(err, firstModelFieldSpan(model.Nodes))
 	}

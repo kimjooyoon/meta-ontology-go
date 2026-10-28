@@ -8,7 +8,11 @@ func (g Generator) generateWithEntityFieldsSupport(input SemanticIR, previous []
 		return Result{}, err
 	}
 	if support.State == entityFieldsSupported && semanticIRHasFields(input) {
-		input = prepareEntityFields(input)
+		var err error
+		input, err = prepareEntityFields(input, support.Profile)
+		if err != nil {
+			return Result{}, err
+		}
 	}
 	ir, err := normalizeIR(input)
 	if err != nil {

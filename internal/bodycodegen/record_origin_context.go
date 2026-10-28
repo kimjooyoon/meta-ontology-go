@@ -7,6 +7,9 @@ import (
 )
 
 func recordPlanModelContext(p recordAssemblyPlan, version string) *RecordOrdinalContext {
+	if recordPlanHasNominalFields(p) {
+		return declinedNominalRecordContext(p, version)
+	}
 	if p.scalar != nil {
 		return &RecordOrdinalContext{Schema: "gooo/scalar-criteria-model-context/v1", FeatureVersion: version,
 			Status: "DECLINED_TO_DETERMINISTIC", Reason: "SCALAR_CRITERIA_FEATURE_CONTRACT_UNAVAILABLE",

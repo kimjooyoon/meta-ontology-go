@@ -22,6 +22,7 @@ func TestGoooCaseCompositionOwnsProfileSelection(t *testing.T) {
 		{"implicit-ports", languagesyntax.CaseDefinition{ImplicitActivityPorts: true}},
 		{"ordered-collections", languagesyntax.CaseDefinition{OrderedCollections: true}},
 		{"gooo.entityfields.go-projection.v6", languagesyntax.CaseDefinition{EntityFieldsProfile: "gooo.entityfields.go-projection.v6"}},
+		{"gooo.entityfields.go-projection.v7", languagesyntax.CaseDefinition{EntityFieldsProfile: "gooo.entityfields.go-projection.v7"}},
 	}
 	for _, row := range cases {
 		t.Run(row.profile, func(t *testing.T) {

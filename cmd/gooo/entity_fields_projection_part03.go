@@ -8,6 +8,10 @@ import (
 )
 
 func validateCLIProjectedFields(model generator.SemanticIR, support syntax.EntityFieldsSupport) error {
+	types, err := generator.EntityFieldTypeNames(model, support.Profile)
+	if err != nil {
+		return err
+	}
 	for _, entity := range model.Entities {
 		if len(entity.Fields) == 0 {
 			continue
@@ -36,9 +40,7 @@ func validateCLIProjectedFields(model generator.SemanticIR, support syntax.Entit
 			}
 			seenNames[field.Name] = struct{}{}
 			stringType := field.TypeRefID == "urn:gooo:type:string"
-			booleanType := field.TypeRefID == "urn:gooo:type:boolean" && capabilities.Boolean
-			integerType := field.TypeRefID == "urn:gooo:type:integer" && capabilities.Integer
-			if !stringType && !booleanType && !integerType {
+			if _, allowed := types[field.TypeRefID]; !allowed {
 				return fmt.Errorf("GOOO-EF-V1-UNSUPPORTED-TYPE: field %q type %q", field.ID, field.TypeRefID)
 			}
 			if field.TextBound.Validate() != nil || field.TextBound.IsSet() && (!capabilities.TextBound || !stringType) {
