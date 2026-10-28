@@ -398,6 +398,15 @@ The final literal owns the insertion; earlier groups and unrelated literals
 retain their bytes. Inline literal punctuation and real token-file paths are
 preserved, including source units carrying line directives.
 
+When the terminal direct constructor reaches the narrowest earlier nonempty
+family width, registration splits that constructor into ordered helper parts in
+its existing source file. IDs and their order are preserved; helper names avoid
+all observed package identifiers. Repeated appends retain that family width.
+A constructor with internal comments requires a comment-preserving split and
+is refused before edits when that operation is unavailable. The physical write
+set remains nine files for ordinary registration. Rendered helper capacities
+are checked independently without increasing the existing 75-line cap.
+
 Branches, cycles, repeated helper paths, external calls, arguments, named return
 bindings and shadowed append/helper bindings remain unresolved. Generation
 returns no candidate for those shapes. This is a finite source observation used
