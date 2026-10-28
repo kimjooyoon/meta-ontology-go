@@ -69,9 +69,6 @@ func (p *compositionFieldProjection) bindSources(file *ast.File, prior Compositi
 	if err != nil {
 		return err
 	}
-	if len(retained) == 0 {
-		return nil
-	}
 	nodes, populations := nativeFieldSyntax(file, prior)
 	sourceSHA := digest([]byte(prior.GoooSource))
 	bindings := make([]CompositionFieldSourceBinding, 0, len(p.sites)+len(p.uses))
@@ -84,6 +81,13 @@ func (p *compositionFieldProjection) bindSources(file *ast.File, prior Compositi
 			missing := bodycodegen.UnmappedReadSource(sourceSHA, "SITE_HAS_NO_RETAINED_FIELD_SYNTAX")
 			bindings = append(bindings, CompositionFieldSourceBinding{Kind: kind, SiteIndex: index, Source: bodycodegen.BodyFieldSource{Value: missing, Target: missing}})
 		}
+	}
+	derived, err := p.bindRangeFieldSources(prior, bindings)
+	if err != nil {
+		return err
+	}
+	if len(retained) == 0 && !derived {
+		return nil
 	}
 	for _, node := range p.nodes {
 		index := node.first

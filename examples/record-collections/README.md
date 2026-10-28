@@ -89,3 +89,8 @@ V7은 선언의 ID를 따라 `Line`, `*Line`, `[]Line`, `*[]Line` 형태를 구�
 데이터 의존성과 중첩 구조를 이해하는 모델 특징은 이어서 다룰 범위입니다.
 [전체 언어 과제 #1834](https://github.com/kimjooyoon/meta-ontology-go/issues/1834)에서
 값 생성과 출처 관측의 남은 경계를 추적합니다.
+
+반복문이 항목의 필드를 바인딩한 원본 위치는
+[반복 필드 기원](../../docs/language/record-iteration-origins.ko.md)에서 설명한다.
+목록 표현식과 실제 변수 토큰의 범위, 파생 필드 ID를 구분하며 실제 원소 위치와
+필드의 입력 기원 연결은 별도 후속 범위로 기록한다.
