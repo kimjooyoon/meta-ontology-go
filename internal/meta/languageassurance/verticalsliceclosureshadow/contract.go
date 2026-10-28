@@ -215,3 +215,5 @@ const DenominatorMigrationV104Digest = "sha256:1a622adc9e8c9b88e12c4cfb91f25e5a0
 const DenominatorMigrationV105Digest = "sha256:a46200686a8e02dc5b6c805fdc139d3382f05af99daa3de0c1759019a678422d"
 
 const DenominatorMigrationV106Digest = "sha256:aed5cbbe293a6dd1b5edc3e15f77735f76b957f9cb996bafd15ea79571f29efe"
+
+const DenominatorMigrationV107Digest = "sha256:34147cd4dc7dd33c9de6295f326d8b488fa83fdeb03c787978e26f2fc579e001"
