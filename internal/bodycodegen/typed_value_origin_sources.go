@@ -21,25 +21,13 @@ func typedOriginSources(source []byte, nodes []RecordFlowNode) ([]BodyExpression
 		if a == nil || node.Span.View != "computes" {
 			continue
 		}
+		body, _, err := rewriteBodySurface(a.ValueProgram)
 		start, end := node.Span.Start, node.Span.End
-		if start < 0 || end <= start || end > len(a.ValueProgram) {
+		if err != nil || start < 0 || end <= start || end > len(body) {
 			continue
 		}
-		span := a.ValueProgramSpan
-		if span.Start.Offset < 0 || span.End.Offset > len(source) || span.Start.Offset > span.End.Offset {
-			continue
-		}
-		first, last, err := SourceLiteralByteRange(string(source[span.Start.Offset:span.End.Offset]), a.ValueProgram, start, end)
-		if err != nil {
-			continue
-		}
-		body, err := rewriteLetDeclarations(a.ValueProgram)
-		if err != nil {
-			continue
-		}
-		result[i] = BodyExpressionSource{Status: "MAPPED", View: "selected_gooo_source", SourceSHA256: sha,
-			BodySHA256: digest([]byte(body)), Start: span.Start.Offset + first, End: span.Start.Offset + last,
-			DecodedStart: start, DecodedEnd: end, Expression: a.ValueProgram[start:end]}
+		result[i] = *bindBodyExpressionSource(source, sha, a, digest([]byte(body)),
+			BodyElementOrigin{Start: start, End: end, Expression: body[start:end]})
 	}
 	return result, nil
 }

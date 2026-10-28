@@ -1,0 +1,128 @@
+{
+  "operation": "RegisterSyntaxCapability",
+  "activity_id": "syntaxregistration://activity/register-syntax-capability",
+  "contract_digest": "sha256:e694b04613c6f8b102ae235cc94cfafd66961e14e4a8c65e166fe5ed60576a1b",
+  "semantic_digest": "14bd316b2b53f508476847ba10a3bc725f2b4bcb90621624548538035079591b",
+  "input_digest": "sha256:91fcd14fc6f0f6dac713dd7daaa88ead19e782118f9cdd7f31b2fba4fada37a2",
+  "request_digest": "sha256:ac18e92d38b0a7ac12a46c1cf8936472aceb09607f010df3f87c4dec8423ac63",
+  "toolchain": "go1.27.3",
+  "state": "PROPOSAL_ONLY",
+  "semantic_admission": "UNASSESSED",
+  "required_members": 9,
+  "emitted_members": 9,
+  "required_artifacts": 9,
+  "repository_writes": 0,
+  "apply_authorized": false,
+  "promotion_authorized": false,
+  "append_record": {
+    "case_id": "indexed-record-source-values",
+    "path": "examples/indexed-record-values/main.gooo",
+    "source_digest": "sha256:70d88173c905453ac711e27ddc26d3c4b95179814d56d6911a7e19a88fcba04c",
+    "baseline_digest": "sha256:32702fcb2d333b1f5b2787c7bab2244576868880b0d6bdb3319fb3cef656be0d",
+    "base_version": 108,
+    "base_target": 144,
+    "corpus_target": 144,
+    "next_version": 109,
+    "next_target": 145,
+    "accepted": true
+  },
+  "append_activity_id": "gooo://syntax-registration/compose-append",
+  "append_source_digest": "sha256:e694b04613c6f8b102ae235cc94cfafd66961e14e4a8c65e166fe5ed60576a1b",
+  "append_projection_digest": "sha256:4aa7f2d68ad49021525f770fd0961b4288c3a7fd345bcd6a44a947f9541e09f1",
+  "execution_binding": {
+    "activity_id": "syntaxregistration://activity/pin-registration-execution-identity",
+    "input_id": "gooo://syntax-registration/request",
+    "output_id": "gooo://syntax-registration/pinned-input",
+    "identity": {
+      "go_version": "go1.27.3",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "executable_sha256": "sha256:641ac8986978defbae915fbe127165474f9ae0cd9a402bcbb43863ad8a2b7cc1",
+      "go_command_sha256": "sha256:aa355b078a81158d418079a3f8c776719eb99cc6f527e39ffa3250c66566aafb",
+      "compiler_sha256": "sha256:4d0bd4c1880e3d575827a72ac66b0f117b31da0aff1fe44f03a54c7ffb3c8ae3"
+    }
+  },
+  "members": [
+    {
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "activity_id": "syntaxregistration://activity/generate-syntax-corpus",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-corpus"
+      ],
+      "before_digest": "sha256:cf2d528cb21597bb38143dbee0f97854801b293ead2fd9093e487c26ef6ffc7f",
+      "after_digest": "sha256:72fa5d0950676ab74f6248c5bce33bd6619a18f2d70cfc02219affdeac734b22"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "activity_id": "syntaxregistration://activity/generate-denominator-digest",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-digest"
+      ],
+      "before_digest": "sha256:ec9093187ef893a3e368c64ff8df005e9cc574ee83f8ab880197f6c0e2739d88",
+      "after_digest": "sha256:67c69e680ac4e6316a9a5463e45179d953013e88bd3e037de4b43b27cf46e803"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "activity_id": "syntaxregistration://activity/generate-denominator-admission",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-admission"
+      ],
+      "before_digest": "sha256:4548872f19eda5d1a5de289b8769cd2c1b466eca895f3fcf9e577b6dcb285970",
+      "after_digest": "sha256:efc9b9b8cf528ca22a59981a2e0ea6a34604c03e539e1bc926daf530d3bfff77"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "activity_id": "syntaxregistration://activity/generate-migration-conformance",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-migration-conformance"
+      ],
+      "before_digest": "sha256:53ff3f09708c158536d24a65c2213f98805571e6cc7415c66515d3e9754b6e70",
+      "after_digest": "sha256:4027d8df4ec5fcd03499b3384c4394e26329f33c40d7f0ee0b41be35fa5e7a44"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "activity_id": "syntaxregistration://activity/generate-denominator-selection",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-selection"
+      ],
+      "before_digest": "sha256:879222054e5eabd2ad3e1ee9e34dfbfee7207850e6449daeb086ba72321c4628",
+      "after_digest": "sha256:1f997edede8f9f2bdbd7809612f3a32233bb18d385c853fabae788632157cac0"
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v109.json",
+      "activity_id": "syntaxregistration://activity/generate-denominator-evidence",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-evidence"
+      ],
+      "before_digest": "ABSENT",
+      "after_digest": "sha256:65acdd4d19be500904138c0fdf5f78dcd3d1db70efc3dac8b60c175b2331a6a1"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "activity_id": "syntaxregistration://activity/generate-syntax-conformance",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-conformance"
+      ],
+      "before_digest": "sha256:39e684e2a6aa832125a5ad421f97c481565e4a5cd4759e0e362dbe0014b4195d",
+      "after_digest": "sha256:f7343cd4cad7cd07c035083415c1e9affcd58d3bef471a32f381fa63dae38300"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+      "activity_id": "syntaxregistration://activity/generate-syntax-denominator",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-denominator"
+      ],
+      "before_digest": "sha256:a90462cb93829d10f39c4726233dedcd1fa2540b007ae332df1ef1c612673100",
+      "after_digest": "sha256:508a267e869f87f4c4887252ebea08877820a7057e4784302f2bad5b5cf1ed21"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
+      "activity_id": "syntaxregistration://activity/generate-native-registry",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-native-registry"
+      ],
+      "before_digest": "sha256:d87ee6bcf03a964822d349712f11aa7461078dd364eeb3e074fbb7339df95333",
+      "after_digest": "sha256:982ac8786841021198f2cb68658f4003146ad7c4ca58dccb07b5a7d313a8366b"
+    }
+  ]
+}

@@ -118,7 +118,7 @@ func query(ctx context.Context, source, graph []byte) (queryResult, error) {
 	}
 	projections[result.ActivityID] = result.ProjectionSHA256
 	return queryResult{
-		ActivityProjections: projections, Schema: "gooo/record-origin-query/v1",
+		ActivityProjections: projections, Schema: "gooo/record-origin-query/v2",
 		ReaderSourceSHA256: result.SourceSHA256, Steps: state.Steps,
 		Budget: state.Budget, Result: result.Value,
 	}, nil

@@ -36,6 +36,7 @@ func recordValueFlow(p recordAssemblyPlan) *RecordValueFlow {
 		return r
 	}
 	c.exportRecordVersions(r)
+	c.exportLoops(r)
 	if c.err != nil {
 		r.Status = "UNRESOLVED"
 		r.Reason = c.err.Error()
