@@ -1413,6 +1413,7 @@
     "examples/ci-strategy/recovery-origin/plan.gooo",
     "examples/ci-strategy/proof-transport/transport.gooo",
     "examples/ci-strategy/transport-outcome/outcome.gooo",
+    "examples/ci-strategy/transport-resolution/resolve.gooo",
     "examples/ci-strategy/transport-origins/origins.gooo",
     "examples/ci-strategy/transport-origins/render.gooo",
     "examples/ci-strategy/transport-origins/terms.gooo",
