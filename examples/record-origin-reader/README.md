@@ -21,6 +21,9 @@ go run ./examples/record-origin-reader --activity Compare \
 go run ./examples/record-origin-reader --activity Shift \
   examples/loop-carried-values/main.gooo
 
+go run ./examples/record-origin-reader --activity Read \
+  examples/indexed-record-values/main.gooo
+
 go run ./examples/record-origin-reader --activity Compare \
   --field gooo://authorization-delta/comparison/model-match \
   --include-control --include-history \
@@ -130,6 +133,8 @@ go test ./internal/bodycodegen \
 [OpenFGA 비교 예제](../openfga-model-change/README.md)의 관찰 자료로 구별한다.
 직접 출처 분석은 필수 단일 레코드와 필수 배열 필드의 `for … in …`을 다룬다.
 배열의 정적 위치는 `symbolic_any`로 표시한다. 실제 실행의 위치 기록과 별도로 읽는다.
+직접 인덱스 접근은 `source_index` 노드에 목록과 작성한 인덱스식의 부모를 보존한다.
+상수·계산식·지역 별칭을 같은 원본 노드 체계로 따라간다.
 선택 필드, 직접 만든 배열과 카운터 반복문의 정적 출처는 남은 범위다.
 [#1834](https://github.com/kimjooyoon/meta-ontology-go/issues/1834)는 전체 실행·출처 경로의
 요구 사항을 함께 확인하는 이슈로 유지한다.

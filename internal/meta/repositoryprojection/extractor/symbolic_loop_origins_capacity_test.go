@@ -24,6 +24,7 @@ func TestSymbolicLoopOriginsRenderedCapacity(t *testing.T) {
 		"internal/bodycodegen#recordFlowBuilder.exportLoops",
 		"internal/bodycodegen#recordFlowBuilder.exportRecordVersions",
 		"internal/bodycodegen#recordFlowBuilder.expression",
+		"internal/bodycodegen#recordFlowBuilder.indexedSequence",
 		"internal/bodycodegen#recordFlowBuilder.finishTypedOrigins",
 		"internal/bodycodegen#recordFlowBuilder.inputRecordFields",
 		"internal/bodycodegen#recordFlowBuilder.join",
