@@ -1,24 +1,27 @@
 package generator
 
-func prepareEntityFields(ir SemanticIR) SemanticIR {
+import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+
+func prepareEntityFields(ir SemanticIR, profile syntax.EntityFieldsProfile) (SemanticIR, error) {
+	capabilities, err := profile.Capabilities()
+	if err != nil {
+		return SemanticIR{}, err
+	}
+	types, err := EntityFieldTypeNames(ir, profile)
+	if err != nil {
+		return SemanticIR{}, err
+	}
 	prepared := copyIR(ir)
 	for entityIndex := range prepared.Entities {
 		for fieldIndex := range prepared.Entities[entityIndex].Fields {
 			field := &prepared.Entities[entityIndex].Fields[fieldIndex]
 			field.GoName = field.Name
-			field.GoType = "string"
-			if field.TypeRefID == entityFieldsBooleanTypeID {
-				field.GoType = "bool"
-			} else if field.TypeRefID == entityFieldsIntegerTypeID {
-				field.GoType = "int64"
+			base, allowed := types[field.TypeRefID]
+			if !allowed {
+				return SemanticIR{}, entityFieldsError(entityFieldsUnsupportedTypeDiagnostic, *field, "field type has no source-bound native name")
 			}
-			if field.Cardinality == "many" {
-				field.GoType = "[]" + field.GoType
-			}
-			if field.Presence == "optional" {
-				field.GoType = "*" + field.GoType
-			}
+			field.GoType = projectedEntityFieldType(*field, base, capabilities)
 		}
 	}
-	return prepared
+	return prepared, nil
 }

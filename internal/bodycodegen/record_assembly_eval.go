@@ -1,7 +1,6 @@
 package bodycodegen
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,20 +8,20 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
-	"strconv"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/assemblyspec"
-	"github.com/kimjooyoon/meta-ontology-go/internal/valuejson"
 )
 
-// Scalar slots keep records value-shaped and bounded; local copies never alias.
+// Pointer and scalar fields occupy the old cell's alignment padding. Adding a
+// nominal child reference does not enlarge each of the 32 value slots.
 type recordBodyScalar struct {
 	Text       string
-	Boolean    bool
 	Integer    int64
+	Collection *recordBodySequence
+	Record     *recordBodyValue
 	Kind       uint8
 	Present    bool
-	Collection *recordBodySequence
+	Boolean    bool
 }
 
 type recordBodyOptionalScalar struct {
@@ -34,26 +33,12 @@ type recordBodyValue struct {
 	Type   string
 	Count  int
 	Values [RecordFieldLimit]recordBodyScalar
+	layout *types.Struct
+	height int
 }
 
 func zeroRecordBodyValue(t types.Type) (recordBodyValue, error) {
-	named, ok := t.(*types.Named)
-	if !ok {
-		return recordBodyValue{}, fmt.Errorf("record requires a nominal value type")
-	}
-	structure, ok := named.Underlying().(*types.Struct)
-	if !ok || structure.NumFields() < 1 || structure.NumFields() > RecordFieldLimit {
-		return recordBodyValue{}, fmt.Errorf("record layout exceeds value bounds")
-	}
-	value := recordBodyValue{Type: named.Obj().Name(), Count: structure.NumFields()}
-	for field := 0; field < structure.NumFields(); field++ {
-		kind, optional, err := recordBodyScalarKind(structure.Field(field).Type())
-		if err != nil {
-			return recordBodyValue{}, err
-		}
-		value.Values[field] = recordBodyScalar{Kind: kind, Present: !optional}
-	}
-	return value, nil
+	return newRecordBodyZero(t)
 }
 
 func recordBodyScalarKind(valueType types.Type) (uint8, bool, error) {
@@ -64,10 +49,15 @@ func recordBodyScalarKind(valueType types.Type) (uint8, bool, error) {
 	}
 	if sequence, ok := valueType.Underlying().(*types.Slice); ok {
 		kind, nestedOptional, err := recordBodyScalarKind(sequence.Elem())
-		if err != nil || nestedOptional || kind > 3 {
-			return 0, optional, fmt.Errorf("collection elements must be scalar values")
+		if err != nil || nestedOptional || !recordBodyElementKind(kind) {
+			return 0, optional, fmt.Errorf("collection elements require declared scalar or record values")
 		}
 		return kind + 3, optional, nil
+	}
+	if named, ok := valueType.(*types.Named); ok {
+		if _, record := named.Underlying().(*types.Struct); record {
+			return recordBodyRecordKind, optional, nil
+		}
 	}
 	basic, ok := valueType.Underlying().(*types.Basic)
 	if !ok {
@@ -88,12 +78,21 @@ func recordBodyScalarKind(valueType types.Type) (uint8, bool, error) {
 func recordBodyScalarFromValue(value any, kind uint8) (recordBodyScalar, error) {
 	scalar := recordBodyScalar{Kind: kind, Present: true}
 	switch kind {
-	case 4, 5, 6:
+	case 4, 5, 6, recordBodyRecordSequenceKind:
 		collection, ok := value.(*recordBodySequence)
 		if !ok || collection == nil || collection.Kind != kind-3 || len(collection.Values) > RepeatedFieldLimit {
 			return recordBodyScalar{}, fmt.Errorf("record field requires its declared collection element type")
 		}
 		scalar.Collection = collection
+	case recordBodyRecordKind:
+		record, ok := value.(recordBodyValue)
+		if !ok || record.Count < 1 {
+			return recordBodyScalar{}, fmt.Errorf("record field requires a declared record value, got %T", value)
+		}
+		if err := validateRecordBodyValueBudget(record); err != nil {
+			return recordBodyScalar{}, err
+		}
+		scalar.Record = &record
 	case 1:
 		text, ok := value.(string)
 		if !ok {
@@ -131,17 +130,28 @@ func recordBodyScalarForField(value any, fieldType types.Type) (recordBodyScalar
 		if !pointer.Present {
 			return recordBodyScalar{Kind: kind}, nil
 		}
-		return recordBodyScalarFromValue(recordBodyScalarValue(pointer.Value), kind)
-	}
-	if _, ok := value.(recordBodyOptionalScalar); ok {
+		value = recordBodyScalarValue(pointer.Value)
+		fieldType = fieldType.(*types.Pointer).Elem()
+	} else if _, ok := value.(recordBodyOptionalScalar); ok {
 		return recordBodyScalar{}, fmt.Errorf("required record field assignment does not accept an optional value")
+	}
+	if kind == recordBodyRecordKind || kind == recordBodyRecordSequenceKind {
+		value, err = coerceBodyValue(value, fieldType)
+		if err != nil {
+			return recordBodyScalar{}, err
+		}
 	}
 	return recordBodyScalarFromValue(value, kind)
 }
 
 func recordBodyScalarValue(value recordBodyScalar) any {
 	switch value.Kind {
-	case 4, 5, 6:
+	case recordBodyRecordKind:
+		if value.Record == nil {
+			return nil
+		}
+		return *value.Record
+	case 4, 5, 6, recordBodyRecordSequenceKind:
 		return value.Collection
 	case 2:
 		return value.Boolean
@@ -183,7 +193,7 @@ func (e *integerBodyEvaluator) evaluateRecordLiteral(literal *ast.CompositeLit) 
 			}
 		}
 	}
-	return value, nil
+	return value, validateRecordBodyValueBudget(value)
 }
 
 func (e *integerBodyEvaluator) evaluateRecordField(selector *ast.SelectorExpr) (any, error) {
@@ -191,11 +201,21 @@ func (e *integerBodyEvaluator) evaluateRecordField(selector *ast.SelectorExpr) (
 	if err != nil {
 		return nil, err
 	}
+	if optional, ok := value.(recordBodyOptionalScalar); ok {
+		if !optional.Present {
+			return nil, fmt.Errorf("field read requires a present optional record")
+		}
+		value = recordBodyScalarValue(optional.Value)
+	}
 	record, ok := value.(recordBodyValue)
 	if !ok {
 		return nil, fmt.Errorf("field read requires a record value")
 	}
-	structure := e.information.Types[selector.X].Type.Underlying().(*types.Struct)
+	receiver := e.information.Types[selector.X].Type
+	if pointer, ok := receiver.(*types.Pointer); ok {
+		receiver = pointer.Elem()
+	}
+	structure := receiver.Underlying().(*types.Struct)
 	for i := 0; i < structure.NumFields(); i++ {
 		if structure.Field(i).Name() == selector.Sel.Name {
 			if _, optional, err := recordBodyScalarKind(structure.Field(i).Type()); err != nil {
@@ -306,7 +326,7 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 	if !ok {
 		return RecordAssemblyCase{}, fmt.Errorf("record case returned %T", value)
 	}
-	if err := validateRecordOutputBounds(actual, record); err != nil {
+	if err := validateNestedRecordOutput(actual, record, records); err != nil {
 		return RecordAssemblyCase{}, err
 	}
 	wanted := expected.(recordBodyValue)
@@ -322,7 +342,7 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 			expectedValue = recordScalarDisplay(expectedScalar)
 		}
 		typeID := ""
-		if field.TypeID == "urn:gooo:type:boolean" || field.TypeID == "urn:gooo:type:integer" {
+		if field.TypeID != "urn:gooo:type:string" {
 			typeID = field.TypeID
 		}
 		fieldResult := RecordAssemblyField{ID: field.ID, Name: field.Name, TypeID: typeID, Expected: expectedValue,
@@ -337,34 +357,13 @@ func (e *integerBodyEvaluator) evaluateRecordCase(function *ast.FuncDecl, inputs
 			object[field.Name] = recordScalarJSONValue(actualScalar)
 		}
 	}
-	result.Actual, _ = json.Marshal(object)
-	return result, nil
+	result.Actual, err = json.Marshal(object)
+	return result, err
 }
 
 func decodeRecordCaseValue(raw []byte, t types.Type, records []RecordType) (any, error) {
-	if bytes.Equal(raw, []byte("null")) {
-		return nil, fmt.Errorf("null is outside the pure value profile")
-	}
-	if named, ok := t.(*types.Named); ok {
-		return decodeRecordObjectCase(raw, named, records)
-	}
-	if sequence, ok := t.(*types.Slice); ok {
-		return decodeRecordSequence(raw, sequence, records)
-	}
-	switch t {
-	case types.Typ[types.Int64]:
-		return strconv.ParseInt(string(raw), 10, 64)
-	case types.Typ[types.Bool]:
-		if string(raw) == "true" {
-			return true, nil
-		}
-		if string(raw) == "false" {
-			return false, nil
-		}
-	case types.Typ[types.String]:
-		return valuejson.DecodeText(raw, 1024)
-	}
-	return nil, fmt.Errorf("value does not match %s or exceeds its text bound", t)
+	decoder := newRecordCaseDecoder(t, records)
+	return decoder.value(raw, t)
 }
 
 func recordScalarJSONValue(value recordBodyScalar) any {

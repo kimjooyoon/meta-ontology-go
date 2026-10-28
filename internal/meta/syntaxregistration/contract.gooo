@@ -111,7 +111,8 @@ if input.profile == "text-fields" {
     input.profile == "gooo.entityfields.go-projection.v3" ||
     input.profile == "gooo.entityfields.go-projection.v4" ||
     input.profile == "gooo.entityfields.go-projection.v5" ||
-    input.profile == "gooo.entityfields.go-projection.v6" {
+    input.profile == "gooo.entityfields.go-projection.v6" ||
+    input.profile == "gooo.entityfields.go-projection.v7" {
     result.entity_fields_profile = input.profile
 } else {
     result.accepted = false

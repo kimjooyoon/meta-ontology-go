@@ -1,0 +1,64 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Total": {
+          "items": []
+        }
+      },
+      "expected": {
+        "Total": 0
+      }
+    },
+    {
+      "inputs": {
+        "Total": {
+          "items": [
+            {
+              "quantity": 2,
+              "price": 7
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Total": 14
+      }
+    },
+    {
+      "inputs": {
+        "Total": {
+          "items": [
+            {
+              "quantity": 2,
+              "price": 7
+            },
+            {
+              "quantity": 2,
+              "price": 7
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Total": 28
+      }
+    },
+    {
+      "inputs": {
+        "Total": {
+          "items": [
+            {
+              "quantity": 1,
+              "price": 9007199254740993
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Total": 9007199254740993
+      }
+    }
+  ]
+}

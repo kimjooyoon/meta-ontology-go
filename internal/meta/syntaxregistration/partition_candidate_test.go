@@ -2,12 +2,14 @@ package syntaxregistration
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path"
 	"reflect"
 	"testing"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/sourcebundle"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -59,8 +61,22 @@ func TestPartitionCandidateIncludesNativeOwnersAndPhysicalSources(t *testing.T) 
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(candidate.Outputs) != item.writes || len(candidate.Projection.Registry.Cases) != 139 ||
+			original, err := fs.ReadFile(repository, corpusPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var baseline languagesyntax.Registry
+			if err := json.Unmarshal(original, &baseline); err != nil {
+				t.Fatal(err)
+			}
+			if len(candidate.Outputs) != item.writes || !reflect.DeepEqual(candidate.Projection.Registry.Cases, baseline.Cases) ||
 				!bytes.Equal(candidate.Outputs[corpusPath], candidate.Projection.Corpus) {
+				for i, prior := range baseline.Cases {
+					if i < len(candidate.Projection.Registry.Cases) && !reflect.DeepEqual(prior, candidate.Projection.Registry.Cases[i]) {
+						t.Logf("first case difference: before=%+v after=%+v", prior, candidate.Projection.Registry.Cases[i])
+						break
+					}
+				}
 				t.Fatal("native construction omitted an owner or changed the case population", sortedPaths(candidate.Outputs))
 			}
 			for _, file := range partition.Files {

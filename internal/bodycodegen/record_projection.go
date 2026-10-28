@@ -31,6 +31,7 @@ func activityRecords(all []RecordType, activityInputs []InputParameter, output, 
 			previous = spelling
 		}
 	}
+	closeRecordTypeUses(all, used, false)
 	var result []RecordType
 	for _, record := range all {
 		if used[record.Name] {
@@ -55,7 +56,7 @@ func RecordDeclarations(records []RecordType, native bool) string {
 			if native {
 				name = field.GoName
 			}
-			fieldType := recordGoType(field.TypeID)
+			fieldType := recordFieldGoType(field.TypeID, records, native)
 			if field.Cardinality == "many" {
 				fieldType = "[]" + fieldType
 			}
@@ -161,4 +162,16 @@ func typecheckAndLowerRecords(packageName string, file *ast.File, fset *token.Fi
 		return err
 	}
 	return typecheck(packageName, file, fset)
+}
+
+func recordFieldGoType(typeID string, records []RecordType, native bool) string {
+	for _, record := range records {
+		if record.ID == typeID {
+			if native {
+				return record.GoName
+			}
+			return record.Name
+		}
+	}
+	return recordGoType(typeID)
 }

@@ -300,7 +300,7 @@ func coerceBodyValue(value any, valueType types.Type) (any, error) {
 		slice, sliceOK := valueType.Underlying().(*types.Slice)
 		if sliceOK && sequence != nil {
 			kind, optional, err := recordBodyScalarKind(slice.Elem())
-			if err == nil && !optional && kind == sequence.Kind && len(sequence.Values) <= RepeatedFieldLimit {
+			if err == nil && !optional && kind == sequence.Kind && sequence.Element == recordBodyElementName(slice.Elem()) && len(sequence.Values) <= RepeatedFieldLimit {
 				return sequence, nil
 			}
 		}
@@ -330,16 +330,19 @@ func coerceBodyValue(value any, valueType types.Type) (any, error) {
 }
 
 func evaluateIntegerBinary(operator token.Token, left, right any) (any, error) {
+	if value, handled := recordBodyPresenceComparison(operator, left, right); handled {
+		return value, nil
+	}
 	if a, ok := left.(recordBodyValue); ok {
 		b, ok := right.(recordBodyValue)
 		if !ok || a.Type != b.Type {
 			return nil, fmt.Errorf("record equality requires matching nominal types")
 		}
 		if operator == token.EQL {
-			return a == b, nil
+			return equalRecordBodyValue(a, b), nil
 		}
 		if operator == token.NEQ {
-			return a != b, nil
+			return !equalRecordBodyValue(a, b), nil
 		}
 	}
 	if a, ok := left.(int64); ok {

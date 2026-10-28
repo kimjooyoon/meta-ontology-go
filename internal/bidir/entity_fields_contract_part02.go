@@ -69,5 +69,5 @@ func validateEntityFieldsModel(nodes []Node, registry semantic.TypeRegistry, sup
 			}
 		}
 	}
-	return nil
+	return validateRecordReferenceGraph(nodes, registry, support)
 }

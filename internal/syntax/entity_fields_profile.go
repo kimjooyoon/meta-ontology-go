@@ -9,9 +9,12 @@ type EntityFieldsProfile struct {
 }
 
 const (
-	EntityFieldsProfileID      = "gooo.entityfields.go-projection.v1"
-	EntityFieldsProfileVersion = 1
-	EntityFieldsProfileDigest  = "7e93032618d1250cd4ff480eb7b5d6832f79bfc6921e6b9eea104151" +
+	EntityFieldsV7ProfileID      = "gooo.entityfields.go-projection.v7"
+	EntityFieldsV7ProfileVersion = 7
+	EntityFieldsV7ProfileDigest  = "db9377f341c13e9f510bf6d8902fe87b25a2b58d9020908285601729be53d7a1"
+	EntityFieldsProfileID        = "gooo.entityfields.go-projection.v1"
+	EntityFieldsProfileVersion   = 1
+	EntityFieldsProfileDigest    = "7e93032618d1250cd4ff480eb7b5d6832f79bfc6921e6b9eea104151" +
 		"db965ec0"
 	EntityFieldsV2ProfileID      = "gooo.entityfields.go-projection.v2"
 	EntityFieldsV2ProfileVersion = 2
@@ -59,6 +62,8 @@ func EntityFieldsSupportForProfileID(id string) (EntityFieldsSupport, bool) {
 
 func (p EntityFieldsProfile) canonicalProfile() EntityFieldsProfile {
 	switch p.ID {
+	case EntityFieldsV7ProfileID:
+		return EntityFieldsV7Support().Profile
 	case EntityFieldsProfileID:
 		return EntityFieldsV1Support().Profile
 	case EntityFieldsV2ProfileID:

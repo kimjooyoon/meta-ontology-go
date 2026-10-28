@@ -20,6 +20,12 @@ func validateEntityFieldsDocument(document Document, namespace string, registry 
 	if !documentHasFields(document) {
 		return nil
 	}
+	var records []Node
+	var err error
+	registry, records, err = documentRecordRegistry(document, registry, support)
+	if err != nil {
+		return err
+	}
 	for _, declaration := range document.Declarations {
 		if len(declaration.Fields) == 0 {
 			continue
@@ -43,7 +49,7 @@ func validateEntityFieldsDocument(document Document, namespace string, registry 
 			}
 		}
 	}
-	return nil
+	return validateRecordReferenceGraph(records, registry, support)
 }
 func validateEntityFieldSequence(owner ID, fields []Field) error {
 	if len(fields) < 2 {

@@ -1,0 +1,15 @@
+package totals
+namespace totals
+entity Integer id "urn:gooo:type:integer"
+entity Line id "urn:record-items:line" fields {
+ field quantity id "urn:record-items:quantity" type integer required one
+ field price id "urn:record-items:price" type integer required one
+}
+entity Basket id "urn:record-items:basket" fields {
+ field items id "urn:record-items:items" type Line required many
+}
+activity Total(Basket) -> Integer id "urn:record-items:total" computes `
+ let total = 0
+ for item in input.items { total = total + item.quantity * item.price }
+ return total
+`

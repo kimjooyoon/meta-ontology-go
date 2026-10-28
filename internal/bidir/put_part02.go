@@ -16,6 +16,10 @@ func putWithTypesAndEntityFieldsSupport(document Document, updated Model, regist
 		return document, putError(PutSourceInvalid, err)
 	}
 	updated = updated.Normalized()
+	registry, err = modelRecordRegistry(updated.Namespace, updated.Nodes, registry, support)
+	if err != nil {
+		return document, putError(PutModelInvalid, err)
+	}
 	if !sameRuntimeBindings(source.RuntimeBindings, updated.RuntimeBindings) {
 		return document, putError(PutWriteConflict, fmt.Errorf("runtime binding changes are not source-representable"))
 	}

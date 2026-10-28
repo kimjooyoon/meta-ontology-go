@@ -100,11 +100,17 @@ func EntityFieldsSupportForFile(file *File, prior EntityFieldsSupport) EntityFie
 	if file == nil || prior.State != EntityFieldsSupported || prior.Validate() != nil {
 		return prior
 	}
+	if fileHasRecordReferences(file) {
+		return EntityFieldsV7Support()
+	}
 	many := false
 	for _, declaration := range file.Declarations {
 		if entity, ok := declaration.(*EntityDecl); ok {
 			for _, field := range entity.Fields {
 				if field.TextBound.IsSet() {
+					if prior.Profile.Version >= EntityFieldsV6ProfileVersion {
+						return prior
+					}
 					return EntityFieldsV6Support()
 				}
 				if field.Cardinality == FieldCardinalityMany {

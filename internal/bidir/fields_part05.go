@@ -29,8 +29,8 @@ func fieldSemanticEqual(left, right Field) bool {
 		return false
 	}
 	registry := semantic.DefaultTypeRegistry()
-	leftTypeID, leftErr := resolvedFieldTypeID(left, leftSemantic.TypeRef, registry)
-	rightTypeID, rightErr := resolvedFieldTypeID(right, rightSemantic.TypeRef, registry)
+	leftTypeID, leftErr := comparisonFieldTypeID(left, leftSemantic.TypeRef, registry)
+	rightTypeID, rightErr := comparisonFieldTypeID(right, rightSemantic.TypeRef, registry)
 	if leftErr != nil || rightErr != nil {
 		return false
 	}
@@ -47,7 +47,7 @@ func writeFieldSemanticFingerprint(builder *strings.Builder, field Field) {
 		writeFingerprintPart(builder, "invalid:"+string(field.ID))
 		return
 	}
-	typeID, err := resolvedFieldTypeID(field, normalized.TypeRef, semantic.DefaultTypeRegistry())
+	typeID, err := comparisonFieldTypeID(field, normalized.TypeRef, semantic.DefaultTypeRegistry())
 	if err != nil {
 		writeFingerprintPart(builder, "invalid-type:"+string(field.ID))
 		return
@@ -74,4 +74,14 @@ func resolvedTypeID(ref semantic.TypeRef, registry semantic.TypeRegistry) (seman
 		return "", err
 	}
 	return definition.ID, nil
+}
+
+// Comparison uses the identity retained by validated lowering. Lookup spelling
+// belongs to the source view; it need not exist in the built-in-only registry.
+// Admission still resolves the complete source reference with normalizeField.
+func comparisonFieldTypeID(field Field, ref semantic.TypeRef, registry semantic.TypeRegistry) (semantic.ID, error) {
+	if ref.ID == "" && field.TypeRefUse.ResolvedID != "" {
+		ref = semantic.TypeRef{ID: semantic.ID(field.TypeRefUse.ResolvedID)}
+	}
+	return resolvedFieldTypeID(field, ref, registry)
 }

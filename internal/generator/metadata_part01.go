@@ -30,7 +30,11 @@ func generateProjectionV1WithEntityFieldsSupport(generator Generator, ir Semanti
 	}
 	working := ir
 	if support.State == entityFieldsSupported && semanticIRHasFields(ir) {
-		working = prepareEntityFields(ir)
+		var err error
+		working, err = prepareEntityFields(ir, support.Profile)
+		if err != nil {
+			return ProjectionMetadataV1{}, err
+		}
 	}
 	normalized, err := normalizeIR(working)
 	if err != nil {

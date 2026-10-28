@@ -2,6 +2,8 @@ package semantic
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 )
 
 // TypeDef describes a registered nominal semantic type. Name is a lookup
@@ -81,4 +83,14 @@ func (r *TypeRegistry) ensure() {
 	if r.names == nil {
 		r.names = make(map[NameRef][]ID)
 	}
+}
+
+// Clone detaches the registry so a source compilation cannot register types in
+// a caller's registry, including when a later declaration conflicts.
+func (r TypeRegistry) Clone() TypeRegistry {
+	result := TypeRegistry{types: maps.Clone(r.types), names: make(map[NameRef][]ID, len(r.names))}
+	for name, ids := range r.names {
+		result.names[name] = slices.Clone(ids)
+	}
+	return result
 }
