@@ -4,7 +4,7 @@ This v1 corpus fixes a denominator of four native targets and twenty-six cases.
 
 - Linux uses `ubuntu-24.04` and emits `tar.gz`.
 - macOS uses `macos-15-intel` and emits `tar.gz`.
-- macOS arm64 uses `macos-15` and emits `tar.gz`.
+- macOS arm64 uses `macos-26` and emits `tar.gz`.
 - Windows uses `windows-2025` and emits `zip`.
 
 Each runner builds twice with Go 1.27.3, runs `gooo version --json` natively,
