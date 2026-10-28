@@ -67,5 +67,7 @@ func expectedSyntaxCaseGroup5Part1Part1() []CaseDefinition {
 		{ID: "source-owned-profile-compatibility-records", Path: "internal/meta/syntaxregistration/contract.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 
 		{ID: "openfga-source-owned-model-change", Path: "examples/openfga-model-change/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
+
+		{ID: "source-owned-record-origin-query", Path: "examples/record-origin-reader/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 	}
 }

@@ -1,0 +1,601 @@
+package recordreader
+
+namespace recordreader
+
+entity Text id "urn:gooo:type:string"
+
+entity Integer id "urn:gooo:type:integer"
+
+entity Boolean id "urn:gooo:type:boolean"
+
+entity Word32 id "reader://type/Word32" fields {
+ field bits id "reader://Word32/bits" type integer required one
+}
+
+entity Mask64 id "reader://type/Mask64" fields {
+ field left id "reader://Mask64/left" type Word32 required one
+ field right id "reader://Mask64/right" type Word32 required one
+}
+
+entity Mask128 id "reader://type/Mask128" fields {
+ field left id "reader://Mask128/left" type Mask64 required one
+ field right id "reader://Mask128/right" type Mask64 required one
+}
+
+entity Mask256 id "reader://type/Mask256" fields {
+ field left id "reader://Mask256/left" type Mask128 required one
+ field right id "reader://Mask256/right" type Mask128 required one
+}
+
+entity Mask512 id "reader://type/Mask512" fields {
+ field left id "reader://Mask512/left" type Mask256 required one
+ field right id "reader://Mask512/right" type Mask256 required one
+}
+
+activity Has32(word Word32, bit Integer) -> Boolean id "reader://activity/Has32" computes `
+
+	if bit < 1 {
+		return false
+	}
+	return (word.bits/bit)%2 == 1
+`
+
+activity Add32(word Word32, bit Integer) -> Word32 id "reader://activity/Add32" computes `
+
+	let result = word
+	if bit > 0 && !Has32(word, bit) {
+		result.bits = result.bits + bit
+	}
+	return result
+`
+
+activity Has64(mask Mask64, index Integer, bit Integer) -> Boolean id "reader://activity/Has64" computes `
+	let selected = mask.left
+	if index >= 32 { selected = mask.right }
+	return Has32(selected, bit)
+`
+
+activity Add64(mask Mask64, index Integer, bit Integer) -> Mask64 id "reader://activity/Add64" computes `
+	let selected = mask.left
+	if index >= 32 { selected = mask.right }
+	let child = Add32(selected, bit)
+	let result = mask
+	if index < 32 { result.left = child } else { result.right = child }
+	return result
+`
+
+activity Has128(mask Mask128, index Integer, bit Integer) -> Boolean id "reader://activity/Has128" computes `
+	let selected = mask.left
+	let offset = index
+	if index >= 64 { selected = mask.right; offset = index - 64 }
+	return Has64(selected, offset, bit)
+`
+
+activity Add128(mask Mask128, index Integer, bit Integer) -> Mask128 id "reader://activity/Add128" computes `
+	let selected = mask.left
+	let offset = index
+	if index >= 64 { selected = mask.right; offset = index - 64 }
+	let child = Add64(selected, offset, bit)
+	let result = mask
+	if index < 64 { result.left = child } else { result.right = child }
+	return result
+`
+
+activity Has256(mask Mask256, index Integer, bit Integer) -> Boolean id "reader://activity/Has256" computes `
+	let selected = mask.left
+	let offset = index
+	if index >= 128 { selected = mask.right; offset = index - 128 }
+	return Has128(selected, offset, bit)
+`
+
+activity Add256(mask Mask256, index Integer, bit Integer) -> Mask256 id "reader://activity/Add256" computes `
+	let selected = mask.left
+	let offset = index
+	if index >= 128 { selected = mask.right; offset = index - 128 }
+	let child = Add128(selected, offset, bit)
+	let result = mask
+	if index < 128 { result.left = child } else { result.right = child }
+	return result
+`
+
+activity Has512(mask Mask512, index Integer, bit Integer) -> Boolean id "reader://activity/Has512" computes `
+	let selected = mask.left
+	let offset = index
+	if index >= 256 { selected = mask.right; offset = index - 256 }
+	return Has256(selected, offset, bit)
+`
+
+activity Add512(mask Mask512, index Integer, bit Integer) -> Mask512 id "reader://activity/Add512" computes `
+	let selected = mask.left
+	let offset = index
+	if index >= 256 { selected = mask.right; offset = index - 256 }
+	let child = Add256(selected, offset, bit)
+	let result = mask
+	if index < 256 { result.left = child } else { result.right = child }
+	return result
+`
+
+activity EmptyMask() -> Mask512 id "reader://activity/EmptyMask" computes `
+
+	let word = Word32{bits: 0}
+	let a = Mask64{left: word, right: word}
+	let b = Mask128{left: a, right: a}
+	let c = Mask256{left: b, right: b}
+	return Mask512{left: c, right: c}
+`
+
+entity Node id "reader://type/Node" fields {
+ field node_id id "reader://Node/id" type integer required one
+ field a id "reader://Node/a" type integer required one
+ field b id "reader://Node/b" type integer required one
+ field guard id "reader://Node/guard" type integer required one
+ field condition id "reader://Node/condition" type integer required one
+ field version id "reader://Node/version" type integer required one
+ field kind id "reader://Node/kind" type string required one
+ field field_id id "reader://Node/field_id" type string required one
+ field port id "reader://Node/port" type string required one
+ field bit id "reader://Node/bit" type integer required one
+ field value id "reader://Node/value" type integer required one
+ field callee_id id "reader://Node/callee_id" type string required one
+ field activity_id id "reader://Node/activity_id" type string required one
+}
+
+entity NodePage id "reader://type/NodePage" fields {
+ field first id "reader://NodePage/first" type integer required one
+ field nodes id "reader://NodePage/nodes" type Node required many
+}
+
+entity Field id "reader://type/Field" fields {
+ field field_id id "reader://Field/id" type string required one
+ field type_id id "reader://Field/type_id" type string required one
+}
+
+entity Layout id "reader://type/Layout" fields {
+ field type_id id "reader://Layout/id" type string required one
+ field members id "reader://Layout/fields" type Field required many
+}
+
+entity Value id "reader://type/Value" fields {
+ field layout id "reader://Value/layout" type integer required one
+ field roots id "reader://Value/roots" type integer required many
+}
+
+entity ValuePage id "reader://type/ValuePage" fields {
+ field first id "reader://ValuePage/first" type integer required one
+ field values id "reader://ValuePage/values" type Value required many
+}
+
+entity Graph id "reader://type/Graph" fields {
+ field schema id "reader://Graph/schema" type string required one
+ field source_sha256 id "reader://Graph/source_sha256" type string required one
+ field flow_sha256 id "reader://Graph/flow_sha256" type string required one
+ field report_sha256 id "reader://Graph/report_sha256" type string required one
+ field activity_id id "reader://Graph/activity_id" type string required one
+ field field_id id "reader://Graph/field_id" type string required one
+ field root id "reader://Graph/root" type integer required one
+ field count id "reader://Graph/count" type integer required one
+ field value_count id "reader://Graph/value_count" type integer required one
+ field control id "reader://Graph/control" type boolean required one
+ field history id "reader://Graph/history" type boolean required one
+ field pages id "reader://Graph/pages" type NodePage required many
+ field layouts id "reader://Graph/layouts" type Layout required many
+ field value_pages id "reader://Graph/value_pages" type ValuePage required many
+}
+
+entity Summary id "reader://type/Summary" fields {
+ field status id "reader://Summary/status" type string required one
+ field source_sha256 id "reader://Summary/source_sha256" type string required one
+ field flow_sha256 id "reader://Summary/flow_sha256" type string required one
+ field report_sha256 id "reader://Summary/report_sha256" type string required one
+ field activity_id id "reader://Summary/activity_id" type string required one
+ field field_id id "reader://Summary/field_id" type string required one
+ field paths id "reader://Summary/paths" type string required one max_utf8_bytes "65536"
+ field contributors id "reader://Summary/contributors" type integer required one
+ field reachable id "reader://Summary/reachable" type integer required one
+ field versions id "reader://Summary/versions" type integer required one
+ field total id "reader://Summary/total" type integer required one
+}
+
+activity NodeAt(graph Graph, index_id Integer) -> Node id "reader://activity/NodeAt" computes `
+
+	if index_id < 1 || index_id > graph.count {
+		return Node{
+			node_id: 0,
+			a: 0,
+			b: 0,
+			guard: 0,
+			condition: 0,
+			version: 0,
+			kind: "",
+			field_id: "",
+			port: "",
+			bit: 0,
+			value: 0,
+			callee_id: "",
+			activity_id: "",
+		}
+	}
+	return graph.pages[(index_id-1)/256].nodes[(index_id-1)%256]
+`
+
+activity Path(graph Graph, node Node) -> Text id "reader://activity/Path" computes `
+
+	let path = node.field_id
+	let parent = node.a
+	let depth = 0
+	for let step = 0; step < 8; step++ {
+		if parent > 0 {
+			let container = NodeAt(graph, parent)
+			if container.kind != "input" {
+				return "UNRESOLVED_INPUT_PATH"
+			}
+			path = container.field_id + " > " + path
+			parent = container.a
+			depth = depth + 1
+		}
+	}
+	if parent != 0 {
+		return "UNRESOLVED_INPUT_DEPTH"
+	}
+	return node.port + ":" + path + ";"
+`
+
+activity Mark(graph Graph, mask Mask512, index_id Integer) -> Mask512 id "reader://activity/Mark" computes `
+
+	if index_id < 1 {
+		return mask
+	}
+	let node = NodeAt(graph, index_id)
+	return Add512(mask, index_id-1, node.bit)
+`
+
+entity Cursor id "reader://type/Cursor" fields {
+field status id "reader://Cursor/status" type string required one
+ field source_sha256 id "reader://Cursor/source_sha256" type string required one
+ field flow_sha256 id "reader://Cursor/flow_sha256" type string required one
+ field report_sha256 id "reader://Cursor/report_sha256" type string required one
+ field activity_id id "reader://Cursor/activity_id" type string required one
+ field field_id id "reader://Cursor/field_id" type string required one
+ field paths id "reader://Cursor/paths" type string required one max_utf8_bytes "65536"
+ field contributors id "reader://Cursor/contributors" type integer required one
+ field reachable id "reader://Cursor/reachable" type integer required one
+ field versions id "reader://Cursor/versions" type integer required one
+ field total id "reader://Cursor/total" type integer required one
+ field steps id "reader://Cursor/steps" type integer required one
+ field step_budget id "reader://Cursor/step_budget" type integer required one
+ field phase id "reader://Cursor/phase" type string required one
+ field offset id "reader://Cursor/offset" type integer required one
+ field bit id "reader://Cursor/bit" type integer required one
+ field mask id "reader://Cursor/mask" type Mask512 required one
+ field root id "reader://Cursor/root" type integer required one
+ field control id "reader://Cursor/control" type boolean required one
+ field history id "reader://Cursor/history" type boolean required one
+}
+
+activity ValueAt(graph Graph, index_id Integer) -> Value id "reader://activity/ValueAt" computes `
+
+	return graph.value_pages[(index_id-1)/256].values[(index_id-1)%256]
+`
+
+activity ValidHeader(graph Graph) -> Boolean id "reader://activity/ValidHeader" computes `
+
+	if graph.schema != "gooo/record-origin-graph/v1" ||
+		graph.count < 1 ||
+		graph.count > 512 ||
+		graph.root < 1 ||
+		graph.root > graph.count ||
+		len(graph.pages) != (graph.count+255)/256 ||
+		graph.value_count < 1 ||
+		graph.value_count > 512 ||
+		len(graph.value_pages) != (graph.value_count+255)/256 ||
+		len(graph.layouts) < 1 ||
+		len(graph.layouts) > 16 {
+		return false
+	}
+	let expected = 1
+	for page in graph.pages {
+		let length = graph.count + 1 - expected
+		if length > 256 {
+			length = 256
+		}
+		if page.first != expected || len(page.nodes) != length {
+			return false
+		}
+		expected = expected + length
+	}
+	expected = 1
+	for page in graph.value_pages {
+		let length = graph.value_count + 1 - expected
+		if length > 256 {
+			length = 256
+		}
+		if page.first != expected || len(page.values) != length {
+			return false
+		}
+		expected = expected + length
+	}
+	return true
+`
+
+activity ValidLayout(layout Layout) -> Boolean id "reader://activity/ValidLayout" computes `
+
+	if layout.type_id == "" || len(layout.members) < 1 || len(layout.members) > 32 {
+		return false
+	}
+	for member in layout.members {
+		if member.field_id == "" || member.type_id == "" {
+			return false
+		}
+	}
+	return true
+`
+
+activity ValidValue(graph Graph, value Value) -> Boolean id "reader://activity/ValidValue" computes `
+
+	if value.layout < 1 ||
+		value.layout > len(graph.layouts) ||
+		len(value.roots) != len(graph.layouts[value.layout-1].members) {
+		return false
+	}
+	for root in value.roots {
+		if root < 1 || root > graph.count {
+			return false
+		}
+	}
+	return true
+`
+
+activity ValidNode(graph Graph, node Node,
+    expected Integer, bit Integer) -> Boolean id "reader://activity/ValidNode" computes `
+
+	if node.node_id != expected ||
+		node.bit != bit ||
+		node.a < 0 ||
+		node.a >= node.node_id ||
+		node.b < 0 ||
+		node.b >= node.node_id ||
+		node.guard < 0 ||
+		node.guard >= node.node_id ||
+		node.condition < 0 ||
+		node.condition >= node.node_id ||
+		node.version < 0 ||
+		node.version >= node.node_id ||
+		node.value < 0 ||
+		node.value > graph.value_count {
+		return false
+	}
+	if node.version > 0 {
+		let prior = NodeAt(graph, node.version)
+		if prior.value == 0 {
+			return false
+		}
+	}
+	if node.kind == "input" {
+		if node.port == "" || node.b != 0 {
+			return false
+		}
+		if node.a > 0 {
+			let prior = NodeAt(graph, node.a)
+			if prior.kind != "input" {
+				return false
+			}
+		}
+	}
+	return true
+`
+
+activity Begin(graph Graph) -> Cursor id "reader://activity/Begin" computes `
+
+	let result = Cursor{
+		status: "MORE",
+		source_sha256: graph.source_sha256,
+		flow_sha256: graph.flow_sha256,
+		report_sha256: graph.report_sha256,
+		activity_id: graph.activity_id,
+		field_id: graph.field_id,
+		paths: "",
+		contributors: 0,
+		reachable: 0,
+		versions: 0,
+		total: graph.count,
+		steps: 0,
+		step_budget: (len(graph.layouts)+31)/32 + (graph.value_count+31)/32 + 3*((graph.count+31)/32),
+		phase: "LAYOUTS",
+		offset: 0,
+		bit: 1,
+		mask: EmptyMask(),
+		root: graph.root,
+		control: graph.control,
+		history: graph.history,
+	}
+	if !ValidHeader(graph) {
+		result.status = "UNUSABLE_INPUT"
+	}
+	return result
+`
+
+activity CheckLayouts(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CheckLayouts" computes `
+	let result = cursor
+	for let step = 0; step < 32; step++ {
+		if result.offset < len(graph.layouts) {
+			if !ValidLayout(graph.layouts[result.offset]) {
+				result.status = "UNUSABLE_INPUT"
+				return result
+			}
+			result.offset = result.offset + 1
+		}
+	}
+	if result.offset == len(graph.layouts) {
+		result.phase = "VALUES"
+		result.offset = 0
+	}
+	return result
+
+`
+
+activity CheckValues(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CheckValues" computes `
+	let result = cursor
+	for let step = 0; step < 32; step++ {
+		if result.offset < graph.value_count {
+			if !ValidValue(graph, ValueAt(graph, result.offset+1)) {
+				result.status = "UNUSABLE_INPUT"
+				return result
+			}
+			result.offset = result.offset + 1
+		}
+	}
+	if result.offset == graph.value_count {
+		result.phase = "NODES"
+		result.offset = 0
+	}
+	return result
+
+`
+
+activity CheckNodes(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CheckNodes" computes `
+	let result = cursor
+	for let step = 0; step < 32; step++ {
+		if result.offset < graph.count {
+			let node = NodeAt(graph, result.offset+1)
+			if !ValidNode(graph, node, result.offset+1, result.bit) {
+				result.status = "UNUSABLE_INPUT"
+				return result
+			}
+			result.offset = result.offset + 1
+			if result.offset%32 == 0 {
+				result.bit = 1
+			} else {
+				result.bit = result.bit * 2
+			}
+		}
+	}
+	if result.offset == graph.count {
+		result.phase = "TRACE"
+		result.offset = graph.count
+		result.mask = Mark(graph, result.mask, graph.root)
+	}
+	return result
+
+`
+
+activity FollowEdges(graph Graph, cursor Cursor) -> Cursor id "reader://activity/FollowEdges" computes `
+	let result = cursor
+	for let step = 0; step < 32; step++ {
+		if result.offset > 0 {
+			let node = NodeAt(graph, result.offset)
+			if Has512(result.mask, node.node_id-1, node.bit) {
+				result.reachable = result.reachable + 1
+				if node.value > 0 {
+					result.versions = result.versions + 1
+				}
+				result.mask = Mark(graph, result.mask, node.a)
+				result.mask = Mark(graph, result.mask, node.b)
+				if graph.control {
+					result.mask = Mark(graph, result.mask, node.guard)
+					result.mask = Mark(graph, result.mask, node.condition)
+				}
+				if graph.history {
+					result.mask = Mark(graph, result.mask, node.version)
+				}
+			}
+			result.offset = result.offset - 1
+		}
+	}
+	if result.offset == 0 {
+		result.phase = "INPUTS"
+		result.offset = 0
+	}
+	return result
+
+`
+
+activity CollectInputs(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CollectInputs" computes `
+	let result = cursor
+	for let step = 0; step < 32; step++ {
+		if result.offset < graph.count {
+			let node = NodeAt(graph, result.offset+1)
+			if node.kind == "input" && node.value == 0 && Has512(result.mask, node.node_id-1, node.bit) {
+				let path = Path(graph, node)
+				if path == "UNRESOLVED_INPUT_PATH" || path == "UNRESOLVED_INPUT_DEPTH" {
+					result.status = "UNUSABLE_INPUT"
+					return result
+				}
+				result.paths = result.paths + path
+				result.contributors = result.contributors + 1
+			}
+			result.offset = result.offset + 1
+		}
+	}
+	if result.offset == graph.count {
+		result.status = "RESOLVED"
+		result.phase = "DONE"
+	}
+	return result
+
+`
+
+activity Step(graph Graph, cursor Cursor) -> Cursor id "reader://activity/Step" computes `
+
+	let result = cursor
+	if graph.source_sha256 != cursor.source_sha256 ||
+		graph.flow_sha256 != cursor.flow_sha256 ||
+		graph.report_sha256 != cursor.report_sha256 ||
+		graph.activity_id != cursor.activity_id ||
+		graph.field_id != cursor.field_id ||
+		graph.count != cursor.total ||
+		graph.root != cursor.root ||
+		graph.control != cursor.control ||
+		graph.history != cursor.history {
+		result.status = "QUERY_CHANGED"
+		return result
+	}
+	if cursor.status != "MORE" {
+		return result
+	}
+	if cursor.steps < 0 || cursor.steps >= cursor.step_budget {
+		result.status = "WORK_BOUND"
+		return result
+	}
+	result.steps = result.steps + 1
+	if cursor.phase == "LAYOUTS" {
+		return CheckLayouts(graph, result)
+	}
+	if cursor.phase == "VALUES" {
+		return CheckValues(graph, result)
+	}
+	if cursor.phase == "NODES" {
+		return CheckNodes(graph, result)
+	}
+	if cursor.phase == "TRACE" {
+		return FollowEdges(graph, result)
+	}
+	if cursor.phase == "INPUTS" {
+		return CollectInputs(graph, result)
+	}
+	result.status = "UNUSABLE_INPUT"
+	return result
+`
+
+activity Finish(cursor Cursor) -> Summary id "reader://activity/Finish" computes `
+
+	let result = Summary{
+		status: cursor.status,
+		source_sha256: cursor.source_sha256,
+		flow_sha256: cursor.flow_sha256,
+		report_sha256: cursor.report_sha256,
+		activity_id: cursor.activity_id,
+		field_id: cursor.field_id,
+		paths: "",
+		contributors: 0,
+		reachable: 0,
+		versions: 0,
+		total: cursor.total,
+	}
+	if cursor.status == "RESOLVED" {
+		result.paths = cursor.paths
+		result.contributors = cursor.contributors
+		result.reachable = cursor.reachable
+		result.versions = cursor.versions
+	}
+	return result
+`
