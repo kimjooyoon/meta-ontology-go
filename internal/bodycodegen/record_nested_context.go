@@ -3,7 +3,11 @@ package bodycodegen
 // Existing model features do not describe nominal child layouts. Keep their
 // versioned encodings intact and retain deterministic source-owned selection.
 func recordPlanHasNominalFields(plan recordAssemblyPlan) bool {
-	for _, record := range plan.body.records {
+	return recordTypesHaveNominalFields(plan.body.records)
+}
+
+func recordTypesHaveNominalFields(records []RecordType) bool {
+	for _, record := range records {
 		for _, field := range record.Fields {
 			switch field.TypeID {
 			case "urn:gooo:type:string", "urn:gooo:type:boolean", "urn:gooo:type:integer":

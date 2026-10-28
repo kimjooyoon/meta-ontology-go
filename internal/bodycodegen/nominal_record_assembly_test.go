@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -59,5 +60,33 @@ func TestNominalRecordAssemblyRejectsMalformedChildBeforeSelection(t *testing.T)
 		if err := ValidateSourceAssembly(context.Background(), "bad-nested.gooo", []byte(source), "Total"); err == nil {
 			t.Fatalf("accepted malformed child: %s", bad)
 		}
+	}
+}
+
+func TestNominalRecordAssemblyReceiptDescribesActualScope(t *testing.T) {
+	g, err := NewTypedPathGenerator("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := g.GenerateSourceAssembly(context.Background(), "nested.gooo", nominalRecordFixture(t), "Total")
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := result.Report.CompletenessReceipt
+	domain, ok := receipt.Scope["domain_scope"].(string)
+	if !ok || !strings.Contains(domain, "nominal record fields") {
+		t.Fatal("nominal assembly retained scalar-only scope", domain)
+	}
+	limits, ok := receipt.Scope["nominal_record_limits"].(map[string]any)
+	if !ok || limits["reference_depth"] != 8 || limits["logical_value_slots"] != 8192 || limits["collection_elements"] != 256 {
+		t.Fatal("nominal limits are absent or differ from the runtime contract", limits)
+	}
+	for _, claim := range []string{"full dynamic nested-field dependency provenance", "direct nested record field assignment", "identity comparison between two present optional pointers"} {
+		if !slices.Contains(receipt.NotClaimed, claim) {
+			t.Fatal("unsupported nominal dimension disappeared", claim)
+		}
+	}
+	if _, err := RealizeSourceAssembly(context.Background(), "nested.gooo", nominalRecordFixture(t), result); err != nil {
+		t.Fatal(err)
 	}
 }
