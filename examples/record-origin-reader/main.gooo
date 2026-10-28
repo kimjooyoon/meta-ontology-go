@@ -50,86 +50,68 @@ activity Add32(word Word32, bit Integer) -> Word32 id "reader://activity/Add32" 
 `
 
 activity Has64(mask Mask64, index Integer, bit Integer) -> Boolean id "reader://activity/Has64" computes `
-
-	if index < 32 {
-		return Has32(mask.left, bit)
-	}
-	return Has32(mask.right, bit)
+	let selected = mask.left
+	if index >= 32 { selected = mask.right }
+	return Has32(selected, bit)
 `
 
 activity Add64(mask Mask64, index Integer, bit Integer) -> Mask64 id "reader://activity/Add64" computes `
-
+	let selected = mask.left
+	if index >= 32 { selected = mask.right }
+	let child = Add32(selected, bit)
 	let result = mask
-	if index < 32 {
-		let child = Add32(mask.left, bit)
-		result.left = child
-	} else {
-		let child = Add32(mask.right, bit)
-		result.right = child
-	}
+	if index < 32 { result.left = child } else { result.right = child }
 	return result
 `
 
 activity Has128(mask Mask128, index Integer, bit Integer) -> Boolean id "reader://activity/Has128" computes `
-
-	if index < 64 {
-		return Has64(mask.left, index, bit)
-	}
-	return Has64(mask.right, index-64, bit)
+	let selected = mask.left
+	let offset = index
+	if index >= 64 { selected = mask.right; offset = index - 64 }
+	return Has64(selected, offset, bit)
 `
 
 activity Add128(mask Mask128, index Integer, bit Integer) -> Mask128 id "reader://activity/Add128" computes `
-
+	let selected = mask.left
+	let offset = index
+	if index >= 64 { selected = mask.right; offset = index - 64 }
+	let child = Add64(selected, offset, bit)
 	let result = mask
-	if index < 64 {
-		let child = Add64(mask.left, index, bit)
-		result.left = child
-	} else {
-		let child = Add64(mask.right, index-64, bit)
-		result.right = child
-	}
+	if index < 64 { result.left = child } else { result.right = child }
 	return result
 `
 
 activity Has256(mask Mask256, index Integer, bit Integer) -> Boolean id "reader://activity/Has256" computes `
-
-	if index < 128 {
-		return Has128(mask.left, index, bit)
-	}
-	return Has128(mask.right, index-128, bit)
+	let selected = mask.left
+	let offset = index
+	if index >= 128 { selected = mask.right; offset = index - 128 }
+	return Has128(selected, offset, bit)
 `
 
 activity Add256(mask Mask256, index Integer, bit Integer) -> Mask256 id "reader://activity/Add256" computes `
-
+	let selected = mask.left
+	let offset = index
+	if index >= 128 { selected = mask.right; offset = index - 128 }
+	let child = Add128(selected, offset, bit)
 	let result = mask
-	if index < 128 {
-		let child = Add128(mask.left, index, bit)
-		result.left = child
-	} else {
-		let child = Add128(mask.right, index-128, bit)
-		result.right = child
-	}
+	if index < 128 { result.left = child } else { result.right = child }
 	return result
 `
 
 activity Has512(mask Mask512, index Integer, bit Integer) -> Boolean id "reader://activity/Has512" computes `
-
-	if index < 256 {
-		return Has256(mask.left, index, bit)
-	}
-	return Has256(mask.right, index-256, bit)
+	let selected = mask.left
+	let offset = index
+	if index >= 256 { selected = mask.right; offset = index - 256 }
+	return Has256(selected, offset, bit)
 `
 
 activity Add512(mask Mask512, index Integer, bit Integer) -> Mask512 id "reader://activity/Add512" computes `
-
+	let selected = mask.left
+	let offset = index
+	if index >= 256 { selected = mask.right; offset = index - 256 }
+	let child = Add256(selected, offset, bit)
 	let result = mask
-	if index < 256 {
-		let child = Add256(mask.left, index, bit)
-		result.left = child
-	} else {
-		let child = Add256(mask.right, index-256, bit)
-		result.right = child
-	}
+	if index < 256 { result.left = child } else { result.right = child }
 	return result
 `
 
@@ -417,7 +399,7 @@ activity Begin(graph Graph) -> Cursor id "reader://activity/Begin" computes `
 		versions: 0,
 		total: graph.count,
 		steps: 0,
-		step_budget: (len(graph.layouts)+7)/8 + (graph.value_count+7)/8 + 3*((graph.count+7)/8),
+		step_budget: (len(graph.layouts)+31)/32 + (graph.value_count+31)/32 + 3*((graph.count+31)/32),
 		phase: "LAYOUTS",
 		offset: 0,
 		bit: 1,
@@ -434,7 +416,7 @@ activity Begin(graph Graph) -> Cursor id "reader://activity/Begin" computes `
 
 activity CheckLayouts(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CheckLayouts" computes `
 	let result = cursor
-	for let step = 0; step < 8; step++ {
+	for let step = 0; step < 32; step++ {
 		if result.offset < len(graph.layouts) {
 			if !ValidLayout(graph.layouts[result.offset]) {
 				result.status = "UNUSABLE_INPUT"
@@ -453,7 +435,7 @@ activity CheckLayouts(graph Graph, cursor Cursor) -> Cursor id "reader://activit
 
 activity CheckValues(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CheckValues" computes `
 	let result = cursor
-	for let step = 0; step < 8; step++ {
+	for let step = 0; step < 32; step++ {
 		if result.offset < graph.value_count {
 			if !ValidValue(graph, ValueAt(graph, result.offset+1)) {
 				result.status = "UNUSABLE_INPUT"
@@ -472,7 +454,7 @@ activity CheckValues(graph Graph, cursor Cursor) -> Cursor id "reader://activity
 
 activity CheckNodes(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CheckNodes" computes `
 	let result = cursor
-	for let step = 0; step < 8; step++ {
+	for let step = 0; step < 32; step++ {
 		if result.offset < graph.count {
 			let node = NodeAt(graph, result.offset+1)
 			if !ValidNode(graph, node, result.offset+1, result.bit) {
@@ -498,7 +480,7 @@ activity CheckNodes(graph Graph, cursor Cursor) -> Cursor id "reader://activity/
 
 activity FollowEdges(graph Graph, cursor Cursor) -> Cursor id "reader://activity/FollowEdges" computes `
 	let result = cursor
-	for let step = 0; step < 8; step++ {
+	for let step = 0; step < 32; step++ {
 		if result.offset > 0 {
 			let node = NodeAt(graph, result.offset)
 			if Has512(result.mask, node.node_id-1, node.bit) {
@@ -529,7 +511,7 @@ activity FollowEdges(graph Graph, cursor Cursor) -> Cursor id "reader://activity
 
 activity CollectInputs(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CollectInputs" computes `
 	let result = cursor
-	for let step = 0; step < 8; step++ {
+	for let step = 0; step < 32; step++ {
 		if result.offset < graph.count {
 			let node = NodeAt(graph, result.offset+1)
 			if node.kind == "input" && node.value == 0 && Has512(result.mask, node.node_id-1, node.bit) {

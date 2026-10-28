@@ -97,7 +97,7 @@ func TestRecordOriginReaderUpperBoundaries(t *testing.T) {
 			t.Fatal(err)
 		}
 		summary := readerProbeObserve(t, final.Value)
-		if summary.Status != "RESOLVED" || summary.Paths != "input:boundary://box/leaf > boundary://leaf/value;" || state.Steps != 194 || state.Budget != 194 {
+		if summary.Status != "RESOLVED" || summary.Paths != "input:boundary://box/leaf > boundary://leaf/value;" || state.Steps != 50 || state.Budget != 50 {
 			t.Fatal(row, summary, state)
 		}
 		var raw map[string]json.RawMessage
