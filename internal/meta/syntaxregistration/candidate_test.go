@@ -222,11 +222,13 @@ func promotedMetaFixture(t *testing.T) (fstest.MapFS, Request) {
 	data, request := fixture(t)
 	delete(data, request.Case.Path)
 	request.Case.ID = "syntax-registration-meta-contract"
-	request.Case.Path = "internal/meta/syntaxregistration/contract.gooo"
+	// The registration contract is now an executed V7 case. Exercise promotion
+	// with a source that still belongs to the raw meta-source cohort.
+	request.Case.Path = "internal/meta/entityfields/entity-fields-meta.gooo"
 	request.Case.EntityFields = false
 	request.Case.EntityFieldsProfile = "gooo.entityfields.go-projection.v5"
 	request.PromoteMetaSource = true
-	source, err := os.ReadFile("contract.gooo")
+	source, err := fs.ReadFile(os.DirFS("../../.."), request.Case.Path)
 	if err != nil {
 		t.Fatal(err)
 	}

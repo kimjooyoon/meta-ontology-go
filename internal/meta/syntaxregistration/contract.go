@@ -22,11 +22,11 @@ type contractBinding struct {
 }
 
 func bindContractSource(source []byte) (contractBinding, error) {
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("contract.gooo", string(source), syntax.EntityFieldsV5Support())
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("contract.gooo", string(source), syntax.EntityFieldsV7Support())
 	if file == nil || diagnostics.HasErrors() {
 		return contractBinding{}, fmt.Errorf("registration contract cannot be parsed: %v", diagnostics)
 	}
-	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, bidir.EntityFieldsV5Support())
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV7Support())
 	if err != nil {
 		return contractBinding{}, err
 	}

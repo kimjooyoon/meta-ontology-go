@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func TestGoooCaseCompositionOwnsProfileSelection(t *testing.T) {
@@ -123,7 +124,7 @@ func TestComposedCaseEntersExistingPinnedRegistration(t *testing.T) {
 func TestContractCaseCompositionReplay(t *testing.T) {
 	result := languagesyntax.ReplayCase(os.DirFS("../../.."), languagesyntax.CaseDefinition{
 		Path: "internal/meta/syntaxregistration/contract.gooo", Kind: "VALID",
-		EntityFieldsProfile: "gooo.entityfields.go-projection.v5"})
+		EntityFieldsProfile: syntax.EntityFieldsV7ProfileID})
 	if !result.ASTReplayed || !result.ByteReplayed || !result.SemanticReplayed || !result.GetPut || !result.PutGet {
 		t.Fatalf("contract source no longer replays: %+v", result)
 	}
