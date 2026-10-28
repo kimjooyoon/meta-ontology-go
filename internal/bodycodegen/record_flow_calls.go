@@ -65,7 +65,7 @@ func (c *recordFlowBuilder) call(call *ast.CallExpr, state *flowState, selected 
 		return flowScalar(0)
 	}
 	value = c.wrap(value, c.span(call), "call", 0)
-	if value.record < 0 {
+	if value.record < 0 || c.compactRecords {
 		c.markCallee(value.scalar, helper.function.identity.ActivityID)
 	} else {
 		for i := range c.body.records[value.record].Fields {
@@ -78,6 +78,11 @@ func (c *recordFlowBuilder) call(call *ast.CallExpr, state *flowState, selected 
 func (c *recordFlowBuilder) markCallee(root uint16, activity string) {
 	if root != 0 {
 		c.nodes[root-1].CalleeID = activity
+		if value, ok := c.nominalValue(root); ok && !c.compactRecords {
+			for i := range c.body.records[value.record].Fields {
+				c.markCallee(value.fields[i], activity)
+			}
+		}
 	}
 }
 
@@ -125,7 +130,11 @@ func (c *recordFlowBuilder) retainReturn(value flowValue, span RecordFlowSpan) {
 		value.scalar = c.join(value.scalar, previous.scalar, span, "", 0, guard)
 	} else {
 		for i, field := range c.body.records[value.record].Fields {
-			value.fields[i] = c.join(value.fields[i], previous.fields[i], span, field.ID, 0, guard)
+			value.fields[i] = c.joinField(value.fields[i], previous.fields[i], span, field.ID, 0, guard)
+		}
+		if c.compactRecords {
+			value.scalar = c.join(value.scalar, previous.scalar, span, "", 0, guard)
+			c.retainNominalValue(value)
 		}
 	}
 	c.returns.value = value

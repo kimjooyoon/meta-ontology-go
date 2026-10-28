@@ -61,21 +61,10 @@ func EntityFieldsSupportForProfileID(id string) (EntityFieldsSupport, bool) {
 }
 
 func (p EntityFieldsProfile) canonicalProfile() EntityFieldsProfile {
-	switch p.ID {
-	case EntityFieldsV7ProfileID:
-		return EntityFieldsV7Support().Profile
-	case EntityFieldsProfileID:
-		return EntityFieldsV1Support().Profile
-	case EntityFieldsV2ProfileID:
-		return EntityFieldsV2Support().Profile
-	case EntityFieldsV3ProfileID:
-		return EntityFieldsV3Support().Profile
-	case EntityFieldsV4ProfileID:
-		return EntityFieldsV4Support().Profile
-	case EntityFieldsV5ProfileID:
-		return EntityFieldsV5Support().Profile
-	case EntityFieldsV6ProfileID:
-		return EntityFieldsV6Support().Profile
+	for _, profile := range supportedEntityFieldsProfiles {
+		if p.ID == profile.ID {
+			return profile
+		}
 	}
 	return EntityFieldsProfile{}
 }

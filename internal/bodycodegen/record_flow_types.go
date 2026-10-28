@@ -7,22 +7,26 @@ import (
 )
 
 const recordFlowSchema = "gooo/record-value-flow/v1"
+const recordVersionFlowSchema = "gooo/record-value-flow/v2"
 const recordFlowNodeLimit = 512
 const recordFlowLocalLimit = 64
 
 // RecordValueFlow records symbolic definitions in source order. Input values
 // and finite expectations are absent; choices retain both permitted expressions.
 type RecordValueFlow struct {
-	Schema     string             `json:"schema"`
-	Status     string             `json:"status"`
-	Reason     string             `json:"reason,omitempty"`
-	ActivityID string             `json:"activity_id"`
-	BodySHA256 string             `json:"body_sha256"`
-	BodyView   string             `json:"body_view"`
-	Nodes      []RecordFlowNode   `json:"nodes,omitempty"`
-	Choices    []RecordFlowChoice `json:"choices,omitempty"`
-	Helpers    []PureCallActivity `json:"helpers,omitempty"`
-	Scope      string             `json:"scope"`
+	Schema         string                    `json:"schema"`
+	Status         string                    `json:"status"`
+	Reason         string                    `json:"reason,omitempty"`
+	ActivityID     string                    `json:"activity_id"`
+	BodySHA256     string                    `json:"body_sha256"`
+	BodyView       string                    `json:"body_view"`
+	Nodes          []RecordFlowNode          `json:"nodes,omitempty"`
+	Choices        []RecordFlowChoice        `json:"choices,omitempty"`
+	Helpers        []PureCallActivity        `json:"helpers,omitempty"`
+	RecordLayouts  []RecordFlowRecordLayout  `json:"record_layouts,omitempty"`
+	RecordValues   []RecordFlowRecordValue   `json:"record_values,omitempty"`
+	RecordVersions []RecordFlowRecordVersion `json:"record_versions,omitempty"`
+	Scope          string                    `json:"scope"`
 }
 
 type RecordFlowSpan struct {
@@ -33,17 +37,18 @@ type RecordFlowSpan struct {
 }
 
 type RecordFlowNode struct {
-	ID         uint16         `json:"id"`
-	Kind       string         `json:"kind"`
-	FieldID    string         `json:"field_id,omitempty"`
-	Local      uint16         `json:"local,omitempty"`
-	Operator   string         `json:"operator,omitempty"`
-	CalleeID   string         `json:"callee_id,omitempty"`
-	Parents    [2]uint16      `json:"parents"`
-	Guard      uint16         `json:"guard,omitempty"`
-	Condition  uint16         `json:"condition,omitempty"`
-	KnownTruth string         `json:"known_truth,omitempty"`
-	Span       RecordFlowSpan `json:"span"`
+	ID            uint16         `json:"id"`
+	Kind          string         `json:"kind"`
+	FieldID       string         `json:"field_id,omitempty"`
+	Local         uint16         `json:"local,omitempty"`
+	RecordVersion uint16         `json:"record_version,omitempty"`
+	Operator      string         `json:"operator,omitempty"`
+	CalleeID      string         `json:"callee_id,omitempty"`
+	Parents       [2]uint16      `json:"parents"`
+	Guard         uint16         `json:"guard,omitempty"`
+	Condition     uint16         `json:"condition,omitempty"`
+	KnownTruth    string         `json:"known_truth,omitempty"`
+	Span          RecordFlowSpan `json:"span"`
 }
 
 type RecordFlowChoice struct {
@@ -96,9 +101,11 @@ type recordFlowBuilder struct {
 	helperOrder      []string
 	activityID       string
 	callDepth        int
+	nominal          *[recordFlowNodeLimit]flowValue
 	outerBindings    int
 	returns          *recordFlowReturns
 	returnSuppressed bool
+	compactRecords   bool
 }
 
 func flowScalar(root uint16) flowValue { return flowValue{record: -1, scalar: root} }

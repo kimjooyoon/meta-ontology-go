@@ -1326,6 +1326,26 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY",
       "entity_fields_profile": "gooo.entityfields.go-projection.v7"
+    },
+    {
+      "id": "source-owned-profile-compatibility-records",
+      "path": "internal/meta/syntaxregistration/contract.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields_profile": "gooo.entityfields.go-projection.v7"
+    },
+    {
+      "id": "openfga-source-owned-model-change",
+      "path": "examples/openfga-model-change/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields_profile": "gooo.entityfields.go-projection.v7"
     }
   ],
   "package_units": [
@@ -1408,7 +1428,6 @@
     }
   ],
   "meta_sources": [
-    "internal/meta/syntaxregistration/contract.gooo",
     "internal/meta/entityfields/entity-fields-meta.gooo",
     "examples/public-trust-surface/main.gooo",
     "internal/meta/generation/operation-input-contract.gooo",

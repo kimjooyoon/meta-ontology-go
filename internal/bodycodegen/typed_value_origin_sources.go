@@ -9,6 +9,10 @@ func typedOriginSources(source []byte, nodes []RecordFlowNode) ([]BodyExpression
 	result := make([]BodyExpressionSource, len(nodes))
 	for i, node := range nodes {
 		result[i] = *UnmappedReadSource(sha, "BODY_RANGE_UNAVAILABLE")
+		if node.Span.View == "record-field-projection" || node.Span.View == "derived-record-output" {
+			result[i].Reason = "DERIVED_RECORD_FIELD_PROJECTION"
+			continue
+		}
 		if node.Span.View == "input-port" {
 			result[i].Reason = "INPUT_PORT_IDENTITY"
 			continue

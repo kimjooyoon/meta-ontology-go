@@ -107,10 +107,10 @@ go run ./cmd/syntax-registration-candidate -root PROJECT -profile-hint examples/
 ~~~
 
 This read-only mode pins the source bytes, replays them under the ordinary,
-text-fields, implicit-port, ordered-collections and exact V1–V6 profiles, and
-reports every observed decision. These are all ten profiles accepted by the
+text-fields, implicit-port, ordered-collections and exact V1–V7 profiles, and
+reports every observed decision. These are all eleven profiles accepted by the
 compact `CaseIntent.profile` selector. For example, a source with ordered
-fields can pass both `ordered-collections` and exact V5/V6, so parsing alone
+fields can pass both `ordered-collections` and exact V5/V6/V7, so parsing alone
 does not identify its intended registration contract.
 
 An agent can add an explicit capability requirement without making a draft:
@@ -121,7 +121,28 @@ go run ./cmd/syntax-registration-candidate -root PROJECT \
   -require-capability entity-many
 ~~~
 
-The fixed Gooo activity combines that request with the ten pinned replay
+The profile catalog comes from the validated syntax kernel. Each replay is
+passed to Gooo as one record with its profile ID, observed parser result and
+kernel-qualified capability eligibility. Gooo walks that ordered record list,
+counts compatible results and chooses a candidate. Adding a supported kernel
+profile therefore does not require another Boolean input field or a positional
+assignment in the observer.
+
+The first internal consumer is this registration contract itself. Its
+`ProfileObservation.profiles` field is a required ordered collection of nominal
+`ProfileCompatibility` records, and `SuggestRegistrationProfile` reads each
+record with `for profile in input.profiles`. The contract is registered as the
+`source-owned-profile-compatibility-records` V7 capability case. The original
+denominator records through V103 remain intact; V104 adds this case.
+
+For this change, the top-level observation has 6 fields instead of 15, and the
+fixed selection activity has 33 nonblank lines instead of 77. The observer now
+replays 11 profiles instead of 10. These are structural counts for this one
+consumer. Runtime latency and allocation changes have not been measured. The
+record list carries more structured data; its evaluator uses the existing
+bounded collection and nominal-value limits.
+
+The fixed Gooo activity combines that request with the eleven pinned replay
 decisions and chooses the least exact entity-fields profile that passes the
 source and satisfies the requested capability. The host independently checks
 the requirement against the syntax kernel's validated profile capabilities.
@@ -129,7 +150,7 @@ The accepted requirements are `ordinary`, `text-fields`, `implicit-ports`,
 `ordered-collections`, `entity-string`, `entity-boolean`, `entity-integer`,
 `entity-optional`, `entity-many`, and `entity-text-bound`. The first four
 request an exact route; the entity requirements ask for a capability floor
-within V1–V6. An unknown requirement reports `UNKNOWN`. For several passing
+within V1–V7. An unknown requirement reports `UNKNOWN`. For several passing
 profiles under an explicit entity requirement, `MINIMAL_HINT` shows the first
 passing version and the complete `compatible_profiles` set. It is still only
 a proposed choice: a later `CaseIntent.profile` must state the exact profile.
@@ -276,6 +297,7 @@ the existing case contract before any candidate member is written.
 | V1 required single Text record fields | `entity_fields: true` |
 | V5 Text/Boolean/Integer, optional fields or ordered collections | `ordered_collections: true` only |
 | V6 Text fields with `max_utf8_bytes`, including ordered collections | `entity_fields_profile: "gooo.entityfields.go-projection.v6"` only |
+| V7 nested nominal record fields and ordered record collections | `entity_fields_profile: "gooo.entityfields.go-projection.v7"` only |
 
 The explicit profile replaces the legacy Boolean flags. For example, the
 [scope-fragment program](../examples/scope-fragments/README.md) uses both a list

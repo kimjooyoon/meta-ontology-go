@@ -26,14 +26,19 @@ func assertNominalNativeCases(t *testing.T, result Result, input string, cases [
 	// The generated package name is independent of source record display names.
 	start := strings.Index(result.Source, "package ") + len("package ")
 	end := strings.IndexByte(result.Source[start:], '\n') + start
-	fmt.Fprintf(&body, "package %s\nimport (\"testing\";\"encoding/json\";\"reflect\";\"strings\")\n", result.Source[start:end])
+	fmt.Fprintf(&body, "package %s\nimport (\"testing\";\"encoding/json\";\"reflect\";\"strings\";\"bytes\")\n", result.Source[start:end])
 	body.WriteString("func TestIndependentValues(t *testing.T) {\n")
 	for i, c := range cases {
 		fmt.Fprintf(&body, `{
  var input %s
  if err := json.Unmarshal([]byte(%s), &input); err != nil { t.Fatal(err) }
+ before, err := json.Marshal(input)
+ if err != nil { t.Fatal(err) }
  actual, err := json.Marshal(%s(input))
  if err != nil { t.Fatal(err) }
+ after, err := json.Marshal(input)
+ if err != nil { t.Fatal(err) }
+ if !bytes.Equal(before, after) { t.Fatalf("pure body changed input: before=%%s after=%%s", before, after) }
  var got, want any
  decoder := json.NewDecoder(strings.NewReader(string(actual)))
  decoder.UseNumber()

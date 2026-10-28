@@ -54,7 +54,10 @@ func (c *recordFlowBuilder) assignment(s *ast.AssignStmt, state *flowState) {
 	if selector, ok := s.Lhs[0].(*ast.SelectorExpr); ok && binding.value.record >= 0 {
 		for i, field := range c.body.records[binding.value.record].Fields {
 			if field.Name == selector.Sel.Name || field.GoName == selector.Sel.Name {
-				binding.value.fields[i] = c.add("write", [2]uint16{value.scalar}, c.span(s), field.ID, binding.id, "")
+				binding.value.fields[i] = c.recordFieldRoot(value, c.span(s), field.ID, binding.id, "write")
+				if c.compactRecords {
+					binding.value = c.wrap(binding.value, c.span(s), "write", binding.id)
+				}
 				return
 			}
 		}
@@ -131,7 +134,11 @@ func (c *recordFlowBuilder) joinStates(state *flowState, then, otherwise flowSta
 			x.scalar = c.join(x.scalar, y.scalar, span, "", state.bindings[i].id, guard)
 		} else {
 			for j, field := range c.body.records[x.record].Fields {
-				x.fields[j] = c.join(x.fields[j], y.fields[j], span, field.ID, state.bindings[i].id, guard)
+				x.fields[j] = c.joinField(x.fields[j], y.fields[j], span, field.ID, state.bindings[i].id, guard)
+			}
+			if c.compactRecords {
+				x.scalar = c.join(x.scalar, y.scalar, span, "", state.bindings[i].id, guard)
+				c.retainNominalValue(x)
 			}
 		}
 		state.bindings[i].value = x

@@ -27,6 +27,10 @@ type TypedOriginColumns struct {
 // The accompanying Gooo example uses a 60-bit set, so this adapter refuses larger
 // graphs instead of dropping nodes. The inspection report itself allows 512.
 func TypedValueOriginInputs(r TypedValueOrigins, target, field string, control bool) ([]byte, error) {
+	if r.Flow != nil && len(r.Flow.RecordVersions) != 0 {
+		return nil, fmt.Errorf("record-version origins require their layout, value and version tables; flat columns cannot retain them")
+	}
+
 	pkg, activity, ok := strings.Cut(target, ":")
 	if !ok || pkg == "" || activity == "" || strings.ContainsAny(target, " \t\r\n") || strings.Contains(activity, ":") {
 		return nil, fmt.Errorf("consumer input needs package/path:Activity")

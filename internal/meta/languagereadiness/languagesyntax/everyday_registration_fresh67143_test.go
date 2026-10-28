@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
@@ -34,7 +35,7 @@ func TestEverydayRegistryRetainsAllPriorCases67143(t *testing.T) {
 	}
 	if len(prior.Cases) != 110 || len(registry.Cases) != FixedTotal ||
 		!reflect.DeepEqual(prior.Cases, registry.Cases[:110]) ||
-		!metaSourceHistoryRetained67143(prior.MetaSources, registry.MetaSources) ||
+		!metaSourceHistoryRetainedByCases67143(prior, registry) ||
 		!reflect.DeepEqual(prior.ProjectionUnits, registry.ProjectionUnits) ||
 		!reflect.DeepEqual(prior.PackageUnits, registry.PackageUnits) {
 		t.Fatal("previous source identities, scopes or classifications changed")
@@ -50,6 +51,32 @@ func TestEverydayRegistryRetainsAllPriorCases67143(t *testing.T) {
 // admitted separately by decodeRegistry's exact current native/JSON binding.
 func metaSourceHistoryRetained67143(prior, current []string) bool {
 	return len(current) >= len(prior) && reflect.DeepEqual(prior, current[:len(prior)])
+}
+
+// A raw meta source can become a newly appended executable capability case.
+// Its path remains registered, and every other raw source keeps its order.
+func metaSourceHistoryRetainedByCases67143(prior, current Registry) bool {
+	if len(current.Cases) < len(prior.Cases) || !reflect.DeepEqual(prior.Cases, current.Cases[:len(prior.Cases)]) {
+		return false
+	}
+	promoted := map[string]bool{}
+	for _, definition := range current.Cases[len(prior.Cases):] {
+		if definition.Kind == KindValid && definition.ExpectedDecision == DecisionPass &&
+			definition.Scope == ScopeLanguageCapability && definition.MetaOperation == "replay-language-syntax" {
+			promoted[definition.Path] = true
+		}
+	}
+	retained := []string{}
+	for _, path := range prior.MetaSources {
+		if promoted[path] {
+			if slices.Contains(current.MetaSources, path) {
+				return false
+			}
+		} else {
+			retained = append(retained, path)
+		}
+	}
+	return metaSourceHistoryRetained67143(retained, current.MetaSources)
 }
 
 func TestEverydayRegistryCoversActualSourceInventory67143(t *testing.T) {

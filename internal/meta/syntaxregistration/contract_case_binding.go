@@ -11,7 +11,8 @@ func bindContract() (contractBinding, error) {
 }
 
 func bindCaseComposition(ir semantic.IR) error {
-	if len(ir.Graph.Nodes()) != 32 {
+	// The closed contract has 12 structural entities, 7 value records and 14 activities.
+	if len(ir.Graph.Nodes()) != 33 {
 		return fmt.Errorf("registration contract node inventory is not exact: %d", len(ir.Graph.Nodes()))
 	}
 	input, inputFound := ir.Graph.NodeByName(ir.Namespace, "CaseIntent")
@@ -56,6 +57,9 @@ func bindAppendComposition(ir semantic.IR) error {
 }
 
 func bindProfileHint(ir semantic.IR) error {
+	if err := bindProfileObservationLayout(ir); err != nil {
+		return err
+	}
 	input, inputFound := ir.Graph.NodeByName(ir.Namespace, "ProfileObservation")
 	output, outputFound := ir.Graph.NodeByName(ir.Namespace, "ProfileHint")
 	activity, activityFound := ir.Graph.NodeByName(ir.Namespace, "SuggestRegistrationProfile")

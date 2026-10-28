@@ -16,9 +16,9 @@ func TestProfileHintUsesPinnedReplayAndGoooChoice(t *testing.T) {
 		path, want, status string
 		matches            int
 	}{
-		{"examples/billing/main.gooo", "ordinary", "AMBIGUOUS", 10},
-		{"examples/collection-filter/main.gooo", "ordered-collections", "AMBIGUOUS", 3},
-		{"examples/scope-fragments/main.gooo", "gooo.entityfields.go-projection.v6", "HINT", 1},
+		{"examples/billing/main.gooo", "ordinary", "AMBIGUOUS", 11},
+		{"examples/collection-filter/main.gooo", "ordered-collections", "AMBIGUOUS", 4},
+		{"examples/scope-fragments/main.gooo", "gooo.entityfields.go-projection.v6", "AMBIGUOUS", 2},
 	} {
 		t.Run(row.path, func(t *testing.T) {
 			report := InspectProfileHint(context.Background(), repository, row.path)
@@ -35,8 +35,8 @@ func TestProfileHintUsesPinnedReplayAndGoooChoice(t *testing.T) {
 		})
 	}
 	path := "examples/collection-filter/main.gooo"
-	changed := strings.Replace(string(contractSource), "} else if ordered_collections {",
-		"} else if false && ordered_collections {", 1)
+	changed := strings.Replace(string(contractSource), "if result.match_count == 0 {",
+		`if (result.match_count == 0 || result.profile == "") && profile.profile != "ordered-collections" {`, 1)
 	if changed == string(contractSource) {
 		t.Fatal("Gooo intervention did not change the profile decision")
 	}
@@ -46,7 +46,7 @@ func TestProfileHintUsesPinnedReplayAndGoooChoice(t *testing.T) {
 		t.Fatalf("Gooo source did not own the advisory choice: %+v", other)
 	}
 	wrongCount := strings.Replace(string(contractSource),
-		"if v5 { matches = matches + 1 }", "if v5 { matches = matches + 2 }", 1)
+		"result.match_count = result.match_count + 1", "result.match_count = result.match_count + 2", 1)
 	if wrongCount == string(contractSource) {
 		t.Fatal("Gooo intervention did not change the match count")
 	}
@@ -62,12 +62,12 @@ func TestProfileHintUsesExplicitCapabilityWithoutChangingCaseIntent(t *testing.T
 		path, requirement, want, status string
 		matches                         int
 	}{
-		{"examples/billing/main.gooo", "entity-string", "gooo.entityfields.go-projection.v1", "MINIMAL_HINT", 6},
-		{"examples/billing/main.gooo", "entity-boolean", "gooo.entityfields.go-projection.v2", "MINIMAL_HINT", 5},
-		{"examples/billing/main.gooo", "entity-integer", "gooo.entityfields.go-projection.v3", "MINIMAL_HINT", 4},
-		{"examples/billing/main.gooo", "entity-optional", "gooo.entityfields.go-projection.v4", "MINIMAL_HINT", 3},
-		{"examples/collection-filter/main.gooo", "entity-many", "gooo.entityfields.go-projection.v5", "MINIMAL_HINT", 2},
-		{"examples/billing/main.gooo", "entity-text-bound", "gooo.entityfields.go-projection.v6", "HINT", 1},
+		{"examples/billing/main.gooo", "entity-string", "gooo.entityfields.go-projection.v1", "MINIMAL_HINT", 7},
+		{"examples/billing/main.gooo", "entity-boolean", "gooo.entityfields.go-projection.v2", "MINIMAL_HINT", 6},
+		{"examples/billing/main.gooo", "entity-integer", "gooo.entityfields.go-projection.v3", "MINIMAL_HINT", 5},
+		{"examples/billing/main.gooo", "entity-optional", "gooo.entityfields.go-projection.v4", "MINIMAL_HINT", 4},
+		{"examples/collection-filter/main.gooo", "entity-many", "gooo.entityfields.go-projection.v5", "MINIMAL_HINT", 3},
+		{"examples/billing/main.gooo", "entity-text-bound", "gooo.entityfields.go-projection.v6", "MINIMAL_HINT", 2},
 		{"examples/billing/main.gooo", "ordinary", "ordinary", "HINT", 1},
 		{"examples/billing/main.gooo", "text-fields", "text-fields", "HINT", 1},
 		{"examples/billing/main.gooo", "implicit-ports", "implicit-ports", "HINT", 1},
@@ -83,8 +83,8 @@ func TestProfileHintUsesExplicitCapabilityWithoutChangingCaseIntent(t *testing.T
 			}
 		})
 	}
-	changed := strings.Replace(string(contractSource), "} else if v5 {",
-		"} else if false && v5 {", 1)
+	changed := strings.Replace(string(contractSource), "if result.match_count == 0 {",
+		`if (result.match_count == 0 || result.profile == "") && profile.profile != "gooo.entityfields.go-projection.v5" {`, 1)
 	if changed == string(contractSource) {
 		t.Fatal("Gooo minimum choice was not found")
 	}

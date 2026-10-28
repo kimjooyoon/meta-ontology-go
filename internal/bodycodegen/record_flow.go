@@ -18,6 +18,9 @@ func recordValueFlow(p recordAssemblyPlan) *RecordValueFlow {
 	c := recordFlowBuilder{body: p.body, sites: p.sites, fset: token.NewFileSet(), view: view, bodyView: view,
 		info: &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}}
 	fn, err := c.parse()
+	if c.compactRecords {
+		r.Schema = recordVersionFlowSchema
+	}
 	if err == nil {
 		state := c.parameters()
 		c.block(fn.Body, &state)
@@ -30,6 +33,12 @@ func recordValueFlow(p recordAssemblyPlan) *RecordValueFlow {
 	}
 	if err != nil {
 		r.Status, r.Reason = "UNRESOLVED", err.Error()
+		return r
+	}
+	c.exportRecordVersions(r)
+	if c.err != nil {
+		r.Status = "UNRESOLVED"
+		r.Reason = c.err.Error()
 		return r
 	}
 	r.Nodes = append([]RecordFlowNode(nil), c.nodes[:c.count]...)
@@ -63,6 +72,7 @@ func (c *recordFlowBuilder) parse() (*ast.FuncDecl, error) {
 	if _, err = checkBodyTypes("selection", file, c.fset, c.info); err != nil {
 		return nil, err
 	}
+	c.compactRecords = recordFlowUsesNominalValues(file, c.info, c.body.records)
 	for _, declaration := range file.Decls {
 		if fn, ok := declaration.(*ast.FuncDecl); ok && fn.Name.Name != root {
 			helper := c.helpers[fn.Name.Name]
@@ -103,9 +113,25 @@ func (c *recordFlowBuilder) wrap(value flowValue, span RecordFlowSpan, kind stri
 		value.scalar = c.add(kind, [2]uint16{value.scalar}, span, "", local, "")
 		return value
 	}
-	for i, field := range c.body.records[value.record].Fields {
-		value.fields[i] = c.add(kind, [2]uint16{value.fields[i]}, span, field.ID, local, "")
+	if kind == "input" {
+		return c.inputRecordFields(value.record, span, local, 0)
 	}
+	if c.compactRecords {
+		value.scalar = c.add(kind, [2]uint16{value.scalar}, span, "", local, "record")
+		c.retainNominalValue(value)
+		return value
+	}
+	if value.scalar != 0 {
+		value.scalar = c.add(kind, [2]uint16{value.scalar}, span, c.nodes[value.scalar-1].FieldID, local, "")
+	}
+	for i, field := range c.body.records[value.record].Fields {
+		if nested, ok := c.nominalValue(value.fields[i]); ok {
+			value.fields[i] = c.wrap(nested, span, kind, local).scalar
+		} else {
+			value.fields[i] = c.add(kind, [2]uint16{value.fields[i]}, span, field.ID, local, "")
+		}
+	}
+	c.retainNominalValue(value)
 	return value
 }
 
