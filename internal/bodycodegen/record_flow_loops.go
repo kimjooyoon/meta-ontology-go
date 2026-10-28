@@ -54,10 +54,14 @@ func (c *recordFlowBuilder) rangeLoop(loop *ast.RangeStmt, state *flowState) boo
 		c.err = fmt.Errorf("FLOW_SEQUENCE_UNRESOLVED")
 		return false
 	}
+	if origin, ok := c.sequenceOrigin(sequence.scalar); ok && origin.length == 0 {
+		return true
+	}
 	if c.loopData == nil {
 		c.loopData = new(recordFlowLoopData)
 	}
-	entry := c.add("loop_entry", [2]uint16{sequence.scalar}, c.span(loop.X), "", 0, "has_element")
+	collection := c.sequenceShape(sequence.scalar)
+	entry := c.add("loop_entry", [2]uint16{collection}, c.span(loop.X), "", 0, "has_element")
 	if entry == 0 {
 		return false
 	}
@@ -80,8 +84,8 @@ func (c *recordFlowBuilder) rangeLoop(loop *ast.RangeStmt, state *flowState) boo
 	}
 	index := c.add("loop_index", [2]uint16{}, c.span(loop.Value), "", 0, "symbolic_any")
 	element := c.sequenceElement(sequence, index, c.span(loop.Value))
-	c.loopData.loops[id-1] = RecordFlowLoop{ID: id, Parent: priorLoop, Collection: sequence.scalar,
-		SequenceType: sequence.sequence, Index: index, Element: element.scalar, Entry: entry,
+	c.loopData.loops[id-1] = RecordFlowLoop{ID: id, Parent: priorLoop, Collection: collection,
+		SequenceType: sequence.sequence, Index: index, Element: c.sequenceElementRoot(element.scalar), Entry: entry,
 		IndexKind: "symbolic_any", Span: c.span(loop)}
 	c.bind(&next, name, element, c.span(loop.Value), "copy")
 	live := c.block(loop.Body, &next)

@@ -125,6 +125,8 @@ func project(r bodycodegen.TypedValueOrigins, fieldID string, control, history b
 		CarryPages:    []carryPage{},
 		Loops:         []loop{},
 		SequenceTypes: []string{},
+		Layouts:       []layout{},
+		ValuePages:    []valuePage{},
 	}
 	for _, sequence := range r.Flow.SequenceTypes {
 		g.SequenceTypes = append(g.SequenceTypes, sequence.ElementTypeID)

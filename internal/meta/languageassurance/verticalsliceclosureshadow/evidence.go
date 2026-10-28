@@ -745,6 +745,8 @@ func activeDenominatorDigestChunk5(total int) string {
 		return DenominatorMigrationV108Digest
 	case 145:
 		return DenominatorMigrationV109Digest
+	case 146:
+		return DenominatorMigrationV110Digest
 	}
 	return ""
 }
@@ -759,6 +761,8 @@ func activeDenominatorChunk5(total int) []byte {
 		return embeddedDenominatorV108
 	case 145:
 		return embeddedDenominatorV109
+	case 146:
+		return embeddedDenominatorV110
 	}
 	return nil
 }
@@ -771,3 +775,6 @@ var embeddedDenominatorV108 []byte
 
 //go:embed evidence/denominator-v109.json
 var embeddedDenominatorV109 []byte
+
+//go:embed evidence/denominator-v110.json
+var embeddedDenominatorV110 []byte

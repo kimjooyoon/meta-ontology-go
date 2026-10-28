@@ -35,7 +35,7 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
-		report.Summary.Satisfied != 147 || report.Summary.ValidCases != 144 ||
+		report.Summary.Satisfied != 148 || report.Summary.ValidCases != 145 ||
 		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 ||
 		report.Summary.CapabilitySatisfied != languagesyntax.FixedCapabilityTotal ||
 		report.Summary.CapabilityTotal != languagesyntax.FixedCapabilityTotal ||
@@ -77,14 +77,14 @@ func TestUnknownRegistryLowersResolution(t *testing.T) {
 			t.Fatal(err)
 		}
 		if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-			report.Summary.Executed != 0 || report.Summary.Unresolved != 147 {
+			report.Summary.Executed != 0 || report.Summary.Unresolved != 148 {
 			t.Fatalf("unknown registry was not lowered: %#v", report)
 		}
 	}
 }
 
 func TestScopePartitionUsesFixedDenominatorsAndRejectsDrift(t *testing.T) {
-	if languagesyntax.FixedTotal != 147 || languagesyntax.FixedCapabilityTotal != 145 ||
+	if languagesyntax.FixedTotal != 148 || languagesyntax.FixedCapabilityTotal != 146 ||
 		languagesyntax.FixedGovernanceTotal != 2 ||
 		languagesyntax.FixedCapabilityTotal+languagesyntax.FixedGovernanceTotal != languagesyntax.FixedTotal {
 		t.Fatalf("scope denominators drifted: total=%d capability=%d governance=%d", languagesyntax.FixedTotal,
@@ -154,7 +154,7 @@ func TestRemovingRecordBindingCannotLowerCorpusDenominator(t *testing.T) {
 	}
 	report := languagesyntax.Evaluate(repository, testHead, mutated, languageconcept.BuildArtifact(repository))
 	if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-		report.Summary.Total != 147 || report.Summary.Executed != 0 || report.Summary.Unresolved != 147 {
+		report.Summary.Total != 148 || report.Summary.Executed != 0 || report.Summary.Unresolved != 148 {
 		t.Fatalf("removing a case reduced proof obligations: %#v", report.Summary)
 	}
 }
@@ -221,7 +221,7 @@ func TestProjectionCorpusBindsActualSourceAndBothArtifacts(t *testing.T) {
 				t.Fatal(err)
 			}
 			if report.Decision != languagesyntax.DecisionClosed || report.Summary.ProjectionSatisfied != languagesyntax.FixedProjectionTotal-1 ||
-				report.Summary.ProjectionTotal != languagesyntax.FixedProjectionTotal || report.Summary.Satisfied != 147 {
+				report.Summary.ProjectionTotal != languagesyntax.FixedProjectionTotal || report.Summary.Satisfied != 148 {
 				t.Fatalf("projection failure was hidden or changed ordinary case coverage: %#v", report.Summary)
 			}
 			if sample.missing && (report.Resolution != languagesyntax.ResolutionLower || report.Summary.ProjectionUnresolved != 1) {
@@ -256,7 +256,7 @@ func TestProjectionRegistryCannotDropOrRedirectObligations(t *testing.T) {
 		if err := languagesyntax.Validate(report, testHead); err != nil {
 			t.Fatal(err)
 		}
-		if report.Decision != languagesyntax.DecisionClosed || report.Summary.Unresolved != 147 ||
+		if report.Decision != languagesyntax.DecisionClosed || report.Summary.Unresolved != 148 ||
 			report.Summary.ProjectionUnresolved != languagesyntax.FixedProjectionTotal || report.Summary.ProjectionTotal != languagesyntax.FixedProjectionTotal {
 			t.Fatal("registry drift reduced the fixed proof obligations")
 		}

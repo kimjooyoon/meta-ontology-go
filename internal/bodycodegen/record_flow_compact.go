@@ -36,6 +36,13 @@ func recordFlowUsesNominalValues(file *ast.File, info *types.Info, records []Rec
 				if named, ok := info.Types[expr].Type.(*types.Named); ok && nominal[named.Obj().Name()] {
 					found = true
 				}
+				if literal, ok := expr.(*ast.CompositeLit); ok {
+					if sequence, ok := info.Types[literal].Type.(*types.Slice); ok {
+						if _, named := sequence.Elem().(*types.Named); named {
+							found = true
+						}
+					}
+				}
 			}
 			return !found
 		})
