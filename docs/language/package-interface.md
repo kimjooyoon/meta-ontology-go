@@ -52,6 +52,13 @@ Current field profiles and their existing restrictions apply. Invalid sources,
 unresolved imports/types, and conflicting identities within a package return a
 failed receipt without a partial interface.
 
+For a source-level diagnostic, use `gooo check --semantic --json file.gooo`.
+The default `check` mode checks syntax. Semantic checking resolves field types;
+an unknown or ambiguous field type retains its stable field ID and the original
+type-reference byte range. The diagnostic can therefore point to the lookup name
+or quoted type ID, including when earlier text contains non-ASCII characters.
+Body construction and execution retain their own supported value profiles.
+
 This command describes declared structure. A compatibility tool also needs to
 consider whether a type is used as input or output, source names, bindings, and
 runtime behavior. The existing `emit --kind operation-interface` v1 format
