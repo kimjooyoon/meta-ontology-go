@@ -188,7 +188,7 @@ func (c *recordFlowBuilder) indexedSequence(index *ast.IndexExpr, state *flowSta
 			known = number
 		}
 	}
-	value := c.sequenceElementAt(sequence, position.scalar, c.span(index), known)
+	value := c.sequenceElementAt(sequence, position.scalar, c.span(index), known, false)
 	root := c.sequenceElementRoot(value.scalar)
 	if root != 0 {
 		c.nodes[root-1].Operator = "source_index"

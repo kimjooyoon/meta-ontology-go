@@ -20,13 +20,15 @@ func (c *recordFlowBuilder) sequenceValue(root uint16, element string) flowValue
 }
 
 func (c *recordFlowBuilder) sequenceElement(sequence flowValue, index uint16, span RecordFlowSpan) flowValue {
-	return c.sequenceElementAt(sequence, index, span, -1)
+	return c.sequenceElementAt(sequence, index, span, -1, true)
 }
 
-func (c *recordFlowBuilder) sequenceElementAt(sequence flowValue, index uint16, span RecordFlowSpan, known int64) flowValue {
+func (c *recordFlowBuilder) sequenceElementAt(sequence flowValue, index uint16, span RecordFlowSpan,
+	known int64, iteration bool) flowValue {
 	root := c.add("element", [2]uint16{c.sequenceShape(sequence.scalar), index}, span, "", 0, "symbolic_any")
 	if _, ok := c.sequenceOrigin(sequence.scalar); ok {
-		projection := sequenceProjection{builder: c, index: index, known: known, span: span, remaining: recordFlowNodeLimit}
+		projection := sequenceProjection{builder: c, index: index, known: known, span: span,
+			iteration: iteration, remaining: recordFlowNodeLimit}
 		value := projection.element(sequence.scalar, c.sequenceTypes[sequence.sequence-1].ElementTypeID)
 		return c.projectSequenceFields(value, root, span)
 	}

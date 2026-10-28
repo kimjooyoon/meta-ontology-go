@@ -151,6 +151,7 @@ type sequenceProjection struct {
 	index     uint16
 	known     int64
 	span      RecordFlowSpan
+	iteration bool
 	remaining int
 	seen      [recordFlowNodeLimit]bool
 	values    [recordFlowNodeLimit]flowValue
@@ -172,7 +173,7 @@ func (p *sequenceProjection) element(root uint16, element string) flowValue {
 	origin, ok := c.sequenceOrigin(root)
 	value := flowScalar(0)
 	if !ok {
-		value = c.sequenceElement(c.sequenceValue(root, element), p.index, p.span)
+		value = c.sequenceElementAt(c.sequenceValue(root, element), p.index, p.span, p.known, p.iteration)
 	} else if origin.joined {
 		left := p.element(origin.left, element)
 		right := p.element(origin.right, element)
@@ -186,6 +187,10 @@ func (p *sequenceProjection) element(root uint16, element string) flowValue {
 
 func (p *sequenceProjection) literal(origin flowSequenceOrigin, element string) flowValue {
 	c := p.builder
+	// An empty range contributes no element; an indexed read still faults.
+	if origin.length == 0 && p.iteration {
+		return flowScalar(0)
+	}
 	if origin.length == 0 || p.known >= int64(origin.length) {
 		c.err = fmt.Errorf("FLOW_SEQUENCE_LITERAL_INDEX_BOUND")
 		return flowScalar(0)
@@ -205,6 +210,15 @@ func (p *sequenceProjection) literal(origin flowSequenceOrigin, element string) 
 
 func (p *sequenceProjection) merge(left, right flowValue, condition uint16) flowValue {
 	c := p.builder
+	if c.err != nil {
+		return flowScalar(0)
+	}
+	if p.iteration && left.scalar == 0 {
+		return right
+	}
+	if p.iteration && right.scalar == 0 {
+		return left
+	}
 	root := c.joinField(left.scalar, right.scalar, p.span, "", 0, condition)
 	if value, ok := c.nominalValue(root); ok {
 		return value
