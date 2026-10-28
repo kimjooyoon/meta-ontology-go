@@ -10,6 +10,10 @@ func validateSupportedEntityFields(ir SemanticIR, profile syntax.EntityFieldsPro
 	if err != nil {
 		return err
 	}
+	types, err := EntityFieldTypeNames(ir, profile)
+	if err != nil {
+		return err
+	}
 	used := make(map[string]string, len(ir.Entities)+len(ir.Activities))
 	for _, entity := range ir.Entities {
 		if previous, exists := used[entity.ID]; exists {
@@ -40,7 +44,7 @@ func validateSupportedEntityFields(ir SemanticIR, profile syntax.EntityFieldsPro
 		var hasPrevious bool
 		for index, field := range entity.Fields {
 			if err := validateSupportedField(entity, index, field, used, seenNames, sourceURI,
-				previousStart, hasPrevious, capabilities); err != nil {
+				previousStart, hasPrevious, capabilities, types); err != nil {
 				return err
 			}
 			if sourceURI == "" {
@@ -50,5 +54,5 @@ func validateSupportedEntityFields(ir SemanticIR, profile syntax.EntityFieldsPro
 			hasPrevious = true
 		}
 	}
-	return nil
+	return validateRecordFieldReferences(ir, capabilities)
 }
