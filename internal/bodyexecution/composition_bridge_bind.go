@@ -23,7 +23,7 @@ func (run *compositionBridgeRun) bind(traces []CompositionTrace, r *CompositionR
 }
 
 func bindBridgeFile(f nativeBridgeFile, traces []CompositionTrace) error {
-	if f.Schema != "gooo/native-field-local-bridge/v1" || len(traces) < 1 || len(traces) > 128 || len(f.Completions) != len(traces) || len(f.Locals) > 4096 || len(f.Fields) > 4096 || len(f.LocalClocks) > 65536 || len(f.FieldClocks) > 65536 {
+	if (f.Schema != "gooo/native-field-local-bridge/v1" && f.Schema != "gooo/native-field-local-bridge/v2") || len(traces) < 1 || len(traces) > 128 || len(f.Completions) != len(traces) || len(f.Locals) > 4096 || len(f.Fields) > 4096 || len(f.LocalClocks) > 65536 || len(f.FieldClocks) > 65536 {
 		return fmt.Errorf("native field/local bridge schema or populations differ")
 	}
 	local, field := 0, 0
@@ -41,7 +41,10 @@ func bindBridgeFile(f nativeBridgeFile, traces []CompositionTrace) error {
 	if err := bindBridgeWindows(f.Locals, traces, false); err != nil {
 		return err
 	}
-	return bindBridgeWindows(f.Fields, traces, true)
+	if err := bindBridgeWindows(f.Fields, traces, true); err != nil {
+		return err
+	}
+	return bindBridgeElementReads(f, traces)
 }
 
 func bindBridgeWindows(rows [][]int, traces []CompositionTrace, field bool) error {
@@ -72,7 +75,7 @@ func validateRecordedBridgeObservations(r CompositionRuntime) error {
 		}
 		return nil
 	}
-	if r.FieldObservation == nil || r.BridgeObservation.Schema != "gooo/native-field-local-bridge-summary/v1" || len(r.BridgeObservation.SHA256) != 71 || !strings.HasPrefix(r.BridgeObservation.SHA256, "sha256:") {
+	if r.FieldObservation == nil || (r.BridgeObservation.Schema != "gooo/native-field-local-bridge-summary/v1" && r.BridgeObservation.Schema != "gooo/native-field-local-bridge-summary/v2") || len(r.BridgeObservation.SHA256) != 71 || !strings.HasPrefix(r.BridgeObservation.SHA256, "sha256:") {
 		return fmt.Errorf("recorded bridge has no field observation or a different schema")
 	}
 	summary, err := validateBridgeObservations(r.Traces, r)

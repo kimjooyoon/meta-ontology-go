@@ -1,0 +1,107 @@
+{
+  "schema": "gooo/syntax-profile-migration-candidate/v1",
+  "operation": "MigrateSyntaxProfile",
+  "activity_id": "gooo://syntax-profile-migration/migrate",
+  "contract_digest": "sha256:67212aaa50c6df433defd398524bab300492fdffe832f9892a0c02e87993945b",
+  "semantic_digest": "a4c425f54b01cfa842d87c18e3267eff07a24e59239da0afe7133888e35cd097",
+  "input_digest": "sha256:b5df8042bab4dda75ac4beb7d0fccc779ddfbd716ff9a018524f2206f3bfb81d",
+  "request_digest": "sha256:d2ffd4d7d8df5e804f251157897984d199dd4bc90b473992f25f224c213dccb7",
+  "before_case": {
+    "id": "local-field-bridge-reader",
+    "path": "examples/local-field-bridge/trace.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY",
+    "ordered_collections": true
+  },
+  "after_case": {
+    "id": "local-field-bridge-reader",
+    "path": "examples/local-field-bridge/trace.gooo",
+    "kind": "VALID",
+    "expected_decision": "PASS",
+    "proof_choice": "COHERENCE",
+    "meta_operation": "replay-language-syntax",
+    "scope": "LANGUAGE_CAPABILITY",
+    "entity_fields_profile": "gooo.entityfields.go-projection.v7"
+  },
+  "source_checks": [
+    {
+      "observed_decision": "PASS",
+      "source_lines": 164,
+      "source_digest": "sha256:6d933d021a98b599d62570bc62263b4841627898e41e48e3eda0465ff88521d4",
+      "ast_digest": "sha256:b4539a4aceb1fac61c81685166785f41b2e5c4a0899b46279637d9fbc0f1c15d",
+      "canonical_digest": "sha256:c0e8f7a6bb40573b3aeb94e09543610537cb7305b1c376a2d080bc2210a3fa32",
+      "semantic_digest": "sha256:18375715e9c03db303885ace60a4cf291abcd6c5a613dae44c8118bb82284778",
+      "ast_replayed": true,
+      "byte_replayed": true,
+      "semantic_replayed": true,
+      "get_put": true,
+      "put_get": true,
+      "diagnostic_rejected": false,
+      "diagnostics": []
+    },
+    {
+      "observed_decision": "PASS",
+      "source_lines": 489,
+      "source_digest": "sha256:7d511d04f23f4d7eb3f1a802ef158dcc72825319d9e7c201477bf55959e77d46",
+      "ast_digest": "sha256:2cbf111dbbed055b398194f1b58e9bd303d414f1ad4816075368b18bd68bd29e",
+      "canonical_digest": "sha256:c0760dfe2ce9c72b44293b02d785755c2f7ad898ee661a8b5e1afe388b3883b2",
+      "semantic_digest": "sha256:5e92593c6629cb7fb95b59492c0c0e974439290019dcc40997d7c237be3bafe0",
+      "ast_replayed": true,
+      "byte_replayed": true,
+      "semantic_replayed": true,
+      "get_put": true,
+      "put_get": true,
+      "diagnostic_rejected": false,
+      "diagnostics": [],
+      "entity_fields_profile": "gooo.entityfields.go-projection.v7",
+      "profile_digest": "sha256:db9377f341c13e9f510bf6d8902fe87b25a2b58d9020908285601729be53d7a1"
+    }
+  ],
+  "case_population": 145,
+  "required_members": 3,
+  "execution_binding": {
+    "activity_id": "gooo://syntax-profile-migration/pin-input",
+    "input_id": "gooo://syntax-profile-migration/request",
+    "output_id": "gooo://syntax-profile-migration/pinned-input",
+    "identity": {
+      "go_version": "go1.27.3",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "executable_sha256": "sha256:684697e6d7a55b0da8a32cdf40f56089a7a22be41593c3489de45af66bb02a10",
+      "go_command_sha256": "sha256:aa355b078a81158d418079a3f8c776719eb99cc6f527e39ffa3250c66566aafb",
+      "compiler_sha256": "sha256:4d0bd4c1880e3d575827a72ac66b0f117b31da0aff1fe44f03a54c7ffb3c8ae3"
+    }
+  },
+  "semantic_admission": "UNASSESSED",
+  "state": "PROPOSAL_ONLY",
+  "repository_writes": 0,
+  "apply_authorized": false,
+  "promotion_authorized": false,
+  "members": [
+    {
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "activity_id": "gooo://syntax-profile-migration/revise-corpus",
+      "output_id": "gooo://syntax-profile-migration/corpus",
+      "before_digest": "sha256:e26baa7dddb6533ebe7aff0e7a0d162444db8c10d9f4a048564ed241b65f3f87",
+      "after_digest": "sha256:8cef0d567b2e180733a600fddf584eb0231d98e798a0d2b81c7b743b39f2e7f1"
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
+      "activity_id": "gooo://syntax-profile-migration/revise-native-registry",
+      "output_id": "gooo://syntax-profile-migration/native-registry",
+      "before_digest": "sha256:5ff90555922677c4100eaf83435e20bd3f549b145688d89e6d8a73d814151318",
+      "after_digest": "sha256:230e528059201177207848146b6d8da4bd1eb492177a70391f6ca4b9144c4209"
+    },
+    {
+      "path": "examples/local-field-bridge/trace.gooo",
+      "activity_id": "gooo://syntax-profile-migration/retain-program",
+      "output_id": "gooo://syntax-profile-migration/program",
+      "before_digest": "sha256:6d933d021a98b599d62570bc62263b4841627898e41e48e3eda0465ff88521d4",
+      "after_digest": "sha256:7d511d04f23f4d7eb3f1a802ef158dcc72825319d9e7c201477bf55959e77d46"
+    }
+  ],
+  "scope": "Three generated members installed after exact before/after verification; case population unchanged by profile migration; full compiler CI remains separately assessed."
+}

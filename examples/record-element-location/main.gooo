@@ -1,0 +1,16 @@
+package locate
+namespace locate
+
+entity Integer id "urn:gooo:type:integer"
+entity Origin id "urn:locate:origin" fields {
+ field position id "urn:locate:position" type integer required one
+ field container id "urn:locate:container" type string required one
+ field status id "urn:locate:status" type string required one
+}
+
+activity Locate(Origin) -> Integer id "urn:locate:locate" computes `
+ if input.status == "RESOLVED" && input.container == "urn:record-items:items" {
+     return input.position
+ }
+ return -1
+`
