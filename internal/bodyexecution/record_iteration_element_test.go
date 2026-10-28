@@ -158,11 +158,7 @@ func checkIterationElementContradictions(t *testing.T, r CompositionRuntime) {
 }
 
 func TestRecordIterationNestedElementLinks(t *testing.T) {
-	source, _ := recordIterationExample(t)
-	source = []byte(strings.Replace(string(source), "field items", "field others id \"urn:record-items:others\" type Line required many\n field items", 1))
-	source = []byte(strings.Replace(string(source), "total = total + item.quantity * item.price", "let copied = item; for extra in input.others { total = total + copied.quantity * extra.price }", 1))
-	cases := []byte(`{"schema":"gooo/body-composition-cases/v1","cases":[{"inputs":{"Total":{"items":[{"quantity":2,"price":7},{"quantity":2,"price":7}],"others":[{"quantity":2,"price":7},{"quantity":2,"price":7}]}},"expected":{"Total":56}}]}`)
-	r := recordIterationRuntime(t, source, cases)
+	r := recordIterationNestedRuntime(t)
 	want := []int{0, 0, -1, -1, 1, 1, 2, 2, 3, 3, -1, -1, 4, 4, 5, 5}
 	if !slices.Equal(r.Traces[0].Bridge.ElementReads, want) || r.BridgeObservation.ElementLinks != 12 {
 		t.Fatal("nested or copied records guessed an element parent", r.Traces[0].Bridge.ElementReads, r.BridgeObservation)
@@ -190,6 +186,15 @@ func TestRecordIterationNestedElementLinks(t *testing.T) {
 			t.Fatal("unexpected lexical binding", fact)
 		}
 	}
+}
+
+func recordIterationNestedRuntime(t *testing.T) CompositionRuntime {
+	t.Helper()
+	source, _ := recordIterationExample(t)
+	source = []byte(strings.Replace(string(source), "field items", "field others id \"urn:record-items:others\" type Line required many\n field items", 1))
+	source = []byte(strings.Replace(string(source), "total = total + item.quantity * item.price", "let copied = item; for extra in input.others { total = total + copied.quantity * extra.price }", 1))
+	cases := []byte(`{"schema":"gooo/body-composition-cases/v1","cases":[{"inputs":{"Total":{"items":[{"quantity":2,"price":7},{"quantity":2,"price":7}],"others":[{"quantity":2,"price":7},{"quantity":2,"price":7}]}},"expected":{"Total":56}}]}`)
+	return recordIterationRuntime(t, source, cases)
 }
 
 func TestRecordIterationElementReadLimit(t *testing.T) {

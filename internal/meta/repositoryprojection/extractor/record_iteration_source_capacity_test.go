@@ -27,5 +27,14 @@ func TestRecordIterationSourceRenderedCapacity(t *testing.T) {
 		"internal/bodyexecution#validateBridgeObservations",
 		"internal/bodyexecution#validateBridgeTrace",
 		"internal/bodyexecution#bindBridgeFile",
+		"internal/bodyexecution#selectRecordedBridgeLineagePage",
+		"internal/bodyexecution#SelectRecordedIndexedBridgeLineagePage",
+		"internal/bodyexecution#recordedBridgeElements",
+		"internal/bodyexecution#BridgeElementColumns.appendElement",
+		"cmd/gooo#packageBridgeOriginRows",
+		"cmd/gooo#marshalPackageColumnRows",
+		"cmd/gooo#configurePackageOriginShape",
+		"cmd/gooo#validatePackageOriginShape",
+		"cmd/gooo#packageOriginInputsWithShape",
 	})
 }

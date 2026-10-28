@@ -133,3 +133,27 @@ func TestRecordIterationFieldSourceDisplayRename(t *testing.T) {
 		t.Fatal("renamed derivation population", count)
 	}
 }
+
+func TestRecordIterationAbsentLocalAnnotations(t *testing.T) {
+	source, cases := recordIterationExample(t)
+	suite, err := DecodeCompositionCases(cases)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := GenerateCompositionWithOptions(context.Background(), "historical.gooo", source, suite, CompositionOptions{EntryActivity: "Total"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range plan.Steps {
+		plan.Steps[i].Generation.Report.BodyLocals = nil
+	}
+	r, err := ExecuteComposition(context.Background(), "historical.gooo", source, plan, suite, "")
+	if err != nil || r.FinitePassed != 4 || !r.RuntimeReplayed || r.ModelCalls != 0 {
+		t.Fatal("missing historical source annotation interrupted computation", err, r.FinitePassed)
+	}
+	if r.BridgeObservation != nil &&
+		(r.BridgeObservation.ElementLinks != 0 || r.BridgeObservation.Schema != "gooo/native-field-local-bridge-summary/v1") {
+		t.Fatal("invented an absent source binding", r.BridgeObservation)
+	}
+	t.Log("4 original computations and replay survive absent historical local annotations;no new element-source claim invented;models0")
+}

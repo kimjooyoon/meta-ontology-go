@@ -31,6 +31,8 @@ go run ./cmd/gooo body-compose --source examples/record-collections/main.gooo \
 
 원본 source-only 필드 기록은 `gooo/native-field-sources/v1`을 사용한다.
 파생 반복 바인딩을 포함하는 표는 `v2`를 사용한다.
+과거 생성 기록에 지역 변수의 선택적 원문 주석이 없으면 계산과 재생을 유지하고,
+새 파생 바인딩을 만들지 않는다. 조회는 보존된 관측 범위와 함께 사용한다.
 
 실행 중에는 이미 기록된 원소 읽기의 **사례 안 번호**를 필드 대입에 연결한다.
 네이티브 생성기는 반복문의 목록·인덱스 바인딩이 맞는 읽기 호출 바로 뒤에 필드
@@ -59,8 +61,10 @@ input.items의 원래 위치 1
 
 이 사실을 받는 원시 행의 입력 설명은 `gooo/native-origin-input/v2`를 사용한다.
 `field-lineage-columns/v1`과 `field-local-lineage-columns/v1`은 원소 연결이 있는
-사례를 명시적으로 거절한다. 확장 사실을 해석하는 소비자는 원시 행을 사용한다.
-기존 v1 기록의 조회는 그대로 지원한다.
+사례를 명시적으로 거절한다. 원시 행과 `field-local-columns-v2` 형식이 이 연결을
+운반한다. [Gooo 경로 조회](../../examples/local-field-bridge/indexed.workspace.json)는
+원래 32개 열을 `history`, 원소 정보를 `elements` 레코드로 받아 공통 탐색 활동을
+사용한다. 기존 v1 기록의 조회도 지원한다.
 
 ## 이 예제의 확인 범위
 
@@ -90,6 +94,6 @@ input.items의 원래 위치 1
 
 현재 `Total`의 정적 `body-origins`는 `FLOW_REQUIRES_REQUIRED_SCALAR_FIELDS`로
 미해결이다. 다음 단계는 정적 반복의 상징적 항목·누적 값과 실제 실행의 원소 번호를
-구분해 표현하고, 확장된 입력 기원을 Gooo의 전체 경로 조회에 연결하는 것이다.
+구분해 표현하고, 생성된 목록과 큰 실행 기록을 Gooo 경로 조회에 연결하는 것이다.
 이 작업은 [#1834](https://github.com/kimjooyoon/meta-ontology-go/issues/1834)에 포함된다.
 필드 일지의 `COMPLETE`는 해당 기록 범위의 완전성을 나타낸다.

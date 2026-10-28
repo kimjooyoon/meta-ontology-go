@@ -32,6 +32,10 @@ func SelectRecordedBridgeLineage(runtime CompositionRuntime, query NativeOriginQ
 // A page transports independent unsliced cases as multiple Gooo inputs. Each
 // input keeps its own read/write bounds; the CLI also bounds the whole payload.
 func SelectRecordedBridgeLineagePage(runtime CompositionRuntime, query NativeOriginQuery) ([]BridgeLineageColumns, *NativeOriginInput, error) {
+	return selectRecordedBridgeLineagePage(runtime, query, false)
+}
+
+func selectRecordedBridgeLineagePage(runtime CompositionRuntime, query NativeOriginQuery, indexed bool) ([]BridgeLineageColumns, *NativeOriginInput, error) {
 	if query.Kind != "field-uses" {
 		return nil, nil, fmt.Errorf("field-local-columns requires field-uses")
 	}
@@ -49,7 +53,7 @@ func SelectRecordedBridgeLineagePage(runtime CompositionRuntime, query NativeOri
 			return nil, report, err
 		}
 		t := runtime.Traces[selected.CaseIndex]
-		if hasBridgeElementReads(t) {
+		if !indexed && hasBridgeElementReads(t) {
 			return nil, report, fmt.Errorf("field-local-lineage-columns/v1 cannot represent recorded element origins; select field-writes or field-uses rows")
 		}
 		n, u := len(t.FieldWrites)+len(t.LocalWrites), len(t.FieldUses)+len(t.LocalUses)
