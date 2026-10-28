@@ -1,0 +1,40 @@
+package extractor
+
+import "testing"
+
+func TestNominalRecordEvaluatorRenderedCapacity(t *testing.T) {
+	requireNamedCapacities(t, "../../../..", []string{
+		"internal/bodycodegen#recordBodyScalarKind",
+		"internal/bodycodegen#recordBodyScalarFromValue",
+		"internal/bodycodegen#recordBodyScalarForField",
+		"internal/bodycodegen#recordBodyScalarValue",
+		"internal/bodycodegen#newRecordBodyZero",
+		"internal/bodycodegen#buildRecordBodyZero",
+		"internal/bodycodegen#zeroRecordBodyField",
+		"internal/bodycodegen#recordBodyHasReferences",
+		"internal/bodycodegen#validateRecordBodyValueBudget",
+		"internal/bodycodegen#chargeRecordBodyValue",
+		"internal/bodycodegen#recordBodyValue.MarshalJSON",
+		"internal/bodycodegen#recordBodyJSONName",
+		"internal/bodycodegen#newRecordCaseDecoder",
+		"internal/bodycodegen#recordCaseTypeHasReferences",
+		"internal/bodycodegen#recordCaseDecoder.charge",
+		"internal/bodycodegen#recordCaseDecoder.value",
+		"internal/bodycodegen#recordCaseDecoder.field",
+		"internal/bodycodegen#recordCaseDecoder.object",
+		"internal/bodycodegen#recordCaseDecoder.objectField",
+		"internal/bodycodegen#recordCaseDecoder.sequence",
+		"internal/bodycodegen#recordCaseFieldType",
+		"internal/bodycodegen#equalRecordBodyScalar",
+		"internal/bodycodegen#equalRecordBodyValue",
+		"internal/bodycodegen#validateSequenceLiteral",
+		"internal/bodycodegen#integerBodyEvaluator.evaluateSequenceLiteral",
+		"internal/bodycodegen#integerBodyEvaluator.evaluateRecordCase",
+		"internal/bodycodegen#validateNestedRecordOutputAt",
+		"internal/bodycodegen#recordPlanHasNominalFields",
+		"internal/bodycodegen#declinedNominalRecordContext",
+		"internal/bodycodegen#recordBodyPresenceComparison",
+		"internal/bodycodegen#coerceBodyValue",
+		"internal/bodycodegen#integerBodyEvaluator.evaluateRecordField",
+	})
+}
