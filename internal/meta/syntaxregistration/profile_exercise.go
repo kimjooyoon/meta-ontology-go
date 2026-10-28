@@ -31,7 +31,7 @@ func observeProfileExercise(path string, raw []byte, requirement string) Profile
 	if !strings.HasPrefix(requirement, "entity-") {
 		return result
 	}
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(path, string(raw), syntax.EntityFieldsV6Support())
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(path, string(raw), latestExerciseProfile())
 	if file == nil || diagnostics.HasErrors() {
 		result.Reason = "SOURCE_PARSE_UNAVAILABLE"
 		return result
@@ -62,4 +62,13 @@ func observeProfileExercise(path string, raw []byte, requirement string) Profile
 		result.Reason = "TYPE_REFERENCE_UNRESOLVED"
 	}
 	return result
+}
+
+func latestExerciseProfile() syntax.EntityFieldsSupport {
+	profiles := syntax.SupportedEntityFieldsProfiles()
+	if len(profiles) == 0 {
+		return syntax.EntityFieldsSupport{}
+	}
+	support, _ := syntax.EntityFieldsSupportForProfileID(profiles[len(profiles)-1].ID)
+	return support
 }
