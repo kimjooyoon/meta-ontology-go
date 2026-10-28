@@ -17,6 +17,10 @@ func recordGraphContext(p recordAssemblyPlan, flow *RecordValueFlow) *RecordOrdi
 		Scope:          "ordered source value graph, canonical literals, input types and complete intent; source provenance retained; inputs, expected outputs and predictions excluded"}
 	raw, _ := json.Marshal(flow)
 	r.ValueFlowSHA256 = digest(raw)
+	if recordFlowNeedsVersionFeatures(flow) {
+		r.Status, r.Reason = "DECLINED_TO_DETERMINISTIC", "RECORD_VERSION_FEATURE_CONTRACT_UNAVAILABLE"
+		return r
+	}
 	if flow == nil || flow.Status != "RESOLVED" {
 		r.Status, r.Reason = "DECLINED_TO_DETERMINISTIC", "SOURCE_VALUE_FLOW_UNRESOLVED"
 		if flow != nil {

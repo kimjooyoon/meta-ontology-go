@@ -25,7 +25,12 @@ labels. Both output modes describe possible source dependencies. JSON is the def
 The JSON report contains field-sensitive value definitions, return roots, input
 ports and original literal byte ranges. Fixed same-source helpers retain their
 argument bindings. Scalar results use an empty output field ID; for a record
-result, select its stable field ID with --field when exporting input arrays.
+result in a flat scalar graph, select its stable field ID with --field when exporting input arrays.
+Required nested record fields also retain container paths. Their v2 JSON report keeps
+record_layouts, record_values and record_versions separately; node record_version
+links retain record history separately from data/control dependencies. The text
+view displays these links. Flat ancestry/control column exports refuse this shape
+because they cannot retain the record-version tables.
 
 Inspection reads source without choosing candidates, evaluating cases or calling
 a model. It reports possible source dependencies, with up to 512 nodes. Unsupported
