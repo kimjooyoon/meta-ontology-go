@@ -113,6 +113,7 @@ type recordFlowBuilder struct {
 	compactRecords   bool
 	loopData         *recordFlowLoopData
 	sequenceTypes    []RecordFlowSequenceType
+	sequenceOrigins  *[recordFlowNodeLimit]flowSequenceOrigin
 }
 
 func flowScalar(root uint16) flowValue { return flowValue{record: -1, scalar: root} }

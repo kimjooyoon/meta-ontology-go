@@ -20,7 +20,16 @@ func (c *recordFlowBuilder) sequenceValue(root uint16, element string) flowValue
 }
 
 func (c *recordFlowBuilder) sequenceElement(sequence flowValue, index uint16, span RecordFlowSpan) flowValue {
-	root := c.add("element", [2]uint16{sequence.scalar, index}, span, "", 0, "symbolic_any")
+	return c.sequenceElementAt(sequence, index, span, -1)
+}
+
+func (c *recordFlowBuilder) sequenceElementAt(sequence flowValue, index uint16, span RecordFlowSpan, known int64) flowValue {
+	root := c.add("element", [2]uint16{c.sequenceShape(sequence.scalar), index}, span, "", 0, "symbolic_any")
+	if _, ok := c.sequenceOrigin(sequence.scalar); ok {
+		projection := sequenceProjection{builder: c, index: index, known: known, span: span, remaining: recordFlowNodeLimit}
+		value := projection.element(sequence.scalar, c.sequenceTypes[sequence.sequence-1].ElementTypeID)
+		return c.projectSequenceFields(value, root, span)
+	}
 	element := c.sequenceTypes[sequence.sequence-1].ElementTypeID
 	for i, record := range c.body.records {
 		if record.ID == element {
@@ -54,6 +63,9 @@ func (c *recordFlowBuilder) symbolicElementFields(record int, root uint16, span 
 }
 
 func (c *recordFlowBuilder) openLoopCarry(value flowValue, span RecordFlowSpan, local uint16, field string) flowValue {
+	if c.rejectConstructedSequenceCarry(value.scalar) {
+		return flowScalar(0)
+	}
 	if value.record >= 0 {
 		for i, declaration := range c.body.records[value.record].Fields {
 			child := flowScalar(value.fields[i])
@@ -78,6 +90,9 @@ func (c *recordFlowBuilder) openLoopCarry(value flowValue, span RecordFlowSpan, 
 
 func (c *recordFlowBuilder) closeLoopCarry(seed, header, yielded flowValue, span RecordFlowSpan,
 	local uint16, field string, live bool) flowValue {
+	if c.rejectConstructedSequenceCarry(seed.scalar, header.scalar, yielded.scalar) {
+		return flowScalar(0)
+	}
 	value := seed
 	if value.record >= 0 {
 		for i, declaration := range c.body.records[value.record].Fields {

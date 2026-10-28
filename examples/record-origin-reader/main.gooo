@@ -325,11 +325,12 @@ activity ValidHeader(graph Graph) -> Boolean id "reader://activity/ValidHeader" 
 		graph.root < 1 ||
 		graph.root > graph.count ||
 		len(graph.pages) != (graph.count+255)/256 ||
-		graph.value_count < 1 ||
+		graph.value_count < 0 ||
 		graph.value_count > 512 ||
 		len(graph.value_pages) != (graph.value_count+255)/256 ||
-		len(graph.layouts) < 1 ||
 		len(graph.layouts) > 16 ||
+		(graph.value_count == 0 && len(graph.layouts) != 0) ||
+		(graph.value_count > 0 && len(graph.layouts) == 0) ||
 		graph.carry_count < 0 || graph.carry_count > graph.count ||
 		len(graph.carry_pages) != (graph.carry_count+255)/256 ||
 		len(graph.loops) > 256 || len(graph.sequence_types) > 19 {
@@ -552,6 +553,11 @@ activity Begin(graph Graph) -> Cursor id "reader://activity/Begin" computes `
 	}
 	if !ValidHeader(graph) {
 		result.status = "UNUSABLE_INPUT"
+	}
+	if graph.value_count == 0 && len(graph.layouts) == 0 {
+		result.phase = "NODES"
+		if graph.carry_count > 0 { result.phase = "CARRIES" }
+		if len(graph.loops) > 0 { result.phase = "LOOPS" }
 	}
 	return result
 `

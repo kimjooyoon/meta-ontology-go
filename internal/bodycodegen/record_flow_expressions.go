@@ -3,6 +3,7 @@ package bodycodegen
 import (
 	"fmt"
 	"go/ast"
+	"go/constant"
 	"go/parser"
 	"go/token"
 )
@@ -38,6 +39,9 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 	case *ast.IndexExpr:
 		return c.indexedSequence(e, state, selected)
 	case *ast.CompositeLit:
+		if _, ok := e.Type.(*ast.ArrayType); ok {
+			return c.sequenceLiteral(e, state)
+		}
 		return c.constructor(e, state)
 	case *ast.CallExpr:
 		if isImplicitLengthConversion(e) {
@@ -49,6 +53,9 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 		if name, ok := e.Fun.(*ast.Ident); ok && bodyPrimitiveName(name.Name) &&
 			c.body.activityIDs[name.Name] == "" && len(e.Args) == 1 {
 			value := c.expression(e.Args[0], state, selected)
+			if name.Name == "len" && value.sequence != 0 {
+				value.scalar = c.sequenceShape(value.scalar)
+			}
 			return flowScalar(c.add("expression", [2]uint16{value.scalar}, c.span(e), "", 0, name.Name))
 		}
 	case *ast.SliceExpr:
@@ -175,9 +182,16 @@ func (c *recordFlowBuilder) indexedSequence(index *ast.IndexExpr, state *flowSta
 	if c.err != nil {
 		return flowScalar(0)
 	}
-	value := c.sequenceElement(sequence, position.scalar, c.span(index))
-	if value.scalar != 0 {
-		c.nodes[value.scalar-1].Operator = "source_index"
+	known := int64(-1)
+	if literal := c.info.Types[index.Index].Value; literal != nil && literal.Kind() == constant.Int {
+		if number, ok := constant.Int64Val(literal); ok {
+			known = number
+		}
+	}
+	value := c.sequenceElementAt(sequence, position.scalar, c.span(index), known)
+	root := c.sequenceElementRoot(value.scalar)
+	if root != 0 {
+		c.nodes[root-1].Operator = "source_index"
 	}
 	return value
 }

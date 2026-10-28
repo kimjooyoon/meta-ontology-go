@@ -155,6 +155,7 @@ func (c *recordFlowBuilder) join(a, b uint16, span RecordFlowSpan, field string,
 	root := c.add("join", [2]uint16{a, b}, span, field, local, "")
 	if root != 0 {
 		c.nodes[root-1].Condition = guard
+		c.joinSequenceOrigins(root, a, b, span, field, local, guard)
 	}
 	return root
 }
