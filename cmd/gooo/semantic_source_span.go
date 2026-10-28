@@ -9,12 +9,19 @@ import (
 
 func semanticFailureSpan(file *syntax.File, err error) syntax.Span {
 	var reference *bidir.ReferenceResolutionError
-	if errors.As(err, &reference) && reference.Span.Valid() {
-		return syntax.Span{
-			Filename: reference.Span.File,
-			Start:    syntax.Position{Offset: reference.Span.Start, Line: reference.Span.StartLine, Column: reference.Span.StartColumn},
-			End:      syntax.Position{Offset: reference.Span.End, Line: reference.Span.EndLine, Column: reference.Span.EndColumn},
-		}
+	var field *bidir.EntityFieldsError
+	var span bidir.SourceSpan
+	switch {
+	case errors.As(err, &reference) && reference.Span.Valid():
+		span = reference.Span
+	case errors.As(err, &field) && field.Span.Valid():
+		span = field.Span
+	default:
+		return syntaxFileSpan(file)
 	}
-	return syntaxFileSpan(file)
+	return syntax.Span{
+		Filename: span.File,
+		Start:    syntax.Position{Offset: span.Start, Line: span.StartLine, Column: span.StartColumn},
+		End:      syntax.Position{Offset: span.End, Line: span.EndLine, Column: span.EndColumn},
+	}
 }

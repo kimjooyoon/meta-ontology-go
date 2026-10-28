@@ -59,7 +59,7 @@ func validateSourceField(field Field, owner ID, registry semantic.TypeRegistry) 
 	}
 	normalized, err := normalizeField(field, owner, EntityKind, registry)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrUnrepresentableField, err)
+		return fmt.Errorf("%w: %w", ErrUnrepresentableField, err)
 	}
 	if field.TypeRefUse.ResolvedID != "" && field.TypeRefUse.ResolvedID != normalized.TypeRefUse.ResolvedID {
 		return fmt.Errorf("%w: field %q source TypeRef resolved ID changed", ErrUnrepresentableField, field.ID)

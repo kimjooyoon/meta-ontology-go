@@ -1,12 +1,16 @@
 package bidir
 
 import (
+	"errors"
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"strings"
 )
 
 func classifyEntityFieldsModelError(err error, span SourceSpan) error {
+	if _, ok := errors.AsType[*EntityFieldsError](err); ok {
+		return err
+	}
 	message := err.Error()
 	switch {
 	case strings.Contains(message, semantic.ErrAmbiguousType.Error()):
@@ -50,12 +54,19 @@ func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistr
 	return nil
 }
 func classifyEntityFieldsTypeError(field Field, err error) error {
+	if _, ok := errors.AsType[*EntityFieldsError](err); ok {
+		return err
+	}
 	message := err.Error()
+	span := field.TypeRefSpan
+	if !span.Valid() {
+		span = field.Span
+	}
 	switch {
-	case strings.Contains(message, semantic.ErrAmbiguousType.Error()):
-		return entityFieldsProfileError(field, EntityFieldsAmbiguousTypeDiagnostic, message)
-	case strings.Contains(message, semantic.ErrUnknownType.Error()):
-		return entityFieldsProfileError(field, EntityFieldsUnknownTypeDiagnostic, message)
+	case errors.Is(err, semantic.ErrAmbiguousType):
+		return entityFieldsError(EntityFieldsAmbiguousTypeDiagnostic, fmt.Sprintf("field %q: %s", field.ID, message), span, err)
+	case errors.Is(err, semantic.ErrUnknownType):
+		return entityFieldsError(EntityFieldsUnknownTypeDiagnostic, fmt.Sprintf("field %q: %s", field.ID, message), span, err)
 	default:
 		return err
 	}

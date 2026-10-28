@@ -65,6 +65,9 @@ Read digests by their full field paths. In `package resolve --json`,
 string serialized by Go `json.Marshal`. In `package execute --json`, the same
 representation appears at
 `result.program.workspace_image.packages[].sources[].source_digest`.
+`result.program.activity_origins[].input_source.source_sha256` hashes the raw
+UTF-8 bytes of the complete file named by its package path and filename. Its
+byte offsets select a region within that file; they do not narrow the digest.
 `ir-search` input `external_training_feedback.source_digest` instead hashes
 the raw Gooo bytes supplied to that search invocation. A generation step's
 `result.composition.steps[].generation.report.source_digest` hashes its own
