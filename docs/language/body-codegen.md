@@ -63,6 +63,10 @@ resolves `Line` by its stable declaration ID and closes the transitive selected
 type graph. [The grouped line-item example](../../examples/record-collections/README.md)
 includes semantic checking, package interface inspection, native totals, saved
 replay, nested value paths, and the independent depth and value-node budgets.
+The ordinary structural `generate` path also projects required/optional single
+records and record collections from the same stable target IDs. It emits Go
+structs, source mappings and implementation-slot scaffolding; authored `computes`
+execution and finite outcomes use the body generation/composition commands above.
 Record-valued assembly evaluation retains its separate existing support boundary.
 
 

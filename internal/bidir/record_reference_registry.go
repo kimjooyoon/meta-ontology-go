@@ -45,65 +45,32 @@ func validateRecordReferenceGraph(nodes []Node, registry semantic.TypeRegistry, 
 	if err != nil || !capabilities.Record {
 		return err
 	}
-	records := make(map[ID]Node)
+	var records []semantic.Node
+	fields := make(map[semantic.ID]Field)
 	for _, node := range nodes {
-		if node.Kind == EntityKind && len(node.Fields) != 0 {
-			records[node.ID] = node
+		if node.Kind != EntityKind || len(node.Fields) == 0 {
+			continue
 		}
-	}
-	heights, visiting := make(map[ID]int), make(map[ID]bool)
-	var visit func(ID, int) (int, error)
-	visit = func(id ID, depth int) (int, error) {
-		if h := heights[id]; h != 0 {
-			return h, nil
-		}
-		visiting[id] = true
-		height := 1
-		for _, field := range records[id].Fields {
-			normalized, err := normalizeField(field, id, EntityKind, registry)
+		record := semantic.Node{ID: semantic.ID(node.ID), Kind: semantic.Entity}
+		for _, field := range node.Fields {
+			normalized, err := normalizeField(field, node.ID, EntityKind, registry)
 			if err != nil {
-				return 0, err
-			}
-			target := normalized.TypeRefUse.ResolvedID
-			if target == ID(semantic.BuiltinStringTypeID) || target == ID(semantic.BuiltinBooleanTypeID) || target == ID(semantic.BuiltinIntegerTypeID) {
-				continue
-			}
-			message := ""
-			if _, ok := records[target]; !ok {
-				message = "record field requires a declared record type"
-			}
-			if visiting[target] {
-				message = "cyclic record reference"
-			}
-			if message != "" {
-				return 0, recordReferenceError(field, message)
-			}
-			if depth >= syntax.RecordReferenceDepthLimit {
-				return 0, recordReferenceError(field, fmt.Sprintf("record depth exceeds %d", syntax.RecordReferenceDepthLimit))
-			}
-			childHeight, err := visit(target, depth+1)
-			if err != nil {
-				return 0, err
-			}
-			if depth+childHeight > syntax.RecordReferenceDepthLimit {
-				return 0, recordReferenceError(field, fmt.Sprintf("record depth exceeds %d", syntax.RecordReferenceDepthLimit))
-			}
-			if childHeight+1 > height {
-				height = childHeight + 1
-			}
-		}
-		visiting[id] = false
-		heights[id] = height
-		return height, nil
-	}
-	for _, node := range nodes {
-		if _, ok := records[node.ID]; ok {
-			if _, err := visit(node.ID, 1); err != nil {
 				return err
 			}
+			id := semantic.ID(field.ID)
+			fields[id] = field
+			record.Fields = append(record.Fields, semantic.Field{ID: id, TypeRef: semantic.TypeRef{ID: semantic.ID(normalized.TypeRefUse.ResolvedID)}})
+		}
+		records = append(records, record)
+	}
+	err = semantic.ValidateRecordReferences(records, syntax.RecordReferenceDepthLimit)
+	if issues, ok := err.(*semantic.ValidationErrors); ok && len(issues.Issues) != 0 {
+		issue := issues.Issues[0]
+		if field, exists := fields[issue.Subject]; exists {
+			return recordReferenceError(field, issue.Message)
 		}
 	}
-	return nil
+	return err
 }
 
 func recordReferenceError(field Field, message string) error {

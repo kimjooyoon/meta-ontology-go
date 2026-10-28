@@ -30,12 +30,9 @@ func projectionSemanticFields(node semantic.Node) ([]generator.Field, error) {
 	return fields, nil
 }
 func projectionBidirField(field bidir.Field) (generator.Field, error) {
-	typeRefID := string(field.TypeRef.ID)
-	if typeRefID == "" && field.TypeRef.Name != "" && field.TypeRefUse.ResolvedID != "" {
-		typeRefID = string(field.TypeRefUse.ResolvedID)
-	}
-	if typeRefID == "" {
-		return generator.Field{}, errors.New("GOOO-EF-V1-INCOMPLETE-FIELD: field has no authoritative TypeRef.ID")
+	typeRefID, err := projectionBidirFieldTypeID(field)
+	if err != nil {
+		return generator.Field{}, err
 	}
 	return generator.Field{
 		ID: string(field.ID), Parent: string(field.Parent), Name: field.Name, Aliases: append([]string(nil), field.Aliases...),
@@ -45,6 +42,17 @@ func projectionBidirField(field bidir.Field) (generator.Field, error) {
 		CardinalitySpan: bidirGeneratorSpan(field.CardinalitySpan), NameSource: bidirGeneratorSpan(field.NameSpan),
 		TextBound: field.TextBound,
 	}, nil
+}
+
+func projectionBidirFieldTypeID(field bidir.Field) (string, error) {
+	typeRefID := string(field.TypeRef.ID)
+	if typeRefID == "" && field.TypeRef.Name != "" && field.TypeRefUse.ResolvedID != "" {
+		typeRefID = string(field.TypeRefUse.ResolvedID)
+	}
+	if typeRefID == "" {
+		return "", errors.New("GOOO-EF-V1-INCOMPLETE-FIELD: field has no authoritative TypeRef.ID")
+	}
+	return typeRefID, nil
 }
 func bidirGeneratorSpan(span bidir.SourceSpan) generator.SourceSpan {
 	return generator.SourceSpan{URI: span.File, Start: generator.Position{Offset: span.Start, Line: span.StartLine, Column: span.StartColumn}, End: generator.Position{Offset: span.End, Line: span.EndLine, Column: span.EndColumn}}

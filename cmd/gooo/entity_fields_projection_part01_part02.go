@@ -23,7 +23,14 @@ func projectionIRFromBidirModelWithSupport(ir semantic.IR, sourceModel bidir.Mod
 	if err != nil {
 		return generator.SemanticIR{}, err
 	}
-	if err := sourceModel.Validate(); err != nil {
+	for _, node := range sourceModel.Nodes {
+		for index, field := range node.Fields {
+			if _, err := projectionBidirFieldTypeID(field); err != nil {
+				return generator.SemanticIR{}, fmt.Errorf("entity %q field %d: %w", node.ID, index, err)
+			}
+		}
+	}
+	if err := sourceModel.ValidateWithEntityFieldsSupport(support); err != nil {
 		return generator.SemanticIR{}, classifyCLIEntityFieldsModelError(err)
 	}
 	byID := make(map[string]bidir.Node, len(sourceModel.Nodes))
