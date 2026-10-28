@@ -25,7 +25,8 @@ go run ./cmd/gooo body-origins --activity Shift examples/loop-carried-values/mai
 이 관계는 소스의 가능한 의존성이며, 실제 실행의 PROV-O 파생 사실과 분리한다.
 
 현재 구현은 필수 배열 필드의 `for … in …`과 중첩 반복, 레코드 필드의
-갱신, 조기 반환을 다룬다. 직접 만든 배열, 카운터 반복문과
+갱신, 조기 반환을 다룬다. [직접 만든 배열](../constructed-record-values/README.md)의
+읽기 전용 순회도 지원한다. 배열 자체의 반복 전달, 카운터 반복문과
 선택 필드의 정적 출처는 남은 작업이다. 기존 512노드·64바인딩 한도를 유지하며,
 범위를 넘으면 부분 그래프를 성공으로 내보내지 않는다.
 

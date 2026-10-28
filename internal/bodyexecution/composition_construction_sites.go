@@ -93,7 +93,7 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 				return true
 			}
 			start, end := fset.Position(expression.Pos()).Offset, fset.Position(expression.End()).Offset
-			site := CompositionConstructionSite{RootActivityID: ids[0], ActivityID: ids[1], NativeOrdinal: current, ElementType: sequence.Elem().String(), Expression: prior.Source[start:end], ProjectionSHA256: sha, Start: start, End: end, Elements: []CompositionConstructionElementSite{}, Kind: kind, MapperActivityID: mapperID, PredicateActivityID: predicateID}
+			site := CompositionConstructionSite{RootActivityID: ids[0], ActivityID: ids[1], NativeOrdinal: current, ElementType: readElementType(sequence.Elem(), prior), Expression: prior.Source[start:end], ProjectionSHA256: sha, Start: start, End: end, Elements: []CompositionConstructionElementSite{}, Kind: kind, MapperActivityID: mapperID, PredicateActivityID: predicateID}
 			origin := origins[conditionOriginKey{ids[0], ids[1], current}]
 			if origin.Kind != kind || kind == "map_values" && origin.MapperActivityID != mapperID || kind == "filter_values" && origin.PredicateActivityID != predicateID {
 				bindingError = fmt.Errorf("construction source kind or mapper identity differs from native projection")
@@ -125,7 +125,7 @@ func compositionConstructionSites(prior Composition) ([]CompositionConstructionS
 	for _, s := range sites {
 		if ((s.Kind == "map_values" && (s.MapperActivityID == "" || s.PredicateActivityID != "" || len(s.Elements) != 1 || s.Source.Status != "MAPPED")) ||
 			(s.Kind == "filter_values" && (s.PredicateActivityID == "" || s.MapperActivityID != "" || len(s.Elements) != 1 || s.Source.Status != "MAPPED"))) ||
-			s.ActivityID == "" || s.RootActivityID == "" || len(s.Elements) > 256 || (s.ElementType != "int64" && s.ElementType != "string" && s.ElementType != "bool") {
+			s.ActivityID == "" || s.RootActivityID == "" || len(s.Elements) > 256 || !supportedReadElementType(s.ElementType, prior) {
 			return nil, fmt.Errorf("collection construction lacks supported identity, type or element bound")
 		}
 	}

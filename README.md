@@ -82,6 +82,7 @@ This offers a small interoperability path from a Gooo metaprogram to RDF tools.
 | Query nested source origins with a Gooo-owned work cursor | [Record origin reader](examples/record-origin-reader/README.md) |
 | Trace values carried between collection iterations | [Loop-carried values](examples/loop-carried-values/README.md) |
 | Query a collection and the expression that selects its element | [Indexed record values](examples/indexed-record-values/README.md) |
+| Follow selected fields through authored lists, copies and branches | [Constructed record values](examples/constructed-record-values/README.md) |
 | Assemble a bounded collection summary | [Length-aware summary](examples/length-aware-summary/README.md), [three-field assembly](examples/assembled-length-summary/README.md) |
 
 These links describe development source. Each example reports its finite cases
