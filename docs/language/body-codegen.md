@@ -69,6 +69,13 @@ structs, source mappings and implementation-slot scaffolding; authored `computes
 execution and finite outcomes use the body generation/composition commands above.
 Record-valued assembly evaluation retains its separate existing support boundary.
 
+Required child records are local value copies. Optional child records use an
+immutable reference to retain presence: assigning that reference another local
+name keeps its storage origin. A field write through the reference is rejected
+before source emission or fixed evaluation. To update an optional child, construct
+a new child value and replace the parent field with its address. The typed
+reference rule also applies inside pure callees and collection loops.
+
 
 Record fields can declare ordered scalar values with `many`. Gooo `for item in
 input.items` lowers to a typed bounded loop, while candidate evaluation and
