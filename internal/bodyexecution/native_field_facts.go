@@ -4,39 +4,42 @@ package bodyexecution
 // field IDs describe source identity; frame/assignment/completion identify an
 // actual instance. Projection ranges are explicitly separate from Gooo literals.
 type CompositionFieldFact struct {
-	CaseIndex            int    `json:"case_index"`
-	EventIndex           int    `json:"event_index"`
-	AssignmentIndex      int    `json:"assignment_index"`
-	Frame                int    `json:"frame"`
-	VariableOrdinal      int    `json:"variable_ordinal"`
-	BindingIndex         int    `json:"binding_index"`
-	UseStart             int    `json:"use_start"`
-	UseEnd               int    `json:"use_end"`
-	UsesDropped          int    `json:"uses_dropped"`
-	Completion           int    `json:"completion"`
-	ParentAssignment     int    `json:"parent_assignment"`
-	Completed            bool   `json:"completed"`
-	HasAssignment        bool   `json:"has_assignment"`
-	EventKind            string `json:"event_kind"`
-	RootActivityID       string `json:"root_activity_id"`
-	ActivityID           string `json:"activity_id"`
-	VariableName         string `json:"variable_name"`
-	RecordID             string `json:"record_id"`
-	FieldID              string `json:"field_id"`
-	FieldName            string `json:"field_name"`
-	ScalarTypeID         string `json:"scalar_type_id"`
-	BindingKind          string `json:"binding_kind"`
-	InputPort            string `json:"input_port"`
-	InputFrom            string `json:"input_from_activity_id"`
-	SiteKind             string `json:"site_kind"`
-	DependencyMode       string `json:"dependency_mode"`
-	Operation            string `json:"operation,omitempty"`
-	AssignmentKind       string `json:"assignment_kind"`
-	Reason               string `json:"reason"`
-	ProjectionSHA256     string `json:"projection_sha256"`
-	ProjectionStart      int    `json:"projection_start"`
-	ProjectionEnd        int    `json:"projection_end"`
-	ProjectionExpression string `json:"projection_expression"`
+	CaseIndex            int                  `json:"case_index"`
+	EventIndex           int                  `json:"event_index"`
+	AssignmentIndex      int                  `json:"assignment_index"`
+	Frame                int                  `json:"frame"`
+	VariableOrdinal      int                  `json:"variable_ordinal"`
+	BindingIndex         int                  `json:"binding_index"`
+	UseStart             int                  `json:"use_start"`
+	UseEnd               int                  `json:"use_end"`
+	UsesDropped          int                  `json:"uses_dropped"`
+	Completion           int                  `json:"completion"`
+	ParentAssignment     int                  `json:"parent_assignment"`
+	Completed            bool                 `json:"completed"`
+	HasAssignment        bool                 `json:"has_assignment"`
+	EventKind            string               `json:"event_kind"`
+	RootActivityID       string               `json:"root_activity_id"`
+	ActivityID           string               `json:"activity_id"`
+	VariableName         string               `json:"variable_name"`
+	RecordID             string               `json:"record_id"`
+	FieldID              string               `json:"field_id"`
+	FieldName            string               `json:"field_name"`
+	ScalarTypeID         string               `json:"scalar_type_id"`
+	BindingKind          string               `json:"binding_kind"`
+	InputPort            string               `json:"input_port"`
+	InputFrom            string               `json:"input_from_activity_id"`
+	SiteKind             string               `json:"site_kind"`
+	DependencyMode       string               `json:"dependency_mode"`
+	Operation            string               `json:"operation,omitempty"`
+	AssignmentKind       string               `json:"assignment_kind"`
+	Reason               string               `json:"reason"`
+	ProjectionSHA256     string               `json:"projection_sha256"`
+	ProjectionStart      int                  `json:"projection_start"`
+	ProjectionEnd        int                  `json:"projection_end"`
+	ProjectionExpression string               `json:"projection_expression"`
+	ElementReadIndex     *int                 `json:"element_read_index,omitempty"`
+	Element              *CompositionReadFact `json:"element,omitempty"`
+	ElementReason        string               `json:"element_reason,omitempty"`
 }
 
 func isFieldOriginKind(kind string) bool {
@@ -64,6 +67,7 @@ func (page *nativeOriginPage) visitFields(runtime CompositionRuntime, trace Comp
 			fact := fieldFact(runtime, runtime.FieldSites[write.SiteIndex], trace.CaseIndex, i, write.Frame)
 			fact.EventKind, fact.AssignmentIndex, fact.HasAssignment = "write", i, write.Completed
 			fillFieldFactWrite(&fact, write, runtime.FieldSites[write.SiteIndex])
+			fillFieldElementFact(&fact, runtime, trace)
 			page.addField(fact, fact.RootActivityID, fact.ActivityID, fact.FieldID)
 		}
 		return
@@ -74,6 +78,7 @@ func (page *nativeOriginPage) visitFields(runtime CompositionRuntime, trace Comp
 		if use.Assignment >= 0 {
 			write := trace.FieldWrites[use.Assignment]
 			fillFieldFactWrite(&fact, write, runtime.FieldSites[write.SiteIndex])
+			fillFieldElementFact(&fact, runtime, trace)
 		}
 		page.addField(fact, fact.RootActivityID, fact.ActivityID, fact.FieldID)
 	}

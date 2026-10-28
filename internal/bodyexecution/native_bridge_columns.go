@@ -49,6 +49,9 @@ func SelectRecordedBridgeLineagePage(runtime CompositionRuntime, query NativeOri
 			return nil, report, err
 		}
 		t := runtime.Traces[selected.CaseIndex]
+		if hasBridgeElementReads(t) {
+			return nil, report, fmt.Errorf("field-local-lineage-columns/v1 cannot represent recorded element origins; select field-writes or field-uses rows")
+		}
 		n, u := len(t.FieldWrites)+len(t.LocalWrites), len(t.FieldUses)+len(t.LocalUses)
 		if n > 60 || u > 128 {
 			return nil, report, fmt.Errorf("field-local-columns needs an unsliced case with at most60 writes/128 uses; got%d/%d", n, u)

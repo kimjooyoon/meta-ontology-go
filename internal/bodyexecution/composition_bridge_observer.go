@@ -8,7 +8,7 @@ import (
 // Bridge windows join the retained local and field journals by their own
 // case-relative row numbers. Neither values nor frame-number equality is used.
 func bridgeReadObserver(source string) (string, error) {
-	groups := [][][2]string{bridgeLocalHooks(), bridgeFieldHooks(), bridgePartHooks()}
+	groups := [][][2]string{bridgeLocalHooks(), bridgeFieldHooks(), bridgePartHooks(), bridgeIterationHooks()}
 	for group, edits := range groups {
 		for index, edit := range edits {
 			if strings.Count(source, edit[0]) != 1 {
@@ -55,12 +55,19 @@ func bridgePartHooks() [][2]string {
 	}
 }
 
+func bridgeIterationHooks() [][2]string {
+	return [][2]string{{`context:=len(GoooReadFieldContexts)`,
+		`if mode==4 {GoooReadBridgeIteration(slots,count)};context:=len(GoooReadFieldContexts)`}}
+}
+
 // Native bridge rows: case, own assignment, other-use start/end, other-use drops,
 // shared clock at evaluation start, shared completion (-1 if unfinished).
 // Every row/read corresponds one-for-one to a retained original journal row.
 const bridgeObserver = `
 var GoooReadBridgeLocals,GoooReadBridgeFields [][7]int32
 var GoooReadBridgeLocalClocks,GoooReadBridgeFieldClocks []int32
+var GoooReadBridgeElementReads []int32
+var GoooReadBridgeHasElements bool
 var GoooReadBridgeCompletions [128]int32
 func GoooReadBridgeLocalStart(slot int) {
  c:=GoooReadCase
@@ -77,6 +84,15 @@ func GoooReadBridgeFieldStart(slot int) {
  c:=GoooReadCase
  start:=int32(len(GoooReadLocalUses)-GoooReadLocalUseStart)
  GoooReadBridgeFields=append(GoooReadBridgeFields,[7]int32{int32(c),int32(slot-GoooReadFieldWriteStart),start,start,int32(GoooReadLocalUseDrops[c]),GoooReadBridgeCompletions[c],-1})
+ GoooReadBridgeElementReads=append(GoooReadBridgeElementReads,-1)
+}
+// The read projection emits the range read immediately before these bindings.
+// Once that read is dropped, retain a missing reference instead of the last row.
+func GoooReadBridgeIteration(slots [32]int,count int) {
+ GoooReadBridgeHasElements=true
+ read:=int32(-2)
+ if GoooReadDropped[GoooReadCase]==0 && len(GoooReadEvents)>GoooReadCaseStart {read=int32(len(GoooReadEvents)-GoooReadCaseStart-1)}
+ for i:=0;i<count;i++ {if slots[i]>=0 {GoooReadBridgeElementReads[slots[i]]=read}}
 }
 func GoooReadBridgePartStart(slot int) {
  c:=GoooReadCase;row:=&GoooReadBridgeFields[slot]
@@ -99,6 +115,7 @@ func GoooReadBridgeFieldFinish(slot int,done,part bool) {
 func GoooReadBridgeSave() {
  envelope:=map[string]any{"schema":"gooo/native-field-local-bridge/v1","locals":GoooReadBridgeLocals,"fields":GoooReadBridgeFields,
  "local_clocks":GoooReadBridgeLocalClocks,"field_clocks":GoooReadBridgeFieldClocks,"completions":GoooReadBridgeCompletions[:GoooReadCases]}
+ if GoooReadBridgeHasElements {envelope["schema"]="gooo/native-field-local-bridge/v2";envelope["element_reads"]=GoooReadBridgeElementReads}
  raw,err:=json.Marshal(envelope);if err!=nil {os.Exit(4)}
  if os.WriteFile("gooo-native-field-local-bridge.json",raw,0600)!=nil {os.Exit(4)}
 }

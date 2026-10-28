@@ -153,6 +153,10 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if runtime.BridgeObservation != nil {
 		copy := *runtime.BridgeObservation
 		report.BridgeObservation = &copy
+		if copy.Schema == "gooo/native-field-local-bridge-summary/v2" &&
+			(query.Kind == "field-writes" || query.Kind == "field-uses") {
+			report.Schema = "gooo/native-origin-input/v2"
+		}
 	}
 	if report.Truncated {
 		next := query.Offset + len(page.rows)
