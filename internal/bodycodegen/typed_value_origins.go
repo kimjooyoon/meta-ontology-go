@@ -62,34 +62,64 @@ func InspectTypedValueOrigins(filename string, source []byte, activity string) (
 			err = fmt.Errorf("FLOW_RETURN_UNRESOLVED")
 		}
 	}
+	if c.compactRecords {
+		r.Schema, flow.Schema = "gooo/typed-value-origins/v2", recordVersionFlowSchema
+		r.Scope = "source may-dependence; no input values, runtime path, candidate selection or model call; required scalar or nominal record fields with source events and immutable field-root versions; collections/optional fields unresolved; 512 nodes, 64 live bindings, branch/helper depth 16"
+		flow.Scope += "; record layouts, symbolic values and source versions retain separate identities"
+	}
 	if err != nil {
 		r.Reason, flow.Reason = err.Error(), err.Error()
+		return r, nil
+	}
+	return c.finishTypedOrigins(source, r, returns.value)
+}
+
+func (c *recordFlowBuilder) typedOriginOutputs(value flowValue) []TypedValueOutput {
+	if value.record < 0 {
+		return []TypedValueOutput{{Root: value.scalar}}
+	}
+	var outputs []TypedValueOutput
+	for i, field := range c.body.records[value.record].Fields {
+		root := c.nominalRoot(value.fields[i], RecordFlowSpan{ActivityID: c.body.activityID, View: "derived-record-output"})
+		if c.compactRecords {
+			root = c.add("return", [2]uint16{root}, RecordFlowSpan{ActivityID: c.body.activityID, View: "record-field-projection"}, field.ID, 0, "record_field_projection")
+			c.linkRecordVersion(root, value.scalar)
+		}
+		outputs = append(outputs, TypedValueOutput{FieldID: field.ID, Root: root})
+	}
+	return outputs
+}
+
+func (c *recordFlowBuilder) finishTypedOrigins(source []byte, r TypedValueOrigins, value flowValue) (TypedValueOrigins, error) {
+	flow := r.Flow
+	r.Outputs = c.typedOriginOutputs(value)
+	c.exportRecordVersions(flow)
+	if c.err != nil {
+		r.Outputs = nil
+		r.Reason = c.err.Error()
+		flow.Reason = r.Reason
+		flow.RecordLayouts = nil
+		flow.RecordValues = nil
+		flow.RecordVersions = nil
 		return r, nil
 	}
 	r.Status, flow.Status = "RESOLVED", "RESOLVED"
 	flow.Nodes = append([]RecordFlowNode(nil), c.nodes[:c.count]...)
 	for i := range flow.Nodes {
 		if flow.Nodes[i].Span.View == "input-port" && flow.Nodes[i].Span.ActivityID == "" {
-			flow.Nodes[i].Span.ActivityID = p.activityID
+			flow.Nodes[i].Span.ActivityID = c.body.activityID
 		}
 	}
 	for _, name := range c.helperOrder {
 		flow.Helpers = append(flow.Helpers, c.helpers[name].function.identity)
 	}
-	if returns.value.record < 0 {
-		r.Outputs = []TypedValueOutput{{Root: returns.value.scalar}}
-	} else {
-		for i, field := range c.body.records[returns.value.record].Fields {
-			r.Outputs = append(r.Outputs, TypedValueOutput{FieldID: field.ID, Root: returns.value.fields[i]})
-		}
-	}
 	for _, node := range flow.Nodes {
 		if node.Kind == "input" {
 			index := int(node.Local) - 1
-			r.Inputs = append(r.Inputs, TypedValueInput{Node: node.ID, Port: inputbinding.PositionName(len(p.parameters), index),
-				FieldID: node.FieldID, Declaration: inputDeclarationSource(p, source, index)})
+			r.Inputs = append(r.Inputs, TypedValueInput{Node: node.ID, Port: inputbinding.PositionName(len(c.body.parameters), index), FieldID: node.FieldID, Declaration: inputDeclarationSource(c.body, source, index)})
 		}
 	}
+	var err error
 	r.Sources, err = typedOriginSources(source, flow.Nodes)
 	return r, err
 }

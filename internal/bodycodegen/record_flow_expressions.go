@@ -74,22 +74,17 @@ func (c *recordFlowBuilder) textSlice(e *ast.SliceExpr, state *flowState, select
 }
 
 func (c *recordFlowBuilder) selector(e *ast.SelectorExpr, state *flowState) flowValue {
-	value, local := flowScalar(0), uint16(0)
-	if name, ok := assignmentLocalName(e.X); ok && state.find(name) != nil {
-		binding := state.find(name)
-		value, local = binding.value, binding.id
-	} else {
-		value = c.expression(e.X, state, true)
+	value, local, field := c.selectorValue(e, state)
+	if c.err != nil {
+		return flowScalar(0)
+	}
+	if c.compactRecords {
+		return value
 	}
 	if value.record >= 0 {
-		for i, field := range c.body.records[value.record].Fields {
-			if field.Name == e.Sel.Name || field.GoName == e.Sel.Name {
-				return flowScalar(c.add("read", [2]uint16{value.fields[i]}, c.span(e), field.ID, local, ""))
-			}
-		}
+		return c.wrap(value, c.span(e), "read", local)
 	}
-	c.err = fmt.Errorf("FLOW_FIELD_UNRESOLVED")
-	return flowScalar(0)
+	return flowScalar(c.add("read", [2]uint16{value.scalar}, c.span(e), field, local, ""))
 }
 
 func (c *recordFlowBuilder) binary(e *ast.BinaryExpr, state *flowState, selected bool) flowValue {
@@ -106,7 +101,7 @@ func (c *recordFlowBuilder) binary(e *ast.BinaryExpr, state *flowState, selected
 		combine = "||"
 	}
 	for i, field := range c.body.records[a.record].Fields {
-		part := c.add("expression", [2]uint16{a.fields[i], b.fields[i]}, c.span(e), field.ID, 0, e.Op.String())
+		part := c.add("expression", [2]uint16{c.nominalRoot(a.fields[i], c.span(e)), c.nominalRoot(b.fields[i], c.span(e))}, c.span(e), field.ID, 0, e.Op.String())
 		if root == 0 {
 			root = part
 		} else {
@@ -134,9 +129,13 @@ func (c *recordFlowBuilder) constructor(e *ast.CompositeLit, state *flowState) f
 		pair := element.(*ast.KeyValueExpr)
 		for i, field := range c.body.records[value.record].Fields {
 			if field.Name == pair.Key.(*ast.Ident).Name || field.GoName == pair.Key.(*ast.Ident).Name {
-				value.fields[i] = c.expression(pair.Value, state, true).scalar
+				value.fields[i] = c.recordFieldRoot(c.expression(pair.Value, state, true), c.span(pair.Value), field.ID, 0, "record")
 			}
 		}
+	}
+	if c.compactRecords {
+		value.scalar = c.add("expression", [2]uint16{}, c.span(e), "", 0, "record")
+		c.retainNominalValue(value)
 	}
 	return value
 }

@@ -37,6 +37,8 @@ func TestNominalRecordEvaluatorRenderedCapacity(t *testing.T) {
 		"internal/bodycodegen#bindRecordAssemblyScope",
 		"internal/bodycodegen#declinedNominalRecordContext",
 		"internal/bodycodegen#recordBodyPresenceComparison",
+		"internal/bodycodegen#validateImmutableRecordReferences",
+		"internal/bodycodegen#checkBodyTypes",
 		"internal/bodycodegen#coerceBodyValue",
 		"internal/bodycodegen#integerBodyEvaluator.evaluateRecordField",
 	})

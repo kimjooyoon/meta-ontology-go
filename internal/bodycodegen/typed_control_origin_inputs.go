@@ -29,6 +29,10 @@ type SourceControlColumns struct {
 }
 
 func TypedSourceControlInputs(r TypedValueOrigins, target string) ([]byte, error) {
+	if r.Flow != nil && len(r.Flow.RecordVersions) != 0 {
+		return nil, fmt.Errorf("record-version origins require their layout, value and version tables; flat columns cannot retain them")
+	}
+
 	pkg, activity, ok := strings.Cut(target, ":")
 	if !ok || pkg == "" || activity == "" || strings.ContainsAny(target, " \t\r\n") || strings.Contains(activity, ":") {
 		return nil, fmt.Errorf("consumer input needs package/path:Activity")

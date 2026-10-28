@@ -1,0 +1,120 @@
+package authorizationdelta
+namespace authorizationdelta
+entity Text id "urn:gooo:type:string"
+
+entity CheckObservation id "gooo://authorization-delta/observation" fields {
+ field recorded id "gooo://authorization-delta/observation/recorded" type boolean required one
+ field invoked id "gooo://authorization-delta/observation/invoked" type boolean required one
+ field completed id "gooo://authorization-delta/observation/completed" type boolean required one
+ field response_present id "gooo://authorization-delta/observation/response" type boolean required one
+ field error_present id "gooo://authorization-delta/observation/error" type boolean required one
+ field allowed id "gooo://authorization-delta/observation/allowed" type boolean required one
+ field error_code id "gooo://authorization-delta/observation/error-code" type string required one
+ field request_input_digest id "gooo://authorization-delta/observation/input-origin" type string required one
+ field request_serialization_digest id "gooo://authorization-delta/observation/serialization" type string required one
+ field model_id id "gooo://authorization-delta/observation/model" type string required one
+ field request_model_id id "gooo://authorization-delta/observation/requested-model" type string required one
+ field model_source_digest id "gooo://authorization-delta/observation/model-source" type string required one
+ field data_digest id "gooo://authorization-delta/observation/data" type string required one
+ field execution_scope_digest id "gooo://authorization-delta/observation/execution" type string required one
+}
+
+entity ComparisonPair id "gooo://authorization-delta/pair" fields {
+ field case_id id "gooo://authorization-delta/pair/case" type string required one
+ field origin_kind id "gooo://authorization-delta/pair/origin-kind" type string required one
+ field scope_qualified id "gooo://authorization-delta/pair/scope" type boolean required one
+ field before_model_id id "gooo://authorization-delta/pair/before-model" type string required one
+ field after_model_id id "gooo://authorization-delta/pair/after-model" type string required one
+ field before id "gooo://authorization-delta/pair/before" type CheckObservation required one
+ field after id "gooo://authorization-delta/pair/after" type CheckObservation required one
+}
+
+entity Comparison id "gooo://authorization-delta/comparison" fields {
+ field case_id id "gooo://authorization-delta/comparison/case" type string required one
+ field change id "gooo://authorization-delta/comparison/change" type string required one
+ field intent_result id "gooo://authorization-delta/comparison/intent" type string required one
+ field reason id "gooo://authorization-delta/comparison/reason" type string required one
+ field before_state id "gooo://authorization-delta/comparison/before-state" type string required one
+ field after_state id "gooo://authorization-delta/comparison/after-state" type string required one
+ field before_error id "gooo://authorization-delta/comparison/before-error" type string required one
+ field after_error id "gooo://authorization-delta/comparison/after-error" type string required one
+ field origin_kind id "gooo://authorization-delta/comparison/origin-kind" type string required one
+ field before_input_digest id "gooo://authorization-delta/comparison/before-input" type string required one
+ field after_input_digest id "gooo://authorization-delta/comparison/after-input" type string required one
+ field same_input id "gooo://authorization-delta/comparison/input-match" type boolean required one
+ field same_data id "gooo://authorization-delta/comparison/data-match" type boolean required one
+ field same_execution_scope id "gooo://authorization-delta/comparison/execution-match" type boolean required one
+ field models_match id "gooo://authorization-delta/comparison/model-match" type boolean required one
+}
+
+activity ObservationState(observation CheckObservation) -> Text id "gooo://authorization-delta/state" computes `
+if !observation.recorded { return "MISSING_OBSERVATION" }
+if !observation.invoked { return "NOT_RUN" }
+if !observation.completed { return "INCOMPLETE" }
+if observation.error_present { return "ERROR" }
+if !observation.response_present { return "MISSING_RESPONSE" }
+return "READY"
+`
+
+# Intent follows the normalized request origin within this model transition.
+activity ExpectedChange(request_digest Text) -> Text id "gooo://authorization-delta/intent" computes `
+if request_digest == "sha256:1a37513a788e7a75d1711f352f44eeca5c65bcf143a150057bf5b30cc0c2d3ce" { return "EXPANSION" }
+if request_digest == "sha256:8ce1e0f77c00377ebc6c25e9eb0b081507bfabe4d8b2d4eaa5588446da3b1baf" { return "UNCHANGED_ALLOW" }
+if request_digest == "sha256:f34b023769e6002ee1f542685b3a8153888251f479501de0ec5875cedb727803" { return "UNCHANGED_DENY" }
+if request_digest == "sha256:ca0aba377143ec56f6780f9dc7f3f6d0e4bbbc2b143b57ac503c251d6a1a542e" { return "UNCHANGED_ALLOW" }
+return ""
+`
+
+activity Compare(pair ComparisonPair) -> Comparison id "gooo://authorization-delta/compare" computes `
+let before_state = ObservationState(pair.before)
+let after_state = ObservationState(pair.after)
+let same_input = pair.before.request_input_digest != "" &&
+ pair.before.request_input_digest == pair.after.request_input_digest
+let same_data = pair.before.data_digest != "" && pair.before.data_digest == pair.after.data_digest
+let same_execution = pair.before.execution_scope_digest != "" &&
+ pair.before.execution_scope_digest == pair.after.execution_scope_digest
+let models_match = pair.before_model_id != "" && pair.after_model_id != "" &&
+ pair.before_model_id != pair.after_model_id &&
+ pair.before.model_id == pair.before_model_id && pair.after.model_id == pair.after_model_id &&
+ pair.before.request_model_id == pair.before_model_id && pair.after.request_model_id == pair.after_model_id &&
+ pair.before.model_source_digest == "sha256:0a53c3ac46aff3a796bcca331644bcdd7d8b4faded5ac199497beeafd12c9ec3" &&
+ pair.after.model_source_digest == "sha256:3b68bd20077865bfb6ef78f4b636f1ad69523c7e647b80854f5884f1150b7676"
+let result = Comparison{case_id: pair.case_id, change: "UNKNOWN", intent_result: "UNASSESSED",
+ reason: "OBSERVATION_NOT_READY", before_state: before_state, after_state: after_state,
+ before_error: pair.before.error_code, after_error: pair.after.error_code, origin_kind: pair.origin_kind,
+ before_input_digest: pair.before.request_input_digest, after_input_digest: pair.after.request_input_digest,
+ same_input: same_input, same_data: same_data, same_execution_scope: same_execution, models_match: models_match}
+if before_state != "READY" || after_state != "READY" { return result }
+if !pair.scope_qualified { result.reason = "DATA_SCOPE_UNQUALIFIED"; return result }
+if pair.before.request_input_digest == "" || pair.after.request_input_digest == "" ||
+ pair.before.data_digest == "" || pair.after.data_digest == "" ||
+ pair.before.execution_scope_digest == "" || pair.after.execution_scope_digest == "" {
+ result.reason = "ORIGIN_UNBOUND"
+ return result
+}
+if !same_input { result.reason = "INPUT_DRIFT"; return result }
+if !same_data { result.reason = "DATA_DRIFT"; return result }
+if !same_execution { result.reason = "EXECUTION_SCOPE_DRIFT"; return result }
+if !models_match { result.reason = "MODEL_BINDING_MISMATCH"; return result }
+let change = "UNCHANGED_DENY"
+if pair.before.allowed && pair.after.allowed {
+ change = "UNCHANGED_ALLOW"
+} else if !pair.before.allowed && pair.after.allowed {
+ change = "EXPANSION"
+} else if pair.before.allowed && !pair.after.allowed {
+ change = "CONTRACTION"
+}
+result.change = change
+let expected = ExpectedChange(pair.before.request_input_digest)
+if expected == "" {
+ result.intent_result = "UNBOUND"
+ result.reason = "INTENT_UNBOUND"
+} else if expected == change {
+ result.intent_result = "EXPECTED"
+ result.reason = "INTENT_MATCHED"
+} else {
+ result.intent_result = "UNEXPECTED"
+ result.reason = "UNEXPECTED_CHANGE"
+}
+return result
+`

@@ -13,8 +13,8 @@ func validProfileRequirement(requirement string) bool {
 	}
 }
 
-// This verifier uses the pinned syntax kernel rather than the Gooo activity's
-// version comparisons. A new profile must be understood by both boundaries.
+// Eligibility comes from the validated kernel capabilities. The source policy
+// consumes this observed fact; the host checks its selected result separately.
 func profileSatisfiesRequirement(profile, requirement string) bool {
 	if requirement == "" {
 		return true

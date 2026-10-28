@@ -11,16 +11,19 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const ProfileHintSchema = "gooo/syntax-registration-profile-hint/v4"
 
-var hintProfiles = [...]string{
-	"ordinary", "text-fields", "implicit-ports", "ordered-collections",
-	"gooo.entityfields.go-projection.v1",
-	"gooo.entityfields.go-projection.v2", "gooo.entityfields.go-projection.v3",
-	"gooo.entityfields.go-projection.v4", "gooo.entityfields.go-projection.v5",
-	"gooo.entityfields.go-projection.v6",
+var hintProfiles = registrationHintProfiles()
+
+func registrationHintProfiles() []string {
+	profiles := []string{"ordinary", "text-fields", "implicit-ports", "ordered-collections"}
+	for _, profile := range syntax.SupportedEntityFieldsProfiles() {
+		profiles = append(profiles, profile.ID)
+	}
+	return profiles
 }
 
 type ProfileReplay struct {
@@ -50,21 +53,18 @@ type ProfileHintReport struct {
 }
 
 type profileObservation struct {
-	Path               string `json:"path"`
-	SourceDigest       string `json:"source_digest"`
-	RequiredCapability string `json:"required_capability"`
-	ExerciseKnown      bool   `json:"exercise_known"`
-	ExerciseCount      int64  `json:"exercise_count"`
-	Ordinary           bool   `json:"ordinary"`
-	TextFields         bool   `json:"text_fields"`
-	ImplicitPorts      bool   `json:"implicit_ports"`
-	OrderedCollections bool   `json:"ordered_collections"`
-	V1                 bool   `json:"v1"`
-	V2                 bool   `json:"v2"`
-	V3                 bool   `json:"v3"`
-	V4                 bool   `json:"v4"`
-	V5                 bool   `json:"v5"`
-	V6                 bool   `json:"v6"`
+	Path               string                 `json:"path"`
+	SourceDigest       string                 `json:"source_digest"`
+	RequiredCapability string                 `json:"required_capability"`
+	ExerciseKnown      bool                   `json:"exercise_known"`
+	ExerciseCount      int64                  `json:"exercise_count"`
+	Profiles           []profileCompatibility `json:"profiles"`
+}
+
+type profileCompatibility struct {
+	Profile  string `json:"profile"`
+	Passed   bool   `json:"passed"`
+	Eligible bool   `json:"eligible"`
 }
 
 type profileHintValue struct {
@@ -80,7 +80,7 @@ type profileHintValue struct {
 type profileReplayResult struct {
 	profiles   []ProfileReplay
 	compatible []string
-	passed     [len(hintProfiles)]bool
+	passed     []bool
 	unknown    bool
 }
 
@@ -140,12 +140,13 @@ func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS
 		report.Reason = "PROFILE_OBSERVATION_UNKNOWN"
 		return report
 	}
-	passed := replayed.passed
 	observation := profileObservation{Path: path, SourceDigest: report.SourceDigest,
 		RequiredCapability: requirement, ExerciseKnown: report.Exercise.Known,
-		ExerciseCount: int64(report.Exercise.MatchCount), Ordinary: passed[0], TextFields: passed[1],
-		ImplicitPorts: passed[2], OrderedCollections: passed[3], V1: passed[4],
-		V2: passed[5], V3: passed[6], V4: passed[7], V5: passed[8], V6: passed[9]}
+		ExerciseCount: int64(report.Exercise.MatchCount), Profiles: make([]profileCompatibility, len(replayed.profiles))}
+	for i, profile := range replayed.profiles {
+		observation.Profiles[i] = profileCompatibility{Profile: profile.Profile, Passed: replayed.passed[i],
+			Eligible: profileSatisfiesRequirement(profile.Profile, requirement)}
+	}
 	input, _ := json.Marshal([]any{observation})
 	value, err := bodycodegen.EvaluateFixedValue(ctx, "internal/meta/syntaxregistration/contract.gooo",
 		source, "SuggestRegistrationProfile", input)
@@ -166,7 +167,7 @@ func inspectProfileHintSourceForCapability(ctx context.Context, repository fs.FS
 // keeps source exercise and the Gooo decision separate from this host replay.
 func replayProfileHintSource(path string, raw []byte, requirement string) profileReplayResult {
 	pinned := fstest.MapFS{path: &fstest.MapFile{Data: raw}}
-	result := profileReplayResult{profiles: []ProfileReplay{}, compatible: []string{}}
+	result := profileReplayResult{profiles: []ProfileReplay{}, compatible: []string{}, passed: make([]bool, len(hintProfiles))}
 	for index, profile := range hintProfiles {
 		definition := languagesyntax.CaseDefinition{Path: path, Kind: languagesyntax.KindValid}
 		switch profile {

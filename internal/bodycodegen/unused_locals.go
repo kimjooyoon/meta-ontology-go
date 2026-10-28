@@ -21,9 +21,15 @@ func checkBodyTypes(packageName string, file *ast.File, fset *token.FileSet, inf
 	if info.Types == nil {
 		info.Types = make(map[ast.Expr]types.TypeAndValue)
 	}
+	if info.Uses == nil {
+		info.Uses = make(map[*ast.Ident]types.Object)
+	}
 	result, err := configuration.Check(packageName, fset, []*ast.File{file}, info)
 	if err == nil {
 		err = validateCollectionLoopTypes(file, info)
+	}
+	if err == nil {
+		err = validateImmutableRecordReferences(file, info)
 	}
 	return result, err
 }
