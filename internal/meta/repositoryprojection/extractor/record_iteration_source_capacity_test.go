@@ -31,6 +31,8 @@ func TestRecordIterationSourceRenderedCapacity(t *testing.T) {
 		"internal/bodyexecution#SelectRecordedIndexedBridgeLineagePage",
 		"internal/bodyexecution#recordedBridgeElements",
 		"internal/bodyexecution#BridgeElementColumns.appendElement",
+		"internal/bodyexecution#selectRecordedNativeOrigins",
+		"internal/bodyexecution#nativeOriginPage.report",
 		"cmd/gooo#packageBridgeOriginRows",
 		"cmd/gooo#marshalPackageColumnRows",
 		"cmd/gooo#configurePackageOriginShape",

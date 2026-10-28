@@ -90,7 +90,7 @@ func TestRecordIterationElementLinks(t *testing.T) {
 
 func checkIterationElementConsumer(t *testing.T, rows []json.RawMessage) {
 	t.Helper()
-	source, err := os.ReadFile("testdata/record-element-locate.gooo")
+	source, err := os.ReadFile("../../examples/record-element-location/main.gooo")
 	if err != nil {
 		t.Fatal(err)
 	}

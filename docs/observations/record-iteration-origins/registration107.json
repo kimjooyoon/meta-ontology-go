@@ -1,0 +1,180 @@
+{
+  "schema": "gooo/source-registration-observation/v1",
+  "intent": {
+    "id": "record-element-location-consumer",
+    "path": "examples/record-element-location/main.gooo",
+    "proof_choice": "COHERENCE",
+    "profile": "ordered-collections"
+  },
+  "operation": "RegisterSyntaxCapability",
+  "contract_digest": "sha256:e694b04613c6f8b102ae235cc94cfafd66961e14e4a8c65e166fe5ed60576a1b",
+  "input_digest": "sha256:b3e0faab2c6a0329b229eade40aa7b91417bb78bc5d18edd286782fcf2019467",
+  "append_activity_id": "gooo://syntax-registration/compose-append",
+  "append_record": {
+    "case_id": "record-element-location-consumer",
+    "path": "examples/record-element-location/main.gooo",
+    "source_digest": "sha256:53774f96fb6d9d339b83bec6646aca571c656e5670f2312204dee6c42ea4e85d",
+    "baseline_digest": "sha256:aed5cbbe293a6dd1b5edc3e15f77735f76b957f9cb996bafd15ea79571f29efe",
+    "base_version": 106,
+    "base_target": 142,
+    "corpus_target": 142,
+    "next_version": 107,
+    "next_target": 143,
+    "accepted": true
+  },
+  "execution_binding": {
+    "activity_id": "syntaxregistration://activity/pin-registration-execution-identity",
+    "input_id": "gooo://syntax-registration/request",
+    "output_id": "gooo://syntax-registration/pinned-input",
+    "identity": {
+      "go_version": "go1.27.3",
+      "goos": "darwin",
+      "goarch": "arm64",
+      "executable_sha256": "sha256:9da9a7693bebb3ebf83c54b835fa5fb40aa3a6f0b4d53d9e0c90ddaf4b3b8598",
+      "go_command_sha256": "sha256:aa355b078a81158d418079a3f8c776719eb99cc6f527e39ffa3250c66566aafb",
+      "compiler_sha256": "sha256:4d0bd4c1880e3d575827a72ac66b0f117b31da0aff1fe44f03a54c7ffb3c8ae3"
+    }
+  },
+  "emitted_members": 9,
+  "required_members": 9,
+  "artifacts": [
+    {
+      "activity_id": "syntaxregistration://activity/generate-syntax-corpus",
+      "output_id": "gooo://syntax-registration/corpus",
+      "member_paths": [
+        "examples/language-syntax-roundtrip/corpus.json"
+      ]
+    },
+    {
+      "activity_id": "syntaxregistration://activity/generate-native-registry",
+      "output_id": "gooo://syntax-registration/registry",
+      "member_paths": [
+        "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go"
+      ]
+    },
+    {
+      "activity_id": "syntaxregistration://activity/generate-syntax-denominator",
+      "output_id": "gooo://syntax-registration/syntax-denominator",
+      "member_paths": [
+        "internal/meta/languagereadiness/languagesyntax/model.go"
+      ]
+    },
+    {
+      "activity_id": "syntaxregistration://activity/generate-syntax-conformance",
+      "output_id": "gooo://syntax-registration/syntax-conformance",
+      "member_paths": [
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go"
+      ]
+    },
+    {
+      "activity_id": "syntaxregistration://activity/generate-denominator-admission",
+      "output_id": "gooo://syntax-registration/denominator-admission",
+      "member_paths": [
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go"
+      ]
+    },
+    {
+      "activity_id": "syntaxregistration://activity/generate-denominator-selection",
+      "output_id": "gooo://syntax-registration/denominator-selection",
+      "member_paths": [
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go"
+      ]
+    },
+    {
+      "activity_id": "syntaxregistration://activity/generate-denominator-digest",
+      "output_id": "gooo://syntax-registration/denominator-digest",
+      "member_paths": [
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go"
+      ]
+    },
+    {
+      "activity_id": "syntaxregistration://activity/generate-denominator-evidence",
+      "output_id": "gooo://syntax-registration/denominator-evidence",
+      "member_paths": [
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v107.json"
+      ]
+    },
+    {
+      "activity_id": "syntaxregistration://activity/generate-migration-conformance",
+      "output_id": "gooo://syntax-registration/migration-conformance",
+      "member_paths": [
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go"
+      ]
+    }
+  ],
+  "members": [
+    {
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "before_digest": "sha256:84c68edf173e355d2ce433098542dae7381d2e96bc0159992247fc28299464cb",
+      "after_digest": "sha256:e26baa7dddb6533ebe7aff0e7a0d162444db8c10d9f4a048564ed241b65f3f87",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-corpus"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "before_digest": "sha256:dfd8c8121b051bb1d2302aa4431a22c5aafbd7c9547f15fe3d2f725cd415eabb",
+      "after_digest": "sha256:6cadf258df763576d61985ec0cbe2955ace01e6192623643210d1079af70f8c8",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-digest"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+      "before_digest": "sha256:f93f3b86b4556cec89091c78be82198b0d633db7a36af8f32e57cf190e28d50f",
+      "after_digest": "sha256:1913d8b7d2a47662c0315da3d9fca58d797b6b86574eefbac38c7238a42fae98",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-admission"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+      "before_digest": "sha256:b66cbee69f29e09c65ea75c878185199a2a6adeb9a11d651383d24f8879465f1",
+      "after_digest": "sha256:65cc9b7399eee39d26b4e6f34cdbd6eb666be4a5fbcc025441ffca68ac61ff20",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-migration-conformance"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+      "before_digest": "sha256:da0dd27934e004e36b2d12c837eb8857d909180d1f15a534309bbced3d503757",
+      "after_digest": "sha256:d442d635f7dd590a2824f4d13e73f5fa4447c5caad0a08eb7b33148a8f1316df",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-selection"
+      ]
+    },
+    {
+      "path": "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v107.json",
+      "before_digest": "ABSENT",
+      "after_digest": "sha256:34147cd4dc7dd33c9de6295f326d8b488fa83fdeb03c787978e26f2fc579e001",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-denominator-evidence"
+      ]
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "before_digest": "sha256:294706ce361e8255751dbf86291aa360d9838191ee11b4cdc4e05d0dea76494b",
+      "after_digest": "sha256:bdb85654b297ebe1840fe6910e74ddf6c313df0de9f4f4375c338ba2e1a52c76",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-conformance"
+      ]
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/model.go",
+      "before_digest": "sha256:e32f5d9da5c7db470cb0961b02cee98fec26ce3ddb0a67d2375c090c9118155b",
+      "after_digest": "sha256:6a94ff30f224abd92dc9c66693a6902060bf4063b19e826b606822206802daba",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-syntax-denominator"
+      ]
+    },
+    {
+      "path": "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go",
+      "before_digest": "sha256:7661f9c518c72ef7041e1faabd80c05cceb837c7f8e082e32e9eabf24d21441b",
+      "after_digest": "sha256:5ff90555922677c4100eaf83435e20bd3f549b145688d89e6d8a73d814151318",
+      "activity_ids": [
+        "syntaxregistration://activity/generate-native-registry"
+      ]
+    }
+  ],
+  "scope": "Generated registration metadata only; prior denominator history and original observation archives are preserved. Does not attest compiler CI or widen runtime/query limits."
+}
