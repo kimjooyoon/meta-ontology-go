@@ -28,6 +28,10 @@ activity Read(input Box) -> Integer id "boundary://read" computes `
 
 func readerMaskWords(t *testing.T, raw json.RawMessage) []int64 {
 	t.Helper()
+	var scalar int64
+	if json.Unmarshal(raw, &scalar) == nil {
+		return []int64{scalar}
+	}
 	var object map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &object); err != nil {
 		t.Fatal(err)

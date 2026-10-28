@@ -1,0 +1,221 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Shift": {
+          "left": 3,
+          "right": 11,
+          "items": []
+        }
+      },
+      "expected": {
+        "Shift": 3
+      }
+    },
+    {
+      "inputs": {
+        "Shift": {
+          "left": 3,
+          "right": 11,
+          "items": [
+            {
+              "value": 7,
+              "ignored": 9000
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Shift": 11
+      }
+    },
+    {
+      "inputs": {
+        "Shift": {
+          "left": 3,
+          "right": 11,
+          "items": [
+            {
+              "value": 7,
+              "ignored": 9000
+            },
+            {
+              "value": 13,
+              "ignored": 9001
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Shift": 10
+      }
+    },
+    {
+      "inputs": {
+        "Shift": {
+          "left": 3,
+          "right": 11,
+          "items": [
+            {
+              "value": 7,
+              "ignored": 9000
+            },
+            {
+              "value": 13,
+              "ignored": 9001
+            },
+            {
+              "value": 17,
+              "ignored": 9002
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Shift": 24
+      }
+    },
+    {
+      "inputs": {
+        "Shift": {
+          "left": 3,
+          "right": 11,
+          "items": [
+            {
+              "value": 7,
+              "ignored": 9000
+            },
+            {
+              "value": 13,
+              "ignored": 9001
+            },
+            {
+              "value": 17,
+              "ignored": 9002
+            },
+            {
+              "value": 19,
+              "ignored": 9003
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Shift": 27
+      }
+    },
+    {
+      "inputs": {
+        "Shift": {
+          "left": 3,
+          "right": 11,
+          "items": [
+            {
+              "value": 7,
+              "ignored": 9000
+            },
+            {
+              "value": 13,
+              "ignored": 9001
+            },
+            {
+              "value": 17,
+              "ignored": 9002
+            },
+            {
+              "value": 19,
+              "ignored": 9003
+            },
+            {
+              "value": 23,
+              "ignored": 9004
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Shift": 43
+      }
+    },
+    {
+      "inputs": {
+        "Shift": {
+          "left": 3,
+          "right": 11,
+          "items": [
+            {
+              "value": 7,
+              "ignored": -123456789
+            },
+            {
+              "value": 13,
+              "ignored": -123456790
+            },
+            {
+              "value": 17,
+              "ignored": -123456791
+            },
+            {
+              "value": 19,
+              "ignored": -123456792
+            },
+            {
+              "value": 23,
+              "ignored": -123456793
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Shift": 43
+      }
+    },
+    {
+      "inputs": {
+        "Shift": {
+          "left": 9007199254740993,
+          "right": 9007199254740995,
+          "items": [
+            {
+              "value": 7,
+              "ignored": 0
+            },
+            {
+              "value": 13,
+              "ignored": 0
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Shift": 9007199254741000
+      }
+    },
+    {
+      "inputs": {
+        "Shift": {
+          "left": 3,
+          "right": 11,
+          "items": [
+            {
+              "value": 7,
+              "ignored": 9000
+            },
+            {
+              "value": 7,
+              "ignored": 9000
+            },
+            {
+              "value": 7,
+              "ignored": 9000
+            }
+          ]
+        }
+      },
+      "expected": {
+        "Shift": 18
+      }
+    }
+  ]
+}

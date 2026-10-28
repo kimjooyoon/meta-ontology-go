@@ -1,4 +1,4 @@
-# Gooo가 중첩 레코드의 기원을 읽기
+# Gooo가 레코드와 반복 값의 기원을 읽기
 
 컴파일러가 만든 출처 그래프를 Gooo 프로그램이 읽는다. 어떤 간선을 따라갈지,
 얼마나 나누어 처리할지, 입력의 어느 필드까지 도달했는지는 `main.gooo`가 정한다.
@@ -18,6 +18,9 @@ go run ./examples/record-origin-reader --activity Compare \
   --field gooo://authorization-delta/comparison/model-match \
   examples/openfga-model-change/main.gooo
 
+go run ./examples/record-origin-reader --activity Shift \
+  examples/loop-carried-values/main.gooo
+
 go run ./examples/record-origin-reader --activity Compare \
   --field gooo://authorization-delta/comparison/model-match \
   --include-control --include-history \
@@ -25,8 +28,9 @@ go run ./examples/record-origin-reader --activity Compare \
 ```
 
 `result`에는 상태, 원본 소스·전체 출처 보고서·그래프의 해시, 활동·필드 ID,
-입력 경로와 노드 개수가 있다. `steps`와 `step_budget`은 Gooo가 계획한 작업과
-완료한 작업의 개수다. `activity_projections`는 실제 호출한 활동의 안정 ID를
+입력 경로와 노드 개수가 있다. `nodes`는 원본 노드 번호의 방문 집합이다.
+`steps`는 완료한 호출 수, `step_budget`은 Gooo가 입력 구조에서 계산한 상한이다.
+`activity_projections`는 실제 호출한 활동의 안정 ID를
 해석한 Go 투영의 해시에 연결한다. 경로는 표시 문자열이며 기계적인 정체성은 원본 보고서의
 노드 번호와 안정 ID로 확인한다. 동일 파일 경로로 `body-origins --activity Compare`
 를 실행하면 바인딩한 원본 보고서를 다시 얻을 수 있다.
@@ -43,17 +47,27 @@ go run ./examples/record-origin-reader --activity Compare \
 | --- | --- | --- |
 | LAYOUTS | `CheckLayouts` | 레코드 형식과 필드 ID |
 | VALUES | `CheckValues` | 형식별 정확한 필드 루트 벡터 |
+| LOOPS | `CheckLoops` | 반복의 원본 위치와 상징적 원소 위치 |
+| CARRIES | `CheckCarries` | 정렬된 초기 값·다음 값·종료 값 관계 |
 | NODES | `CheckNodes` | 원래 노드 번호, 비트, 간선 순서 |
 | TRACE | `FollowEdges` | 선택한 출력에서 역순으로 연결 추적 |
 | INPUTS | `CollectInputs` | 선택된 입력의 컨테이너·필드 경로 |
 
 각 단계 호출은 최대 32개 항목을 처리한다. 형식 수를 `L`, 벡터 수를 `V`, 노드 수를
-`N`이라 하면 계획은 `ceil(L/32) + ceil(V/32) + 3*ceil(N/32)`회다. 이것은 작업량의
-개수다. 소요 시간이나 CPU 명령 수를 보장하는 식으로 사용하지 않는다.
+`N`, 반복 수를 `R`, 전달 관계 수를 `K`라 하면 상한은
+`ceil(L/32) + ceil(V/32) + (3+K)*ceil(N/32) + ceil(R/32) + ceil(K/32)`회다.
+반복이 없는 기존 질의는 이전의 `ceil(L/32) + ceil(V/32) + 3*ceil(N/32)`를 유지한다.
+이는 작업량의 개수다. 소요 시간이나 CPU 명령 수를 보장하는 식으로 사용하지 않는다.
+
+일반 부모는 앞선 노드만 가리킨다. 반복의 다음 값은 뒤쪽 노드에 있을 수 있어
+Gooo가 다시 훑는다. 이미 확장한 노드는 방문 집합과 별도로 기억한다. 각 전달
+관계는 한 번만 새 재탐색을 요청하므로 최대 `K+1`회 훑고 끝난다. 표는 원래
+헤더 번호 순서를 유지하며, Gooo가 최대 10번의 이분 탐색으로 해당 관계를 읽는다.
 
 512개 방문 여부는 32비트 양의 정수 16개를 담은 불변 레코드 트리로 표현한다.
 마스크에서 사용할 자식을 먼저 선택하고, 같은 하위 활동을 한 번 호출한다.
-`Step`의 정적 호출 상한은 2,189/4,096이다. 배열 원소를
+정수 잎을 별도 단일 필드 레코드로 감싸지 않아, 질의에 필요한 레코드 형식을
+기존 16개 한도 안에 둔다. `Step`의 정적 호출 상한은 3,727/4,096이다. 배열 원소를
 수정하거나 언어의 전체 호출·반복·노드 한도를 변경하지 않는다.
 
 결과를 누적하는 두 `paths` 필드는 기존 `max_utf8_bytes "65536"`를 원문에 선언한다.
@@ -77,6 +91,9 @@ go run ./examples/record-origin-reader --activity Compare \
   그래프를 내보내지 않는지 검사한다.
 - 같은 25개 질의를 해석 실행과 독립적으로 컴파일한 Go 실행에서 비교한다.
   두 실행 경로가 질의의 분모를 늘리지는 않는다.
+- 두 지역 변수가 서로 이전 값을 넘기는 예제의 데이터·조건·이력 선택 4개를
+  양쪽 실행에서 비교한다. 원본 노드 방문 집합은 별도 스택 탐색과 대조한다.
+- 반복 표의 누락·중복·역순·잘못된 초기 값·범위 밖 다음 값 등 9개 반례를 거절한다.
 - 잘못된 페이지·벡터·부모 간선·비트, 도중 질의 변경과 부족한 Text 선언을 검사한다.
 - 준비한 프로그램의 동시 입력, 실패 후 재사용과 취소 문맥 분리를 검사한다.
 
@@ -86,6 +103,11 @@ go run ./examples/record-origin-reader --activity Compare \
 질의는 원문이 계산한 50단계에 완료된다. 이들은 소스 의존성의
 구조 개수다. 실행 시간·할당량·RAM 개선치는 측정하지 않았다.
 
+`Shift`의 30노드·전달 관계 2개는 9단계 예산 중 8단계에 끝난다. 원래의
+`left`, `right`, `items` 세 입력을 찾으며, 원본 노드 번호로 사용한 `value`와
+읽지 않은 `ignored`를 구별한다. 이 프로그램 자체의 산술 결과는 별도 9개
+기대값으로 검사한다. 출처 질의 4개와 값 실행 9개는 서로 다른 분모다.
+
 ```sh
 go test ./examples/record-origin-reader
 go test ./internal/bodycodegen \
@@ -94,13 +116,27 @@ go test ./internal/bodycodegen \
 
 ## 경계와 다음 작업
 
-입력은 컴파일러가 `RESOLVED`로 내보낸 v2 그래프다. 원래 노드 번호와 데이터
-부모 둘, 조건·가드·레코드 버전, 형식·값 사전을 옮긴다. 표현식 위치와 연산자
+입력은 컴파일러가 `RESOLVED`로 내보낸 v2·v3 보고서다. 원래 노드 번호와 데이터
+부모 둘, 조건·가드·레코드 버전, 형식·값 사전을 옮긴다. v3의 반복·전달 관계·
+원소 형식 표도 옮긴다. 반복 정보는 관계가 있는 행만 저장해 모든 노드의 입력
+크기를 늘리지 않는다. 표현식 위치와 연산자
 등 전체 보고서의 다른 사실은 원본 보고서의 해시로 연결한다. 사전의 형식
 소속을 새로운 데이터 간선으로 해석하지 않는다.
 
+전체 질의 입력은 기존 8,192슬롯 한도도 지킨다. 노드·값 사전·반복 정보의
+합이 이 한도를 넘는 경우는 읽을 수 있는 전체 입력을 만드는 후속 작업에 포함한다.
+
 정적 분석은 입력값 없이 가능한 출처를 다룬다. 실제 권한 결과와 오류는
 [OpenFGA 비교 예제](../openfga-model-change/README.md)의 관찰 자료로 구별한다.
-현재 직접 출처 분석은 필수 단일 레코드를 지원한다. 선택 필드·컬렉션의 정적
-출처, 중첩 필드의 실제 실행 출처는 [#1834](https://github.com/kimjooyoon/meta-ontology-go/issues/1834)에 남아 있다.
+직접 출처 분석은 필수 단일 레코드와 필수 배열 필드의 `for … in …`을 다룬다.
+배열의 정적 위치는 `symbolic_any`로 표시한다. 실제 실행의 위치 기록과 별도로 읽는다.
+선택 필드, 직접 만든 배열과 카운터 반복문의 정적 출처는 남은 범위다.
+[#1834](https://github.com/kimjooyoon/meta-ontology-go/issues/1834)는 전체 실행·출처 경로의
+요구 사항을 함께 확인하는 이슈로 유지한다.
 평면 그래프의 기존 60노드 입력 형식은 [이전 탐색기](../typed-value-origins/README.md)에서 사용한다.
+
+전송 형식은 `gooo/record-origin-graph/v2`, 질의 출력은
+`gooo/record-origin-query/v2`다. 원래의 `body-origins` v2 보고서도 새 투영으로 읽는다.
+저장해 둔 graph/v1 전송 자료는
+[이전 원문](https://github.com/kimjooyoon/meta-ontology-go/blob/1c0bf271bff4b3602a38e5b9d644392051c5f8bd/examples/record-origin-reader/main.gooo)의
+형식으로 보존한다. 새 독자는 v1 전송 계약을 명시적으로 거절한다.

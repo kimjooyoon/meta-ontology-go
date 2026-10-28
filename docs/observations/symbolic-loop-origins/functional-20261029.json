@@ -1,0 +1,144 @@
+{
+  "schema": "gooo/symbolic-loop-functional-observation/v1",
+  "observed_utc": "2026-10-28T20:27:55.849713+00:00",
+  "stage": "LOCAL_CANDIDATE",
+  "base_commit": "1c0bf271bff4b3602a38e5b9d644392051c5f8bd",
+  "exact_commit_qualification": "not yet run; full clean-head checks are separate",
+  "source_sha256": "sha256:0d5c79dd58e463358f89585fa487b8503bdf3de82857aa81b4659ead693e64fe",
+  "source_nodes": 30,
+  "source_loops": 1,
+  "source_carry_relations": 2,
+  "source_schema": "gooo/typed-value-origins/v3",
+  "source_index_kind": "symbolic_any",
+  "source_span_mapping": {
+    "mapped": 27,
+    "total_rows": 30,
+    "input_declarations_and_derived_views": "reported separately in original report"
+  },
+  "query": {
+    "original_input_contributors": 3,
+    "reachable_nodes": 24,
+    "steps": 8,
+    "step_budget": 9,
+    "source_hash": "sha256:fe70b0418c820b34d639e6928f3e67bda0864583f98e06fba7eaf9f8db9e0a88",
+    "wire_schema": "gooo/record-origin-query/v2"
+  },
+  "native_value_expectations": {
+    "passed": 9,
+    "total": 9,
+    "projection_replayed": true,
+    "runtime_replayed": true,
+    "model_calls": 0,
+    "producer_source_sha": "UNBOUND_LOCAL_SOURCE",
+    "scope": "nine authored finite examples; two fresh executions preserve a denominator of nine"
+  },
+  "source_reader_regressions": {
+    "legacy_queries": 25,
+    "new_loop_edge_mode_queries": 4,
+    "execution_routes": [
+      "interpreted",
+      "separately compiled Go"
+    ],
+    "denominator_rule": "execution routes do not duplicate query counts",
+    "malformed_recurrence_or_old_wire_counterexamples": 9
+  },
+  "bounds": {
+    "nodes": 512,
+    "live_bindings": 64,
+    "selected_record_types": 16,
+    "step_record_types_observed": 16,
+    "input_slots": 8192,
+    "pure_calls": 4096,
+    "step_static_calls_observed": 3727,
+    "flow_value_discriminator": "fits existing padding; independent size regression",
+    "performance_claim": "no latency, allocation or RAM improvement measured"
+  },
+  "rejected_designs": [
+    "four extra fields on every node exceeded the existing 8192-slot input bound",
+    "separate wrappers for every metadata object exceeded the 16-record-type closure bound"
+  ],
+  "implementation": "sparse original-order carry pages; flattened loop source spans; scalar sequence type dictionary; unboxed integer mask leaves; Gooo-owned bounded cycle traversal",
+  "remaining": [
+    "counted-loop static origins",
+    "constructed-list and arbitrary-index static origins",
+    "optional-field static origins",
+    "combined large dictionaries and recurrences within the existing full-input transport bound",
+    "full issue1834 acceptance audit and accepted-dev qualification"
+  ],
+  "artifacts": [
+    {
+      "path": "source-origins.json.gz",
+      "original_sha256": "sha256:b270e21fb2dbf61fcfb68f81ddbefc68be13d147144acf73a68d8d4cd453a64f",
+      "archive_sha256": "sha256:e891e8c8d25b3b03a8f6d1bf918f6abb4e9ff183a066fc58a3abcdb4534423de",
+      "original_bytes": 17540,
+      "archive_bytes": 1932
+    },
+    {
+      "path": "native-nine-cases.json.gz",
+      "original_sha256": "sha256:766f6fc383aec9f0c05a8059019fa26a35adca2b147094130e861e49956ff5f4",
+      "archive_sha256": "sha256:a6d6db69b067659acae146cc4195c2bb22de973618a45c1ad4c39bed2ac8074d",
+      "original_bytes": 104121,
+      "archive_bytes": 12717
+    }
+  ],
+  "checks": [
+    {
+      "log_name": "final-bodycodegen-and-reader.log",
+      "sha256": "sha256:f7fee1f826e3b7c21f388cfc2d87c0c9d12e039d17fddeb4e386914398fb1499",
+      "bytes": 200984,
+      "scope": "local working-tree functional check; no accepted-dev or CI authorization"
+    },
+    {
+      "log_name": "final-registration-capacity.log",
+      "sha256": "sha256:b05a715822aec4e95f836536d3225585ed48c23c145d4649d3ff3f623edc5c4e",
+      "bytes": 603,
+      "scope": "local working-tree functional check; no accepted-dev or CI authorization"
+    },
+    {
+      "log_name": "go-fix.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "scope": "local working-tree functional check; no accepted-dev or CI authorization"
+    },
+    {
+      "log_name": "go-vet.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "scope": "local working-tree functional check; no accepted-dev or CI authorization"
+    }
+  ],
+  "source_files_sha256": {
+    "examples/loop-carried-values/main.gooo": "sha256:0d5c79dd58e463358f89585fa487b8503bdf3de82857aa81b4659ead693e64fe",
+    "examples/record-origin-reader/loops_test.go": "sha256:782d34519451d86bb08879e66b3db39801f90c4e5c0d59955f19917957ef46eb",
+    "examples/record-origin-reader/main.go": "sha256:4508ce2c8783ba219e9026dc8343dab988a1a3ce1014e00d6096f9b55f7bb128",
+    "examples/record-origin-reader/main.gooo": "sha256:fe70b0418c820b34d639e6928f3e67bda0864583f98e06fba7eaf9f8db9e0a88",
+    "examples/record-origin-reader/projection.go": "sha256:4b22a738b2b195efaf3418a8d355d5e8493a71e834cab9db961330e970328086",
+    "internal/bodycodegen/record_flow.go": "sha256:a5aec7cc6d468bef68d5590cebedb46b12438e7e0d887c256a427231806b4bf4",
+    "internal/bodycodegen/record_flow_expressions.go": "sha256:e583bb0540e774897e217bfd62cbae0ce90fe8f0a8e103357f29f05be8f615a6",
+    "internal/bodycodegen/record_flow_loop_test.go": "sha256:76e81ced4e338c108adfdc164f53ab24eb4e122059d87d19d5e72fae9c177f1c",
+    "internal/bodycodegen/record_flow_loop_text.go": "sha256:4f093bcdcc8af1b83daa273becb6ea238ff5527652e0ae7e5a17fad0155c3307",
+    "internal/bodycodegen/record_flow_loop_values.go": "sha256:4dce0ae7184a54ab93bdf665baecadc2b4637b2b03206daa4354583ed4bf967c",
+    "internal/bodycodegen/record_flow_loops.go": "sha256:64a096946043c7c2a1eeb072f7af3d6314d5610e403f716ec42b28e8aae61d9d",
+    "internal/bodycodegen/record_flow_nominal.go": "sha256:f28829f51c458ad3ee2c981d88fc613845b1b81ca2cc971fc044349a3a14b26d",
+    "internal/bodycodegen/record_flow_nominal_selector.go": "sha256:b8f3d0b15105708144908d4f46b7021e315372078b896c9743fdeed83fd8b35c",
+    "internal/bodycodegen/record_flow_record_versions.go": "sha256:51d3c014633bf48dc1545d72e1f15932968fd843628d83923bc73863c42c3882",
+    "internal/bodycodegen/record_flow_statements.go": "sha256:3a0b1d38e468ef0e4e203194954cf5fb7be6e7c324d7d279e16efa132400c482",
+    "internal/bodycodegen/record_flow_types.go": "sha256:0818ac7fe99eab3b5fb9b7101a65ae4ec197ba4ed0326bd8c8cb6d4df1f1c85c",
+    "internal/bodycodegen/record_origin_reader_boundary_test.go": "sha256:23735e12bb904fd97671e98be1e3513c208419a462a80bce5bc7ba7d212eac01",
+    "internal/bodycodegen/record_origin_reader_loop_test.go": "sha256:a54b563c1c07fee754db18c63cad138fc1043135098c51b3160eab59c6d823f1",
+    "internal/bodycodegen/record_origin_reader_test.go": "sha256:338fb3e07855874180c89f078c99900098be555c183a47e814bab47a3b4611fd",
+    "internal/bodycodegen/typed_control_origin_inputs.go": "sha256:c6195ddd94aca5f4e4dbba1d90042fabb830213d90171affff3ccdddbc28cabc",
+    "internal/bodycodegen/typed_origin_text.go": "sha256:3496a5c53d69b43c59ca8b971802b89fd9cd9ab4d0258d0f746e0bb8535a102e",
+    "internal/bodycodegen/typed_value_origin_inputs.go": "sha256:2d158f01fc640ba83b5710fe777235e54d4e17cd6123e2bdacb73a8acdf851d7",
+    "internal/bodycodegen/typed_value_origin_sources.go": "sha256:6b665c69ac97ee6da09013d008e9775484044ffd050c89a3831bbd3bb5bd9e7f",
+    "internal/bodycodegen/typed_value_origins.go": "sha256:ad92c6ab89dad749b133c76040555b579b6aa90238d4d2a7debe08d3c2941dc5",
+    "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go": "sha256:ec9093187ef893a3e368c64ff8df005e9cc574ee83f8ab880197f6c0e2739d88",
+    "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go": "sha256:4548872f19eda5d1a5de289b8769cd2c1b466eca895f3fcf9e577b6dcb285970",
+    "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go": "sha256:53ff3f09708c158536d24a65c2213f98805571e6cc7415c66515d3e9754b6e70",
+    "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go": "sha256:879222054e5eabd2ad3e1ee9e34dfbfee7207850e6449daeb086ba72321c4628",
+    "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go": "sha256:39e684e2a6aa832125a5ad421f97c481565e4a5cd4759e0e362dbe0014b4195d",
+    "internal/meta/languagereadiness/languagesyntax/model.go": "sha256:a90462cb93829d10f39c4726233dedcd1fa2540b007ae332df1ef1c612673100",
+    "internal/meta/languagereadiness/languagesyntax/registry_cases_group5.go": "sha256:d87ee6bcf03a964822d349712f11aa7461078dd364eeb3e074fbb7339df95333",
+    "internal/meta/repositoryprojection/extractor/symbolic_loop_origins_capacity_test.go": "sha256:1988cef7f67235a01615df16202c6c4b6dca1c386048f13814b9ca0fe7dc8504"
+  }
+}

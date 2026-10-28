@@ -29,6 +29,8 @@ func (c *recordFlowBuilder) statement(node ast.Stmt, state *flowState) bool {
 		c.assignment(s, state)
 	case *ast.IfStmt:
 		return c.branch(s, state)
+	case *ast.RangeStmt:
+		return c.rangeLoop(s, state)
 	case *ast.ReturnStmt:
 		value := c.wrap(c.expression(s.Results[0], state, true), c.span(s), "return", 0)
 		c.retainReturn(value, c.span(s))

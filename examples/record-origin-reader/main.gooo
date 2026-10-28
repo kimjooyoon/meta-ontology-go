@@ -8,13 +8,9 @@ entity Integer id "urn:gooo:type:integer"
 
 entity Boolean id "urn:gooo:type:boolean"
 
-entity Word32 id "reader://type/Word32" fields {
- field bits id "reader://Word32/bits" type integer required one
-}
-
 entity Mask64 id "reader://type/Mask64" fields {
- field left id "reader://Mask64/left" type Word32 required one
- field right id "reader://Mask64/right" type Word32 required one
+ field left id "reader://Mask64/left" type integer required one
+ field right id "reader://Mask64/right" type integer required one
 }
 
 entity Mask128 id "reader://type/Mask128" fields {
@@ -32,19 +28,19 @@ entity Mask512 id "reader://type/Mask512" fields {
  field right id "reader://Mask512/right" type Mask256 required one
 }
 
-activity Has32(word Word32, bit Integer) -> Boolean id "reader://activity/Has32" computes `
+activity Has32(word Integer, bit Integer) -> Boolean id "reader://activity/Has32" computes `
 
 	if bit < 1 {
 		return false
 	}
-	return (word.bits/bit)%2 == 1
+	return (word/bit)%2 == 1
 `
 
-activity Add32(word Word32, bit Integer) -> Word32 id "reader://activity/Add32" computes `
+activity Add32(word Integer, bit Integer) -> Integer id "reader://activity/Add32" computes `
 
 	let result = word
 	if bit > 0 && !Has32(word, bit) {
-		result.bits = result.bits + bit
+		result = result + bit
 	}
 	return result
 `
@@ -117,7 +113,7 @@ activity Add512(mask Mask512, index Integer, bit Integer) -> Mask512 id "reader:
 
 activity EmptyMask() -> Mask512 id "reader://activity/EmptyMask" computes `
 
-	let word = Word32{bits: 0}
+	let word = 0
 	let a = Mask64{left: word, right: word}
 	let b = Mask128{left: a, right: a}
 	let c = Mask256{left: b, right: b}
@@ -148,6 +144,7 @@ entity NodePage id "reader://type/NodePage" fields {
 entity Field id "reader://type/Field" fields {
  field field_id id "reader://Field/id" type string required one
  field type_id id "reader://Field/type_id" type string required one
+ field cardinality id "reader://Field/cardinality" type string required one
 }
 
 entity Layout id "reader://type/Layout" fields {
@@ -165,6 +162,36 @@ entity ValuePage id "reader://type/ValuePage" fields {
  field values id "reader://ValuePage/values" type Value required many
 }
 
+entity Loop id "reader://type/Loop" fields {
+ field number id "reader://Loop/id" type integer required one
+ field parent id "reader://Loop/parent" type integer required one
+ field collection id "reader://Loop/collection" type integer required one
+ field sequence_type id "reader://Loop/sequence_type" type integer required one
+ field index id "reader://Loop/index" type integer required one
+ field element id "reader://Loop/element" type integer required one
+ field entry id "reader://Loop/entry" type integer required one
+ field done id "reader://Loop/done" type integer required one
+ field continues id "reader://Loop/continues" type boolean required one
+ field index_kind id "reader://Loop/index_kind" type string required one
+ field source_activity id "reader://Loop/source-activity" type string required one
+ field source_view id "reader://Loop/source-view" type string required one
+ field source_start id "reader://Loop/source-start" type integer required one
+ field source_end id "reader://Loop/source-end" type integer required one
+}
+
+entity Carry id "reader://type/Carry" fields {
+ field loop id "reader://Carry/loop" type integer required one
+ field header id "reader://Carry/header" type integer required one
+ field seed id "reader://Carry/seed" type integer required one
+ field yield id "reader://Carry/yield" type integer required one
+ field exit id "reader://Carry/exit" type integer required one
+}
+
+entity CarryPage id "reader://type/CarryPage" fields {
+ field first id "reader://CarryPage/first" type integer required one
+ field carries id "reader://CarryPage/carries" type Carry required many
+}
+
 entity Graph id "reader://type/Graph" fields {
  field schema id "reader://Graph/schema" type string required one
  field source_sha256 id "reader://Graph/source_sha256" type string required one
@@ -180,6 +207,10 @@ entity Graph id "reader://type/Graph" fields {
  field pages id "reader://Graph/pages" type NodePage required many
  field layouts id "reader://Graph/layouts" type Layout required many
  field value_pages id "reader://Graph/value_pages" type ValuePage required many
+ field carry_count id "reader://Graph/carry_count" type integer required one
+ field carry_pages id "reader://Graph/carry_pages" type CarryPage required many
+ field loops id "reader://Graph/loops" type Loop required many
+ field sequence_types id "reader://Graph/sequence_types" type string required many
 }
 
 entity Summary id "reader://type/Summary" fields {
@@ -194,6 +225,7 @@ entity Summary id "reader://type/Summary" fields {
  field reachable id "reader://Summary/reachable" type integer required one
  field versions id "reader://Summary/versions" type integer required one
  field total id "reader://Summary/total" type integer required one
+ field nodes id "reader://Summary/nodes" type Mask512 required one
 }
 
 activity NodeAt(graph Graph, index_id Integer) -> Node id "reader://activity/NodeAt" computes `
@@ -270,6 +302,14 @@ field status id "reader://Cursor/status" type string required one
  field root id "reader://Cursor/root" type integer required one
  field control id "reader://Cursor/control" type boolean required one
  field history id "reader://Cursor/history" type boolean required one
+ field expanded id "reader://Cursor/expanded" type Mask512 required one
+ field again id "reader://Cursor/again" type boolean required one
+ field carries id "reader://Cursor/carries" type integer required one
+ field passes id "reader://Cursor/passes" type integer required one
+ field carry_total id "reader://Cursor/carry-total" type integer required one
+ field loop_total id "reader://Cursor/loop-total" type integer required one
+ field sequence_total id "reader://Cursor/sequence-total" type integer required one
+ field schema id "reader://Cursor/schema" type string required one
 }
 
 activity ValueAt(graph Graph, index_id Integer) -> Value id "reader://activity/ValueAt" computes `
@@ -279,7 +319,7 @@ activity ValueAt(graph Graph, index_id Integer) -> Value id "reader://activity/V
 
 activity ValidHeader(graph Graph) -> Boolean id "reader://activity/ValidHeader" computes `
 
-	if graph.schema != "gooo/record-origin-graph/v1" ||
+	if graph.schema != "gooo/record-origin-graph/v2" ||
 		graph.count < 1 ||
 		graph.count > 512 ||
 		graph.root < 1 ||
@@ -289,8 +329,14 @@ activity ValidHeader(graph Graph) -> Boolean id "reader://activity/ValidHeader" 
 		graph.value_count > 512 ||
 		len(graph.value_pages) != (graph.value_count+255)/256 ||
 		len(graph.layouts) < 1 ||
-		len(graph.layouts) > 16 {
+		len(graph.layouts) > 16 ||
+		graph.carry_count < 0 || graph.carry_count > graph.count ||
+		len(graph.carry_pages) != (graph.carry_count+255)/256 ||
+		len(graph.loops) > 256 || len(graph.sequence_types) > 19 {
 		return false
+	}
+	for sequence in graph.sequence_types {
+		if sequence == "" { return false }
 	}
 	let expected = 1
 	for page in graph.pages {
@@ -314,6 +360,13 @@ activity ValidHeader(graph Graph) -> Boolean id "reader://activity/ValidHeader" 
 		}
 		expected = expected + length
 	}
+	expected = 1
+	for page in graph.carry_pages {
+		let length = graph.carry_count + 1 - expected
+		if length > 256 { length = 256 }
+		if page.first != expected || len(page.carries) != length { return false }
+		expected = expected + length
+	}
 	return true
 `
 
@@ -323,7 +376,8 @@ activity ValidLayout(layout Layout) -> Boolean id "reader://activity/ValidLayout
 		return false
 	}
 	for member in layout.members {
-		if member.field_id == "" || member.type_id == "" {
+		if member.field_id == "" || member.type_id == "" ||
+			(member.cardinality != "" && member.cardinality != "many") {
 			return false
 		}
 	}
@@ -384,6 +438,91 @@ activity ValidNode(graph Graph, node Node,
 	return true
 `
 
+activity CarryRow(graph Graph, index_id Integer) -> Carry id "reader://activity/CarryRow" computes `
+ return graph.carry_pages[(index_id-1)/256].carries[(index_id-1)%256]
+`
+
+activity CarryFor(graph Graph, node_id Integer) -> Carry id "reader://activity/CarryFor" computes `
+ let first = 0
+ let last = graph.carry_count
+ for let step = 0; step < 10; step++ {
+  if first < last {
+   let middle = (first+last)/2
+   let carry = CarryRow(graph, middle+1)
+   if carry.header == node_id { return carry }
+   if carry.header < node_id { first = middle+1 } else { last = middle }
+  }
+ }
+ return Carry{loop: 0, header: 0, seed: 0, yield: 0, exit: 0}
+`
+
+activity ValidCarry(graph Graph, carry Carry, expected Integer) -> Boolean id "reader://activity/ValidCarry" computes `
+ if carry.loop < 1 || carry.loop > len(graph.loops) || carry.header < 1 || carry.header > graph.count ||
+    carry.seed < 1 || carry.seed >= carry.header || carry.yield < 0 || carry.yield > graph.count ||
+    carry.exit < 1 || carry.exit > graph.count { return false }
+ let node = NodeAt(graph, carry.header)
+ if node.kind != "loop_carry" || node.a != carry.seed || node.b != 0 { return false }
+ if expected > 1 {
+  let prior = CarryRow(graph, expected-1)
+  if prior.header >= carry.header { return false }
+ }
+ let loop = graph.loops[carry.loop-1]
+ return loop.entry < carry.header && (loop.continues == (carry.yield > 0))
+`
+
+activity CheckCarries(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CheckCarries" computes `
+ let result = cursor
+ for let step = 0; step < 32; step++ {
+  if result.offset < graph.carry_count {
+   if !ValidCarry(graph, CarryRow(graph, result.offset+1), result.offset+1) {
+    result.status = "UNUSABLE_INPUT"
+    return result
+   }
+   result.offset = result.offset + 1
+  }
+ }
+ if result.offset == graph.carry_count { result.phase = "NODES"; result.offset = 0 }
+ return result
+`
+
+activity ValidLoop(graph Graph, loop Loop, expected Integer) -> Boolean id "reader://activity/ValidLoop" computes `
+ if loop.number != expected || loop.parent < 0 || loop.parent >= loop.number ||
+    loop.collection < 1 || loop.collection > graph.count ||
+    loop.sequence_type < 1 || loop.sequence_type > len(graph.sequence_types) ||
+    loop.index < 1 || loop.index > graph.count || loop.element < 1 || loop.element > graph.count ||
+    loop.entry < 1 || loop.entry > graph.count || loop.done < 1 || loop.done > graph.count ||
+    loop.index_kind != "symbolic_any" || loop.source_activity == "" || loop.source_view == "" ||
+    loop.source_start < 0 || loop.source_end <= loop.source_start { return false }
+ let index = NodeAt(graph, loop.index)
+ let element = NodeAt(graph, loop.element)
+ let entry = NodeAt(graph, loop.entry)
+ let done = NodeAt(graph, loop.done)
+ return index.kind == "loop_index" && index.a == 0 && index.b == 0 &&
+  element.kind == "element" && element.a == loop.collection && element.b == loop.index &&
+  entry.kind == "loop_entry" && entry.a == loop.collection &&
+  done.kind == "loop_done" && done.a == loop.entry &&
+  entry.activity_id == loop.source_activity
+`
+
+activity CheckLoops(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CheckLoops" computes `
+ let result = cursor
+ for let step = 0; step < 32; step++ {
+  if result.offset < len(graph.loops) {
+   if !ValidLoop(graph, graph.loops[result.offset], result.offset+1) {
+    result.status = "UNUSABLE_INPUT"
+    return result
+   }
+   result.offset = result.offset + 1
+  }
+ }
+ if result.offset == len(graph.loops) {
+  result.phase = "NODES"
+  if graph.carry_count > 0 { result.phase = "CARRIES" }
+  result.offset = 0
+ }
+ return result
+`
+
 activity Begin(graph Graph) -> Cursor id "reader://activity/Begin" computes `
 
 	let result = Cursor{
@@ -399,7 +538,8 @@ activity Begin(graph Graph) -> Cursor id "reader://activity/Begin" computes `
 		versions: 0,
 		total: graph.count,
 		steps: 0,
-		step_budget: (len(graph.layouts)+31)/32 + (graph.value_count+31)/32 + 3*((graph.count+31)/32),
+		step_budget: (len(graph.layouts)+31)/32 + (graph.value_count+31)/32 +
+			(3+graph.carry_count)*((graph.count+31)/32) + (len(graph.loops)+31)/32 + (graph.carry_count+31)/32,
 		phase: "LAYOUTS",
 		offset: 0,
 		bit: 1,
@@ -407,6 +547,8 @@ activity Begin(graph Graph) -> Cursor id "reader://activity/Begin" computes `
 		root: graph.root,
 		control: graph.control,
 		history: graph.history,
+		expanded: EmptyMask(), again: false, carries: 0, passes: 0,
+		carry_total: graph.carry_count, loop_total: len(graph.loops), sequence_total: len(graph.sequence_types), schema: graph.schema,
 	}
 	if !ValidHeader(graph) {
 		result.status = "UNUSABLE_INPUT"
@@ -446,6 +588,8 @@ activity CheckValues(graph Graph, cursor Cursor) -> Cursor id "reader://activity
 	}
 	if result.offset == graph.value_count {
 		result.phase = "NODES"
+		if graph.carry_count > 0 { result.phase = "CARRIES" }
+		if len(graph.loops) > 0 { result.phase = "LOOPS" }
 		result.offset = 0
 	}
 	return result
@@ -461,6 +605,7 @@ activity CheckNodes(graph Graph, cursor Cursor) -> Cursor id "reader://activity/
 				result.status = "UNUSABLE_INPUT"
 				return result
 			}
+			if node.kind == "loop_carry" { result.carries = result.carries + 1 }
 			result.offset = result.offset + 1
 			if result.offset%32 == 0 {
 				result.bit = 1
@@ -470,6 +615,7 @@ activity CheckNodes(graph Graph, cursor Cursor) -> Cursor id "reader://activity/
 		}
 	}
 	if result.offset == graph.count {
+		if result.carries != graph.carry_count { result.status = "UNUSABLE_INPUT"; return result }
 		result.phase = "TRACE"
 		result.offset = graph.count
 		result.mask = Mark(graph, result.mask, graph.root)
@@ -478,35 +624,53 @@ activity CheckNodes(graph Graph, cursor Cursor) -> Cursor id "reader://activity/
 
 `
 
-activity FollowEdges(graph Graph, cursor Cursor) -> Cursor id "reader://activity/FollowEdges" computes `
-	let result = cursor
-	for let step = 0; step < 32; step++ {
-		if result.offset > 0 {
-			let node = NodeAt(graph, result.offset)
-			if Has512(result.mask, node.node_id-1, node.bit) {
-				result.reachable = result.reachable + 1
-				if node.value > 0 {
-					result.versions = result.versions + 1
-				}
-				result.mask = Mark(graph, result.mask, node.a)
-				result.mask = Mark(graph, result.mask, node.b)
-				if graph.control {
-					result.mask = Mark(graph, result.mask, node.guard)
-					result.mask = Mark(graph, result.mask, node.condition)
-				}
-				if graph.history {
-					result.mask = Mark(graph, result.mask, node.version)
-				}
-			}
-			result.offset = result.offset - 1
-		}
-	}
-	if result.offset == 0 {
-		result.phase = "INPUTS"
-		result.offset = 0
-	}
-	return result
+activity ExpandNode(graph Graph, cursor Cursor, node Node) -> Cursor id "reader://activity/ExpandNode" computes `
+ let result = cursor
+ result.reachable = result.reachable + 1
+ if node.value > 0 { result.versions = result.versions + 1 }
+ result.expanded = Mark(graph, result.expanded, node.node_id)
+ result.mask = Mark(graph, result.mask, node.a)
+ result.mask = Mark(graph, result.mask, node.b)
+ if graph.control {
+  result.mask = Mark(graph, result.mask, node.guard)
+  result.mask = Mark(graph, result.mask, node.condition)
+ }
+ if graph.history { result.mask = Mark(graph, result.mask, node.version) }
+ if node.kind == "loop_carry" {
+  let carry = CarryFor(graph, node.node_id)
+  if carry.yield > 0 {
+   let next = NodeAt(graph, carry.yield)
+   if carry.yield > node.node_id && !Has512(result.expanded, next.node_id-1, next.bit) { result.again = true }
+   result.mask = Mark(graph, result.mask, carry.yield)
+  }
+ }
+ return result
+`
 
+activity FollowEdges(graph Graph, cursor Cursor) -> Cursor id "reader://activity/FollowEdges" computes `
+ let result = cursor
+ for let step = 0; step < 32; step++ {
+  if result.offset > 0 {
+   let node = NodeAt(graph, result.offset)
+   if Has512(result.mask, node.node_id-1, node.bit) &&
+      !Has512(result.expanded, node.node_id-1, node.bit) {
+    result = ExpandNode(graph, result, node)
+   }
+   result.offset = result.offset - 1
+  }
+ }
+ if result.offset == 0 {
+  result.passes = result.passes + 1
+  if result.again {
+   if result.passes > graph.carry_count { result.status = "WORK_BOUND"; return result }
+   result.offset = graph.count
+   result.again = false
+  } else {
+   result.phase = "INPUTS"
+   result.offset = 0
+  }
+ }
+ return result
 `
 
 activity CollectInputs(graph Graph, cursor Cursor) -> Cursor id "reader://activity/CollectInputs" computes `
@@ -545,7 +709,9 @@ activity Step(graph Graph, cursor Cursor) -> Cursor id "reader://activity/Step" 
 		graph.count != cursor.total ||
 		graph.root != cursor.root ||
 		graph.control != cursor.control ||
-		graph.history != cursor.history {
+		graph.history != cursor.history || graph.schema != cursor.schema ||
+		graph.carry_count != cursor.carry_total || len(graph.loops) != cursor.loop_total ||
+		len(graph.sequence_types) != cursor.sequence_total {
 		result.status = "QUERY_CHANGED"
 		return result
 	}
@@ -563,6 +729,8 @@ activity Step(graph Graph, cursor Cursor) -> Cursor id "reader://activity/Step" 
 	if cursor.phase == "VALUES" {
 		return CheckValues(graph, result)
 	}
+	if cursor.phase == "LOOPS" { return CheckLoops(graph, result) }
+	if cursor.phase == "CARRIES" { return CheckCarries(graph, result) }
 	if cursor.phase == "NODES" {
 		return CheckNodes(graph, result)
 	}
@@ -590,8 +758,10 @@ activity Finish(cursor Cursor) -> Summary id "reader://activity/Finish" computes
 		reachable: 0,
 		versions: 0,
 		total: cursor.total,
+		nodes: EmptyMask(),
 	}
 	if cursor.status == "RESOLVED" {
+		result.nodes = cursor.mask
 		result.paths = cursor.paths
 		result.contributors = cursor.contributors
 		result.reachable = cursor.reachable

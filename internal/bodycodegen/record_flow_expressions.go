@@ -78,7 +78,7 @@ func (c *recordFlowBuilder) selector(e *ast.SelectorExpr, state *flowState) flow
 	if c.err != nil {
 		return flowScalar(0)
 	}
-	if c.compactRecords {
+	if c.compactRecords || value.sequence != 0 {
 		return value
 	}
 	if value.record >= 0 {

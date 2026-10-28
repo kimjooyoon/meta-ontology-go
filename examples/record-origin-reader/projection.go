@@ -32,8 +32,9 @@ type nodePage struct {
 	Nodes []node `json:"nodes"`
 }
 type field struct {
-	FieldID string `json:"field_id"`
-	TypeID  string `json:"type_id"`
+	FieldID     string `json:"field_id"`
+	TypeID      string `json:"type_id"`
+	Cardinality string `json:"cardinality"`
 }
 type layout struct {
 	TypeID  string  `json:"type_id"`
@@ -48,26 +49,54 @@ type valuePage struct {
 	Values []value `json:"values"`
 }
 
+// Parent zero is an explicit root-loop value in the Gooo input contract.
+type loop struct {
+	Number         uint16 `json:"number"`
+	Parent         uint16 `json:"parent"`
+	Collection     uint16 `json:"collection"`
+	SequenceType   uint16 `json:"sequence_type"`
+	Index          uint16 `json:"index"`
+	Element        uint16 `json:"element"`
+	Entry          uint16 `json:"entry"`
+	Done           uint16 `json:"done"`
+	Continues      bool   `json:"continues"`
+	IndexKind      string `json:"index_kind"`
+	SourceActivity string `json:"source_activity"`
+	SourceView     string `json:"source_view"`
+	SourceStart    int    `json:"source_start"`
+	SourceEnd      int    `json:"source_end"`
+}
+
+type carryPage struct {
+	First   int                               `json:"first"`
+	Carries []bodycodegen.RecordFlowLoopCarry `json:"carries"`
+}
+
 type originGraph struct {
-	Schema       string      `json:"schema"`
-	SourceSHA256 string      `json:"source_sha256"`
-	FlowSHA256   string      `json:"flow_sha256"`
-	ReportSHA256 string      `json:"report_sha256"`
-	ActivityID   string      `json:"activity_id"`
-	FieldID      string      `json:"field_id"`
-	Root         uint16      `json:"root"`
-	Count        int         `json:"count"`
-	ValueCount   int         `json:"value_count"`
-	Control      bool        `json:"control"`
-	History      bool        `json:"history"`
-	Pages        []nodePage  `json:"pages"`
-	Layouts      []layout    `json:"layouts"`
-	ValuePages   []valuePage `json:"value_pages"`
+	Schema        string      `json:"schema"`
+	SourceSHA256  string      `json:"source_sha256"`
+	FlowSHA256    string      `json:"flow_sha256"`
+	ReportSHA256  string      `json:"report_sha256"`
+	ActivityID    string      `json:"activity_id"`
+	FieldID       string      `json:"field_id"`
+	Root          uint16      `json:"root"`
+	Count         int         `json:"count"`
+	ValueCount    int         `json:"value_count"`
+	Control       bool        `json:"control"`
+	History       bool        `json:"history"`
+	Pages         []nodePage  `json:"pages"`
+	Layouts       []layout    `json:"layouts"`
+	ValuePages    []valuePage `json:"value_pages"`
+	CarryPages    []carryPage `json:"carry_pages"`
+	CarryCount    int         `json:"carry_count"`
+	Loops         []loop      `json:"loops"`
+	SequenceTypes []string    `json:"sequence_types"`
 }
 
 func project(r bodycodegen.TypedValueOrigins, fieldID string, control, history bool) ([]byte, error) {
-	if r.Status != "RESOLVED" || r.Flow == nil || r.Schema != "gooo/typed-value-origins/v2" {
-		return nil, fmt.Errorf("nominal source origins unresolved or outside v2: %s", r.Reason)
+	if r.Status != "RESOLVED" || r.Flow == nil ||
+		(r.Schema != "gooo/typed-value-origins/v2" && r.Schema != "gooo/typed-value-origins/v3") {
+		return nil, fmt.Errorf("source origins unresolved or outside v2/v3: %s", r.Reason)
 	}
 	var root uint16
 	for _, out := range r.Outputs {
@@ -88,10 +117,25 @@ func project(r bodycodegen.TypedValueOrigins, fieldID string, control, history b
 	}
 	rows := projectNodes(r)
 	g := originGraph{
-		Schema: "gooo/record-origin-graph/v1", SourceSHA256: r.SourceSHA256,
+		Schema: "gooo/record-origin-graph/v2", SourceSHA256: r.SourceSHA256,
 		FlowSHA256: sha(flow), ReportSHA256: sha(report), ActivityID: r.ActivityID,
 		FieldID: fieldID, Root: root, Count: len(rows), ValueCount: len(r.Flow.RecordValues),
 		Control: control, History: history,
+		CarryCount:    len(r.Flow.LoopCarries),
+		CarryPages:    []carryPage{},
+		Loops:         []loop{},
+		SequenceTypes: []string{},
+	}
+	for _, sequence := range r.Flow.SequenceTypes {
+		g.SequenceTypes = append(g.SequenceTypes, sequence.ElementTypeID)
+	}
+	for _, l := range r.Flow.Loops {
+		g.Loops = append(g.Loops, loop{l.ID, l.Parent, l.Collection, l.SequenceType,
+			l.Index, l.Element, l.Entry, l.Done, l.Continues, l.IndexKind,
+			l.Span.ActivityID, l.Span.View, l.Span.Start, l.Span.End})
+	}
+	for first := 0; first < len(r.Flow.LoopCarries); first += 256 {
+		g.CarryPages = append(g.CarryPages, carryPage{first + 1, r.Flow.LoopCarries[first:min(first+256, len(r.Flow.LoopCarries))]})
 	}
 	for first := 0; first < len(rows); first += 256 {
 		g.Pages = append(g.Pages, nodePage{first + 1, rows[first:min(first+256, len(rows))]})
@@ -125,7 +169,7 @@ func projectTables(g *originGraph, f *bodycodegen.RecordValueFlow) {
 	for _, l := range f.RecordLayouts {
 		members := make([]field, len(l.Fields))
 		for i, m := range l.Fields {
-			members[i] = field{m.ID, m.TypeID}
+			members[i] = field{m.ID, m.TypeID, m.Cardinality}
 		}
 		g.Layouts = append(g.Layouts, layout{l.ID, members})
 	}
