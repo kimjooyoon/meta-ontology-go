@@ -932,7 +932,7 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY",
-      "ordered_collections": true
+      "entity_fields_profile": "gooo.entityfields.go-projection.v7"
     },
     {
       "id": "field-source-map-reader",
@@ -1356,6 +1356,16 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY",
       "entity_fields_profile": "gooo.entityfields.go-projection.v7"
+    },
+    {
+      "id": "record-element-location-consumer",
+      "path": "examples/record-element-location/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "ordered_collections": true
     }
   ],
   "package_units": [

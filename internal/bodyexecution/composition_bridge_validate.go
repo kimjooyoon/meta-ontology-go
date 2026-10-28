@@ -40,6 +40,9 @@ func validateBridgeTrace(t CompositionTrace, r CompositionRuntime) error {
 	if err := validateBridgeLocalUses(t, r.LocalSites, r.LocalUseSites); err != nil {
 		return err
 	}
+	if err := validateBridgeElementReads(t, r); err != nil {
+		return err
+	}
 	return validateBridgeEvaluationWindows(t, r)
 }
 
