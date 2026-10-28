@@ -87,6 +87,12 @@ func writeOriginTextNode(w io.Writer, report TypedValueOrigins, node RecordFlowN
 }
 
 func writeOriginTextFacts(w io.Writer, node RecordFlowNode) error {
+	if node.RecordVersion != 0 {
+		if _, err := fmt.Fprintf(w, " record-version=#%d", node.RecordVersion); err != nil {
+			return err
+		}
+	}
+
 	if node.Operator != "" {
 		label := "operator"
 		if node.Kind == "guard" && (node.Operator == "true" || node.Operator == "false") {

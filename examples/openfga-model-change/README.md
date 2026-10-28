@@ -82,3 +82,27 @@ go run ./examples/openfga-model-change/normalize \
 리스너 없이 프로세스 안에서 수행했습니다. 실행 범위 식별자는 그 통제된 기록을
 묶으며, 같은 운영 저장소의 두 시점에 적용하려면 별도 스냅샷·실행 환경 관찰이
 필요합니다. 현재 기대값 검증의 범위는 위 21개 입력입니다.
+
+## 계산식의 원래 입력 따라가기
+
+저장소 루트에서 같은 소스의 입력과 반환 필드 의존성을 조회합니다.
+관찰 사례를 실행하거나 권한 판단을 다시 요청하지 않습니다.
+
+```sh
+go run ./cmd/gooo body-origins --activity Compare \
+  examples/openfga-model-change/main.gooo
+```
+
+`--format text`로 원문 위치와 레코드 버전 연결을 읽을 수도 있습니다.
+`before_input_digest`와 `after_input_digest`는 같은 자식 필드 선언을 사용하지만,
+각각 `ComparisonPair.before`와 `ComparisonPair.after`의 입력 경로를 유지합니다.
+조회 스키마는 `gooo/typed-value-origins/v2`입니다.
+JSON의 `flow.record_layouts`, `record_values`, `record_versions`는 필드 기원과
+복사·호출·반환 이력을 함께 보관합니다. 같은 필드 기원 배열만 공유하므로
+두 입력의 값이 같다는 이유로 출처가 합쳐지지 않습니다.
+
+확인할 지표는 그래프 노드 수, 선언된 입력·출력 수, 레코드 버전 수와 공유 배열 수,
+실제 원문 위치가 매핑된 사건 수입니다. 공유 전후의 필드 참조 수는 같은 버전
+집합을 분모로 비교합니다. 전체 메모리나 실행 속도 개선을 뜻하지는 않습니다.
+그래프 한도는 512노드이며, 실행 중의 구체적인 경로나 중첩 목록 인덱스는
+이 소스 조회의 범위 밖입니다.

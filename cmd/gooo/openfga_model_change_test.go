@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 )
 
 func TestOpenFGAModelChangeSourceCompositionAndReplay(t *testing.T) {
@@ -51,6 +54,35 @@ func TestOpenFGAModelChangeSourceCompositionAndReplay(t *testing.T) {
 			unknown.BeforeError != "Code(2000)" || unknown.AfterError != "Code(2000)" ||
 			renamed.Change != "EXPANSION" || renamed.IntentResult != "EXPECTED" {
 			t.Fatal("error response became a denial or display label changed source intent", unknown, renamed)
+		}
+	}
+}
+
+func TestOpenFGAModelChangeSourceOrigins(t *testing.T) {
+	for _, format := range []string{"json", "text"} {
+		var stdout, stderr bytes.Buffer
+		code := run([]string{"body-origins", "--activity", "Compare", "--format", format,
+			"../../examples/openfga-model-change/main.gooo"}, &stdout, &stderr)
+		if code != exitOK {
+			t.Fatalf("%s: %d / %s", format, code, stderr.String())
+		}
+		if format == "text" {
+			if !strings.Contains(stdout.String(), "Status: RESOLVED") ||
+				!strings.Contains(stdout.String(), "record-version=#") {
+				t.Fatal("text view lost the separate record history")
+			}
+			continue
+		}
+		var result bodycodegen.TypedValueOrigins
+		if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+			t.Fatal(err)
+		}
+		if result.Schema != "gooo/typed-value-origins/v2" || result.Status != "RESOLVED" ||
+			result.ActivityID != "gooo://authorization-delta/compare" ||
+			result.Flow == nil || len(result.Flow.Nodes) > 512 || len(result.Inputs) != 35 ||
+			len(result.Outputs) != 15 || len(result.Flow.RecordValues) == 0 ||
+			len(result.Flow.RecordValues) >= len(result.Flow.RecordVersions) {
+			t.Fatal("actual source inspection lost its declared roots or shared exact field versions")
 		}
 	}
 }
