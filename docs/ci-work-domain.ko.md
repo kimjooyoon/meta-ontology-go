@@ -336,3 +336,15 @@ source-repacker가 계획하지 못한 1,035개 항목은 정상적으로 수집
 `READ_ONLY`이며 원래 실행의 `cancelled` 상태와 포맷 실패를 유지한다. 재사용과
 승격은 허용하지 않는다. 이 확인은 저장된 기록의 읽기이며 원본 검사 재실행이나
 GitHub 콜백 수정본의 실행 결과가 아니다.
+
+## 실행기 예약과 실행 시작
+
+[dev 실행 40765497394](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/40765497394)는
+테스트 전에 다른 작업의 대기 행을 실행 구간 오류로 처리했다. 그 행에는 실행기 ID가
+배정돼 있었지만 상태는 `queued`, 실행 단계는 비어 있었다. 배정과 실행을 구별해
+같은 source/run/attempt의 응답을 다시 읽도록 CI 도메인의 고정을 갱신했다.
+원본 응답은 [CI 도메인 회귀 자료](https://github.com/kimjooyoon/gooo-ci-domain/blob/b99b5cc915457bbc37efeb6fbb4eacc4cc0df982/testdata/runner-clock/40765497394-assigned-queued.json)와
+연결된 원본 ZIP에 보존한다.
+
+대기 중에는 시계를 발급하지 않는다. 나중 행의 잘못된 출처·실패한 생산자·잘못된
+실행 시각은 계속 거절하며, 기존 16회·30초 관측 한도와 원래 작업 예산을 유지한다.
