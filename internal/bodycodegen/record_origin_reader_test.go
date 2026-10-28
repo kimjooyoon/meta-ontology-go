@@ -24,6 +24,7 @@ type readerProbeCase struct {
 	Name  string          `json:"name"`
 	Graph json.RawMessage `json:"graph"`
 	Paths []string        `json:"paths"`
+	Words []int64         `json:"words,omitempty"`
 }
 
 type readerProbeState struct {
@@ -176,11 +177,11 @@ func TestRecordOriginReaderInterpretedAndNativeQueries(t *testing.T) {
 	}
 	cases := []readerProbeCase{}
 	for _, out := range report.Outputs {
-		cases = append(cases, readerProbeCase{out.FieldID, readerProbeGraph(t, report, out, false, false), readerProbeOracle(t, report, out.Root, false, false)})
+		cases = append(cases, readerProbeCase{Name: out.FieldID, Graph: readerProbeGraph(t, report, out, false, false), Paths: readerProbeOracle(t, report, out.Root, false, false)})
 	}
 	for _, mode := range [][2]bool{{true, false}, {false, true}, {true, true}} {
 		out := report.Outputs[len(report.Outputs)-1]
-		cases = append(cases, readerProbeCase{fmt.Sprintf("edge-modes-%v", mode), readerProbeGraph(t, report, out, mode[0], mode[1]), readerProbeOracle(t, report, out.Root, mode[0], mode[1])})
+		cases = append(cases, readerProbeCase{Name: fmt.Sprintf("edge-modes-%v", mode), Graph: readerProbeGraph(t, report, out, mode[0], mode[1]), Paths: readerProbeOracle(t, report, out.Root, mode[0], mode[1])})
 	}
 	before := "input:gooo://authorization-delta/pair/before > gooo://authorization-delta/observation/input-origin"
 	after := "input:gooo://authorization-delta/pair/after > gooo://authorization-delta/observation/input-origin"
@@ -199,7 +200,7 @@ func TestRecordOriginReaderInterpretedAndNativeQueries(t *testing.T) {
 			t.Fatal(err, r.Reason)
 		}
 		out := r.Outputs[0]
-		cases = append(cases, readerProbeCase{"required-" + activity, readerProbeGraph(t, r, out, false, false), readerProbeOracle(t, r, out.Root, false, false)})
+		cases = append(cases, readerProbeCase{Name: "required-" + activity, Graph: readerProbeGraph(t, r, out, false, false), Paths: readerProbeOracle(t, r, out.Root, false, false)})
 	}
 	stepsTotal := 0
 	for _, c := range cases {
@@ -294,7 +295,7 @@ func readerProbeNative(t *testing.T, programs map[string]Result, readerProbeDir 
 	native := fmt.Sprintf(`package recordreader
 import("testing";"os";"encoding/json";"reflect";"strings";"slices";"bytes")
 func TestOriginalOriginPaths(t *testing.T) {
- var cases []struct{Name string;Graph json.RawMessage;Paths []string}
+ var cases []struct{Name string;Graph json.RawMessage;Paths []string;Words []int64}
  raw,err:=os.ReadFile(%s);if err!=nil {t.Fatal(err)};if err:=json.Unmarshal(raw,&cases);err!=nil {t.Fatal(err)}
  for _,c:=range cases {
   var graph %s;if err:=json.Unmarshal(c.Graph,&graph);err!=nil {t.Fatal(err)}
@@ -308,8 +309,14 @@ func TestOriginalOriginPaths(t *testing.T) {
   raw,err:=json.Marshal(Finish(cursor));if err!=nil {t.Fatal(err)};var result struct{Status string;Paths string};if err:=json.Unmarshal(raw,&result);err!=nil {t.Fatal(err)}
   paths:=[]string{};if result.Paths!="" {paths=strings.Split(strings.TrimSuffix(result.Paths,";"),";")};slices.Sort(paths)
   if result.Status!="RESOLVED"||!reflect.DeepEqual(paths,c.Paths) {t.Fatal(c.Name,paths,c.Paths)}
+  if c.Words!=nil {raw,err:=json.Marshal(cursor);if err!=nil {t.Fatal(err)};var state struct{Mask json.RawMessage};if err:=json.Unmarshal(raw,&state);err!=nil {t.Fatal(err)};if words:=nativeWords(t,state.Mask);!reflect.DeepEqual(words,c.Words) {t.Fatal(c.Name,"native visited words differ",words,c.Words)}}
   after,_:=json.Marshal(graph);if !bytes.Equal(before,after) {t.Fatal(c.Name,"native query mutated original graph")}
  }
+}
+func nativeWords(t *testing.T, raw json.RawMessage) []int64 {
+ t.Helper();var node map[string]json.RawMessage;if err:=json.Unmarshal(raw,&node);err!=nil {t.Fatal(err)}
+ if raw,ok:=node["bits"];ok {var word int64;if err:=json.Unmarshal(raw,&word);err!=nil {t.Fatal(err)};return []int64{word}}
+ return append(nativeWords(t,node["left"]),nativeWords(t,node["right"])...)
 }
 `, strconv.Quote(filepath.Join(readerProbeDir, "native-cases.json")), graph.GoName)
 	dir := filepath.Join(readerProbeDir, "native")

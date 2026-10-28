@@ -90,22 +90,29 @@ activity Echo(value Long) -> Long id "prepared://echo" computes "return value"
 }
 
 func TestFixedProgramConcurrentNominalRecords(t *testing.T) {
-	program, err := NewFixedProgram(context.Background(), "nominal.gooo", []byte(nominalOriginSource), "NewChild")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var group sync.WaitGroup
-	for i := 1; i <= 32; i++ {
-		group.Go(func() {
-			input := []byte(fmt.Sprintf(`[{"before":{"value":11},"after":{"value":22}},%d]`, i))
-			value, err := program.Evaluate(context.Background(), input)
-			if err != nil || string(value.Value) != fmt.Sprint(i) {
-				t.Errorf("nominal invocation %d shared another value: %s / %v", i, value.Value, err)
+	for _, activity := range []string{"NewChild", "ThroughAlias"} {
+		t.Run(activity, func(t *testing.T) {
+			program, err := NewFixedProgram(context.Background(), "nominal.gooo", []byte(nominalOriginSource), activity)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var group sync.WaitGroup
+			for i := 1; i <= 32; i++ {
+				group.Go(func() {
+					input := []byte(fmt.Sprintf(`[{"before":{"value":11},"after":{"value":22}},%d]`, i))
+					if activity == "ThroughAlias" {
+						input = []byte(fmt.Sprintf(`[{"before":{"value":11},"after":{"value":%d}}]`, i))
+					}
+					value, err := program.Evaluate(context.Background(), input)
+					if err != nil || string(value.Value) != fmt.Sprint(i) {
+						t.Errorf("nominal invocation %d shared another value: %s / %v", i, value.Value, err)
+					}
+				})
+			}
+			group.Wait()
+			if program.template.evaluator.environment != nil || program.template.evaluator.callCount != nil {
+				t.Fatal("nominal values or helper call counters retained by the program")
 			}
 		})
-	}
-	group.Wait()
-	if program.template.evaluator.environment != nil {
-		t.Fatal("nominal values retained by the program")
 	}
 }
