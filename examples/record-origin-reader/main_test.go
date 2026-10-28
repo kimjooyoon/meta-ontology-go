@@ -52,7 +52,7 @@ func TestExampleQueryUsesCompleteSourceGraph(t *testing.T) {
 	if err := json.Unmarshal(result.Result, &summary); err != nil {
 		t.Fatal(err)
 	}
-	if len(result.ActivityProjections) != 3 || result.Steps != 173 || result.Budget != 173 || summary.Status != "RESOLVED" || summary.Contributors != 27 || summary.Total != 446 || summary.Reachable != 368 || summary.Versions != 74 || result.ReaderSourceSHA256 != sha(readerSource) || summary.SourceSHA == "" || summary.FlowSHA == "" || summary.ReportSHA == "" {
+	if len(result.ActivityProjections) != 3 || result.Steps != 44 || result.Budget != 44 || summary.Status != "RESOLVED" || summary.Contributors != 27 || summary.Total != 446 || summary.Reachable != 368 || summary.Versions != 74 || result.ReaderSourceSHA256 != sha(readerSource) || summary.SourceSHA == "" || summary.FlowSHA == "" || summary.ReportSHA == "" {
 		t.Fatal("lost work, full input or original identities", out.String())
 	}
 	// This field affects source control. It is independently named here rather
