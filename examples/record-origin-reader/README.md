@@ -1,0 +1,101 @@
+# Gooo가 중첩 레코드의 기원을 읽기
+
+컴파일러가 만든 출처 그래프를 Gooo 프로그램이 읽는다. 어떤 간선을 따라갈지,
+얼마나 나누어 처리할지, 입력의 어느 필드까지 도달했는지는 `main.gooo`가 정한다.
+Go는 원래 노드 번호와 레코드 사전을 페이지로 옮기고 순수 프로그램을 호출한다.
+
+권한 변경 예제의 `Compare`는 두 관찰 레코드를 읽어 결과 레코드를 만든다.
+이 탐색기로 `model-match`를 조회하면 두 관찰의 모델 이름과 요청한 모델,
+모델 소스, 비교 입력의 두 모델 이름이 데이터 기원으로 나온다.
+조건 간선도 선택하면 그 판단에 사용되는 관찰의 완료 여부 등도 따라간다.
+
+## 실행
+
+저장소 루트에서 Go 1.27.3로 실행한다.
+
+```sh
+go run ./examples/record-origin-reader --activity Compare \
+  --field gooo://authorization-delta/comparison/model-match \
+  examples/openfga-model-change/main.gooo
+
+go run ./examples/record-origin-reader --activity Compare \
+  --field gooo://authorization-delta/comparison/model-match \
+  --include-control --include-history \
+  examples/openfga-model-change/main.gooo
+```
+
+`result`에는 상태, 원본 소스·전체 출처 보고서·그래프의 해시, 활동·필드 ID,
+입력 경로와 노드 개수가 있다. `steps`와 `step_budget`은 Gooo가 계획한 작업과
+완료한 작업의 개수다. `activity_projections`는 실제 호출한 활동의 안정 ID를
+해석한 Go 투영의 해시에 연결한다. 경로는 표시 문자열이며 기계적인 정체성은 원본 보고서의
+노드 번호와 안정 ID로 확인한다. 동일 파일 경로로 `body-origins --activity Compare`
+를 실행하면 바인딩한 원본 보고서를 다시 얻을 수 있다.
+
+이 실행 예제는 준비한 순수 프로그램을 해석한다. 각 호출은 독립 입력과 취소
+상태를 가지며, 같은 형식 정보와 투영을 재사용한다. 소스가 바뀌면 새 프로그램을
+준비한다. 모델, 외부 권한 평가기 또는 파일 변경을 호출하는 활동은 없다.
+
+## 원문이 소유하는 단계와 예산
+
+`Begin`이 질의 정체성과 작업 계획을 만들고, `Step`이 다음 활동에 전달한다.
+
+| 단계 | Gooo 활동 | 처리 대상 |
+| --- | --- | --- |
+| LAYOUTS | `CheckLayouts` | 레코드 형식과 필드 ID |
+| VALUES | `CheckValues` | 형식별 정확한 필드 루트 벡터 |
+| NODES | `CheckNodes` | 원래 노드 번호, 비트, 간선 순서 |
+| TRACE | `FollowEdges` | 선택한 출력에서 역순으로 연결 추적 |
+| INPUTS | `CollectInputs` | 선택된 입력의 컨테이너·필드 경로 |
+
+각 단계 호출은 최대 8개 항목을 처리한다. 형식 수를 `L`, 벡터 수를 `V`, 노드 수를
+`N`이라 하면 계획은 `ceil(L/8) + ceil(V/8) + 3*ceil(N/8)`회다. 이것은 작업량의
+개수다. 소요 시간이나 CPU 명령 수를 보장하는 식으로 사용하지 않는다.
+
+512개 방문 여부는 32비트 양의 정수 16개를 담은 불변 레코드 트리로 표현한다.
+단계별 활동을 나누어 `Step`의 정적 호출 상한은 2,654/4,096이다. 배열 원소를
+수정하거나 언어의 전체 호출·반복·노드 한도를 변경하지 않는다.
+
+결과를 누적하는 두 `paths` 필드는 기존 `max_utf8_bytes "65536"`를 원문에 선언한다.
+최초 초안에서 이 선언을 빠뜨려 조건 기원이 포함된 결과가 기본 1,024바이트를
+넘었다. 이 필드의 출력 계약과 전체 입력·전송 예산은 별도로 확인한다.
+
+조회 도중 소스·그래프·보고서·활동·필드·출력 루트·간선 선택이 바뀌면
+`QUERY_CHANGED`, 구조가 맞지 않으면 `UNUSABLE_INPUT`, 선언한 작업을 소진하면
+`WORK_BOUND`다. `Finish`는 `RESOLVED`인 결과에만 경로를 담는다. Go 호출부도
+단계 개수가 증가하는지와 계획이 유지되는지 확인해 정체된 작업을 중단한다.
+
+## 확인한 범위
+
+독립 검사기는 페이지 변환 전 원본 그래프를 직접 읽는다. Gooo가 만든 결과를
+정답으로 삼지 않고, 일부 경로는 원래 선언의 ID로 다시 명시한다.
+
+- 실제 OpenFGA 비교 소스의 출력 15개와 추가 간선 선택 3개: 18개 질의.
+- 별도 필수 레코드 예제의 읽기·양쪽 읽기·다른 필드 보존: 4개 질의.
+- 같은 22개 질의를 해석 실행과 독립적으로 컴파일한 Go 실행에서 비교한다.
+  두 실행 경로가 질의의 분모를 늘리지는 않는다.
+- 잘못된 페이지·벡터·부모 간선·비트, 도중 질의 변경과 부족한 Text 선언을 검사한다.
+- 준비한 프로그램의 동시 입력, 실패 후 재사용과 취소 문맥 분리를 검사한다.
+
+실제 비교 소스의 446개 노드는 출력별로 173단계 안에 처리된다. `model-match`의
+데이터 기원은 입력 8개, 조건 간선을 포함하면 25개, 변경 이력도 포함하면 27개다.
+마지막 조회는 368개 노드와 74개 레코드 버전에 도달한다. 이들은 소스 의존성의
+구조 개수다. 실행 시간·할당량·RAM 개선치는 측정하지 않았다.
+
+```sh
+go test ./examples/record-origin-reader
+go test ./internal/bodycodegen \
+  -run 'TestRecordOriginReaderInterpretedAndNativeQueries|TestFixedProgram'
+```
+
+## 경계와 다음 작업
+
+입력은 컴파일러가 `RESOLVED`로 내보낸 v2 그래프다. 원래 노드 번호와 데이터
+부모 둘, 조건·가드·레코드 버전, 형식·값 사전을 옮긴다. 표현식 위치와 연산자
+등 전체 보고서의 다른 사실은 원본 보고서의 해시로 연결한다. 사전의 형식
+소속을 새로운 데이터 간선으로 해석하지 않는다.
+
+정적 분석은 입력값 없이 가능한 출처를 다룬다. 실제 권한 결과와 오류는
+[OpenFGA 비교 예제](../openfga-model-change/README.md)의 관찰 자료로 구별한다.
+현재 직접 출처 분석은 필수 단일 레코드를 지원한다. 선택 필드·컬렉션의 정적
+출처, 중첩 필드의 실제 실행 출처는 [#1834](https://github.com/kimjooyoon/meta-ontology-go/issues/1834)에 남아 있다.
+평면 그래프의 기존 60노드 입력 형식은 [이전 탐색기](../typed-value-origins/README.md)에서 사용한다.

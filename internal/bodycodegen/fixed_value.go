@@ -32,25 +32,9 @@ func EvaluateFixedValue(ctx context.Context, filename string, source []byte,
 	if err := completeness.CheckJSON(input, 1<<20); err != nil {
 		return FixedValue{}, err
 	}
-	body, err := prepareActivityBody(filename, source, activity)
+	program, err := NewFixedProgram(ctx, filename, source, activity)
 	if err != nil {
 		return FixedValue{}, err
 	}
-	if body.activity.Assembly != nil {
-		return FixedValue{}, fmt.Errorf("fixed evaluation requires a fixed computes activity")
-	}
-	evaluator, err := newCriteriaTupleEvaluator(ctx, body.base.source,
-		body.activity.Name, body.base.report.RecordTypes, nil)
-	if err != nil {
-		return FixedValue{}, err
-	}
-	value, err := evaluator.evaluate(string(input), 0)
-	if err != nil {
-		return FixedValue{}, err
-	}
-	if len(value) > 1<<20 {
-		return FixedValue{}, fmt.Errorf("fixed evaluation output exceeds 1048576 bytes")
-	}
-	return FixedValue{ActivityID: body.activityID, SourceSHA256: digest(source),
-		ProjectionSHA256: digest(body.base.source), Value: value}, nil
+	return program.Evaluate(ctx, input)
 }
