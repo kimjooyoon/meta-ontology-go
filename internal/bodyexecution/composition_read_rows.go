@@ -83,6 +83,12 @@ func (graph compositionGraph) nativeReadFile(raw []byte, suite CompositionCases,
 	} else if file.Constructions != nil || file.ConstructionDropped != nil || construction != nil && len(construction.sites) > 0 {
 		return fail(fmt.Errorf("construction protocol version differs"))
 	}
+	for _, site := range sites {
+		if site.ElementType != "int64" && site.ElementType != "bool" && site.ElementType != "string" {
+			summary.Scope += "; source-declared record elements retain original input backing indexes; complete nested-field dynamic dependencies remain outside this observation"
+			break
+		}
+	}
 	lastCase, lastRoot := -1, -1
 	for _, event := range file.Reads {
 		if event.Case == nil || event.Site == nil || event.Index == nil || event.Length == nil || *event.Case < 0 || *event.Case >= cases || *event.Site < 0 || *event.Site >= len(sites) || *event.Index < 0 || *event.Length < 1 || *event.Length > 256 || *event.Index >= *event.Length {

@@ -92,7 +92,7 @@ func compositionReadSites(prior Composition) ([]CompositionReadSite, error) {
 				return true
 			}
 			start, end := fset.Position(expression.Pos()).Offset, fset.Position(expression.End()).Offset
-			site := CompositionReadSite{RootActivityID: ids[0], ActivityID: ids[1], Kind: kind, ElementType: sequence.Elem().String(), NativeOrdinal: current,
+			site := CompositionReadSite{RootActivityID: ids[0], ActivityID: ids[1], Kind: kind, ElementType: readElementType(sequence.Elem(), prior), NativeOrdinal: current,
 				Expression: prior.Source[start:end], ProjectionSHA256: sha, Start: start, End: end}
 			site.ExpressionID = compositionDigest(site)
 			site.Source = origins[conditionOriginKey{ids[0], ids[1], current}]
@@ -107,7 +107,7 @@ func compositionReadSites(prior Composition) ([]CompositionReadSite, error) {
 		return nil, fmt.Errorf("collection reads exceed 4096 sites")
 	}
 	for _, site := range sites {
-		if site.ActivityID == "" || site.RootActivityID == "" || (site.ElementType != "int64" && site.ElementType != "bool" && site.ElementType != "string") {
+		if site.ActivityID == "" || site.RootActivityID == "" || !supportedReadElementType(site.ElementType, prior) {
 			return nil, fmt.Errorf("collection read lacks a supported source identity or type")
 		}
 	}
@@ -130,7 +130,13 @@ func compositionReadInputs(prior Composition) []CompositionReadInput {
 						continue
 					}
 					kind, _ := compositionRecordFieldScalar(field.TypeID)
-					result = append(result, CompositionReadInput{Presence: field.Presence, ActivityID: node.ID, InputKey: node.inputKey(slot.Port), Port: slot.Port, EntityID: slot.EntityID, FieldID: field.ID, FieldName: field.Name, ElementType: scalarGoType(kind)})
+					elementType := scalarGoType(kind)
+					for _, target := range prior.Plan.Records {
+						if target.ID == field.TypeID {
+							elementType = target.GoName
+						}
+					}
+					result = append(result, CompositionReadInput{Presence: field.Presence, ActivityID: node.ID, InputKey: node.inputKey(slot.Port), Port: slot.Port, EntityID: slot.EntityID, FieldID: field.ID, FieldName: field.Name, ElementType: elementType})
 				}
 			}
 		}
@@ -161,4 +167,27 @@ func addressedCollectionIndexes(file *ast.File) map[*ast.IndexExpr]bool {
 		return true
 	})
 	return result
+}
+
+func readElementType(t types.Type, prior Composition) string {
+	if named, ok := t.(*types.Named); ok {
+		for _, record := range prior.Plan.Records {
+			if record.GoName == named.Obj().Name() {
+				return record.GoName
+			}
+		}
+	}
+	return t.String()
+}
+
+func supportedReadElementType(name string, prior Composition) bool {
+	if name == "int64" || name == "bool" || name == "string" {
+		return true
+	}
+	for _, record := range prior.Plan.Records {
+		if record.GoName == name {
+			return true
+		}
+	}
+	return false
 }

@@ -39,7 +39,7 @@ func validateEntityFieldsProfileField(field Field, registry semantic.TypeRegistr
 	}
 	booleanType := typeID == semantic.BuiltinBooleanTypeID && capabilities.Boolean
 	integerType := typeID == semantic.BuiltinIntegerTypeID && capabilities.Integer
-	if !stringType && !booleanType && !integerType {
+	if !stringType && !booleanType && !integerType && !capabilities.Record {
 		return entityFieldsProfileError(field, EntityFieldsUnsupportedTypeDiagnostic, fmt.Sprintf("resolved type %q is not in the bound profile", typeID))
 	}
 	if normalized.TextBound.IsSet() && (!capabilities.TextBound || !stringType) {

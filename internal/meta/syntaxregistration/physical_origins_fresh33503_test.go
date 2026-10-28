@@ -21,11 +21,19 @@ func TestSameFileRegistryOrigins33503(t *testing.T) {
 	var fused strings.Builder
 	fused.WriteString("package languagesyntax\n")
 	source.activity = "gooo://physical-origins33503/layout"
-	for _, name := range []string{"expectedRegistry", "expectedSyntaxCaseGroup5"} {
-		function, err := source.function(name)
-		if err != nil {
-			t.Fatal(err)
-		}
+	registryFunction, err := source.function("expectedRegistry")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tail, err := source.registryCaseTail(registryFunction)
+	if err != nil {
+		t.Fatal(err)
+	}
+	caseOwner := source.registryLiteralOwner(tail)
+	if caseOwner == nil {
+		t.Fatal("fixture requires an observed direct constructor for the terminal case family")
+	}
+	for _, function := range []*ast.FuncDecl{registryFunction, caseOwner} {
 		fused.WriteString(source.text(function) + "\n")
 		source.replace(function, "")
 	}

@@ -22,6 +22,10 @@ func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, do
 	if err != nil {
 		return semantic.IR{}, err
 	}
+	registry, _, err = documentRecordRegistry(document, registry, support)
+	if err != nil {
+		return semantic.IR{}, err
+	}
 	if err := validateEntityFieldsDocument(document, namespace.String(), registry, support); err != nil {
 		return semantic.IR{}, err
 	}
@@ -44,15 +48,8 @@ func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, do
 			return semantic.IR{}, err
 		}
 	}
-	for _, policy := range document.Policies {
-		if err := checkLowerContext(ctx); err != nil {
-			return semantic.IR{}, err
-		}
-		normalized, err := policy.Normalized()
-		if err != nil {
-			return semantic.IR{}, err
-		}
-		ir.Policies = append(ir.Policies, normalized)
+	if err := lowerDocumentPolicies(ctx, &ir, document.Policies); err != nil {
+		return semantic.IR{}, err
 	}
 	if err := validateLoweredContext(ctx, ir); err != nil {
 		return semantic.IR{}, err
@@ -71,4 +68,18 @@ func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, do
 		return semantic.IR{}, err
 	}
 	return ir, nil
+}
+
+func lowerDocumentPolicies(ctx context.Context, ir *semantic.IR, policies []semantic.Policy) error {
+	for _, policy := range policies {
+		if err := checkLowerContext(ctx); err != nil {
+			return err
+		}
+		normalized, err := policy.Normalized()
+		if err != nil {
+			return err
+		}
+		ir.Policies = append(ir.Policies, normalized)
+	}
+	return nil
 }

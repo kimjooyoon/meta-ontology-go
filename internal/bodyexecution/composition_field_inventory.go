@@ -42,7 +42,8 @@ func compositionFieldBindings(prior Composition) (compositionFieldInventory, err
 		for _, record := range step.Generation.Report.RecordTypes {
 			eligible := true
 			for _, field := range record.Fields {
-				eligible = eligible && field.Presence == "" && field.Cardinality == ""
+				_, scalar := compositionRecordFieldScalar(field.TypeID)
+				eligible = eligible && scalar && field.Presence == "" && field.Cardinality == ""
 			}
 			if eligible && len(record.Fields) > 0 && len(record.Fields) <= bodycodegen.RecordFieldLimit {
 				records[record.GoName] = record

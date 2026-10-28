@@ -57,6 +57,15 @@ partition installation and recovery are separate work.
 
 ### Ordered record collections
 
+Authored `computes` bodies can also receive a source-declared record field such
+as `field items id "urn:items" type Line required many`. The V7 reference profile
+resolves `Line` by its stable declaration ID and closes the transitive selected
+type graph. [The grouped line-item example](../../examples/record-collections/README.md)
+includes semantic checking, package interface inspection, native totals, saved
+replay, nested value paths, and the independent depth and value-node budgets.
+Record-valued assembly evaluation retains its separate existing support boundary.
+
+
 Record fields can declare ordered scalar values with `many`. Gooo `for item in
 input.items` lowers to a typed bounded loop, while candidate evaluation and
 native execution retain the same input order. The development profile supports
