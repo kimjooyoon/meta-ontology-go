@@ -7,24 +7,11 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/textbound"
-	"github.com/kimjooyoon/meta-ontology-go/internal/valuejson"
 )
 
 func decodeRecordCaseField(raw []byte, t types.Type, records []RecordType, bound textbound.UTF8) (any, error) {
-	if err := bound.Validate(); err != nil {
-		return nil, err
-	}
-	if !bound.IsSet() {
-		return decodeRecordCaseValue(raw, t, records)
-	}
-	if sequence, ok := t.(*types.Slice); ok {
-		return decodeRecordSequenceWithBound(raw, sequence, records, bound)
-	}
-	maximum, err := bound.Resolve(0)
-	if err != nil || t != types.Typ[types.String] {
-		return nil, fmt.Errorf("max_utf8_bytes requires a Text field")
-	}
-	return valuejson.DecodeText(raw, maximum)
+	decoder := newRecordCaseDecoder(t, records)
+	return decoder.field(raw, t, bound)
 }
 
 func validateRecordOutputBounds(value recordBodyValue, record RecordType) error {
