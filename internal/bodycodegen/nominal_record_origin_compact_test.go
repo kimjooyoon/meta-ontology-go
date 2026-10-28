@@ -311,8 +311,7 @@ func TestCompactNodeMetadataFitsExistingPadding(t *testing.T) {
 		{reflect.TypeFor[recordFlowBuilder](), "compactRecords"},
 	} {
 		var baseline []reflect.StructField
-		for i := range row.typeInfo.NumField() {
-			field := row.typeInfo.Field(i)
+		for field := range row.typeInfo.Fields() {
 			if field.Name != row.field {
 				baseline = append(baseline, field)
 			}
