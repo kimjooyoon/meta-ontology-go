@@ -20,7 +20,8 @@ func nativeCapture(t *testing.T, name string) Capture {
 	dir := t.TempDir()
 	fixture := "package subject\nimport \"testing\"\nfunc TestPass(t *testing.T) {}\n" +
 		"func TestDeliberateFail(t *testing.T) { t.Fatal(\"intentional control\") }\n" +
-		"func TestSkip(t *testing.T) { t.Skip(\"declared skip\") }\n"
+		"func TestSkip(t *testing.T) { t.Skip(\"declared skip\") }\n" +
+		"func TestNested(t *testing.T) { t.Run(\"leaf\", func(t *testing.T) {}) }\n"
 	module := "module declared-test-subject\n\ngo 1.27.3\n"
 	for path, text := range map[string]string{"go.mod": module, "subject_test.go": fixture} {
 		if err := os.WriteFile(filepath.Join(dir, path), []byte(text), 0600); err != nil {
@@ -65,6 +66,7 @@ func TestRealNamedGoEventsUseSourceAssessment(t *testing.T) {
 		{"TestDeliberateFail", "TestDeliberateFail", "fail", "MATCHED_EXPECTATION", 1, 1, 1, true, true},
 		{"TestAbsent", "TestPass", "pass", "NO_TESTS_OBSERVED", 0, 0, 0, false, false},
 		{"TestSkip", "TestSkip", "skip", "MATCHED_EXPECTATION", 0, 1, 1, false, true},
+		{"TestNested", "TestNested/leaf", "pass", "TEST_SET_MISMATCH", 0, 2, 1, false, false},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			capture := nativeCapture(t, row.name)
@@ -86,6 +88,9 @@ func TestRealNamedGoEventsUseSourceAssessment(t *testing.T) {
 			if !bytes.Equal(before, capture.Stdout) {
 				t.Fatal("assessment rewrote original observations")
 			}
+			if row.name == "TestNested" {
+				assertAllNamedInventory(t, capture, plan)
+			}
 			if row.failure {
 				capture.Stdout = append(bytes.Clone(capture.Stdout), '{')
 				partial, err := Assess(context.Background(), plan, capture)
@@ -100,5 +105,30 @@ func TestRealNamedGoEventsUseSourceAssessment(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func assertAllNamedInventory(t *testing.T, capture Capture, leafPlan json.RawMessage) {
+	t.Helper()
+	var plan map[string]any
+	if err := json.Unmarshal(leafPlan, &plan); err != nil {
+		t.Fatal(err)
+	}
+	plan["tests"] = []map[string]string{
+		{"test_id": "TestNested/leaf", "outcome": "pass"}, {"test_id": "TestNested", "outcome": "pass"},
+	}
+	raw, err := json.Marshal(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := Assess(context.Background(), raw, capture)
+	var value struct {
+		State                       string
+		Declared, Observed, Matched int
+		Accepted                    bool `json:"expectation_observed"`
+	}
+	if err != nil || json.Unmarshal(result.Value, &value) != nil || value.State != "MATCHED_EXPECTATION" ||
+		value.Declared != 2 || value.Observed != 2 || value.Matched != 2 || !value.Accepted {
+		t.Fatal("explicit all-node inventory did not retain both parent and leaf", value, err)
 	}
 }

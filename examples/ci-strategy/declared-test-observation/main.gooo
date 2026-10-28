@@ -43,6 +43,13 @@ entity Assessment id "urn:declared-tests:assessment" fields {
  field expectation_observed id "urn:declared-tests:assessment/expectation-observed" type boolean required one
 }
 
+entity Text id "urn:gooo:type:string"
+entity Boolean id "urn:gooo:type:boolean"
+
+activity KnownOutcome(value Text) -> Boolean id "urn:declared-tests:known-outcome" computes `
+ return value == "pass" || value == "fail" || value == "skip"
+`
+
 # The plan, process result and named test observations are separate inputs.
 # argv_captured describes observation scope; it is never invented from exit 0.
 activity Assess(Trial) -> Assessment id "urn:declared-tests:assess" computes `
@@ -58,7 +65,7 @@ activity Assess(Trial) -> Assessment id "urn:declared-tests:assess" computes `
   return result
  }
  for expected in input.plan.tests {
-  if expected.test_id == "" || (expected.outcome != "pass" && expected.outcome != "fail" && expected.outcome != "skip") { return result }
+  if expected.test_id == "" || !KnownOutcome(expected.outcome) { return result }
   let copies = 0
   for other in input.plan.tests { if other.test_id == expected.test_id { copies = copies + 1 } }
   if copies != 1 { return result }
@@ -75,7 +82,7 @@ activity Assess(Trial) -> Assessment id "urn:declared-tests:assess" computes `
  if !input.observation.stream_complete { return result }
  result.state = "INVALID_OBSERVATION"
  for observed in input.observation.tests {
-  if observed.test_id == "" || (observed.outcome != "pass" && observed.outcome != "fail" && observed.outcome != "skip") { return result }
+  if observed.test_id == "" || !KnownOutcome(observed.outcome) { return result }
   let copies = 0
   for other in input.observation.tests { if other.test_id == observed.test_id { copies = copies + 1 } }
   if copies != 1 { return result }
