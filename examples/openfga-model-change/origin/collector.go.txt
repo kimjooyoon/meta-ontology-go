@@ -1,0 +1,118 @@
+package main
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"os"
+	"time"
+
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	parser "github.com/openfga/language/pkg/go/transformer"
+
+	"github.com/openfga/openfga/pkg/server"
+	"github.com/openfga/openfga/pkg/storage/memory"
+	"github.com/openfga/openfga/pkg/tuple"
+)
+
+func digest(b []byte) string {
+	h := sha256.Sum256(b)
+	return "sha256:" + hex.EncodeToString(h[:])
+}
+
+func jsonMessage(m proto.Message) json.RawMessage {
+	b, err := (protojson.MarshalOptions{EmitUnpopulated: true}).Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func run() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	s, err := server.NewServerWithOpts(server.WithDatastore(memory.New()))
+	if err != nil {
+		return err
+	}
+	defer s.Close()
+	store, err := s.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: "gooo-controlled-model-comparison"})
+	if err != nil {
+		return err
+	}
+	const prefix = "model\n  schema 1.1\ntype user\ntype group\n  relations\n    define member: [user]\ntype document\n  relations\n    define editor: [user]\n    define viewer: "
+	dsls := []string{prefix + "[user, group#member]\n", prefix + "[user, group#member] or editor\n"}
+	models := make([]map[string]any, 0, 2)
+	modelIDs := make([]string, 0, 2)
+	for _, dsl := range dsls {
+		m := parser.MustTransformDSLToProto(dsl)
+		res, err := s.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{StoreId: store.GetId(), SchemaVersion: m.GetSchemaVersion(), TypeDefinitions: m.GetTypeDefinitions(), Conditions: m.GetConditions()})
+		if err != nil {
+			return err
+		}
+		modelIDs = append(modelIDs, res.GetAuthorizationModelId())
+		models = append(models, map[string]any{"id": res.GetAuthorizationModelId(), "dsl": dsl, "dsl_sha256": digest([]byte(dsl)), "parsed_model": jsonMessage(m)})
+	}
+	stored := []*openfgav1.TupleKey{
+		tuple.NewTupleKey("document:plan", "editor", "user:alice"),
+		tuple.NewTupleKey("document:plan", "viewer", "group:eng#member"),
+		tuple.NewTupleKey("group:eng", "member", "user:bob"),
+	}
+	write := &openfgav1.WriteRequest{StoreId: store.GetId(), AuthorizationModelId: modelIDs[0], Writes: &openfgav1.WriteRequestWrites{TupleKeys: stored}}
+	_, err = s.Write(ctx, write)
+	if err != nil {
+		return err
+	}
+	// This owned in-memory fixture makes no further tuple writes. A shared live
+	// store ID alone would not establish that two checks saw the same data.
+	type checkCase struct {
+		name, user, relation string
+		contextual           []*openfgav1.TupleKey
+	}
+	cases := []checkCase{
+		{"editor_gains_viewer", "user:alice", "viewer", nil},
+		{"group_member_remains_allowed", "user:bob", "viewer", nil},
+		{"unrelated_user_remains_denied", "user:carol", "viewer", nil},
+		{"contextual_membership_both_allowed", "user:carol", "viewer", []*openfgav1.TupleKey{tuple.NewTupleKey("group:eng", "member", "user:carol")}},
+		{"unknown_relation_is_error", "user:alice", "owner", nil},
+	}
+	observations := make([]map[string]any, 0, len(cases))
+	for _, c := range cases {
+		pair := make([]map[string]any, 0, 2)
+		for _, id := range modelIDs {
+			req := &openfgav1.CheckRequest{StoreId: store.GetId(), AuthorizationModelId: id, TupleKey: &openfgav1.CheckRequestTupleKey{Object: "document:plan", Relation: c.relation, User: c.user}}
+			if len(c.contextual) > 0 {
+				req.ContextualTuples = &openfgav1.ContextualTupleKeys{TupleKeys: c.contextual}
+			}
+			requestBytes := jsonMessage(req)
+			res, err := s.Check(ctx, req)
+			o := map[string]any{"request": requestBytes, "request_sha256": digest(requestBytes), "invoked": true, "completed": true, "model_id": id, "response_present": res != nil, "error_present": err != nil}
+			if err != nil {
+				o["error"] = err.Error()
+				o["grpc_code"] = status.Code(err).String()
+			}
+			if res != nil {
+				o["response"] = jsonMessage(res)
+			}
+			pair = append(pair, o)
+		}
+		observations = append(observations, map[string]any{"case": c.name, "old": pair[0], "new": pair[1]})
+	}
+	out := map[string]any{"schema": "gooo/openfga-controlled-observations/v1", "at_utc": time.Now().UTC().Format(time.RFC3339Nano), "execution": "owned in-process OpenFGA server; in-memory datastore; no HTTP listener or external endpoint", "store_id": store.GetId(), "models": models, "stored_tuple_write_request": jsonMessage(write), "no_tuple_writes_during_checks": true, "observations": observations, "is_actual_Gooo_execution": false, "is_production_safety_proof": false}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(out)
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
