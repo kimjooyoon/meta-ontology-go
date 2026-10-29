@@ -55,7 +55,8 @@ can carry `PROGRESS`, and input-only `OBSERVED` has no expected-output score.
 Send `close` after reading the final response for explicit cleanup. Stdin EOF
 finishes the last request before releasing the owner. SIGINT or SIGTERM cancels
 active work and releases owned native resources; it also interrupts an idle
-stdio input wait. A close frame is processed between requests. The owner keeps
+stdio input or output wait by closing its cancellable streams. A close frame is
+processed between requests. The owner keeps
 at most one compiled native artifact. Cleanup errors are returned, and only
 owned temporary workspaces are removed.
 

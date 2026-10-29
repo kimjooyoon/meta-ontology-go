@@ -53,8 +53,10 @@ func servePackageSession(ctx context.Context, input io.Reader, reader SourceRead
 	owner := workspaceexecution.NewExecutor()
 	stop := context.AfterFunc(ctx, func() {
 		_ = owner.Close()
-		if closer, ok := input.(io.Closer); ok {
-			_ = closer.Close()
+		for _, stream := range []any{input, stdout, stderr} {
+			if closer, ok := stream.(io.Closer); ok {
+				_ = closer.Close()
+			}
 		}
 	})
 	defer stop()
