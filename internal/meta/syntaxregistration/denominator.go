@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/ast"
 	"strconv"
-	"strings"
 )
 
 type boundary struct {
@@ -68,38 +67,22 @@ func digestName(version int) string   { return fmt.Sprintf("DenominatorMigration
 func evidenceName(version int) string { return fmt.Sprintf("embeddedDenominatorV%d", version) }
 
 func generateAdmission(source *goSource, version, capability int) error {
-	decode, err := source.function("decodeDenominator")
+	trial := *source
+	trial.edits = append([]sourceEdit(nil), source.edits...)
+	sets, err := readAdmissionSets(&trial)
 	if err != nil {
 		return err
 	}
-	header, err := source.function("validateDenominator")
-	if err != nil {
+	for _, set := range sets {
+		if err := set.appendVersion(&trial, version); err != nil {
+			return err
+		}
+	}
+	if err := pinPreviousSyntaxTarget(&trial, version-1, capability); err != nil {
 		return err
 	}
-	digests, headers := 0, 0
-	ast.Inspect(decode, func(node ast.Node) bool {
-		check, ok := node.(*ast.IfStmt)
-		if ok && strings.Contains(source.text(check.Cond), "digest != DenominatorDigest") {
-			source.replace(check.Cond, "("+source.text(check.Cond)+") && digest != "+digestName(version))
-			digests++
-			return false
-		}
-		return true
-	})
-	ast.Inspect(header, func(node ast.Node) bool {
-		assignment, ok := node.(*ast.AssignStmt)
-		if ok && len(assignment.Lhs) == 1 && source.text(assignment.Lhs[0]) == "validHeader" && len(assignment.Rhs) == 1 {
-			extension := fmt.Sprintf(" || (value.DenominatorID == %q && value.Version == %d)", denominatorID(version), version)
-			source.replace(assignment.Rhs[0], "("+source.text(assignment.Rhs[0])+")"+extension)
-			headers++
-			return false
-		}
-		return true
-	})
-	if digests != 1 || headers != 1 {
-		return fmt.Errorf("denominator admission anchors are not exact")
-	}
-	return pinPreviousSyntaxTarget(source, version-1, capability)
+	source.edits = trial.edits
+	return nil
 }
 
 func generateDigest(source *goSource, previous []byte, version int, next []byte) error {

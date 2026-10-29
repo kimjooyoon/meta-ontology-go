@@ -104,7 +104,7 @@ func TestRegistrationContractRejectsUnpinnedInputRoute(t *testing.T) {
 		{"RegisterSyntaxCapability(PinnedRegistrationInput)", "RegisterSyntaxCapability(RegistrationRequest)"},
 		{"GenerateSyntaxCorpus(PinnedRegistrationInput)", "GenerateSyntaxCorpus(RegistrationRequest)"},
 		{"syntax.register:v2", "syntax.register:v1"},
-		{"syntax.history.append:v1", "syntax.history.append:v0"},
+		{"syntax.history.append:v2", "syntax.history.append:v1"},
 		{"syntax.selection.append:v1", "syntax.selection.append:v0"},
 	} {
 		source := bytes.Replace(contractSource, []byte(mutation.before), []byte(mutation.after), 1)
