@@ -104,7 +104,9 @@ versions. It normalizes them into 16-case helpers and appends only to the termin
 helper's physical owner. A full helper gains one successor. Historical JSON,
 digest constants, version/target links and earlier helpers keep their identities.
 Unsupported predicates, duplicate versions, inconsistent inventories, ambiguous
-owners and malformed continuations return without adding partial edits.
+owners and malformed continuations return without adding partial edits. The
+decoder and header roots retain their declared parameter bindings; local digest
+shadowing and guard initializers are refused before predicates move into helpers.
 
 The current normalization retains all 91 digest and 91 header memberships from
 the V111 source at `5ea307130f08b2d299d007c1f111def66e19f2b8`. A frozen copy in

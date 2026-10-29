@@ -6,6 +6,10 @@ import (
 )
 
 func TestBoundedAdmissionOracle(t *testing.T) {
+ if !legacyAdmissionWithLocalShadow(DenominatorMigrationV111Digest) ||
+  !acceptedDenominatorDigestChunk0(DenominatorMigrationV111Digest) {
+  t.Fatal("local-shadow control did not distinguish original binding from package binding")
+ }
  for _, original := range []string{DIGEST_VALUES} {
   for _, digest := range []string{original, "changed:" + original, "", original + "\x00"} {
    old := LEGACY_DIGEST
@@ -23,4 +27,9 @@ func TestBoundedAdmissionOracle(t *testing.T) {
    if old != current { t.Fatalf("header admission changed: %d/%q: %v != %v", version, identity, old, current) }
   }
  }
+}
+
+func legacyAdmissionWithLocalShadow(digest string) bool {
+ const DenominatorMigrationV111Digest = DenominatorMigrationV110Digest
+ return LEGACY_DIGEST
 }

@@ -35,22 +35,26 @@ func readAdmissionSets(source *goSource) ([]admissionSet, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := checkAdmissionRootBindings(source, decode, validate); err != nil {
+		return nil, err
+	}
 	var digests []ast.Expr
-	ast.Inspect(decode, func(node ast.Node) bool {
-		if check, ok := node.(*ast.IfStmt); ok && (strings.Contains(source.text(check.Cond), "digest != DenominatorDigest") ||
+	for _, statement := range decode.Body.List {
+		if check, ok := statement.(*ast.IfStmt); ok && (strings.Contains(source.text(check.Cond), "digest != DenominatorDigest") ||
 			strings.Contains(source.text(check.Cond), digest.prefix)) {
+			if check.Init != nil {
+				return nil, fmt.Errorf("denominator admission guard has a local initializer")
+			}
 			digests = append(digests, check.Cond)
 		}
-		return true
-	})
+	}
 	var headers []ast.Expr
-	ast.Inspect(validate, func(node ast.Node) bool {
-		if assignment, ok := node.(*ast.AssignStmt); ok && len(assignment.Lhs) == 1 &&
+	for _, statement := range validate.Body.List {
+		if assignment, ok := statement.(*ast.AssignStmt); ok && len(assignment.Lhs) == 1 &&
 			source.text(assignment.Lhs[0]) == "validHeader" && len(assignment.Rhs) == 1 {
 			headers = append(headers, assignment.Rhs[0])
 		}
-		return true
-	})
+	}
 	if len(digests) != 1 || len(headers) != 1 {
 		return nil, fmt.Errorf("denominator admission anchors are not exact")
 	}

@@ -32,6 +32,19 @@ func TestAdmissionUnsupportedPredicatesHaveNoPartialEdits(t *testing.T) {
 	}
 }
 
+func TestAdmissionRejectsLocallyShadowedDigestBindings(t *testing.T) {
+	raw := string(admissionFixture(t))
+	t.Run("function-local", func(t *testing.T) {
+		altered := strings.Replace(raw, "digest := digestBytes(raw)",
+			"digest := digestBytes(raw)\nconst DenominatorDigest = DenominatorMigrationDigest", 1)
+		assertAdmissionRefusal(t, raw, altered)
+	})
+	t.Run("if-initializer", func(t *testing.T) {
+		altered := strings.Replace(raw, "\tif (", "\tif DenominatorDigest := DenominatorMigrationDigest; (", 1)
+		assertAdmissionRefusal(t, raw, altered)
+	})
+}
+
 func TestAdmissionUnsupportedHelpersHaveNoPartialEdits(t *testing.T) {
 	raw := string(normalizedAdmissionFixture(t)[closureRoot+"denominator.go"])
 	for _, altered := range []string{
