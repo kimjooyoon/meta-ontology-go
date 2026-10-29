@@ -16,7 +16,8 @@ func TestSourceFillReplayPreservesHistoricalAdvisoryExclusions(t *testing.T) {
 			source, prior := sourceFillReplayFixture(t, fixture.name, fixture.activity)
 			for _, historical := range []string{
 				"calls, loops, imports, external effects, optional-field synthesis and repeated record fields",
-				"recursive, indirect, external and assembling-callee calls; loops, imports, external effects, optional-field synthesis and repeated record fields",
+				"recursive, indirect, external and assembling-callee calls; " +
+					"loops, imports, external effects, optional-field synthesis and repeated record fields",
 			} {
 				prior.Report.UnsupportedConstructs = historical
 				before, err := json.Marshal(prior)

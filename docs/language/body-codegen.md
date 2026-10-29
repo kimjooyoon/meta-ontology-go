@@ -401,6 +401,11 @@ an input is accepted. Bounded iteration, repeated record fields and fixed pure
 callees are supported within those checks. Structural construct and semantic-unit
 counts describe lowering coverage for the accepted source; finite output cases
 and their observed results remain separate correctness observations.
+Saved source-fill replay preserves the original explanation bytes in its
+observation while comparing the source, typed projection, candidate decisions and
+finite results. A changed `unsupported_constructs` explanation does not prevent
+replay; changed source identities, generated code, types or finite results still
+do. Replay leaves the caller's retained observation unchanged.
 The generated result is written to stdout; this command does not
 mutate the repository.
 
