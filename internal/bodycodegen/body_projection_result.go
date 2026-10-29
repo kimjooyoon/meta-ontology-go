@@ -31,10 +31,8 @@ func (p preparedBody) selectedResult(sourceDigest string, choice bodyRouteChoice
 	result.report.RouteDecisionLatencyMS, result.report.CandidateRoutes = choice.latencyMS, choice.ids
 	result.report.DeterministicReplay = result.report.GeneratedDigest == result.report.ReplayDigest
 	result.report.RepositoryWrites = 0
-	result.report.UnsupportedConstructs = "calls, loops, imports, external effects, optional-field synthesis and repeated record fields"
-	if result.report.CallClosure != nil {
-		result.report.UnsupportedConstructs = "recursive, indirect, external and assembling-callee calls; loops, imports, external effects, optional-field synthesis and repeated record fields"
-	}
+	result.report.UnsupportedConstructs = "Known exclusions: recursive, indirect, external and assembling-callee calls; " +
+		"unbounded iteration, body-level imports and external effects"
 	populateCompletenessReceipt(&result.report, "")
 	return Result{Report: result.report, Source: string(result.source)}, nil
 }

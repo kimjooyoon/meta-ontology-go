@@ -395,6 +395,12 @@ and replay; see [pure activity reuse](../../examples/pure-activity-calls/README.
 its pure callees receive arguments from expressions. Recursive, indirect,
 external and assembling-callee calls and external effects fail closed.
 Bounded counted and collection loops follow their declared body profiles.
+The report's `unsupported_constructs` text gives examples of excluded forms.
+Source parsing, typing, record bounds and call-closure checks determine whether
+an input is accepted. Bounded iteration, repeated record fields and fixed pure
+callees are supported within those checks. Structural construct and semantic-unit
+counts describe lowering coverage for the accepted source; finite output cases
+and their observed results remain separate correctness observations.
 The generated result is written to stdout; this command does not
 mutate the repository.
 
