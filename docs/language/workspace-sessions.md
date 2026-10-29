@@ -6,11 +6,11 @@ choose the next replay input before sending another request. The source remains
 in `.gooo`; current source files and inputs are loaded for every request.
 
 From the compiler repository root, this complete stream executes an existing
-Gooo record program and then releases its native workspace:
+Gooo workspace and then releases its native workspace:
 
 ```sh
 gooo package session <<'JSON'
-{"schema":"gooo/workspace-session-request/v1","id":"first","operation":"execute","arguments":["--cases","examples/record-collections/cases.json","examples/record-collections/gooo.workspace.json"]}
+{"schema":"gooo/workspace-session-request/v1","id":"first","operation":"execute","arguments":["--cases","examples/workspace-input-observations/cases.json","examples/workspace-input-observations/gooo.workspace.json"]}
 {"schema":"gooo/workspace-session-request/v1","id":"finish","operation":"close"}
 JSON
 ```

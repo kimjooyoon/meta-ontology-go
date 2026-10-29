@@ -378,6 +378,11 @@ local model. Replay runs the saved program on new rows with zero new inference.
 Native execution uses Go 1.27.3; pass `--go /path/to/go1.27.3` when needed.
 See [project starters](docs/language/project-starters.md) for the complete flow.
 
+The development CLI also offers [`gooo package session`](docs/language/workspace-sessions.md)
+for callers that inspect a receipt before choosing the next input. It retains
+one executable owner while each request reads current sources and inputs and
+performs two fresh native runs.
+
 Gooo 0.6.17 also supports `gooo package construct`: caller examples
 can reconsider assembly choices in imported libraries. The
 [package construction example](examples/package-caller-construction/README.md)
