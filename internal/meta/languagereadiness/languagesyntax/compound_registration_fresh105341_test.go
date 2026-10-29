@@ -1,7 +1,6 @@
 package languagesyntax
 
 import (
-	"bytes"
 	"encoding/json"
 	"os"
 	"testing"
@@ -30,9 +29,7 @@ func TestCompoundSourceRegistration105341(t *testing.T) {
 	if len(registry.Cases) <= len(prior.Cases) {
 		t.Fatalf("compound registration missing after %d prior cases", len(prior.Cases))
 	}
-	a, _ := json.Marshal(prior.Cases)
-	b, _ := json.Marshal(registry.Cases[:len(prior.Cases)])
-	if !bytes.Equal(a, b) {
+	if !historicalSyntaxCasesRetained(prior.Cases, registry.Cases) {
 		t.Fatal("prior source identities changed")
 	}
 	definition := registry.Cases[len(prior.Cases)]

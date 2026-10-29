@@ -45,8 +45,11 @@ func packageOriginQuery(flags map[string]string) (bodyexecution.NativeOriginQuer
 }
 
 func configurePackageOriginShape(query bodyexecution.NativeOriginQuery, shape string, defaultKind bool) (bodyexecution.NativeOriginQuery, error) {
-	if shape != "" && shape != "rows" && shape != "local-fill-columns" && shape != "field-lineage-columns" && shape != "field-local-columns" && shape != "field-parent-columns" && shape != "local-version-columns" && shape != "local-use-columns" {
-		return query, fmt.Errorf("origin shape must be rows, local-fill-columns, field-lineage-columns, field-local-columns, field-parent-columns, local-version-columns or local-use-columns")
+	switch shape {
+	case "", "rows", "local-fill-columns", "field-lineage-columns", "field-local-columns",
+		"field-local-columns-v2", "field-parent-columns", "local-version-columns", "local-use-columns":
+	default:
+		return query, fmt.Errorf("origin shape must be rows, local-fill-columns, field-lineage-columns, field-local-columns, field-local-columns-v2, field-parent-columns, local-version-columns or local-use-columns")
 	}
 	if shape == "local-use-columns" {
 		if defaultKind {
@@ -65,7 +68,7 @@ func configurePackageOriginShape(query bodyexecution.NativeOriginQuery, shape st
 			return query, fmt.Errorf("local-fill-columns requires local-fill-fragments")
 		}
 	}
-	if shape == "field-lineage-columns" || shape == "field-local-columns" || shape == "field-parent-columns" {
+	if shape == "field-lineage-columns" || shape == "field-local-columns" || shape == "field-local-columns-v2" || shape == "field-parent-columns" {
 		if defaultKind {
 			query.Kind = "field-uses"
 		}
@@ -75,8 +78,8 @@ func configurePackageOriginShape(query bodyexecution.NativeOriginQuery, shape st
 }
 
 func validatePackageOriginShape(query bodyexecution.NativeOriginQuery, shape string) error {
-	if shape == "field-local-columns" && query.Kind != "field-uses" {
-		return fmt.Errorf("field-local-columns requires field-uses")
+	if (shape == "field-local-columns" || shape == "field-local-columns-v2") && query.Kind != "field-uses" {
+		return fmt.Errorf("%s requires field-uses", shape)
 	}
 	if (shape == "field-lineage-columns" || shape == "field-parent-columns") && (query.Kind != "field-uses" || query.Limit != 1) {
 		return fmt.Errorf("%s requires field-uses and limit1", shape)
@@ -117,19 +120,8 @@ func packageOriginInputsWithShape(raw []byte, target packageruntime.EntrySpec, q
 			row, err = json.Marshal(columns)
 			rows = []json.RawMessage{row}
 		}
-	} else if shape == "field-local-columns" {
-		var columns []bodyexecution.BridgeLineageColumns
-		columns, origin, err = bodyexecution.SelectRecordedBridgeLineagePage(runtime, query)
-		if err == nil {
-			for _, column := range columns {
-				var row []byte
-				row, err = json.Marshal(column)
-				if err != nil {
-					break
-				}
-				rows = append(rows, row)
-			}
-		}
+	} else if shape == "field-local-columns" || shape == "field-local-columns-v2" {
+		rows, origin, err = packageBridgeOriginRows(runtime, query, shape == "field-local-columns-v2")
 	} else if shape == "field-parent-columns" {
 		var columns bodyexecution.FieldParentColumns
 		columns, origin, err = bodyexecution.SelectRecordedFieldParent(runtime, query, workspaceDigest(raw))

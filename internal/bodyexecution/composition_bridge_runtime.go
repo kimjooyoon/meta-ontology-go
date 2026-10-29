@@ -19,35 +19,40 @@ type CompositionBridgeWindow struct {
 }
 
 type CompositionBridgeTrace struct {
-	Locals      []CompositionBridgeWindow `json:"locals"`
-	Fields      []CompositionBridgeWindow `json:"fields"`
-	LocalClocks []int                     `json:"local_clocks"`
-	FieldClocks []int                     `json:"field_clocks"`
-	Completions int                       `json:"completions"`
+	Locals       []CompositionBridgeWindow `json:"locals"`
+	Fields       []CompositionBridgeWindow `json:"fields"`
+	LocalClocks  []int                     `json:"local_clocks"`
+	FieldClocks  []int                     `json:"field_clocks"`
+	Completions  int                       `json:"completions"`
+	ElementReads []int                     `json:"element_reads,omitempty"`
 }
 
 type CompositionBridgeSummary struct {
-	Schema         string `json:"schema"`
-	Status         string `json:"status"`
-	SHA256         string `json:"sha256"`
-	MetadataSHA256 string `json:"metadata_sha256"`
-	FieldWindows   int    `json:"field_windows"`
-	LocalWindows   int    `json:"local_windows"`
-	FieldUses      int    `json:"field_uses"`
-	LocalUses      int    `json:"local_uses"`
-	CrossReads     int    `json:"cross_window_reads"`
-	Interrupted    int    `json:"interrupted_windows"`
-	Completions    int    `json:"completions"`
-	Scope          string `json:"scope"`
+	Schema             string `json:"schema"`
+	Status             string `json:"status"`
+	SHA256             string `json:"sha256"`
+	MetadataSHA256     string `json:"metadata_sha256"`
+	FieldWindows       int    `json:"field_windows"`
+	LocalWindows       int    `json:"local_windows"`
+	FieldUses          int    `json:"field_uses"`
+	LocalUses          int    `json:"local_uses"`
+	CrossReads         int    `json:"cross_window_reads"`
+	Interrupted        int    `json:"interrupted_windows"`
+	Completions        int    `json:"completions"`
+	Scope              string `json:"scope"`
+	ElementLinks       int    `json:"element_links,omitempty"`
+	MissingElements    int    `json:"missing_element_links,omitempty"`
+	UnresolvedElements int    `json:"unresolved_element_origins,omitempty"`
 }
 
 type nativeBridgeFile struct {
-	Schema      string  `json:"schema"`
-	Locals      [][]int `json:"locals"`
-	Fields      [][]int `json:"fields"`
-	LocalClocks []int   `json:"local_clocks"`
-	FieldClocks []int   `json:"field_clocks"`
-	Completions []int   `json:"completions"`
+	Schema       string  `json:"schema"`
+	Locals       [][]int `json:"locals"`
+	Fields       [][]int `json:"fields"`
+	LocalClocks  []int   `json:"local_clocks"`
+	FieldClocks  []int   `json:"field_clocks"`
+	Completions  []int   `json:"completions"`
+	ElementReads []int   `json:"element_reads,omitempty"`
 }
 
 type compositionBridgeRun struct {

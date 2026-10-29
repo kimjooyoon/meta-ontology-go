@@ -47,5 +47,5 @@ for observation in {1..16}; do
   if test "$code" -ne 75; then exit "$code"; fi
   if test "$observation" -lt 16; then sleep 1; fi
 done
-printf 'Current job was not observed in progress within 16 snapshots; no clock admitted.\n' >&2
+printf 'Runner execution metadata did not stabilize within 16 snapshots; no clock admitted.\n' >&2
 exit 75

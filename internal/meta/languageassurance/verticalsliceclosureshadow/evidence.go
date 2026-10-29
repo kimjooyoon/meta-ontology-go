@@ -112,7 +112,10 @@ func activeDenominator() []byte {
 	if value := activeDenominatorChunk3(languagesyntax.FixedCapabilityTotal); value != nil {
 		return value
 	}
-	return activeDenominatorChunk4(languagesyntax.FixedCapabilityTotal)
+	if value := activeDenominatorChunk4(languagesyntax.FixedCapabilityTotal); value != nil {
+		return value
+	}
+	return activeDenominatorChunk5(languagesyntax.FixedCapabilityTotal)
 }
 
 func activeDenominatorDigest() string {
@@ -128,7 +131,10 @@ func activeDenominatorDigest() string {
 	if value := activeDenominatorDigestChunk3(languagesyntax.FixedCapabilityTotal); value != "" {
 		return value
 	}
-	return activeDenominatorDigestChunk4(languagesyntax.FixedCapabilityTotal)
+	if value := activeDenominatorDigestChunk4(languagesyntax.FixedCapabilityTotal); value != "" {
+		return value
+	}
+	return activeDenominatorDigestChunk5(languagesyntax.FixedCapabilityTotal)
 }
 
 type assuranceSummary struct {
@@ -725,3 +731,50 @@ var embeddedDenominatorV104 []byte
 
 //go:embed evidence/denominator-v105.json
 var embeddedDenominatorV105 []byte
+
+//go:embed evidence/denominator-v106.json
+var embeddedDenominatorV106 []byte
+
+func activeDenominatorDigestChunk5(total int) string {
+	switch total {
+	case 142:
+		return DenominatorMigrationV106Digest
+	case 143:
+		return DenominatorMigrationV107Digest
+	case 144:
+		return DenominatorMigrationV108Digest
+	case 145:
+		return DenominatorMigrationV109Digest
+	case 146:
+		return DenominatorMigrationV110Digest
+	}
+	return ""
+}
+
+func activeDenominatorChunk5(total int) []byte {
+	switch total {
+	case 142:
+		return embeddedDenominatorV106
+	case 143:
+		return embeddedDenominatorV107
+	case 144:
+		return embeddedDenominatorV108
+	case 145:
+		return embeddedDenominatorV109
+	case 146:
+		return embeddedDenominatorV110
+	}
+	return nil
+}
+
+//go:embed evidence/denominator-v107.json
+var embeddedDenominatorV107 []byte
+
+//go:embed evidence/denominator-v108.json
+var embeddedDenominatorV108 []byte
+
+//go:embed evidence/denominator-v109.json
+var embeddedDenominatorV109 []byte
+
+//go:embed evidence/denominator-v110.json
+var embeddedDenominatorV110 []byte

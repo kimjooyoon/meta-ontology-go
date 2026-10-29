@@ -5,8 +5,9 @@ import "fmt"
 // Layout fields keep their authored order and stable IDs. Version values are
 // symbolic node references, not JSON values or a value-equality interning key.
 type RecordFlowRecordField struct {
-	ID     string `json:"id"`
-	TypeID string `json:"type_id"`
+	ID          string `json:"id"`
+	TypeID      string `json:"type_id"`
+	Cardinality string `json:"cardinality,omitempty"`
 }
 type RecordFlowRecordLayout struct {
 	ID     string                  `json:"id"`
@@ -26,7 +27,7 @@ type recordFlowValueKey struct {
 }
 
 func recordFlowNeedsVersionFeatures(flow *RecordValueFlow) bool {
-	return flow != nil && (flow.Schema == recordVersionFlowSchema || len(flow.RecordVersions) != 0)
+	return flow != nil && (flow.Schema == recordVersionFlowSchema || flow.Schema == recordLoopFlowSchema || len(flow.RecordVersions) != 0 || len(flow.Loops) != 0 || len(flow.LoopCarries) != 0 || len(flow.SequenceTypes) != 0)
 }
 
 func (c *recordFlowBuilder) exportRecordVersions(flow *RecordValueFlow) {
@@ -50,7 +51,7 @@ func (c *recordFlowBuilder) exportRecordVersions(flow *RecordValueFlow) {
 			}
 			item := RecordFlowRecordLayout{ID: record.ID}
 			for _, field := range record.Fields {
-				item.Fields = append(item.Fields, RecordFlowRecordField{field.ID, field.TypeID})
+				item.Fields = append(item.Fields, RecordFlowRecordField{ID: field.ID, TypeID: field.TypeID, Cardinality: field.Cardinality})
 			}
 			staged.RecordLayouts = append(staged.RecordLayouts, item)
 			layout = uint16(len(staged.RecordLayouts))

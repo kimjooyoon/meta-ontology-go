@@ -3,6 +3,7 @@ package bodycodegen
 import (
 	"fmt"
 	"go/ast"
+	"go/constant"
 	"go/parser"
 	"go/token"
 )
@@ -35,7 +36,12 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 	case *ast.UnaryExpr:
 		a := c.expression(e.X, state, selected)
 		return flowScalar(c.add("expression", [2]uint16{a.scalar}, c.span(e), "", 0, e.Op.String()))
+	case *ast.IndexExpr:
+		return c.indexedSequence(e, state, selected)
 	case *ast.CompositeLit:
+		if _, ok := e.Type.(*ast.ArrayType); ok {
+			return c.sequenceLiteral(e, state)
+		}
 		return c.constructor(e, state)
 	case *ast.CallExpr:
 		if isImplicitLengthConversion(e) {
@@ -47,6 +53,9 @@ func (c *recordFlowBuilder) expression(node ast.Expr, state *flowState, selected
 		if name, ok := e.Fun.(*ast.Ident); ok && bodyPrimitiveName(name.Name) &&
 			c.body.activityIDs[name.Name] == "" && len(e.Args) == 1 {
 			value := c.expression(e.Args[0], state, selected)
+			if name.Name == "len" && value.sequence != 0 {
+				value.scalar = c.sequenceShape(value.scalar)
+			}
 			return flowScalar(c.add("expression", [2]uint16{value.scalar}, c.span(e), "", 0, name.Name))
 		}
 	case *ast.SliceExpr:
@@ -78,7 +87,7 @@ func (c *recordFlowBuilder) selector(e *ast.SelectorExpr, state *flowState) flow
 	if c.err != nil {
 		return flowScalar(0)
 	}
-	if c.compactRecords {
+	if c.compactRecords || value.sequence != 0 {
 		return value
 	}
 	if value.record >= 0 {
@@ -158,4 +167,31 @@ func (c *recordFlowBuilder) choice(i int, node ast.Expr, state *flowState) flowV
 		First: first, Second: second, Result: result, Span: span, Guard: c.guardRoot}
 	c.choiceSeen[i] = true
 	return flowScalar(result)
+}
+
+func (c *recordFlowBuilder) indexedSequence(index *ast.IndexExpr, state *flowState, selected bool) flowValue {
+	sequence := c.expression(index.X, state, selected)
+	if c.err != nil {
+		return flowScalar(0)
+	}
+	if sequence.sequence == 0 {
+		c.err = fmt.Errorf("FLOW_INDEX_SEQUENCE_UNRESOLVED")
+		return flowScalar(0)
+	}
+	position := c.expression(index.Index, state, selected)
+	if c.err != nil {
+		return flowScalar(0)
+	}
+	known := int64(-1)
+	if literal := c.info.Types[index.Index].Value; literal != nil && literal.Kind() == constant.Int {
+		if number, ok := constant.Int64Val(literal); ok {
+			known = number
+		}
+	}
+	value := c.sequenceElementAt(sequence, position.scalar, c.span(index), known, false)
+	root := c.sequenceElementRoot(value.scalar)
+	if root != 0 {
+		c.nodes[root-1].Operator = "source_index"
+	}
+	return value
 }

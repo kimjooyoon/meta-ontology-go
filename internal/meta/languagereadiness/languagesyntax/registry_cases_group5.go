@@ -7,7 +7,7 @@ func expectedSyntaxCaseGroup5() []CaseDefinition {
 }
 func expectedSyntaxCaseGroup5Part0() []CaseDefinition {
 	return []CaseDefinition{
-		{ID: "local-field-bridge-reader", Path: "examples/local-field-bridge/trace.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, OrderedCollections: true},
+		{ID: "local-field-bridge-reader", Path: "examples/local-field-bridge/trace.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 		{ID: "field-source-map-reader", Path: "examples/field-source-map/inspect.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, OrderedCollections: true},
 		{ID: "scoped-origin-coverage-reader", Path: "examples/scoped-origin-coverage/coverage.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, OrderedCollections: true},
 		{ID: "length-aware-summary", Path: "examples/length-aware-summary/summary.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, OrderedCollections: true},
@@ -67,5 +67,15 @@ func expectedSyntaxCaseGroup5Part1Part1() []CaseDefinition {
 		{ID: "source-owned-profile-compatibility-records", Path: "internal/meta/syntaxregistration/contract.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 
 		{ID: "openfga-source-owned-model-change", Path: "examples/openfga-model-change/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
+
+		{ID: "source-owned-record-origin-query", Path: "examples/record-origin-reader/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
+
+		{ID: "record-element-location-consumer", Path: "examples/record-element-location/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: true},
+
+		{ID: "loop-carried-source-values", Path: "examples/loop-carried-values/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
+
+		{ID: "indexed-record-source-values", Path: "examples/indexed-record-values/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
+
+		{ID: "constructed-record-source-values", Path: "examples/constructed-record-values/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 	}
 }

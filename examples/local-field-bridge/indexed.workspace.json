@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/package-workspace-manifest/v1",
+  "entry": {
+    "package_path": "origin/bridgetrace",
+    "activity": "TraceIndexed"
+  },
+  "packages": [
+    {
+      "path": "origin/bridgetrace",
+      "name": "bridgetrace",
+      "imports": [],
+      "sources": [
+        "trace.gooo"
+      ]
+    }
+  ]
+}
