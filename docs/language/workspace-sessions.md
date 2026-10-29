@@ -71,3 +71,25 @@ read a following valid line. An oversized line or broken stream terminates the
 session and triggers cleanup. A failed expected value stays in the current
 receipt and never becomes a reused PASS. Session closure, compilation and test
 observations remain separate lifecycle facts.
+
+## Nested source-owned assessments
+
+The existing `examples/ci-strategy/declared-test-observation/main.gooo` also runs
+through this entry point with nested Trial, Plan, Observation and test-list
+records. Its `Assess` activity and `KnownOutcome` helper retain their stable IDs;
+the caller supplies cases under a qualified `<package-path>:Assess` key.
+
+A [recorded Go caller and normalized OpenFGA inputs](https://gist.github.com/kimjooyoon/21d1a191fae483145c7696bf098267b8/59efffd1c6cd460d1853cb3e8e696b7f01b71946)
+exercise execute, changed-intent replay, changed-observation replay and a wrong
+expected-value control. The unchanged Gooo source distinguishes an unmet intent
+from an intentionally reproduced failure. Three authored output records match;
+the wrong expected record stays0/1 with outer `PROGRESS`. Each inner assessment
+has four named test nodes, including three leaves and their parent. These counts
+are separate from the two original host captures and the full green58-leaf suite.
+
+That local caller cohort used one build, three artifact reuses and eight fresh
+native runs, then closed with zero owned artifact directories. It used compiler
+code128685d and made zero model calls or new OpenFGA test executions. The record
+binds this development source; acceptance and release availability follow its
+original compiler CI. This demonstrates the supplied nested inputs and outputs;
+it does not authenticate caller-supplied observations or authorize CI changes.
