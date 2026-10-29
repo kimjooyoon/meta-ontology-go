@@ -2,8 +2,8 @@
   "schema": "gooo/ci-command-evolution/v1",
   "baseline_file": "docs/observations/ci-command-domain/predecessor-command-population.json",
   "baseline_sha256": "8f25e279421b3268df6d73641755ab37f06d1af7311bc62a3c88a520300fc97e",
-  "changed_workflow_source_head": "642327c19ff947d18765ee10ad904122b553268c",
-  "workflow_sha256": "13f3c343f15925f386c3d7bf33fb7e4e2651e437691cddaf6d43647cf9017051",
+  "changed_workflow_source_head": "f4feb8435959e7564f2a9ae36d47c632ae076515",
+  "workflow_sha256": "c2520d3519086a95e8e9deefe75848f1b8dee544b5915e2107f89472e0746f93",
   "jobs": {
     "format": [
       {
@@ -15,8 +15,8 @@
       {
         "original_index": 1,
         "before_sha256": "2f04cd5b6e086bcbc1eea901980fcda61add3ade712d62b151f4ec0d8f39ebf2",
-        "after_sha256": "2f04cd5b6e086bcbc1eea901980fcda61add3ade712d62b151f4ec0d8f39ebf2",
-        "operation": "retain_modernizer_check"
+        "after_sha256": "2faf07edcd685bfbbf6d6f4edb53e1d3ccc686b7c9b68f21d8f52956af373f39",
+        "operation": "require_readonly_modernizer_and_module_fixed_point"
       },
       {
         "original_index": 2,
@@ -184,8 +184,8 @@
   },
   "scope": "raw run-source extents under the existing recognizer; each original command retains exactly one descendant, additions are explicit; actual expanded commands retain their own work-shell receipts",
   "previous_evolution": {
-    "source_head": "9092f911647d7d4974e6e808c1fca1ff669f2bb4",
+    "source_head": "f4feb8435959e7564f2a9ae36d47c632ae076515",
     "path": "docs/observations/ci-source-join/command-evolution.json",
-    "sha256": "1e18e322228ba2bf70526ed56447e39889a721b3afa98ca9fd6017ca3ee9e148"
+    "sha256": "56f954cff3862d3a09811f989ecbd4b2cb54c71ba595f8e34af171003b7fcbf6"
   }
 }

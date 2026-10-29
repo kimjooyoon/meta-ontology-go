@@ -133,8 +133,8 @@ jobs:
           go version
       - name: Require Go modernizers and module graph at a fixed point
         run: |
-          go fix ./...
-          go mod tidy
+          go fix -diff ./...
+          go mod tidy -diff
           git diff --exit-code
       - name: Compile module-declared meta tools
         run: |
