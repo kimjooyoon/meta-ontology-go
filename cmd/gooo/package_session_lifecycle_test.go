@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -53,4 +55,37 @@ func TestPackageSessionCancellationInterruptsIdleInput(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("session cancellation left its input reader blocked")
 	}
+}
+
+func TestPackageSessionInputOnlyReplayRetainsUnscoredCurrentValues(t *testing.T) {
+	manifest, _, root := packageSessionFixture(t)
+	inputPath := filepath.Join(root, "inputs.json")
+	writeInputs := func(value int) {
+		raw, err := json.Marshal(map[string]any{"schema": "gooo/body-composition-inputs/v1",
+			"inputs": []any{map[string]int{"session/app:Main": value}}})
+		if err != nil {
+			t.Fatal("write current session inputs", err)
+		}
+		if err := os.WriteFile(inputPath, raw, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	client := newPackageSessionClient(t)
+	writeInputs(7)
+	first := client.request(t, "input-first", "execute", "--inputs", inputPath, manifest)
+	prior := saveSessionReceipt(t, root, first)
+	writeInputs(10)
+	second := client.request(t, "input-second", "replay", "--receipt", prior, "--inputs", inputPath, manifest)
+	if second.ExitCode != exitOK || second.Receipt == nil || second.Receipt.Result == nil {
+		t.Fatal("input-only session replay failed")
+	}
+	r := second.Receipt.Result.Runtime
+	if first.Receipt.Decision != "OBSERVED" || second.Receipt.Decision != "OBSERVED" ||
+		second.Receipt.InputsDigest == first.Receipt.InputsDigest || second.Receipt.CasesDigest != "" ||
+		r.FiniteTotal != 0 || r.FinitePassed != 0 || r.Artifact == nil || !r.Artifact.Reused ||
+		len(r.Traces) != 1 || len(r.Traces[0].Deliveries) != 1 || string(r.Traces[0].Deliveries[0].Actual) != "11" {
+		t.Fatal("session reused old values or invented an input-only score")
+	}
+	assertSessionReplayParent(t, second, prior)
+	assertSessionClose(t, client)
 }
