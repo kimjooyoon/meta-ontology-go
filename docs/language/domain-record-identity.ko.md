@@ -59,3 +59,32 @@ Gooo에서는 명시 ID, 계산 본문, 허용한 선택지와 실제 관찰을 
 각 요구를 표현한 선언, 외부 구현이 필요한 부분, 유지한 ID와 확인한 입력 사례를 센다.
 관계 질의·중첩 레코드·단위 변환·에디터 연동도 지원 범위를 따로 기록한다.
 동일한 업무 과제를 다른 언어에서 실행한 비교 자료는 아직 준비하지 않았다.
+
+## 레코드 이름을 바꿀 때
+
+다음 소스에서 `Line`의 표시 이름을 `Product`로 바꾸어도 품목의 ID는 유지한다.
+
+```gooo
+entity Line id "urn:record-items:line" fields {
+ field quantity id "urn:record-items:quantity" type integer required one
+}
+entity Basket id "urn:record-items:basket" fields {
+ field items id "urn:record-items:items" type Line required many
+}
+```
+
+V7 레코드 프로필의 `PutWithEntityFieldsSupport`는 원본에서 해석한 대상 ID를 사용해,
+직접 수정하지 않은 `type Line`을 `type Product`로 함께 갱신한다.
+`type "totals:Line"`처럼 이름 공간을 적었다면 같은 이름 공간을 유지한다.
+`type "urn:record-items:line"`처럼 ID로 적은 참조는 그대로 둔다.
+다른 레코드에 예전 이름을 붙여도 기존 참조가 그 레코드로 옮겨가지 않는다.
+
+필드의 ID·순서·필수 여부·개수와 원본의 세부 위치는 유지한다.
+위치는 수정 전 원본의 기원을 가리키며, 새로 출력한 텍스트의 위치는 다시 파싱해서 얻는다.
+필드 타입을 명시적으로 함께 수정했다면 그 수정은 별도로 검증한다.
+이름 변경이 상충하는 타입 수정을 덮어쓰지 않으며, 실패한 갱신은 원본을 반환한다.
+
+회귀 검사는 세 참조 표기와 예전 이름 재사용 여부의 6개 조합에서 네 필드 형태를 확인한다.
+충돌·대상 삭제 등 5개 거절 사례와 일관된 타입 변경 1개는 별도로 확인한다.
+소스 표기를 다시 파싱한 결과와 BX 법칙도 검사한다.
+이 범위는 parser-neutral 문서 갱신 API이며, 편집기나 CLI 이름 변경 명령은 별도 구현이 필요하다.
