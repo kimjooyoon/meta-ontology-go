@@ -24,7 +24,7 @@ func newPackageSessionClient(t *testing.T) *packageSessionClient {
 	t.Helper()
 	input, inputWriter := io.Pipe()
 	output, outputWriter := io.Pipe()
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	c := &packageSessionClient{input: inputWriter, output: output, write: json.NewEncoder(inputWriter),
 		read: json.NewDecoder(output), done: make(chan int, 1), cancel: cancel}
 	go func() {
@@ -103,6 +103,10 @@ func saveSessionReceipt(t *testing.T, root string, response packageSessionRespon
 }
 
 func TestPackageSessionExecuteInspectReplayUsesFreshInputsAndResults(t *testing.T) {
+	ownedRoot := t.TempDir()
+	t.Setenv("TMPDIR", ownedRoot)
+	t.Setenv("TMP", ownedRoot)
+	t.Setenv("TEMP", ownedRoot)
 	manifest, source, root := packageSessionFixture(t)
 	client := newPackageSessionClient(t)
 	first := client.request(t, "first", "execute", "--json", "--cases", sessionCases(t, root, "first.json", 1, 2), manifest)
@@ -111,16 +115,47 @@ func TestPackageSessionExecuteInspectReplayUsesFreshInputsAndResults(t *testing.
 		!first.Receipt.Result.Runtime.Build.Completed || first.Receipt.Result.Runtime.FinitePassed != 1 {
 		t.Fatal("session did not build the first workspace")
 	}
+	assertSessionOwnedWorkspaces(t, ownedRoot, 1)
+	assertSessionCurrentTool(t, client, manifest, prior, root)
 	second := client.request(t, "second", "replay", "--receipt", prior, "--cases", sessionCases(t, root, "second.json", 5, 6), manifest)
 	assertSessionFreshReplay(t, first, second, 1)
+	assertSessionReplayParent(t, second, prior)
 	prior = saveSessionReceipt(t, root, second)
 	third := client.request(t, "third", "replay", "--receipt", prior, "--cases", sessionCases(t, root, "third.json", 9, 0), manifest)
 	assertSessionFreshReplay(t, second, third, 0)
+	assertSessionReplayParent(t, third, prior)
 	if third.Receipt.Decision != "PROGRESS" {
 		t.Fatal("current wrong expectation reused a previous PASS")
 	}
 	assertSessionCurrentSource(t, client, manifest, source, prior, root)
 	assertSessionClose(t, client)
+	assertSessionOwnedWorkspaces(t, ownedRoot, 0)
+}
+
+func assertSessionOwnedWorkspaces(t *testing.T, root string, count int) {
+	t.Helper()
+	paths, err := filepath.Glob(filepath.Join(root, "gooo-composition-runtime-*"))
+	if err != nil || len(paths) != count {
+		t.Fatal("session native workspace lifetime differs", paths, err)
+	}
+}
+
+func assertSessionReplayParent(t *testing.T, response packageSessionResponse, path string) {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil || response.Receipt.ReplayedFrom != workspaceDigest(raw) {
+		t.Fatal("replay envelope lost the exact caller-saved parent", err)
+	}
+}
+
+func assertSessionCurrentTool(t *testing.T, client *packageSessionClient, manifest, prior, root string) {
+	t.Helper()
+	response := client.request(t, "tool-missing", "replay", "--receipt", prior, "--cases",
+		sessionCases(t, root, "tool.json", 1, 2), "--go", "gooo-session-tool-must-not-exist-20261029", manifest)
+	if response.ExitCode != exitFailure || response.Receipt == nil || response.Receipt.Result == nil ||
+		response.Receipt.Decision != "FAIL_CLOSED" || len(response.Receipt.Result.Runtime.Runs) != 0 {
+		t.Fatal("session artifact bypassed current tool inspection")
+	}
 }
 
 func assertSessionFreshReplay(t *testing.T, prior, current packageSessionResponse, passed int) {
@@ -134,6 +169,11 @@ func assertSessionFreshReplay(t *testing.T, prior, current packageSessionRespons
 		r.FinitePassed != passed || r.FiniteTotal != 1 || len(r.Runs) != 2 || r.ModelCalls != 0 ||
 		r.RuntimeSuiteSHA256 == before.RuntimeSuiteSHA256 || current.Receipt.ReplayedFrom == "" || current.Receipt.Result.Replay == nil {
 		t.Fatal("session reused an outcome or lost fresh-run provenance", r.Stage)
+	}
+	for _, run := range r.Runs {
+		if !run.Started || !run.Completed || run.ExitCode == nil || *run.ExitCode != 0 {
+			t.Fatal("session reported an uncompleted native run")
+		}
 	}
 }
 

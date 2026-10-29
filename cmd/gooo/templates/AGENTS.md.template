@@ -46,6 +46,10 @@ for the installed command's scope.
 - Reuse a saved program through replay when only caller inputs change. Source
   changes require a fresh construction receipt. Report unmeasured behavior and
   remaining requirements alongside the finite results.
+- For several execute/replay calls, consult `gooo help package session`. A session
+  can retain one verified native artifact while each request reads current files
+  and runs current inputs twice. Read each response and save its `receipt` object
+  before requesting replay; finish with `close` or stdin EOF.
 
 ## Read the operation result
 

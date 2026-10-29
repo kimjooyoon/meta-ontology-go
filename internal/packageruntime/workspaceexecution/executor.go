@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodyexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 )
 
@@ -44,6 +45,8 @@ func (e *Executor) request(ctx context.Context, run func(context.Context) (Resul
 	if ctx == nil || e == nil || e.lifetime == nil || e.native == nil || run == nil {
 		return Result{}, errors.New("initialized workspace executor and context are required")
 	}
+	phase := bodytiming.Start(ctx, "executor_gate")
+	defer func() { phase.End(false) }()
 	select {
 	case <-ctx.Done():
 		return Result{}, ctx.Err()
@@ -58,6 +61,7 @@ func (e *Executor) request(ctx context.Context, run func(context.Context) (Resul
 	if e.lifetime.Err() != nil {
 		return Result{}, bodyexecution.ErrExecutorClosed
 	}
+	phase.End(true)
 	current, cancel := context.WithCancel(ctx)
 	defer cancel()
 	stop := context.AfterFunc(e.lifetime, cancel)

@@ -41,5 +41,6 @@ Usage:
 Use --check to report whether formatting is needed without changing the file.
 `,
 	"package":         packageTopicHelp,
+	"package session": packageSessionTopicHelp,
 	"package origins": packageOriginsHelp,
 }
