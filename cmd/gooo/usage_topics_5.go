@@ -38,6 +38,9 @@ Saved replay:
   gooo body-compose --source out/scalar-model/original.gooo \
     --cases examples/scalar-identity/cases.json --composition out/scalar-model/composition.json
 
+Repeating the saved --entry is accepted for replay and continuation. A different
+entry reports the requested and saved values before compiling or writing output.
+
 Observe values before writing runtime expectations:
   gooo body-compose --source examples/scalar-identity/source.gooo.fixture \
     --inputs examples/composition-inputs/record.json --entry Describe --out out/scalar-observed
