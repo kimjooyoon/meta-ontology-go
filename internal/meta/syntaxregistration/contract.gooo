@@ -180,7 +180,7 @@ activity GenerateNativeRegistry(PinnedRegistrationInput) -> NativeRegistry
 activity GenerateSyntaxDenominator(PinnedRegistrationInput, AppendRecord) -> SyntaxDenominator
 activity GenerateSyntaxConformance(PinnedRegistrationInput) -> SyntaxConformance
 activity GenerateDenominatorAdmission(PinnedRegistrationInput, AppendRecord) -> DenominatorAdmission
-    computes "syntax.history.append:v1"
+    computes "syntax.history.append:v2"
 activity GenerateDenominatorSelection(PinnedRegistrationInput, AppendRecord) -> DenominatorSelection
     computes "syntax.selection.append:v1"
 activity GenerateDenominatorDigest(PinnedRegistrationInput, AppendRecord) -> DenominatorDigest

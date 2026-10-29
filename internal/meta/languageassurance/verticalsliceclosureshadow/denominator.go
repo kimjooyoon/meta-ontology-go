@@ -15,7 +15,7 @@ import (
 
 func decodeDenominator(raw []byte) (denominator, error) {
 	digest := digestBytes(raw)
-	if (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest && digest != DenominatorMigrationV27Digest && digest != DenominatorMigrationV28Digest && digest != DenominatorMigrationV29Digest && digest != DenominatorMigrationV30Digest && digest != DenominatorMigrationV31Digest && digest != DenominatorMigrationV32Digest && digest != DenominatorMigrationV33Digest && digest != DenominatorMigrationV34Digest && digest != DenominatorMigrationV35Digest && digest != DenominatorMigrationV36Digest && digest != DenominatorMigrationV37Digest && digest != DenominatorMigrationV38Digest && digest != DenominatorMigrationV39Digest && digest != DenominatorMigrationV40Digest && digest != DenominatorMigrationV41Digest && digest != DenominatorMigrationV42Digest && digest != DenominatorMigrationV43Digest && digest != DenominatorMigrationV44Digest && digest != DenominatorMigrationV45Digest && digest != DenominatorMigrationV46Digest && digest != DenominatorMigrationV47Digest && digest != DenominatorMigrationV48Digest && digest != DenominatorMigrationV49Digest) && digest != DenominatorMigrationV50Digest) && digest != DenominatorMigrationV51Digest) && digest != DenominatorMigrationV52Digest) && digest != DenominatorMigrationV53Digest) && digest != DenominatorMigrationV54Digest) && digest != DenominatorMigrationV55Digest) && digest != DenominatorMigrationV56Digest) && digest != DenominatorMigrationV57Digest) && digest != DenominatorMigrationV58Digest) && digest != DenominatorMigrationV59Digest) && digest != DenominatorMigrationV60Digest) && digest != DenominatorMigrationV61Digest) && digest != DenominatorMigrationV62Digest) && digest != DenominatorMigrationV63Digest) && digest != DenominatorMigrationV64Digest) && digest != DenominatorMigrationV65Digest) && digest != DenominatorMigrationV66Digest) && digest != DenominatorMigrationV67Digest) && digest != DenominatorMigrationV68Digest) && digest != DenominatorMigrationV69Digest) && digest != DenominatorMigrationV70Digest) && digest != DenominatorMigrationV71Digest && digest != DenominatorMigrationV72Digest) && digest != DenominatorMigrationV73Digest) && digest != DenominatorMigrationV74Digest) && digest != DenominatorMigrationV75Digest) && digest != DenominatorMigrationV76Digest) && digest != DenominatorMigrationV77Digest) && digest != DenominatorMigrationV78Digest) && digest != DenominatorMigrationV79Digest) && digest != DenominatorMigrationV80Digest) && digest != DenominatorMigrationV81Digest) && digest != DenominatorMigrationV82Digest) && digest != DenominatorMigrationV83Digest) && digest != DenominatorMigrationV84Digest) && digest != DenominatorMigrationV85Digest) && digest != DenominatorMigrationV86Digest) && digest != DenominatorMigrationV87Digest) && digest != DenominatorMigrationV88Digest) && digest != DenominatorMigrationV89Digest) && digest != DenominatorMigrationV90Digest) && digest != DenominatorMigrationV91Digest) && digest != DenominatorMigrationV92Digest) && digest != DenominatorMigrationV93Digest) && digest != DenominatorMigrationV94Digest) && digest != DenominatorMigrationV95Digest) && digest != DenominatorMigrationV96Digest) && digest != DenominatorMigrationV97Digest) && digest != DenominatorMigrationV98Digest) && digest != DenominatorMigrationV99Digest) && digest != DenominatorMigrationV100Digest) && digest != DenominatorMigrationV101Digest) && digest != DenominatorMigrationV102Digest) && digest != DenominatorMigrationV103Digest) && digest != DenominatorMigrationV104Digest) && digest != DenominatorMigrationV105Digest) && digest != DenominatorMigrationV106Digest) && digest != DenominatorMigrationV107Digest) && digest != DenominatorMigrationV108Digest) && digest != DenominatorMigrationV109Digest) && digest != DenominatorMigrationV110Digest) && digest != DenominatorMigrationV111Digest {
+	if !acceptedDenominatorDigestChunk0(digest) {
 		return denominator{}, fmt.Errorf("denominator digest mismatch")
 	}
 	var value denominator
@@ -35,35 +35,7 @@ func decodeDenominator(raw []byte) (denominator, error) {
 
 func validateDenominator(value denominator) error {
 	expected := expectedBoundarySpecsForVersion(value.Version)
-	validHeader := ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v21" && value.Version == 21) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v22" && value.Version == 22) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v23" && value.Version == 23) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v24" && value.Version == 24) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v25" && value.Version == 25) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v26" && value.Version == 26) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v27" && value.Version == 27) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v28" && value.Version == 28) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v29" && value.Version == 29) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v30" && value.Version == 30) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v31" && value.Version == 31) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v32" && value.Version == 32) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v33" && value.Version == 33) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v34" && value.Version == 34) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v35" && value.Version == 35) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v36" && value.Version == 36) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v37" && value.Version == 37) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v38" && value.Version == 38) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v39" && value.Version == 39) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v40" && value.Version == 40) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v41" && value.Version == 41) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v42" && value.Version == 42) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v43" && value.Version == 43) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v44" && value.Version == 44) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v45" && value.Version == 45) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v46" && value.Version == 46) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v47" && value.Version == 47) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v48" && value.Version == 48) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v49" && value.Version == 49)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v50" && value.Version == 50)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v51" && value.Version == 51)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v52" && value.Version == 52)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v53" && value.Version == 53)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v54" && value.Version == 54)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v55" && value.Version == 55)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v56" && value.Version == 56)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v57" && value.Version == 57)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v58" && value.Version == 58)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v59" && value.Version == 59)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v60" && value.Version == 60)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v61" && value.Version == 61)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v62" && value.Version == 62)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v63" && value.Version == 63)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v64" && value.Version == 64)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v65" && value.Version == 65)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v66" && value.Version == 66)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v67" && value.Version == 67)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v68" && value.Version == 68)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v69" && value.Version == 69)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v70" && value.Version == 70)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v71" && value.Version == 71) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v72" && value.Version == 72)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v73" && value.Version == 73)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v74" && value.Version == 74)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v75" && value.Version == 75)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v76" && value.Version == 76)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v77" && value.Version == 77)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v78" && value.Version == 78)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v79" && value.Version == 79)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v80" && value.Version == 80)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v81" && value.Version == 81)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v82" && value.Version == 82)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v83" && value.Version == 83)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v84" && value.Version == 84)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v85" && value.Version == 85)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v86" && value.Version == 86)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v87" && value.Version == 87)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v88" && value.Version == 88)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v89" && value.Version == 89)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v90" && value.Version == 90)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v91" && value.Version == 91)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v92" && value.Version == 92)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v93" && value.Version == 93)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v94" && value.Version == 94)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v95" && value.Version == 95)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v96" && value.Version == 96)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v97" && value.Version == 97)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v98" && value.Version == 98)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v99" && value.Version == 99)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v100" && value.Version == 100)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v101" && value.Version == 101)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v102" && value.Version == 102)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v103" && value.Version == 103)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v104" && value.Version == 104)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v105" && value.Version == 105)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v106" && value.Version == 106)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v107" && value.Version == 107)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v108" && value.Version == 108)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v109" && value.Version == 109)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v110" && value.Version == 110)) || (value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v111" && value.Version == 111)
+	validHeader := acceptedDenominatorHeaderChunk0(value)
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
 		!validHeader || len(value.Boundaries) != len(expected) {
 		return fmt.Errorf("denominator header mismatch")
@@ -236,4 +208,440 @@ func historicalSyntaxTargetChunk2(version int) (int, bool) {
 		return 146, true
 	}
 	return 0, false
+}
+
+func acceptedDenominatorHeaderChunk0(value denominator) bool {
+	switch value.Version {
+	case 21:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v21"
+	case 22:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v22"
+	case 23:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v23"
+	case 24:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v24"
+	case 25:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v25"
+	case 26:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v26"
+	case 27:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v27"
+	case 28:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v28"
+	case 29:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v29"
+	case 30:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v30"
+	case 31:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v31"
+	case 32:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v32"
+	case 33:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v33"
+	case 34:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v34"
+	case 35:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v35"
+	case 36:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v36"
+	}
+	return acceptedDenominatorHeaderChunk1(value)
+}
+
+func acceptedDenominatorHeaderChunk1(value denominator) bool {
+	switch value.Version {
+	case 37:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v37"
+	case 38:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v38"
+	case 39:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v39"
+	case 40:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v40"
+	case 41:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v41"
+	case 42:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v42"
+	case 43:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v43"
+	case 44:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v44"
+	case 45:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v45"
+	case 46:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v46"
+	case 47:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v47"
+	case 48:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v48"
+	case 49:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v49"
+	case 50:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v50"
+	case 51:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v51"
+	case 52:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v52"
+	}
+	return acceptedDenominatorHeaderChunk2(value)
+}
+
+func acceptedDenominatorHeaderChunk2(value denominator) bool {
+	switch value.Version {
+	case 53:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v53"
+	case 54:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v54"
+	case 55:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v55"
+	case 56:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v56"
+	case 57:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v57"
+	case 58:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v58"
+	case 59:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v59"
+	case 60:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v60"
+	case 61:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v61"
+	case 62:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v62"
+	case 63:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v63"
+	case 64:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v64"
+	case 65:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v65"
+	case 66:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v66"
+	case 67:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v67"
+	case 68:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v68"
+	}
+	return acceptedDenominatorHeaderChunk3(value)
+}
+
+func acceptedDenominatorHeaderChunk3(value denominator) bool {
+	switch value.Version {
+	case 69:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v69"
+	case 70:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v70"
+	case 71:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v71"
+	case 72:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v72"
+	case 73:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v73"
+	case 74:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v74"
+	case 75:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v75"
+	case 76:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v76"
+	case 77:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v77"
+	case 78:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v78"
+	case 79:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v79"
+	case 80:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v80"
+	case 81:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v81"
+	case 82:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v82"
+	case 83:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v83"
+	case 84:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v84"
+	}
+	return acceptedDenominatorHeaderChunk4(value)
+}
+
+func acceptedDenominatorHeaderChunk4(value denominator) bool {
+	switch value.Version {
+	case 85:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v85"
+	case 86:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v86"
+	case 87:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v87"
+	case 88:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v88"
+	case 89:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v89"
+	case 90:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v90"
+	case 91:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v91"
+	case 92:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v92"
+	case 93:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v93"
+	case 94:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v94"
+	case 95:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v95"
+	case 96:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v96"
+	case 97:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v97"
+	case 98:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v98"
+	case 99:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v99"
+	case 100:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v100"
+	}
+	return acceptedDenominatorHeaderChunk5(value)
+}
+
+func acceptedDenominatorHeaderChunk5(value denominator) bool {
+	switch value.Version {
+	case 101:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v101"
+	case 102:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v102"
+	case 103:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v103"
+	case 104:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v104"
+	case 105:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v105"
+	case 106:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v106"
+	case 107:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v107"
+	case 108:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v108"
+	case 109:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v109"
+	case 110:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v110"
+	case 111:
+		return value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v111"
+	}
+	return false
+}
+
+func acceptedDenominatorDigestChunk0(digest string) bool {
+	switch digest {
+	case DenominatorDigest:
+		return true
+	case DenominatorMigrationDigest:
+		return true
+	case DenominatorMigrationV23Digest:
+		return true
+	case DenominatorMigrationV24Digest:
+		return true
+	case DenominatorMigrationV25Digest:
+		return true
+	case DenominatorMigrationV26Digest:
+		return true
+	case DenominatorMigrationV27Digest:
+		return true
+	case DenominatorMigrationV28Digest:
+		return true
+	case DenominatorMigrationV29Digest:
+		return true
+	case DenominatorMigrationV30Digest:
+		return true
+	case DenominatorMigrationV31Digest:
+		return true
+	case DenominatorMigrationV32Digest:
+		return true
+	case DenominatorMigrationV33Digest:
+		return true
+	case DenominatorMigrationV34Digest:
+		return true
+	case DenominatorMigrationV35Digest:
+		return true
+	case DenominatorMigrationV36Digest:
+		return true
+	}
+	return acceptedDenominatorDigestChunk1(digest)
+}
+
+func acceptedDenominatorDigestChunk1(digest string) bool {
+	switch digest {
+	case DenominatorMigrationV37Digest:
+		return true
+	case DenominatorMigrationV38Digest:
+		return true
+	case DenominatorMigrationV39Digest:
+		return true
+	case DenominatorMigrationV40Digest:
+		return true
+	case DenominatorMigrationV41Digest:
+		return true
+	case DenominatorMigrationV42Digest:
+		return true
+	case DenominatorMigrationV43Digest:
+		return true
+	case DenominatorMigrationV44Digest:
+		return true
+	case DenominatorMigrationV45Digest:
+		return true
+	case DenominatorMigrationV46Digest:
+		return true
+	case DenominatorMigrationV47Digest:
+		return true
+	case DenominatorMigrationV48Digest:
+		return true
+	case DenominatorMigrationV49Digest:
+		return true
+	case DenominatorMigrationV50Digest:
+		return true
+	case DenominatorMigrationV51Digest:
+		return true
+	case DenominatorMigrationV52Digest:
+		return true
+	}
+	return acceptedDenominatorDigestChunk2(digest)
+}
+
+func acceptedDenominatorDigestChunk2(digest string) bool {
+	switch digest {
+	case DenominatorMigrationV53Digest:
+		return true
+	case DenominatorMigrationV54Digest:
+		return true
+	case DenominatorMigrationV55Digest:
+		return true
+	case DenominatorMigrationV56Digest:
+		return true
+	case DenominatorMigrationV57Digest:
+		return true
+	case DenominatorMigrationV58Digest:
+		return true
+	case DenominatorMigrationV59Digest:
+		return true
+	case DenominatorMigrationV60Digest:
+		return true
+	case DenominatorMigrationV61Digest:
+		return true
+	case DenominatorMigrationV62Digest:
+		return true
+	case DenominatorMigrationV63Digest:
+		return true
+	case DenominatorMigrationV64Digest:
+		return true
+	case DenominatorMigrationV65Digest:
+		return true
+	case DenominatorMigrationV66Digest:
+		return true
+	case DenominatorMigrationV67Digest:
+		return true
+	case DenominatorMigrationV68Digest:
+		return true
+	}
+	return acceptedDenominatorDigestChunk3(digest)
+}
+
+func acceptedDenominatorDigestChunk3(digest string) bool {
+	switch digest {
+	case DenominatorMigrationV69Digest:
+		return true
+	case DenominatorMigrationV70Digest:
+		return true
+	case DenominatorMigrationV71Digest:
+		return true
+	case DenominatorMigrationV72Digest:
+		return true
+	case DenominatorMigrationV73Digest:
+		return true
+	case DenominatorMigrationV74Digest:
+		return true
+	case DenominatorMigrationV75Digest:
+		return true
+	case DenominatorMigrationV76Digest:
+		return true
+	case DenominatorMigrationV77Digest:
+		return true
+	case DenominatorMigrationV78Digest:
+		return true
+	case DenominatorMigrationV79Digest:
+		return true
+	case DenominatorMigrationV80Digest:
+		return true
+	case DenominatorMigrationV81Digest:
+		return true
+	case DenominatorMigrationV82Digest:
+		return true
+	case DenominatorMigrationV83Digest:
+		return true
+	case DenominatorMigrationV84Digest:
+		return true
+	}
+	return acceptedDenominatorDigestChunk4(digest)
+}
+
+func acceptedDenominatorDigestChunk4(digest string) bool {
+	switch digest {
+	case DenominatorMigrationV85Digest:
+		return true
+	case DenominatorMigrationV86Digest:
+		return true
+	case DenominatorMigrationV87Digest:
+		return true
+	case DenominatorMigrationV88Digest:
+		return true
+	case DenominatorMigrationV89Digest:
+		return true
+	case DenominatorMigrationV90Digest:
+		return true
+	case DenominatorMigrationV91Digest:
+		return true
+	case DenominatorMigrationV92Digest:
+		return true
+	case DenominatorMigrationV93Digest:
+		return true
+	case DenominatorMigrationV94Digest:
+		return true
+	case DenominatorMigrationV95Digest:
+		return true
+	case DenominatorMigrationV96Digest:
+		return true
+	case DenominatorMigrationV97Digest:
+		return true
+	case DenominatorMigrationV98Digest:
+		return true
+	case DenominatorMigrationV99Digest:
+		return true
+	case DenominatorMigrationV100Digest:
+		return true
+	}
+	return acceptedDenominatorDigestChunk5(digest)
+}
+
+func acceptedDenominatorDigestChunk5(digest string) bool {
+	switch digest {
+	case DenominatorMigrationV101Digest:
+		return true
+	case DenominatorMigrationV102Digest:
+		return true
+	case DenominatorMigrationV103Digest:
+		return true
+	case DenominatorMigrationV104Digest:
+		return true
+	case DenominatorMigrationV105Digest:
+		return true
+	case DenominatorMigrationV106Digest:
+		return true
+	case DenominatorMigrationV107Digest:
+		return true
+	case DenominatorMigrationV108Digest:
+		return true
+	case DenominatorMigrationV109Digest:
+		return true
+	case DenominatorMigrationV110Digest:
+		return true
+	case DenominatorMigrationV111Digest:
+		return true
+	}
+	return false
 }
