@@ -197,7 +197,7 @@ func assertAdmissionHelperBounds(t *testing.T, source *goSource, set admissionSe
 		if len(strings.Split(text, "\n")) > 40 {
 			t.Fatal("admission helper exceeded 40 physical lines", helper.Name)
 		}
-		for _, line := range strings.Split(text, "\n") {
+		for line := range strings.SplitSeq(text, "\n") {
 			if len(line) > 120 {
 				t.Fatal("admission helper exceeded 120 columns", helper.Name)
 			}
