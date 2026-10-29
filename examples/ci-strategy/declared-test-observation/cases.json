@@ -1,0 +1,997 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "MATCHED_EXPECTATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 1,
+          "argv_captured": true,
+          "expectation_observed": true,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 1,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "fail"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 1,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "fail"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "MATCHED_EXPECTATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 1,
+          "argv_captured": true,
+          "expectation_observed": true,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "NO_TESTS_OBSERVED",
+          "declared": 1,
+          "observed": 0,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestDifferent",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "TEST_SET_MISMATCH",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              },
+              {
+                "test_id": "TestCancel/intersection",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "TEST_SET_MISMATCH",
+          "declared": 2,
+          "observed": 1,
+          "matched": 1,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              },
+              {
+                "test_id": "TestOther",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "TEST_SET_MISMATCH",
+          "declared": 1,
+          "observed": 2,
+          "matched": 1,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              },
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INVALID_OBSERVATION",
+          "declared": 1,
+          "observed": 2,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              },
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INVALID_PLAN",
+          "declared": 2,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "UNASSESSED",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": false,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INCOMPLETE_OBSERVATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 1,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "PROCESS_MISMATCH",
+          "declared": 1,
+          "observed": 1,
+          "matched": 1,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MISMATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INVALID_PLAN",
+          "declared": 0,
+          "observed": 0,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "UNASSESSED",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "unrelated",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INVALID_OBSERVATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "UNASSESSED",
+          "observation_trial_id": "unrelated",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": false,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "MATCHED_EXPECTATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 1,
+          "argv_captured": false,
+          "expectation_observed": true,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "fail"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "TEST_SET_MISMATCH",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-beta"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INVALID_OBSERVATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "UNASSESSED",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-beta",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": false,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INCOMPLETE_OBSERVATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "UNASSESSED",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": false,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "fail"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INCOMPLETE_OBSERVATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": false,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "fail"
+              },
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INCOMPLETE_OBSERVATION",
+          "declared": 1,
+          "observed": 2,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "fail"
+              }
+            ],
+            "source_revision": "fixture://source/revision-beta"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "INVALID_OBSERVATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "UNASSESSED",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-beta",
+          "failure_observed": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "skip"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "skip"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "MATCHED_EXPECTATION",
+          "declared": 1,
+          "observed": 1,
+          "matched": 1,
+          "argv_captured": true,
+          "expectation_observed": true,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    },
+    {
+      "inputs": {
+        "Assess": {
+          "plan": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "pass"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          },
+          "observation": {
+            "trial_id": "trial",
+            "process_exit": 0,
+            "completed": true,
+            "stream_complete": true,
+            "argv_captured": true,
+            "tests": [
+              {
+                "test_id": "TestCancel/union",
+                "outcome": "skip"
+              }
+            ],
+            "source_revision": "fixture://source/revision-alpha"
+          }
+        }
+      },
+      "expected": {
+        "Assess": {
+          "trial_id": "trial",
+          "state": "TEST_SET_MISMATCH",
+          "declared": 1,
+          "observed": 1,
+          "matched": 0,
+          "argv_captured": true,
+          "expectation_observed": false,
+          "source_revision": "fixture://source/revision-alpha",
+          "process_outcome": "MATCH",
+          "observation_trial_id": "trial",
+          "observation_source_revision": "fixture://source/revision-alpha",
+          "failure_observed": false
+        }
+      }
+    }
+  ]
+}

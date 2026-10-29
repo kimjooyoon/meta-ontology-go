@@ -85,6 +85,12 @@ local structural model for choice-based integer or record assembly. Optional
 use both. Empty model paths use deterministic bounded selection. All ordinary
 bodies and declared assignments are checked before an optional model is loaded.
 
+The saved composition retains its selected entry. When using `--composition` or
+`--resume-composition`, repeating the same `--entry ACTIVITY` asserts that entry.
+A different entry reports both requested and saved values before compilation,
+execution or output-directory creation. Saved source, plan and projection checks
+remain in effect when the assertion matches.
+
 The directory contains `original.gooo`, `cases.json`, `composition.json`,
 `runtime.json`, `realized.gooo`, `generated.go`, `main.go` and `go.mod`.
 The final three files form the actual runnable program; `main.go` contains the

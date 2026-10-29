@@ -1,0 +1,23 @@
+[
+  "ordinary-pass",
+  "expected-negative-control",
+  "zero-exit-no-tests",
+  "wrong-test-with-same-count",
+  "missing-declared-test",
+  "unexpected-test",
+  "duplicate-observed",
+  "duplicate-declared",
+  "incomplete-event-stream",
+  "wrong-process-exit",
+  "empty-plan",
+  "other-trial",
+  "argv-not-captured",
+  "unexpected-test-failure",
+  "different-source-same-trial",
+  "process-incomplete",
+  "incomplete-failure-prefix",
+  "incomplete-duplicate-failure-prefix",
+  "foreign-source-failure",
+  "declared-skip",
+  "unexpected-skip"
+]
