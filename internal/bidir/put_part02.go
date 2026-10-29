@@ -16,6 +16,7 @@ func putWithTypesAndEntityFieldsSupport(document Document, updated Model, regist
 		return document, putError(PutSourceInvalid, err)
 	}
 	updated = updated.Normalized()
+	updateRenamedRecordReferences(source, &updated)
 	registry, err = modelRecordRegistry(updated.Namespace, updated.Nodes, registry, support)
 	if err != nil {
 		return document, putError(PutModelInvalid, err)
