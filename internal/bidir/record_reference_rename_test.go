@@ -17,115 +17,139 @@ func TestRecordReferenceRenamePreservesIdentityAndSourceForm(t *testing.T) {
 	for _, spelling := range []string{"Line", `"totals:Line"`, `"urn:record-items:line"`} {
 		for _, reuseName := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/reuse=%t", spelling, reuseName), func(t *testing.T) {
-				document, model, support := recordRenameFixture(t, spelling)
-				snapshot, err := json.Marshal(document)
-				if err != nil {
-					t.Fatal(err)
-				}
-				original := model.Clone()
-				for i := range model.Nodes {
-					if model.Nodes[i].ID == "urn:record-items:line" {
-						model.Nodes[i].Name = "Product"
-					}
-					if reuseName && model.Nodes[i].ID == "urn:record-items:other" {
-						model.Nodes[i].Name = "Line"
-					}
-				}
-				input := model.Clone()
-				written, err := PutWithEntityFieldsSupport(document, model, support)
-				if err != nil {
-					t.Fatal(err)
-				}
-				if !reflect.DeepEqual(input, model) {
-					t.Fatal("Put mutated the caller's model")
-				}
-				after, err := json.Marshal(document)
-				if err != nil || !bytes.Equal(snapshot, after) {
-					t.Fatal("Put mutated the original source document", err)
-				}
-				want := strings.Trim(strings.Replace(spelling, "Line", "Product", 1), `"`)
-				if strings.Contains(spelling, "urn:") {
-					want = "urn:record-items:line"
-				}
-				for i, declaration := range written.Declarations {
-					before := document.Declarations[i]
-					if declaration.ID != before.ID || declaration.Span != before.Span {
-						t.Fatal("declaration identity, order or origin changed")
-					}
-					for j, field := range declaration.Fields {
-						previous := nodeMap(original.Nodes)[declaration.ID].Fields[j]
-						if declaration.ID != "urn:record-items:basket" {
-							if !reflect.DeepEqual(field, previous) {
-								t.Fatal("unrelated field changed", field)
-							}
-							continue
-						}
-						if field.TypeRefUse.Spelling != want || field.TypeRefUse.ResolvedID != "urn:record-items:line" {
-							t.Fatal("renamed reference lost its source form or stable target", field)
-						}
-						comparison := field.clone()
-						comparison.TypeRef, comparison.TypeRefUse = previous.TypeRef, previous.TypeRefUse
-						if !reflect.DeepEqual(comparison, previous) {
-							t.Fatal("field identity, shape, order or exact source spans changed")
-						}
-					}
-				}
-				observed, err := GetWithEntityFieldsSupport(written, support)
-				if err != nil || !SemanticEquivalent(original, observed) {
-					t.Fatal("rename changed semantic identity", err)
-				}
-				if err := CheckPutGetWithEntityFieldsSupport(document, model, support); err != nil {
-					t.Fatal(err)
-				}
-				if err := CheckGetPutWithEntityFieldsSupport(written, support); err != nil {
-					t.Fatal(err)
-				}
-				assertRenamedRecordSourceReload(t, written, support)
+				checkRecordReferenceRename(t, spelling, reuseName)
 			})
 		}
 	}
 }
 
+func checkRecordReferenceRename(t *testing.T, spelling string, reuseName bool) {
+	t.Helper()
+	document, model, support := recordRenameFixture(t, spelling)
+	original, snapshot := model.Clone(), recordRenameSnapshot(t, document)
+	renameFixtureRecords(&model, reuseName)
+	input := model.Clone()
+	written, err := PutWithEntityFieldsSupport(document, model, support)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(input, model) || !bytes.Equal(snapshot, recordRenameSnapshot(t, document)) {
+		t.Fatal("Put mutated the caller model or original source document")
+	}
+	assertRecordRenameDeclarations(t, document, original, written, spelling)
+	observed, err := GetWithEntityFieldsSupport(written, support)
+	if err != nil || !SemanticEquivalent(original, observed) {
+		t.Fatal("rename changed semantic identity", err)
+	}
+	if err := CheckPutGetWithEntityFieldsSupport(document, model, support); err != nil {
+		t.Fatal(err)
+	}
+	if err := CheckGetPutWithEntityFieldsSupport(written, support); err != nil {
+		t.Fatal(err)
+	}
+	assertRenamedRecordSourceReload(t, written, support)
+}
+
+func recordRenameSnapshot(t *testing.T, document Document) []byte {
+	t.Helper()
+	raw, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return raw
+}
+
+func renameFixtureRecords(model *Model, reuseName bool) {
+	for i := range model.Nodes {
+		if model.Nodes[i].ID == "urn:record-items:line" {
+			model.Nodes[i].Name = "Product"
+		}
+		if reuseName && model.Nodes[i].ID == "urn:record-items:other" {
+			model.Nodes[i].Name = "Line"
+		}
+	}
+}
+
+func assertRecordRenameDeclarations(t *testing.T, source Document, original Model, written Document, spelling string) {
+	t.Helper()
+	want := strings.Trim(strings.Replace(spelling, "Line", "Product", 1), `"`)
+	if strings.Contains(spelling, "urn:") {
+		want = "urn:record-items:line"
+	}
+	nodes := nodeMap(original.Nodes)
+	for i, declaration := range written.Declarations {
+		before := source.Declarations[i]
+		if declaration.ID != before.ID || declaration.Span != before.Span {
+			t.Fatal("declaration identity, order or origin changed")
+		}
+		for j, field := range declaration.Fields {
+			previous := nodes[declaration.ID].Fields[j]
+			if declaration.ID == "urn:record-items:basket" {
+				assertRenamedRecordField(t, field, previous, want)
+			} else if !reflect.DeepEqual(field, previous) {
+				t.Fatal("unrelated field changed", field)
+			}
+		}
+	}
+}
+
+func assertRenamedRecordField(t *testing.T, field, previous Field, want string) {
+	t.Helper()
+	if field.TypeRefUse.Spelling != want || field.TypeRefUse.ResolvedID != "urn:record-items:line" {
+		t.Fatal("renamed reference lost its source form or stable target", field)
+	}
+	comparison := field.clone()
+	comparison.TypeRef, comparison.TypeRefUse = previous.TypeRef, previous.TypeRefUse
+	if !reflect.DeepEqual(comparison, previous) {
+		t.Fatal("field identity, shape, order or exact source spans changed")
+	}
+}
+
 func TestRecordReferenceRenameDoesNotMaskExplicitTypeEdits(t *testing.T) {
 	for _, edit := range []string{"explicit-id", "lookup", "presentation", "removed-target", "duplicate-name"} {
-		t.Run(edit, func(t *testing.T) {
-			document, model, support := recordRenameFixture(t, "Line")
-			for i := range model.Nodes {
-				if model.Nodes[i].ID == "urn:record-items:line" {
-					model.Nodes[i].Name = "Product"
-					if edit == "removed-target" {
-						model.Nodes = append(model.Nodes[:i], model.Nodes[i+1:]...)
-						break
-					}
-				}
-				if edit == "duplicate-name" && model.Nodes[i].ID == "urn:record-items:other" {
-					model.Nodes[i].Name = "Product"
-				}
-			}
-			for i := range model.Nodes {
-				if model.Nodes[i].ID != "urn:record-items:basket" {
-					continue
-				}
-				field := &model.Nodes[i].Fields[0]
-				switch edit {
-				case "explicit-id":
-					field.TypeRef = TypeRef{ID: "urn:record-items:other"}
-				case "lookup":
-					field.TypeRef = TypeRef{Name: "Other"}
-				case "presentation":
-					field.TypeRefUse.Spelling = "Other"
-				}
-			}
-			input := model.Clone()
-			written, err := PutWithEntityFieldsSupport(document, model, support)
-			var putErr *PutError
-			if !errors.As(err, &putErr) || !putErr.NoWrite {
-				t.Fatal("invalid rename or conflicting type edit must fail without writing", err)
-			}
-			if !reflect.DeepEqual(written, document) || !reflect.DeepEqual(input, model) {
-				t.Fatal("rejected update mutated a source or caller model")
-			}
-		})
+		t.Run(edit, func(t *testing.T) { checkRejectedRecordRename(t, edit) })
+	}
+}
+
+func checkRejectedRecordRename(t *testing.T, edit string) {
+	t.Helper()
+	document, model, support := recordRenameFixture(t, "Line")
+	editRecordRenameFixture(&model, edit)
+	input := model.Clone()
+	written, err := PutWithEntityFieldsSupport(document, model, support)
+	var putErr *PutError
+	if !errors.As(err, &putErr) || !putErr.NoWrite {
+		t.Fatal("invalid rename or conflicting type edit must fail without writing", err)
+	}
+	if !reflect.DeepEqual(written, document) || !reflect.DeepEqual(input, model) {
+		t.Fatal("rejected update mutated a source or caller model")
+	}
+}
+
+func editRecordRenameFixture(model *Model, edit string) {
+	renameFixtureRecords(model, false)
+	for i := range model.Nodes {
+		if edit == "removed-target" && model.Nodes[i].ID == "urn:record-items:line" {
+			model.Nodes = append(model.Nodes[:i], model.Nodes[i+1:]...)
+			return
+		}
+		if edit == "duplicate-name" && model.Nodes[i].ID == "urn:record-items:other" {
+			model.Nodes[i].Name = "Product"
+		}
+	}
+	for i := range model.Nodes {
+		if model.Nodes[i].ID != "urn:record-items:basket" {
+			continue
+		}
+		field := &model.Nodes[i].Fields[0]
+		switch edit {
+		case "explicit-id":
+			field.TypeRef = TypeRef{ID: "urn:record-items:other"}
+		case "lookup":
+			field.TypeRef = TypeRef{Name: "Other"}
+		case "presentation":
+			field.TypeRefUse.Spelling = "Other"
+		}
 	}
 }
 
@@ -190,8 +214,7 @@ func recordRenameFixture(t *testing.T, spelling string) (Document, Model, Entity
 
 // Reparse the written source spelling without the old resolved-ID cache. This
 // detects accidental capture by another record that now owns the old name.
-func assertRenamedRecordSourceReload(t *testing.T, written Document, support EntityFieldsSupport) {
-	t.Helper()
+func renamedRecordSource(written Document) string {
 	var source strings.Builder
 	fmt.Fprintf(&source, "package %s\nnamespace %s\n", written.Package, written.Namespace)
 	for _, declaration := range written.Declarations {
@@ -207,7 +230,13 @@ func assertRenamedRecordSourceReload(t *testing.T, written Document, support Ent
 		}
 		source.WriteString("}\n")
 	}
-	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("renamed.gooo", source.String(), support)
+	return source.String()
+}
+
+// Fresh parsing starts without the old resolved-ID cache.
+func assertRenamedRecordSourceReload(t *testing.T, written Document, support EntityFieldsSupport) {
+	t.Helper()
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("renamed.gooo", renamedRecordSource(written), support)
 	if diagnostics.HasErrors() {
 		t.Fatal(diagnostics)
 	}
