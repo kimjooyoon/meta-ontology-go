@@ -29,6 +29,11 @@ type ReplayEvidence struct {
 // remain historical evidence; this invocation performs two fresh native runs.
 func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prior Result,
 	suite bodyexecution.CompositionCases, goBinary string) (Result, error) {
+	return replayWorkspace(ctx, manifest, prior, suite, goBinary, nil)
+}
+
+func replayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prior Result,
+	suite bodyexecution.CompositionCases, goBinary string, owner *bodyexecution.Executor) (Result, error) {
 	program, current, err := reconstructWorkspace(ctx, manifest, prior)
 	if err != nil {
 		return Result{}, err
@@ -47,7 +52,7 @@ func ReplayWorkspace(ctx context.Context, manifest packageruntime.Manifest, prio
 		Replay: &ReplayEvidence{Schema: "gooo/workspace-body-replay/v1", PriorResultSHA256: sourceSHA256(encoded),
 			BodyFillsReplayed: len(prior.BodyFills), Scope: "saved decisions and source-bound candidates reconstructed without inference; old runtime observations are not reused"},
 		Scope: "saved workspace construction with two fresh native executions; current finite expectations or input-only observations"}
-	result.Runtime, err = bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, prior.Composition, translated, goBinary)
+	result.Runtime, err = executeWorkspaceNative(ctx, current, prior.Composition, translated, goBinary, owner)
 	if err == nil {
 		bindWorkspaceConditionSources(program, &result.Runtime, result.BodyFills)
 		bindWorkspaceLocalFileSources(program, &result.Runtime, prior.Composition, result.BodyFills)

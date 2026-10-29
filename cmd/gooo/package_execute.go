@@ -113,6 +113,11 @@ func parsePackageExecuteArgs(args []string) (map[string]string, string, error) {
 }
 
 func executePackage(ctx context.Context, reader SourceReader, manifestPath string, flags map[string]string) (packageExecutionReceipt, error) {
+	return executePackageWithExecutor(ctx, reader, manifestPath, flags, nil)
+}
+
+func executePackageWithExecutor(ctx context.Context, reader SourceReader, manifestPath string,
+	flags map[string]string, owner *workspaceexecution.Executor) (packageExecutionReceipt, error) {
 	receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Manifest: filepath.ToSlash(manifestPath)}
 	manifestBytes, err := readSource(reader, manifestPath)
 	if err != nil {
@@ -145,7 +150,12 @@ func executePackage(ctx context.Context, reader SourceReader, manifestPath strin
 	if err != nil {
 		return receipt, err
 	}
-	result, err := workspaceexecution.ExecuteWorkspaceWithOptions(ctx, runtimeManifest, suite, options)
+	var result workspaceexecution.Result
+	if owner == nil {
+		result, err = workspaceexecution.ExecuteWorkspaceWithOptions(ctx, runtimeManifest, suite, options)
+	} else {
+		result, err = owner.Execute(ctx, runtimeManifest, suite, options)
+	}
 	if result.Schema != "" {
 		receipt.Result = &result
 	}
