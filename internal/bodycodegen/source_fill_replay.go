@@ -108,6 +108,8 @@ func compareSourceFillReplay(prior, expected Result) error {
 	a.BodyFill.LocalCalls, b.BodyFill.LocalCalls = nil, nil
 	a.CompilerSourceSHA, b.CompilerSourceSHA = "", ""
 	a.RouteDecisionLatencyMS, b.RouteDecisionLatencyMS = 0, 0
+	// Retain explanations in the original observation without making their wording an execution claim.
+	a.UnsupportedConstructs, b.UnsupportedConstructs = "", ""
 	a.CompletenessReceipt, b.CompletenessReceipt = nil, nil
 	if !reflect.DeepEqual(a, b) {
 		return fmt.Errorf("body-fill candidate, selected case, holdout or projection evidence does not replay")
