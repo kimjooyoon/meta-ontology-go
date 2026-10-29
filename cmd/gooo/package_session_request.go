@@ -1,24 +1,30 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspaceexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/valuejson"
 )
 
 func decodePackageSessionRequest(raw []byte) (packageSessionRequest, error) {
 	var request packageSessionRequest
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&request); err != nil {
+	fields, err := valuejson.Object(raw, 4)
+	if err != nil {
 		return request, err
 	}
-	if err := decoder.Decode(new(any)); err != io.EOF {
-		return request, fmt.Errorf("session request must contain one JSON value")
+	for name := range fields {
+		switch name {
+		case "schema", "id", "operation", "arguments":
+		default:
+			return request, fmt.Errorf("unknown session request field %q", name)
+		}
+	}
+	if err := json.Unmarshal(raw, &request); err != nil {
+		return request, err
 	}
 	if request.Schema != packageSessionRequestSchema || request.ID == "" || len(request.ID) > 128 || len(request.Arguments) > 48 {
 		return request, fmt.Errorf("session request schema, id or argument bound differs")

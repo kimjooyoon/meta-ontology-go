@@ -22,6 +22,10 @@ Requests are processed serially with no internal work queue. Relative paths use
 the session process's working directory. Request lines are bounded at 64 KiB,
 IDs at 128 bytes, and argument lists at 48 entries.
 
+Field names are exactly `schema`, `id`, `operation` and `arguments`. Repeated
+names and case variants return a per-request error. The following valid frame
+can still complete, including an explicit `close` request.
+
 To replay, save the returned **receipt object** as `first-receipt.json`, then
 send the following request to the same still-running session:
 
