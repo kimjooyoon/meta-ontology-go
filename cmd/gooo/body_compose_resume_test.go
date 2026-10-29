@@ -79,12 +79,12 @@ func TestBodyComposeResumesNestedHelpersAndReplays(t *testing.T) {
 		t.Fatal(prior.Runtime)
 	}
 	continued := filepath.Join(t.TempDir(), "continued")
-	result := runFixture("--resume-composition", filepath.Join(first, "composition.json"),
+	result := runFixture("--entry", "Main", "--resume-composition", filepath.Join(first, "composition.json"),
 		"--assembly-policy", "../../examples/assembly-explainer/main.gooo.fixture", "--policy-activity", "Explain", "--out", continued)
 	if result.Runtime.FinitePassed != 2 || result.Composition.Continuation.Activities[1].RecheckedAttempts != 1 {
 		t.Fatal(result.Runtime)
 	}
-	replay := runFixture("--composition", filepath.Join(continued, "composition.json"))
+	replay := runFixture("--entry", "Main", "--composition", filepath.Join(continued, "composition.json"))
 	if replay.GeneratedNow || replay.Runtime.ModelCalls != 0 || replay.Runtime.FinitePassed != 2 {
 		t.Fatal(replay.Runtime)
 	}
