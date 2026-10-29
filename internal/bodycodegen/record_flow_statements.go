@@ -29,6 +29,8 @@ func (c *recordFlowBuilder) statement(node ast.Stmt, state *flowState) bool {
 		c.assignment(s, state)
 	case *ast.IfStmt:
 		return c.branch(s, state)
+	case *ast.RangeStmt:
+		return c.rangeLoop(s, state)
 	case *ast.ReturnStmt:
 		value := c.wrap(c.expression(s.Results[0], state, true), c.span(s), "return", 0)
 		c.retainReturn(value, c.span(s))
@@ -153,6 +155,7 @@ func (c *recordFlowBuilder) join(a, b uint16, span RecordFlowSpan, field string,
 	root := c.add("join", [2]uint16{a, b}, span, field, local, "")
 	if root != 0 {
 		c.nodes[root-1].Condition = guard
+		c.joinSequenceOrigins(root, a, b, span, field, local, guard)
 	}
 	return root
 }

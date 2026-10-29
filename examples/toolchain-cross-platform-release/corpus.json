@@ -5,7 +5,7 @@
   "targets": [
     {"id": "linux-amd64", "runner": "ubuntu-24.04", "goos": "linux", "goarch": "amd64", "archive_format": "tar.gz"},
     {"id": "darwin-amd64", "runner": "macos-15-intel", "goos": "darwin", "goarch": "amd64", "archive_format": "tar.gz"},
-    {"id": "darwin-arm64", "runner": "macos-15", "goos": "darwin", "goarch": "arm64", "archive_format": "tar.gz"},
+    {"id": "darwin-arm64", "runner": "macos-26", "goos": "darwin", "goarch": "arm64", "archive_format": "tar.gz"},
     {"id": "windows-amd64", "runner": "windows-2025", "goos": "windows", "goarch": "amd64", "archive_format": "zip"}
   ],
   "cases": [

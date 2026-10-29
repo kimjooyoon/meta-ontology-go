@@ -36,6 +36,7 @@ func recordValueFlow(p recordAssemblyPlan) *RecordValueFlow {
 		return r
 	}
 	c.exportRecordVersions(r)
+	c.exportLoops(r)
 	if c.err != nil {
 		r.Status = "UNRESOLVED"
 		r.Reason = c.err.Error()
@@ -94,6 +95,7 @@ func (c *recordFlowBuilder) add(kind string, parents [2]uint16, span RecordFlowS
 	id := uint16(c.count + 1)
 	c.nodes[c.count] = RecordFlowNode{ID: id, Kind: kind, Parents: parents, Span: span, FieldID: field, Local: local, Operator: op, Guard: c.guardRoot}
 	c.count++
+	c.forwardSequenceOrigin(id, kind, parents, span, field, local)
 	return id
 }
 

@@ -1,0 +1,48 @@
+{
+  "schema": "gooo/release-runner-recovery-observation/v1",
+  "head_sha": "6a7761af57cf6e0ff4d6e7e0d72cf82dad648872",
+  "workflow": ".github/workflows/gooo-release-readiness.yml",
+  "attempts": [
+    {
+      "run_id": 40742734226,
+      "attempt": 1,
+      "job_id": 123008338210,
+      "status": "completed",
+      "conclusion": "cancelled",
+      "runner_name": "",
+      "steps": 0,
+      "started_at": "2026-10-28T18:11:12Z",
+      "completed_at": "2026-10-28T18:26:35Z",
+      "api_jobs_sha256": "4e77eeb280c2940a70cb01b9ee9abda8eae0ce523f1eeae9f98930ec71474758"
+    },
+    {
+      "run_id": 40742734226,
+      "attempt": 2,
+      "job_id": 123033154640,
+      "status": "completed",
+      "conclusion": "cancelled",
+      "runner_name": "",
+      "steps": 0,
+      "started_at": "2026-10-28T18:56:50Z",
+      "completed_at": "2026-10-28T19:11:52Z",
+      "api_jobs_sha256": "5def84f106f22bf97d72b457b170e04680b0735f35fc3cbec591ecdfe0af9d8e"
+    }
+  ],
+  "observed_scope": "No ARM source or build step ran in either attempt. Three other native platform jobs succeeded at this head. Canonical CI40742735259 attempt1 succeeded independently.",
+  "candidate_change": {
+    "platform": "darwin-arm64",
+    "runner_before": "macos-15",
+    "runner_after": "macos-26",
+    "native_architecture": "arm64",
+    "target_count": 4,
+    "case_count": 26,
+    "job_timeout_minutes": 20
+  },
+  "official_source": "https://github.blog/changelog/2026-02-26-macos-26-is-now-generally-available-for-github-hosted-runners/",
+  "decision": "NEW_SOURCE_REQUIRES_NEW_CANONICAL_CI_AND_NATIVE_RELEASE_OBSERVATIONS",
+  "claims_not_measured": [
+    "new runner provisioning success",
+    "queue time improvement",
+    "new source CI success"
+  ]
+}

@@ -1,0 +1,19 @@
+package constructorigin
+namespace constructorigin
+entity Integer id "urn:gooo:type:integer"
+entity Item id "urn:construct:item" fields {
+ field value id "urn:construct:value" type integer required one
+ field ignored id "urn:construct:ignored" type integer required one
+}
+entity State id "urn:construct:state" fields {
+ field left id "urn:construct:left" type integer required one
+ field right id "urn:construct:right" type integer required one
+ field noise id "urn:construct:noise" type integer required one
+ field pick id "urn:construct:pick" type integer required one
+}
+activity Read(State) -> Integer id "urn:construct:read" computes `
+ let first = Item{value: input.left, ignored: input.noise}
+ let second = Item{value: input.right, ignored: input.noise}
+ let items = []Item{first, second}
+ return items[input.pick].value
+`

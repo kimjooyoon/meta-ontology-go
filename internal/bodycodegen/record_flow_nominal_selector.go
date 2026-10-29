@@ -22,10 +22,18 @@ func (c *recordFlowBuilder) selectorBase(expression ast.Expr, state *flowState) 
 
 func (c *recordFlowBuilder) selectorValue(e *ast.SelectorExpr, state *flowState) (flowValue, uint16, string) {
 	value, local := c.selectorBase(e.X, state)
+	if c.err != nil {
+		return flowScalar(0), 0, ""
+	}
 	if value.record >= 0 {
 		for i, field := range c.body.records[value.record].Fields {
 			if field.Name != e.Sel.Name && field.GoName != e.Sel.Name {
 				continue
+			}
+			if field.Cardinality != "" {
+				root := c.add("read", [2]uint16{value.fields[i]}, c.span(e), field.ID, local, "sequence")
+				c.linkRecordVersion(root, value.scalar)
+				return c.sequenceValue(root, field.TypeID), local, field.ID
 			}
 			if c.compactRecords {
 				root := c.add("read", [2]uint16{value.fields[i]}, c.span(e), field.ID, local, "")

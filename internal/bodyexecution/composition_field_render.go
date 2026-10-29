@@ -199,7 +199,36 @@ func (r compositionFieldRenderer) rangeRecordWrite(n compositionFieldNode) strin
 	loop := n.node.(*ast.RangeStmt)
 	name := loop.Value.(*ast.Ident).Name
 	typeName := r.plan.inventory.bindings[n.binding].Record.GoName
+	start, mode := n.start+1, "0"
+	if pairedRangeRead(loop, r.prefix) {
+		_, start = r.sourceOffsets(loop.Body.List[0])
+		mode = "4"
+	}
 	assignment := r.call("FieldAssignRecord", strconv.Itoa(n.first), r.fieldCount(n.binding), r.prefix+"FieldScope",
-		"&"+r.slot(n.binding), r.slot(-1), "0", "func() "+typeName+" {return "+name+"}")
-	return "{" + name + "=" + assignment + ";" + r.render(n.start+1, n.end-1, n.node) + "}"
+		"&"+r.slot(n.binding), r.slot(-1), mode, "func() "+typeName+" {return "+name+"}")
+	return "{" + r.render(n.start+1, start, n.node) + ";" + name + "=" + assignment + ";" +
+		r.render(start, n.end-1, n.node) + "}"
+}
+
+// Match the already emitted typed range read by its exact sequence/index
+// bindings. The field copy must follow that read, before any authored body work.
+func pairedRangeRead(loop *ast.RangeStmt, prefix string) bool {
+	if len(loop.Body.List) == 0 {
+		return false
+	}
+	statement, ok := loop.Body.List[0].(*ast.ExprStmt)
+	if !ok {
+		return false
+	}
+	call, ok := statement.X.(*ast.CallExpr)
+	if !ok || len(call.Args) != 3 {
+		return false
+	}
+	function, named := call.Fun.(*ast.Ident)
+	sequence, sequenceName := call.Args[1].(*ast.Ident)
+	index, indexName := call.Args[2].(*ast.Ident)
+	loopSequence, loopSequenceName := loop.X.(*ast.Ident)
+	loopIndex, loopIndexName := loop.Key.(*ast.Ident)
+	return named && function.Name == prefix+"Read" && sequenceName && indexName &&
+		loopSequenceName && loopIndexName && sequence.Name == loopSequence.Name && index.Name == loopIndex.Name
 }

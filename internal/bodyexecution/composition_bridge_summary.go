@@ -17,6 +17,7 @@ func validateBridgeObservations(traces []CompositionTrace, r CompositionRuntime)
 			return nil, fmt.Errorf("bridge case%d: %w", c, err)
 		}
 		b := t.Bridge
+		summarizeBridgeElementReads(s, t)
 		s.FieldWindows += len(b.Fields)
 		s.LocalWindows += len(b.Locals)
 		s.FieldUses += len(b.FieldClocks)
@@ -37,8 +38,12 @@ func validateBridgeObservations(traces []CompositionTrace, r CompositionRuntime)
 	if s.LocalWindows > 4096 || s.FieldWindows > 4096 || s.LocalUses > 65536 || s.FieldUses > 65536 {
 		return nil, fmt.Errorf("bridge retained populations exceed their original journal limits")
 	}
-	if s.Interrupted > 0 || r.FieldObservation.Status != "COMPLETE" || r.LocalObservation != nil && r.LocalObservation.Status != "COMPLETE" {
+	if s.Interrupted > 0 || s.MissingElements > 0 || s.UnresolvedElements > 0 ||
+		r.FieldObservation.Status != "COMPLETE" || r.LocalObservation != nil && r.LocalObservation.Status != "COMPLETE" {
 		s.Status = "PARTIAL"
+	}
+	if err := bindBridgeElementSummary(s, r); err != nil {
+		return nil, err
 	}
 	return s, nil
 }

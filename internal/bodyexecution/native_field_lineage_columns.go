@@ -53,6 +53,9 @@ func SelectRecordedFieldLineage(runtime CompositionRuntime, query NativeOriginQu
 		return c, report, err
 	}
 	trace := runtime.Traces[selected.CaseIndex]
+	if hasBridgeElementReads(trace) {
+		return c, report, fmt.Errorf("field-lineage-columns/v1 cannot represent recorded element origins; select field-writes or field-uses rows")
+	}
 	n, u := len(trace.FieldWrites), len(trace.FieldUses)
 	if n > 60 || u > 128 {
 		return c, report, fmt.Errorf("field-lineage-columns needs an unsliced case with at most60 writes/128 uses; got%d/%d", n, u)

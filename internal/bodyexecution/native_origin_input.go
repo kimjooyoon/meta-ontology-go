@@ -124,6 +124,11 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if len(page.rows) == 0 && !(emptyTable && query.Offset == 0 && page.total == 0) {
 		return nil, nil, fmt.Errorf("origin selection contains no rows: kind=%s offset=%d total=%d", query.Kind, query.Offset, page.total)
 	}
+	return page.rows, page.report(runtime), nil
+}
+
+func (page *nativeOriginPage) report(runtime CompositionRuntime) *NativeOriginInput {
+	query := page.query
 	observed := *runtime.ReadObservation
 	report := &NativeOriginInput{Schema: "gooo/native-origin-input/v1", SelectedSourceSHA256: runtime.SelectedSourceSHA256, RuntimeSuiteSHA256: runtime.RuntimeSuiteSHA256, Query: query, TotalRows: page.total, ReturnedRows: len(page.rows), Truncated: query.Offset+len(page.rows) < page.total, Observation: &observed,
 		Scope: "recorded claims read without re-execution; the new consumer evaluates these rows only; construction read windows describe reads during evaluation, not complete scalar dependencies; inspect original observation drops and the selected page"}
@@ -153,12 +158,16 @@ func selectRecordedNativeOrigins(runtime CompositionRuntime, query NativeOriginQ
 	if runtime.BridgeObservation != nil {
 		copy := *runtime.BridgeObservation
 		report.BridgeObservation = &copy
+		if copy.Schema == "gooo/native-field-local-bridge-summary/v2" &&
+			(query.Kind == "field-writes" || query.Kind == "field-uses") {
+			report.Schema = "gooo/native-origin-input/v2"
+		}
 	}
 	if report.Truncated {
 		next := query.Offset + len(page.rows)
 		report.NextOffset = &next
 	}
-	return page.rows, report, nil
+	return report
 }
 
 func isLocalOriginKind(kind string) bool {

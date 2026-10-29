@@ -1,0 +1,85 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "Read": {
+          "items": [
+            {
+              "value": 7,
+              "ignored": 90
+            },
+            {
+              "value": 11,
+              "ignored": 91
+            }
+          ],
+          "offset": -1,
+          "unused": 99
+        }
+      },
+      "expected": {
+        "Read": 7
+      }
+    },
+    {
+      "inputs": {
+        "Read": {
+          "items": [
+            {
+              "value": 7,
+              "ignored": 90
+            },
+            {
+              "value": 11,
+              "ignored": 91
+            }
+          ],
+          "offset": 0,
+          "unused": 99
+        }
+      },
+      "expected": {
+        "Read": 11
+      }
+    },
+    {
+      "inputs": {
+        "Read": {
+          "items": [
+            {
+              "value": 7,
+              "ignored": 90
+            },
+            {
+              "value": 7,
+              "ignored": 91
+            }
+          ],
+          "offset": 0,
+          "unused": 99
+        }
+      },
+      "expected": {
+        "Read": 7
+      }
+    },
+    {
+      "inputs": {
+        "Read": {
+          "items": [
+            {
+              "value": 9007199254740993,
+              "ignored": 90
+            }
+          ],
+          "offset": -1,
+          "unused": 99
+        }
+      },
+      "expected": {
+        "Read": 9007199254740993
+      }
+    }
+  ]
+}

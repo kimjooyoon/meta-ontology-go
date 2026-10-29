@@ -34,7 +34,7 @@ func TestEverydayRegistryRetainsAllPriorCases67143(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(prior.Cases) != 110 || len(registry.Cases) != FixedTotal ||
-		!reflect.DeepEqual(prior.Cases, registry.Cases[:110]) ||
+		!historicalSyntaxCasesRetained(prior.Cases, registry.Cases) ||
 		!metaSourceHistoryRetainedByCases67143(prior, registry) ||
 		!reflect.DeepEqual(prior.ProjectionUnits, registry.ProjectionUnits) ||
 		!reflect.DeepEqual(prior.PackageUnits, registry.PackageUnits) {
@@ -56,7 +56,7 @@ func metaSourceHistoryRetained67143(prior, current []string) bool {
 // A raw meta source can become a newly appended executable capability case.
 // Its path remains registered, and every other raw source keeps its order.
 func metaSourceHistoryRetainedByCases67143(prior, current Registry) bool {
-	if len(current.Cases) < len(prior.Cases) || !reflect.DeepEqual(prior.Cases, current.Cases[:len(prior.Cases)]) {
+	if !historicalSyntaxCasesRetained(prior.Cases, current.Cases) {
 		return false
 	}
 	promoted := map[string]bool{}
