@@ -1502,6 +1502,7 @@
     "internal/meta/publictestreuse/policy.gooo",
     "examples/measurement-metadata/main.gooo",
     "internal/meta/languagereadiness/toolchainrelease/payload.gooo",
+    "internal/meta/releaseidentity/version.gooo",
     "examples/agent-tool-inventory/main.gooo",
     "examples/recorded-use-origins/retention.gooo",
     "examples/toolchain-version-impact/impact.gooo",

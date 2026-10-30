@@ -18,6 +18,13 @@ result := surface.Evaluate(surface.R_Observation{
 fmt.Println(result.F_status, result.F_missing_count)
 ```
 
+The underlying computed-entry API accepts an activity's source name or stable
+ID. Selecting by stable ID keeps the entry after a display rename. The typed
+plan records its current source name and semantic ID; an unknown or non-unique
+selection fails before output. The compiler's own release version uses this
+path: `release://activity/current-version` generates a zero-input `Evaluate()`
+from `internal/meta/releaseidentity/version.gooo`.
+
 `--out` creates the output directory after successful generation and publishes
 the complete source using the CLI's shared atomic writer. Generation errors leave
 the previous file untouched. Existing file permissions are preserved, and equal

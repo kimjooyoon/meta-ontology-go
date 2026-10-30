@@ -8,6 +8,9 @@ on:
       - 'cmd/gooo/version.go'
       - 'cmd/gooo/version_test.go'
       - 'docs/external/gooo-release-publication-v3.md'
+      - 'docs/external/gooo-release-publication-v4.md'
+      - 'internal/meta/releaseidentity/**'
+      - 'scripts/release-version/**'
       - 'examples/gooo-release-publication/**'
       - 'internal/verify/scope_gooo_experimental_release.go'
       - '.github/ci-governance.json'
@@ -25,7 +28,6 @@ on:
       tag:
         description: Experimental release tag
         required: true
-        default: v0.6.38-dev
         type: string
 
 permissions: {}
@@ -44,9 +46,11 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
     env:
       EXACT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.validated_sha || github.event.pull_request.head.sha }}
-      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.6.38-dev' }}
+      RELEASE_TAG: ${{ inputs.tag }}
       GOTOOLCHAIN: go1.27.3
     steps:
       - name: Bind dispatched source to current dev before executing it
@@ -70,6 +74,7 @@ jobs:
           go-version-file: go.mod
           cache: false
       - name: Bind and check the Gooo publication authority
+        id: identity
         shell: bash
         run: |
           set -euo pipefail
@@ -77,23 +82,36 @@ jobs:
           output="$RUNNER_TEMP/gooo-release-publication-contract"
           mkdir -p "$output"
           test "$(git rev-parse HEAD)" = "$EXACT_SHA"
-          test "$RELEASE_TAG" = "v0.6.38-dev"
+          go run ./scripts/release-version -mode check
           go run ./cmd/gooo check "$source" > "$output/check.stdout"
           version_json="$(go run ./cmd/gooo version --json)"
+          version="$(jq -er .version <<< "$version_json")"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-dev$ ]]
+          tag="v$version"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            test "$RELEASE_TAG" = "$tag"
+          fi
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+          printf 'RELEASE_VERSION=%s\nRELEASE_TAG=%s\n' "$version" "$tag" >> "$GITHUB_ENV"
           jq -e '
             .schema_version == "gooo-version/v1" and
-            .language == "gooo" and .version == "0.6.38-dev" and
+            .language == "gooo" and
             .status == "development"
           ' <<< "$version_json"
           activity_total="$(awk '$1 == "activity" { count++ } END { print count + 0 }' "$source")"
           test "$activity_total" -eq 8
           source_digest="sha256:$(sha256sum "$source" | awk '{print $1}')"
+          version_source="internal/meta/releaseidentity/version.gooo"
+          version_source_digest="sha256:$(sha256sum "$version_source" | awk '{print $1}')"
           check_digest="sha256:$(sha256sum "$output/check.stdout" | awk '{print $1}')"
           jq -n \
             --arg head "$EXACT_SHA" \
-            --arg tag "$RELEASE_TAG" \
+            --arg tag "$tag" \
+            --arg version "$version" \
             --arg source "$source" \
             --arg source_digest "$source_digest" \
+            --arg version_source "$version_source" \
+            --arg version_source_digest "$version_source_digest" \
             --arg check_digest "$check_digest" \
             --argjson activities "$activity_total" \
             '{
@@ -101,7 +119,8 @@ jobs:
               head_sha:$head,
               meta_operation:"publish-exact-experimental-release",
               meta_source:{path:$source,digest:$source_digest,check_digest:$check_digest,activities:$activities},
-              identity:{tag:$tag,version:"0.6.38-dev",status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
+              identity:{tag:$tag,version:$version,status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
+              identity_source:{path:$version_source,digest:$version_source_digest,activity:"release://activity/current-version"},
               cells:[
                 {id:"VALIDATED_MERGE_EVIDENCE",proof_choice:"FOUNDATION"},
                 {id:"EXPERIMENTAL_RELEASE_IDENTITY",proof_choice:"FOUNDATION"},
@@ -191,9 +210,9 @@ jobs:
           output="$RUNNER_TEMP/gooo-release-publication-contract"
           source="examples/gooo-release-publication/main.gooo"
           grep -Fx 'activity AssembleReleasePayload(ValidatedMergeEvidence, ReleaseIdentity) -> ReleasePayload' "$source"
-          jq -e '
+          jq -e --arg version "$RELEASE_VERSION" '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
-            .version == "0.6.38-dev" and .status == "development" and
+            .version == $version and .status == "development" and
             .semantic_ir == "semantic-ir/v1" and .semantic_check == "gooo-semantic-check/v1" and
             .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
           ' "$output/probe-version.json"
@@ -236,11 +255,14 @@ jobs:
     permissions:
       actions: read
       contents: read
+    outputs:
+      version: ${{ needs.conformance.outputs.version }}
     env:
       GH_TOKEN: ${{ github.token }}
       READINESS_RUN_ID: ${{ inputs.readiness_run_id }}
       VALIDATED_SHA: ${{ inputs.validated_sha }}
       RELEASE_TAG: ${{ inputs.tag }}
+      RELEASE_VERSION: ${{ needs.conformance.outputs.version }}
       GOTOOLCHAIN: go1.27.3
     steps:
       - name: Check out exact validated merge
@@ -274,7 +296,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$RELEASE_TAG" = "v0.6.38-dev"
+          test "$RELEASE_TAG" = "v$RELEASE_VERSION"
           [[ "$VALIDATED_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$READINESS_RUN_ID" =~ ^[1-9][0-9]*$ ]]
           test "$(git rev-parse HEAD)" = "$VALIDATED_SHA"
@@ -304,8 +326,13 @@ jobs:
           ' "$evidence/eligibility.json"
 
           source_digest="sha256:$(sha256sum examples/gooo-release-publication/main.gooo | awk '{print $1}')"
-          jq -e --arg sha "$VALIDATED_SHA" --arg digest "$source_digest" '
+          version_source_digest="sha256:$(sha256sum internal/meta/releaseidentity/version.gooo | awk '{print $1}')"
+          jq -e --arg sha "$VALIDATED_SHA" --arg digest "$source_digest" \
+            --arg version "$RELEASE_VERSION" --arg tag "$RELEASE_TAG" --arg version_digest "$version_source_digest" '
             .head_sha == $sha and .meta_source.digest == $digest and
+            .identity.version == $version and .identity.tag == $tag and
+            .identity_source.digest == $version_digest and
+            .identity_source.activity == "release://activity/current-version" and
             .meta_source.activities == 8 and (.cells | length) == 8 and
             .assets.total == 9 and .assets.checksum_entries == 8
           ' "$RUNNER_TEMP/publication-contract/contract.json"
@@ -359,9 +386,9 @@ jobs:
           set -euo pipefail
           contract="$RUNNER_TEMP/publication-contract/contract.json"
           dist="$RUNNER_TEMP/gooo-release-dist"
-          jq -e '
+          jq -e --arg version "$RELEASE_VERSION" '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
-            .version == "0.6.38-dev" and .status == "development" and
+            .version == $version and .status == "development" and
             .semantic_ir == "semantic-ir/v1" and
             .semantic_check == "gooo-semantic-check/v1" and
             .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
@@ -390,26 +417,30 @@ jobs:
           source_report_digest="$(jq -r .source_report_digest "$dist/release-eligibility.json")"
           concept_digest="$(jq -r .concept_digest "$dist/release-eligibility.json")"
           meta_source_digest="$(jq -r .meta_source.digest "$contract")"
+          version_source_digest="$(jq -r .identity_source.digest "$contract")"
           contract_digest="sha256:$(sha256sum "$contract" | awk '{print $1}')"
           jq -n \
             --arg tag "$RELEASE_TAG" \
+            --arg version "$RELEASE_VERSION" \
             --arg head "$VALIDATED_SHA" \
             --argjson run_id "$READINESS_RUN_ID" \
             --arg report_digest "$report_digest" \
             --arg source_report_digest "$source_report_digest" \
             --arg concept_digest "$concept_digest" \
             --arg meta_source_digest "$meta_source_digest" \
+            --arg version_source_digest "$version_source_digest" \
             --arg contract_digest "$contract_digest" \
             --slurpfile assets "$RUNNER_TEMP/release-assets.json" \
             '{
               schema:"gooo/release-manifest/v1",
-              tag:$tag,head_sha:$head,version:"0.6.38-dev",status:"development",
+              tag:$tag,head_sha:$head,version:$version,status:"development",
               prerelease:true,latest:false,readiness_run_id:$run_id,
               release_report_digest:$report_digest,
               source_report_digest:$source_report_digest,
               concept_digest:$concept_digest,
               publication_meta_operation:"publish-exact-experimental-release",
               publication_meta_source_digest:$meta_source_digest,
+              version_source_digest:$version_source_digest,
               publication_contract_digest:$contract_digest,
               payload_total:7,assets:$assets[0],repository_writes:0
             }' > "$dist/release-manifest.json"
@@ -460,6 +491,7 @@ jobs:
       READINESS_RUN_ID: ${{ inputs.readiness_run_id }}
       VALIDATED_SHA: ${{ inputs.validated_sha }}
       RELEASE_TAG: ${{ inputs.tag }}
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - name: Download exact publication candidate
         uses: actions/download-artifact@v8
@@ -471,13 +503,13 @@ jobs:
         run: |
           set -euo pipefail
           dist="$RUNNER_TEMP/gooo-release-dist"
-          test "$RELEASE_TAG" = "v0.6.38-dev"
+          test "$RELEASE_TAG" = "v$RELEASE_VERSION"
           dev_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)"
           test "$dev_sha" = "$VALIDATED_SHA"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID" \
             --jq '.conclusion' | grep -Fx success
-          jq -e --arg sha "$VALIDATED_SHA" --arg tag "$RELEASE_TAG" '
-            .head_sha == $sha and .tag == $tag and .version == "0.6.38-dev" and
+          jq -e --arg sha "$VALIDATED_SHA" --arg tag "$RELEASE_TAG" --arg version "$RELEASE_VERSION" '
+            .head_sha == $sha and .tag == $tag and .version == $version and
             .status == "development" and .prerelease == true and .latest == false and
             .payload_total == 7 and (.assets | length) == 7 and
             .repository_writes == 0
@@ -503,18 +535,17 @@ jobs:
           dist="$RUNNER_TEMP/gooo-release-dist"
           notes="$RUNNER_TEMP/release-notes.md"
           cat > "$notes" <<EOF
-          # Gooo v0.6.38-dev
+          # Gooo $RELEASE_TAG
 
           Development prerelease for exact source \`$VALIDATED_SHA\`, built with Go 1.27.3.
 
-          ## Compose work and retain its origins
+          ## Gooo programs, libraries and source origins
 
-          - This release's native archives are built with Go 1.27.3. The preceding v0.6.37-dev archives retain their original Go 1.27.2 identity; verify the selected archive with \`gooo version --build --json\`.
-          - Each platform archive carries the compiler, root MIT license, the pinned decision-runtime and gooo-jev license texts, and a NOTICE that names their exact source revisions and SHA-256 digests. The [release payload guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/language/release-payload-origins.md) describes what the independent archive reader checks.
-          - Apply a named Gooo activity to each scalar collection item with \`map_values\`. The [collection-map example](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/collection-map/README.md) keeps input order, duplicates and each attempted element's source origins. Its profile is bounded to 256 items and the existing activity-call budget.
-          - Read the compiler's eight pure-body maxima from \`gooo version --build --json\` before preparing a program. The [0.6.36 guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/releases/0.6.36-dev.md) explains their scope and how to handle older binaries.
-          - Generate JSON, Go and Markdown registration fragments from one Gooo input with the [scope-fragments program](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/examples/scope-fragments/README.md). The caller applies the proposed text.
-          - Keep the original source, mapper identity and retained element reads when querying saved execution. Observation bounds stay separate from value computation.
+          - Generate an importable Go library from an authored Gooo workspace, including shared nominal record types, selected stage exports and optional generation origins. The [library guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/language/package-library-generation.md) describes the typed host boundary.
+          - Use nested nominal records and ordered record collections in source-owned computations and construction. Original fields, element reads, loops and authored indices retain source origins. Stable IDs connect declarations across display renames; inspect the [recorded-origin guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/language/recorded-origin-queries.ko.md).
+          - Keep a caller-owned workspace alive with \`gooo package session\`. Each execute or saved replay reloads current sources and inputs, verifies the exact reusable executable, and performs two fresh native runs. The [session guide](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/language/workspace-sessions.md) defines framing, limits, cancellation and cleanup.
+          - Derive the compiler release version from a Gooo activity and its generated library. The [publication identity](https://github.com/$GITHUB_REPOSITORY/blob/$VALIDATED_SHA/docs/external/gooo-release-publication-v4.md) binds the selected version, source digest and requested tag.
+          - Each native archive retains the compiler, its MIT license, both pinned direct-module license texts and NOTICE with exact source revisions and digests. Go remains pinned to 1.27.3.
 
           ## Checks for this release source
 
@@ -533,7 +564,7 @@ jobs:
 
           tag_object="$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/tags" \
             -f tag="$RELEASE_TAG" \
-            -f message="Gooo v0.6.38-dev experimental prerelease" \
+            -f message="Gooo $RELEASE_TAG experimental prerelease" \
             -f object="$VALIDATED_SHA" \
             -f type="commit" \
             --jq .sha)"
@@ -547,7 +578,7 @@ jobs:
             --draft \
             --prerelease \
             --latest=false \
-            --title "Gooo v0.6.38-dev" \
+            --title "Gooo $RELEASE_TAG" \
             --notes-file "$notes"
       - name: Verify draft and publish prerelease
         shell: bash
@@ -589,7 +620,7 @@ jobs:
               manifest_digest:$manifest_digest,
               publication_meta_source_digest:$meta_source_digest,
               release:{url:.url,prerelease:.isPrerelease,draft:.isDraft,asset_names:[.assets[].name]|sort},
-              claim:{id:"release://gooo/v0.6.38-dev",entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
+              claim:{id:("release://gooo/"+$tag),entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
               summary:{total_work:9,closed:9,unknown:0,refuted:0,assets_published:(.assets|length),assets_total:9,checksum_entries:8,repository_writes:0}
             }' "$release_json" > "$RUNNER_TEMP/publication.json"
       - name: Upload publication result
@@ -632,7 +663,7 @@ jobs:
               mutation_allowed:false,
               upstream:{prepare:$prepare,publish:$publish},
               claim:{
-                id:"release://gooo/v0.6.38-dev",entity:"GoooExperimentalPrerelease",
+                id:("release://gooo/"+$tag),entity:"GoooExperimentalPrerelease",
                 status:"ACTIVE",state:"UNKNOWN",resolution:"OPERATION_CLASS",
                 stage:"RELEASE",step:"PUBLISH_PRERELEASE",
                 reason:"RELEASE_PUBLICATION_UPSTREAM_NOT_SUCCESS",
