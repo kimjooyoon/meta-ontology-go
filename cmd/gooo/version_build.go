@@ -11,6 +11,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/buildidentity"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/runtimeidentity"
 )
 
 const decisionRuntimeModule = "github.com/kimjooyoon/gooo-decision-runtime"
@@ -41,8 +42,9 @@ type versionBuildInfo struct {
 	SDK               versionSDKInfo        `json:"decision_runtime"`
 	NativeGoRequired  string                `json:"native_go_required"`
 
-	PureBodyLimits          bodycodegen.ProfileLimits      `json:"pure_body_limits"`
-	PackageReceiptTransport packageReceiptTransportProfile `json:"package_receipt_transport"`
+	PureBodyLimits           bodycodegen.ProfileLimits       `json:"pure_body_limits"`
+	PackageReceiptTransport  packageReceiptTransportProfile  `json:"package_receipt_transport"`
+	RuntimeObservationFields *runtimeidentity.R_Descriptions `json:"runtime_observation_fields,omitempty"`
 }
 
 func versionBuildMetadata(info *debug.BuildInfo, runtimeVersion string) versionBuildInfo {
@@ -119,10 +121,14 @@ func versionBuildCommitSHA(revision string) bool {
 	return err == nil && len(decoded) == 20
 }
 
-func runBuildVersion(asJSON bool, stdout io.Writer) int {
+func runBuildVersion(asJSON, describeRuntime bool, stdout io.Writer) int {
 	info, _ := debug.ReadBuildInfo()
 	identity := versionBuildMetadata(info, runtime.Version())
 	if asJSON {
+		if describeRuntime {
+			fields := runtimeidentity.Evaluate()
+			identity.RuntimeObservationFields = &fields
+		}
 		if err := json.NewEncoder(stdout).Encode(identity); err != nil {
 			return exitFailure
 		}

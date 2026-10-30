@@ -14,7 +14,7 @@ var goooVersion = releaseidentity.Evaluate()
 const (
 	versionSchema = "gooo-version/v1"
 	versionStatus = "development"
-	versionUsage  = "usage: gooo version [--build] [--json]"
+	versionUsage  = "usage: gooo version [--build] [--json] [--describe-runtime]"
 )
 
 type versionInfo struct {
@@ -29,20 +29,26 @@ type versionInfo struct {
 }
 
 func runVersion(args []string, stdout, stderr io.Writer) int {
-	build, asJSON := false, false
+	build, asJSON, describeRuntime := false, false, false
 	for _, arg := range args {
 		switch {
 		case arg == "--build" && !build:
 			build = true
 		case arg == "--json" && !asJSON:
 			asJSON = true
+		case arg == "--describe-runtime" && !describeRuntime:
+			describeRuntime = true
 		default:
 			fmt.Fprintln(stderr, versionUsage)
 			return exitUsage
 		}
 	}
+	if describeRuntime && (!build || !asJSON) {
+		fmt.Fprintln(stderr, versionUsage+"; --describe-runtime requires --build --json")
+		return exitUsage
+	}
 	if build {
-		return runBuildVersion(asJSON, stdout)
+		return runBuildVersion(asJSON, describeRuntime, stdout)
 	}
 	if len(args) == 0 {
 		_, err := fmt.Fprintf(stdout, "gooo %s (%s)\n", goooVersion, versionStatus)
