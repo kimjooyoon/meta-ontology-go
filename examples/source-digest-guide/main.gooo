@@ -1,0 +1,90 @@
+package digestguide
+namespace digestguide
+
+# "출처"가 같아 보여도 파일 바이트와 JSON 문자열은 서로 다른 표현이다.
+entity Query id "urn:gooo:source-digest-guide:query" fields {
+    field owner id "urn:gooo:source-digest-guide:query:owner" type string required one
+    field path id "urn:gooo:source-digest-guide:query:path" type string required one
+}
+
+entity Meaning id "urn:gooo:source-digest-guide:meaning" fields {
+    field owner id "urn:gooo:source-digest-guide:meaning:owner" type string required one
+    field path id "urn:gooo:source-digest-guide:meaning:path" type string required one
+    field known id "urn:gooo:source-digest-guide:meaning:known" type boolean required one
+    field byte_domain id "urn:gooo:source-digest-guide:meaning:byte-domain" type string required one
+    field source_scope id "urn:gooo:source-digest-guide:meaning:source-scope" type string required one
+    field hash_recipe id "urn:gooo:source-digest-guide:meaning:hash-recipe" type string required one
+}
+
+activity Unknown(Query) -> Meaning id "urn:gooo:source-digest-guide:unknown" computes `
+return Meaning{owner: input.owner, path: input.path, known: false,
+    byte_domain: "UNKNOWN", source_scope: "UNRESOLVED", hash_recipe: "READ_PRODUCER_CONTRACT"}
+`
+
+activity Workspace(Query) -> Meaning id "urn:gooo:source-digest-guide:workspace" computes `
+let result = Unknown(input)
+let image = input.owner == "package resolve" &&
+    input.path == "result.image.packages[].sources[].source_digest"
+let program = input.owner == "package execute" &&
+    input.path == "result.program.workspace_image.packages[].sources[].source_digest"
+if image || program {
+    result.known = true
+    result.byte_domain = "GO_JSON_STRING"
+    result.source_scope = "COMPLETE_WORKSPACE_SOURCE"
+    result.hash_recipe = "sha256(json.Marshal(source.Content))"
+}
+if input.owner == "package execute" &&
+    input.path == "result.program.activity_origins[].input_source.source_sha256" {
+    result.known = true
+    result.byte_domain = "RAW_UTF8"
+    result.source_scope = "COMPLETE_WORKSPACE_SOURCE"
+    result.hash_recipe = "sha256(original_file_bytes)"
+}
+return result
+`
+
+activity Generation(Query) -> Meaning id "urn:gooo:source-digest-guide:generation" computes `
+let result = Unknown(input)
+let direct = input.owner == "body-codegen" && input.path == "report.source_digest"
+let composed = input.owner == "package execute" &&
+    input.path == "result.composition.steps[].generation.report.source_digest"
+if direct || composed {
+    result.known = true
+    result.byte_domain = "RAW_UTF8"
+    result.source_scope = "GENERATION_INPUT_CHECKPOINT"
+    result.hash_recipe = "sha256(generation_input_bytes)"
+}
+return result
+`
+
+activity Release(Query) -> Meaning id "urn:gooo:source-digest-guide:release" computes `
+let result = Unknown(input)
+if input.owner != "release-manifest.json" { return result }
+if input.path == "release_report_digest" {
+    result.known = true
+    result.byte_domain = "GO_TYPED_REPORT_JSON"
+    result.source_scope = "RELEASE_REPORT_WITH_EMPTY_DIGEST"
+    result.hash_recipe = "sha256(json.Marshal(Report{report_digest: empty}))"
+}
+if input.path == "assets[name=\"release-report.json\"].digest" {
+    result.known = true
+    result.byte_domain = "RAW_FILE_BYTES"
+    result.source_scope = "COMPLETE_PUBLISHED_REPORT_FILE"
+    result.hash_recipe = "sha256(published_file_bytes)"
+}
+if input.path == "version_source_digest" {
+    result.known = true
+    result.byte_domain = "RAW_UTF8"
+    result.source_scope = "RELEASE_VERSION_GOOO_SOURCE"
+    result.hash_recipe = "sha256(internal/meta/releaseidentity/version.gooo bytes)"
+}
+return result
+`
+
+activity Explain(Query) -> Meaning id "urn:gooo:source-digest-guide:explain" computes `
+let workspace = Workspace(input)
+if workspace.known { return workspace }
+let generation = Generation(input)
+if generation.known { return generation }
+return Release(input)
+`
