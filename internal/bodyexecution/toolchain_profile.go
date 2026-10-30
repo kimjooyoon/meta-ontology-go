@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
+	"github.com/kimjooyoon/meta-ontology-go/nativeobservation"
 )
 
 func ownedScopeToolchain(receipt *completeness.CompletenessReceipt) (ToolchainObservation, error) {
@@ -26,9 +27,8 @@ func ownedScopeToolchain(receipt *completeness.CompletenessReceipt) (ToolchainOb
 		!strings.Contains(fields[3], "/") {
 		return reference, fmt.Errorf("unsupported owned Go version")
 	}
-	bound, err := json.Marshal([]any{reference.KeySHA256, reference.GoToolSHA256, reference.GoVersion, reference.SourceCheck, reference.SourceOutput})
 	p := reference.SourceCheck
-	if err != nil || reference.SourceCheckSHA256 != digest(bound) || !p.Started || !p.Completed ||
+	if reference.SourceCheckSHA256 != nativeobservation.SourceCheckBindingDigest(reference) || !p.Started || !p.Completed ||
 		p.ExitCode == nil || *p.ExitCode != 0 || p.Canceled || p.TimedOut || p.OutputTruncated || p.DiagnosticsBytes != 0 ||
 		p.WallNS <= 0 || p.UserNS < 0 || p.SystemNS < 0 || (p.PeakRSSBytes != nil && *p.PeakRSSBytes < 0) ||
 		p.StdoutSHA256 != digest(reference.SourceOutput) || p.StderrSHA256 != digest(nil) {

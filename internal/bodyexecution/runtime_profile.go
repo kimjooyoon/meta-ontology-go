@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/completeness"
+	"github.com/kimjooyoon/meta-ontology-go/nativeobservation"
 )
 
 // Consistency checks preserve failed observations. They do not attest a build,
@@ -96,11 +97,11 @@ func sourceBuildBinding(o Observation) error {
 		}
 		return nil // The build stage may have failed before ownership was recorded.
 	}
-	bound, err := json.Marshal([]any{a.KeySHA256, o.ExecutableSHA256, a.SourceBuild})
 	p := a.SourceBuild
-	if err != nil || !a.ExecutableVerified || !runtimeDigest(o.ExecutableSHA256) ||
+	if !a.ExecutableVerified || !runtimeDigest(o.ExecutableSHA256) ||
 		!p.Started || !p.Completed || p.ExitCode == nil || *p.ExitCode != 0 || p.Canceled ||
-		p.TimedOut || p.OutputTruncated || p.DiagnosticsBytes != 0 || a.SourceBuildSHA256 != digest(bound) {
+		p.TimedOut || p.OutputTruncated || p.DiagnosticsBytes != 0 ||
+		a.SourceBuildSHA256 != nativeobservation.SourceBuildBindingDigest(a.KeySHA256, o.ExecutableSHA256, a.SourceBuild) {
 		return fmt.Errorf("runtime source build binding differs")
 	}
 	return nil

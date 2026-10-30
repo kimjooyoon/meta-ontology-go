@@ -63,3 +63,33 @@ Descriptions are instantiated only for the explicit query above. Ordinary
 version output and normal program execution keep their existing paths. There is
 no new source parsing, hashing or model call during the query: its Go function
 was generated at development time. No latency or memory improvement is inferred.
+
+## Share the native Go wire layout
+
+Development source exposes the standard-library-only Go package
+`github.com/kimjooyoon/meta-ontology-go/nativeobservation`. A Go consumer can use
+its `ProcessObservation`, `ProcessTiming`, `ToolchainObservation` and
+`ArtifactObservation` types instead of copying the producer's field order and
+JSON tags. The compiler uses aliases of the same types.
+
+`SourceCheckBindingDigest(reference)` calculates the original five-item tuple
+above. `SourceBuildBindingDigest(artifactKey, executableSHA256, sourceBuild)`
+calculates the existing original-build tuple. Both retain Go JSON field order,
+`[]byte` base64, null pointers and `omitempty` behavior. They preserve input
+spelling and bytes. The caller compares the result with the recorded digest.
+
+Keep the producing compiler/profile and the consumer's library revision pinned.
+The library preserves existing layouts; its contract remains scoped to the
+profiles and versions the consumer has checked. The published 0.6.39 source tag
+predates this Go package. Importing it compiles its standard-library dependency
+closure; downloading its module still retrieves the compiler's module archive.
+
+The functions calculate content bindings. Existing consumer checks still own
+exact keys, duplicate-key and null handling, source and parent identity,
+successful original work, current/reused work and fresh native runs. A matching
+calculated digest alone establishes none of those properties. Preserve an
+independent original digest or byte fixture when checking a shared implementation.
+
+Gooo's declarations above own the field-role explanation. The Go package owns
+the existing host serialization boundary. Sharing those host types introduces
+no new receipt profile, execution hook or model operation.

@@ -1,0 +1,73 @@
+{
+  "baseline_serializer_source": "023cc75ec5869bf3aa6118ae2b5c73f298e797cb",
+  "receipt_producer_source": "276734167edc7f5fef18cbb79004ea9592553317",
+  "scope": "Frozen pre-move Go wire observations; retained H4 sample is from a failed whole run, not full-run acceptance.",
+  "processes": [
+    {
+      "name": "zero-current-process",
+      "canonical_json": "{\"started\":false,\"completed\":false,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":null,\"wall_ns\":0,\"user_ns\":0,\"system_ns\":0,\"peak_rss_bytes\":null,\"stdout_sha256\":\"\",\"stderr_sha256\":\"\"}"
+    },
+    {
+      "name": "first-request-toolchain",
+      "canonical_json": "{\"started\":true,\"completed\":true,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":0,\"wall_ns\":9311917,\"user_ns\":3856000,\"system_ns\":3227000,\"peak_rss_bytes\":14204928,\"stdout_sha256\":\"sha256:70f94d37a097ca424ec1a1c0d5a81288ec60b4ceeae67edc3a75aeb6ce378600\",\"stderr_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"timing\":{\"start_ns\":1214000,\"wait_ns\":8097917,\"deadline_remaining_ns\":59985009000,\"context_at_start_return\":\"ACTIVE\"}}"
+    },
+    {
+      "name": "first-request-build",
+      "canonical_json": "{\"started\":true,\"completed\":true,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":0,\"wall_ns\":484518250,\"user_ns\":216251000,\"system_ns\":135561000,\"peak_rss_bytes\":87687168,\"stdout_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stderr_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"timing\":{\"start_ns\":1280417,\"wait_ns\":483237833,\"deadline_remaining_ns\":59947507000,\"context_at_start_return\":\"ACTIVE\"}}"
+    },
+    {
+      "name": "reused-request-toolchain",
+      "canonical_json": "{\"started\":false,\"completed\":false,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":null,\"wall_ns\":0,\"user_ns\":0,\"system_ns\":0,\"peak_rss_bytes\":null,\"stdout_sha256\":\"\",\"stderr_sha256\":\"\"}"
+    },
+    {
+      "name": "reused-request-build",
+      "canonical_json": "{\"started\":false,\"completed\":false,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":null,\"wall_ns\":0,\"user_ns\":0,\"system_ns\":0,\"peak_rss_bytes\":null,\"stdout_sha256\":\"\",\"stderr_sha256\":\"\"}"
+    },
+    {
+      "name": "failed-unicode-bytes-large-int64",
+      "canonical_json": "{\"started\":true,\"completed\":false,\"canceled\":true,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":7,\"wall_ns\":9007199254740993,\"user_ns\":9007199254740993,\"system_ns\":3,\"peak_rss_bytes\":9007199254740993,\"stdout_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stderr_sha256\":\"sha256:36ef98b33b9466c6d1e56326f9df94a7e723676d2ad03e8ff2b632e58234f9ca\",\"failure\":\"한글 \\u003c\\u003e\\u0026 \\u2028\",\"diagnostics\":\"/wB/\",\"timing\":{\"start_ns\":5,\"wait_ns\":8,\"deadline_remaining_ns\":0,\"context_at_start_return\":\"CANCELED\"},\"failure_phase\":\"WAIT\"}"
+    },
+    {
+      "name": "timing-nil-deadline",
+      "canonical_json": "{\"started\":true,\"completed\":false,\"canceled\":true,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":7,\"wall_ns\":9007199254740993,\"user_ns\":9007199254740993,\"system_ns\":3,\"peak_rss_bytes\":9007199254740993,\"stdout_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stderr_sha256\":\"sha256:36ef98b33b9466c6d1e56326f9df94a7e723676d2ad03e8ff2b632e58234f9ca\",\"failure\":\"한글 \\u003c\\u003e\\u0026 \\u2028\",\"diagnostics\":\"/wB/\",\"timing\":{\"start_ns\":1,\"wait_ns\":2,\"wait_limit_ns\":3,\"context_at_start_return\":\"ACTIVE\"},\"failure_phase\":\"WAIT\"}"
+    }
+  ],
+  "bindings": [
+    {
+      "name": "first-request",
+      "toolchain_json": "{\"schema\":\"gooo/owned-go-toolchain/v1\",\"key_sha256\":\"sha256:f0d00ceaf162644a706a0818a52713ca134dc710011eec351dc563b65e22bbac\",\"go_tool_sha256\":\"sha256:aa355b078a81158d418079a3f8c776719eb99cc6f527e39ffa3250c66566aafb\",\"go_version\":\"go version go1.27.3 darwin/arm64\",\"reused\":false,\"bytes_verified\":true,\"build_info_verified\":true,\"source_check\":{\"started\":true,\"completed\":true,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":0,\"wall_ns\":9311917,\"user_ns\":3856000,\"system_ns\":3227000,\"peak_rss_bytes\":14204928,\"stdout_sha256\":\"sha256:70f94d37a097ca424ec1a1c0d5a81288ec60b4ceeae67edc3a75aeb6ce378600\",\"stderr_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"timing\":{\"start_ns\":1214000,\"wait_ns\":8097917,\"deadline_remaining_ns\":59985009000,\"context_at_start_return\":\"ACTIVE\"}},\"source_output\":\"Z28gdmVyc2lvbiBnbzEuMjcuMyBkYXJ3aW4vYXJtNjQK\",\"source_check_sha256\":\"sha256:0b5888fb435560cab9e65d3bef6c991b95f7af1ac1eddc486d35672dabb34be3\"}",
+      "artifact_json": "{\"schema\":\"gooo/owned-native-artifact/v1\",\"key_sha256\":\"sha256:7e01f951cb71e845c6a00462a6f596b08e3846de86785844b0859c22021a5a45\",\"reused\":false,\"executable_verified\":true,\"source_build\":{\"started\":true,\"completed\":true,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":0,\"wall_ns\":484518250,\"user_ns\":216251000,\"system_ns\":135561000,\"peak_rss_bytes\":87687168,\"stdout_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stderr_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"timing\":{\"start_ns\":1280417,\"wait_ns\":483237833,\"deadline_remaining_ns\":59947507000,\"context_at_start_return\":\"ACTIVE\"}},\"source_build_sha256\":\"sha256:2f01566877e998944fe07a36ca9fdc9ab4e6bf62cba16f5aaa5022b9f8e643bf\",\"miss_reason\":\"empty\",\"wait_ns\":13000}",
+      "executable_sha256": "sha256:7e345467e8d578f1c1b70d6573769b217af59fccdd89a8aa8a2eaa8b72688130",
+      "toolchain_digest": "sha256:0b5888fb435560cab9e65d3bef6c991b95f7af1ac1eddc486d35672dabb34be3",
+      "build_digest": "sha256:2f01566877e998944fe07a36ca9fdc9ab4e6bf62cba16f5aaa5022b9f8e643bf"
+    },
+    {
+      "name": "reused-request",
+      "toolchain_json": "{\"schema\":\"gooo/owned-go-toolchain/v1\",\"key_sha256\":\"sha256:f0d00ceaf162644a706a0818a52713ca134dc710011eec351dc563b65e22bbac\",\"go_tool_sha256\":\"sha256:aa355b078a81158d418079a3f8c776719eb99cc6f527e39ffa3250c66566aafb\",\"go_version\":\"go version go1.27.3 darwin/arm64\",\"reused\":true,\"bytes_verified\":true,\"build_info_verified\":true,\"source_check\":{\"started\":true,\"completed\":true,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":0,\"wall_ns\":9311917,\"user_ns\":3856000,\"system_ns\":3227000,\"peak_rss_bytes\":14204928,\"stdout_sha256\":\"sha256:70f94d37a097ca424ec1a1c0d5a81288ec60b4ceeae67edc3a75aeb6ce378600\",\"stderr_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"timing\":{\"start_ns\":1214000,\"wait_ns\":8097917,\"deadline_remaining_ns\":59985009000,\"context_at_start_return\":\"ACTIVE\"}},\"source_output\":\"Z28gdmVyc2lvbiBnbzEuMjcuMyBkYXJ3aW4vYXJtNjQK\",\"source_check_sha256\":\"sha256:0b5888fb435560cab9e65d3bef6c991b95f7af1ac1eddc486d35672dabb34be3\"}",
+      "artifact_json": "{\"schema\":\"gooo/owned-native-artifact/v1\",\"key_sha256\":\"sha256:7e01f951cb71e845c6a00462a6f596b08e3846de86785844b0859c22021a5a45\",\"reused\":true,\"executable_verified\":true,\"source_build\":{\"started\":true,\"completed\":true,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":0,\"wall_ns\":484518250,\"user_ns\":216251000,\"system_ns\":135561000,\"peak_rss_bytes\":87687168,\"stdout_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stderr_sha256\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"timing\":{\"start_ns\":1280417,\"wait_ns\":483237833,\"deadline_remaining_ns\":59947507000,\"context_at_start_return\":\"ACTIVE\"}},\"source_build_sha256\":\"sha256:2f01566877e998944fe07a36ca9fdc9ab4e6bf62cba16f5aaa5022b9f8e643bf\",\"wait_ns\":9542}",
+      "executable_sha256": "sha256:7e345467e8d578f1c1b70d6573769b217af59fccdd89a8aa8a2eaa8b72688130",
+      "toolchain_digest": "sha256:0b5888fb435560cab9e65d3bef6c991b95f7af1ac1eddc486d35672dabb34be3",
+      "build_digest": "sha256:2f01566877e998944fe07a36ca9fdc9ab4e6bf62cba16f5aaa5022b9f8e643bf"
+    }
+  ],
+  "byte_outputs": [
+    {
+      "name": "nil",
+      "source_output": null,
+      "canonical_tuple": "[\"\",\"\",\"\",{\"started\":false,\"completed\":false,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":null,\"wall_ns\":0,\"user_ns\":0,\"system_ns\":0,\"peak_rss_bytes\":null,\"stdout_sha256\":\"\",\"stderr_sha256\":\"\"},null]",
+      "digest": "sha256:7db022a71aae0a789795fbb2c8b95cfda124e53844c52bbf1b9af76f902950b6"
+    },
+    {
+      "name": "empty",
+      "source_output": "",
+      "canonical_tuple": "[\"\",\"\",\"\",{\"started\":false,\"completed\":false,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":null,\"wall_ns\":0,\"user_ns\":0,\"system_ns\":0,\"peak_rss_bytes\":null,\"stdout_sha256\":\"\",\"stderr_sha256\":\"\"},\"\"]",
+      "digest": "sha256:869ff40059f1cc51eb25256dd578c09259a3fd1890a0e5c89a2fac0016d8dafa"
+    },
+    {
+      "name": "untrimmed-bytes",
+      "source_output": "/wAK",
+      "canonical_tuple": "[\"\",\"\",\"\",{\"started\":false,\"completed\":false,\"canceled\":false,\"timed_out\":false,\"diagnostics_bytes\":0,\"output_truncated\":false,\"exit_code\":null,\"wall_ns\":0,\"user_ns\":0,\"system_ns\":0,\"peak_rss_bytes\":null,\"stdout_sha256\":\"\",\"stderr_sha256\":\"\"},\"/wAK\"]",
+      "digest": "sha256:5e775b2219a3f77584d8eb472800b6b008b9b42d953257b39d2d6fa1bc1405d9"
+    }
+  ]
+}
