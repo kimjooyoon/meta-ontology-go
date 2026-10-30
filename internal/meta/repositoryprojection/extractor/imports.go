@@ -94,7 +94,7 @@ func validateImports(root, logical string, list []importSpec) error {
 			}
 		}
 		if _, importErr := resolver.moduleFiles(item.path); importErr != nil {
-			return fail("validate-ast-imports", "resolve-import", "UNRESOLVED_IMPORT", "DIRECT_MISSING", "restore-import-package", nil)
+			return importResolutionFailure(root, logical, module, item.path, importErr)
 		}
 	}
 	return nil
