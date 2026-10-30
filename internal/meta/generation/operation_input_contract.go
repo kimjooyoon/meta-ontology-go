@@ -25,6 +25,7 @@ type nativeOperationInput struct {
 type nativeOperationObligation struct {
 	Name         string
 	Activity     string
+	ActivityID   string
 	InputEntity  string
 	OutputEntity string
 }
@@ -180,7 +181,8 @@ func parseOperationInputContractSources(sources []sourcebundle.Source) (operatio
 			return operationInputContract{}, fmt.Errorf("unknown operation input contract declaration")
 		}
 	}
-	expectedCount := len(nativeOperationInputs) + len(nativeOperationObligations) + len(nativeContractPolicies)
+	obligations := allNativeOperationObligations()
+	expectedCount := len(nativeOperationInputs) + len(obligations) + len(nativeContractPolicies)
 	if len(entities) != len(nativeContractEntities) || len(activities) != expectedCount ||
 		len(ir.Graph.Nodes()) != len(entities)+len(activities) {
 		return operationInputContract{}, fmt.Errorf("operation input contract declaration count is not exact")
@@ -196,7 +198,7 @@ func parseOperationInputContractSources(sources []sourcebundle.Source) (operatio
 	seen := make(map[semantic.FactKey]struct{}, expectedCount*2)
 	bindings := make(map[sourcepolicy.Operation]operationInputContractBinding, len(nativeOperationInputs))
 	facts := make(map[sourcepolicy.Operation]operationInputContractFacts, len(nativeOperationInputs))
-	obligationFacts := make(map[string]operationInputContractFacts, len(nativeOperationObligations))
+	obligationFacts := make(map[string]operationInputContractFacts, len(obligations))
 	policyFacts := make(map[string]operationInputContractFacts, len(nativeContractPolicies))
 	for _, native := range nativeOperationInputs {
 		inputKind, known := inputKinds[native.InputEntity]
@@ -213,13 +215,21 @@ func parseOperationInputContractSources(sources []sourcebundle.Source) (operatio
 		bindings[native.Operation] = operationInputContractBinding{InputSubjectKind: inputKind, ActivityID: activity.ID.String()}
 		facts[native.Operation] = observed
 	}
-	for _, obligation := range nativeOperationObligations {
-		observed, err := operationContractRelation(ir, activities[obligation.Activity], obligation.Activity,
+	for _, obligation := range obligations {
+		name := obligation.Activity
+		if obligation.ActivityID != "" {
+			activity, ok := ir.Graph.Node(semantic.ID(obligation.ActivityID))
+			if !ok || activity.Kind != semantic.Activity {
+				return operationInputContract{}, fmt.Errorf("operation obligation activity identity is not exact: %s", obligation.Activity)
+			}
+			name = activity.Name
+		}
+		observed, err := operationContractRelation(ir, activities[name], name,
 			obligation.InputEntity, obligation.OutputEntity, seen)
 		if err != nil {
 			return operationInputContract{}, err
 		}
-		expectedActivities[obligation.Activity] = true
+		expectedActivities[name] = true
 		obligationFacts[obligation.Activity] = observed
 	}
 	for _, policy := range nativeContractPolicies {
@@ -266,21 +276,26 @@ func parseOperationInputContractSources(sources []sourcebundle.Source) (operatio
 // semantic digests as well as to the Used/WasGeneratedBy facts. Entity labels
 // retain authored names; the accompanying IDs bind their native roles.
 func ExtractFunctionInputContractEvidence() (OperationInputContractEvidence, error) {
+	return operationInputContractEvidence(sourcepolicy.OperationExtractFunction, nativeOperationObligations)
+}
+
+func operationInputContractEvidence(operation sourcepolicy.Operation,
+	required []nativeOperationObligation) (OperationInputContractEvidence, error) {
 	contract, err := loadOperationInputContract()
 	if err != nil {
 		return OperationInputContractEvidence{}, err
 	}
-	native := nativeOperationInputFor(sourcepolicy.OperationExtractFunction)
+	native := nativeOperationInputFor(operation)
 	binding, bindingOK := contract.Bindings[native.Operation]
 	facts, factsOK := contract.Facts[native.Operation]
 	if !bindingOK || !factsOK || !facts.UsedInput || !facts.GeneratedOutput {
-		return OperationInputContractEvidence{}, fmt.Errorf("ExtractFunction operation input contract facts are incomplete")
+		return OperationInputContractEvidence{}, fmt.Errorf("%s operation input contract facts are incomplete", native.Activity)
 	}
-	obligations := make([]OperationInputContractObligationEvidence, 0, len(nativeOperationObligations))
-	for _, obligation := range nativeOperationObligations {
+	obligations := make([]OperationInputContractObligationEvidence, 0, len(required))
+	for _, obligation := range required {
 		facts, ok := contract.ObligationFacts[obligation.Activity]
 		if !ok || !facts.UsedInput || !facts.GeneratedOutput {
-			return OperationInputContractEvidence{}, fmt.Errorf("ExtractFunction proof obligation %q facts are incomplete", obligation.Name)
+			return OperationInputContractEvidence{}, fmt.Errorf("%s proof obligation %q facts are incomplete", native.Activity, obligation.Name)
 		}
 		input, output := contract.entity(obligation.InputEntity), contract.entity(obligation.OutputEntity)
 		obligations = append(obligations, OperationInputContractObligationEvidence{

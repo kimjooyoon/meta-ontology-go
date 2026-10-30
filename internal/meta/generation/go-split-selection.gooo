@@ -1,0 +1,47 @@
+package generation
+namespace gosplitselection
+
+entity SplitObservations id "gooo://split-selection/input" fields {
+    field rendered_state id "gooo://split-selection/input/rendered" type string required one
+    field directory_state id "gooo://split-selection/input/directory" type string required one
+    field native_blocker id "gooo://split-selection/input/blocker" type string required one
+}
+
+entity SplitNext id "gooo://split-selection/next" fields {
+    field ready_for_projection id "gooo://split-selection/next/ready" type boolean required one
+    field next_requirement id "gooo://split-selection/next/requirement" type string required one
+    field next_operation id "gooo://split-selection/next/operation" type string required one
+}
+
+activity SelectNextSplitStep(observation SplitObservations) -> SplitNext
+    id "gooo://split-selection/select-next" computes `
+if observation.rendered_state == "UNMET" && observation.native_blocker == "RENDERED_PLAN_UNAVAILABLE" {
+    return SplitNext{ready_for_projection: false,
+        next_requirement: "gooo://meta-operation-input-contract/activity/go-split-rendered-capacity",
+        next_operation: "extract-function"}
+}
+if observation.rendered_state == "UNMET" && observation.native_blocker == "NO_DECLARATION_SPLIT" {
+    return SplitNext{ready_for_projection: false,
+        next_requirement: "gooo://meta-operation-input-contract/activity/go-split-rendered-capacity",
+        next_operation: "refresh-source-metrics"}
+}
+if observation.rendered_state != "OBSERVED" {
+    return SplitNext{ready_for_projection: false,
+        next_requirement: "gooo://meta-operation-input-contract/activity/go-split-rendered-capacity",
+        next_operation: "observe-source"}
+}
+if observation.directory_state == "UNMET" &&
+    (observation.native_blocker == "DIRECTORY_CAPACITY_UNMET" || observation.native_blocker == "DIRECTORY_CONTAINS_FOLDERS") {
+    return SplitNext{ready_for_projection: false,
+        next_requirement: "gooo://meta-operation-input-contract/activity/go-split-directory-capacity",
+        next_operation: "repack-directory"}
+}
+if observation.directory_state != "OBSERVED" || observation.native_blocker != "" {
+    return SplitNext{ready_for_projection: false,
+        next_requirement: "gooo://meta-operation-input-contract/activity/go-split-directory-capacity",
+        next_operation: "observe-directory"}
+}
+return SplitNext{ready_for_projection: true,
+    next_requirement: "gooo://meta-operation-input-contract/activity/go-split-projected-conformance",
+    next_operation: "verify-projected-workspace"}
+`

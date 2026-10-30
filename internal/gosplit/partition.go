@@ -26,7 +26,7 @@ func (planner Planner) partitionDeclarations(fset *token.FileSet, file *ast.File
 	if groups, ok := planner.orderedGreedyDeclarationPartition(fset, file, declarations, limit); ok {
 		return groups, nil
 	}
-	return nil, fmt.Errorf("declarations cannot preserve source order within %d lines", limit)
+	return nil, &partitionUnavailable{limit: limit}
 }
 
 func declarationIdentity(fset *token.FileSet, declaration ast.Decl, ordinal int) (DeclarationOrder, error) {

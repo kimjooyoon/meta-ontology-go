@@ -43,21 +43,21 @@ func PhysicalLines(data []byte) int {
 	return lines
 }
 
-func parseSource(target, subject string) (os.FileInfo, *token.FileSet, *ast.File, error) {
+func parseSource(target, subject string) (os.FileInfo, *token.FileSet, *ast.File, []byte, error) {
 	source, err := os.ReadFile(target)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("read %s: %w", subject, err)
+		return nil, nil, nil, nil, fmt.Errorf("read %s: %w", subject, err)
 	}
 	info, err := os.Stat(target)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("stat %s: %w", subject, err)
+		return nil, nil, nil, nil, fmt.Errorf("stat %s: %w", subject, err)
 	}
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, subject, source, parser.ParseComments|parser.AllErrors)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("parse %s: %w", subject, err)
+		return nil, nil, nil, nil, fmt.Errorf("parse %s: %w", subject, err)
 	}
-	return info, fset, file, nil
+	return info, fset, file, source, nil
 }
 
 func sourceDeclarations(file *ast.File) []ast.Decl {

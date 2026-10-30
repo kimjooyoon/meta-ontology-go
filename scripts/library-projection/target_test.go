@@ -8,6 +8,17 @@ import (
 	"testing"
 )
 
+func TestSplitSelectionProjectionMatchesAuthoredSource(t *testing.T) {
+	target := projectionTarget{
+		"internal/meta/generation/go-split-selection.gooo",
+		"internal/meta/generation/go_split_selection.gooo.go",
+		"gooo://split-selection/select-next", "generation",
+	}
+	if err := projectLibrary("../..", target, false); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestExplicitRecordLibraryRetainsSourceAndPriorOutput(t *testing.T) {
 	root := t.TempDir()
 	source, err := os.ReadFile("../../internal/meta/runtimeidentity/fields.gooo")

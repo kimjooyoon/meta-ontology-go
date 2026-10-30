@@ -43,7 +43,7 @@ func TestNativeContractConsumesPartitionedPhysicalSources(t *testing.T) {
 	if before.SourceDigest == after.SourceDigest || before.SemanticDigest != after.SemanticDigest {
 		t.Fatal("partition must change source identity and preserve semantic identity")
 	}
-	if len(after.Bindings) != 4 || len(after.ObligationFacts) != 6 || len(after.PolicyFacts) != 2 ||
+	if len(after.Bindings) != 4 || len(after.ObligationFacts) != 9 || len(after.PolicyFacts) != 2 ||
 		!reflect.DeepEqual(before.Bindings, after.Bindings) || !reflect.DeepEqual(before.Facts, after.Facts) ||
 		!reflect.DeepEqual(before.ObligationFacts, after.ObligationFacts) ||
 		!reflect.DeepEqual(before.PolicyFacts, after.PolicyFacts) {
@@ -58,7 +58,7 @@ func TestNativeContractConsumesPartitionedPhysicalSources(t *testing.T) {
 
 func assertPhysicalContractOrigins(t *testing.T, origins sourcebundle.Provenance, files fstest.MapFS) {
 	t.Helper()
-	if len(origins.Members) != 2 || len(origins.Declarations) != 22 {
+	if len(origins.Members) != 2 || len(origins.Declarations) != 26 {
 		t.Fatalf("missing physical origins: members=%d declarations=%d", len(origins.Members), len(origins.Declarations))
 	}
 	for _, member := range origins.Members {
@@ -89,7 +89,7 @@ func assertPhysicalContractOrigins(t *testing.T, origins sourcebundle.Provenance
 		ids[origin.ID] = true
 		counts[span.File]++
 	}
-	if counts[contractTypesFile] != 10 || counts[contractActivitiesFile] != 12 {
+	if counts[contractTypesFile] != 11 || counts[contractActivitiesFile] != 15 {
 		t.Fatalf("declarations were attributed to the wrong partition: %v", counts)
 	}
 }

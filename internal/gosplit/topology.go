@@ -2,6 +2,7 @@ package gosplit
 
 import (
 	"fmt"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence"
 )
 
@@ -12,12 +13,13 @@ func ValidateTopology(report metricevidence.Report, plan Plan) error {
 		}
 		added := len(plan.Parts) - 1
 		if directory.DirectFolders != 0 {
-			return fmt.Errorf("%w: %s contains folders", ErrBlocked, plan.Directory)
+			return planBlocker(DirectoryMixed, plan, fmt.Errorf("%w: %s contains folders", ErrBlocked, plan.Directory))
 		}
 		if directory.DirectFiles+added > report.Meta.Policy.MaxDirectEntries {
-			return fmt.Errorf("%w: %s projects %d entries", ErrBlocked, plan.Directory, directory.DirectFiles+added)
+			return planBlocker(DirectoryFull, plan,
+				fmt.Errorf("%w: %s projects %d entries", ErrBlocked, plan.Directory, directory.DirectFiles+added))
 		}
 		return nil
 	}
-	return fmt.Errorf("metric evidence omits directory %q", plan.Directory)
+	return planBlocker(DirectoryUnobserved, plan, fmt.Errorf("metric evidence omits directory %q", plan.Directory))
 }

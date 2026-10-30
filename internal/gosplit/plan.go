@@ -1,6 +1,8 @@
 package gosplit
 
 import (
+	"crypto/sha256"
+	"errors"
 	"fmt"
 	"go/ast"
 	"path"
@@ -16,10 +18,11 @@ func (planner Planner) PlanSource(root, subject string, limit int) (Plan, error)
 	if err != nil {
 		return plan, err
 	}
-	info, fset, file, err := parseSource(target, subject)
+	info, fset, file, source, err := parseSource(target, subject)
 	if err != nil {
 		return plan, err
 	}
+	sourceSHA := fmt.Sprintf("%x", sha256.Sum256(source))
 	declarations := sourceDeclarations(file)
 	positions := make(map[ast.Decl]int, len(declarations))
 	for index, declaration := range declarations {
@@ -27,12 +30,17 @@ func (planner Planner) PlanSource(root, subject string, limit int) (Plan, error)
 	}
 	groups, err := planner.partitionDeclarations(fset, file, declarations, limit)
 	if err != nil {
-		return plan, fmt.Errorf("%w: %s", ErrBlocked, err)
+		cause := fmt.Errorf("%w: %w", ErrBlocked, err)
+		if _, ok := errors.AsType[*partitionUnavailable](err); ok {
+			return plan, &Blocker{Kind: RenderedPlanUnavailable, Subject: subject, SourceSHA256: sourceSHA, cause: cause}
+		}
+		return plan, cause
 	}
 	if len(groups) < 2 {
-		return plan, fmt.Errorf("%w: %s does not require declaration splitting", ErrBlocked, subject)
+		return plan, &Blocker{Kind: NoDeclarationSplit, Subject: subject, SourceSHA256: sourceSHA,
+			cause: fmt.Errorf("%w: %s does not require declaration splitting", ErrBlocked, subject)}
 	}
-	plan = Plan{Directory: path.Dir(subject), Mode: info.Mode(), Parts: make([]Part, len(groups))}
+	plan = Plan{Directory: path.Dir(subject), Mode: info.Mode(), Parts: make([]Part, len(groups)), SourceSHA256: sourceSHA}
 	for index, group := range groups {
 		partSubject, nameErr := PartPath(subject, index+1)
 		if nameErr != nil {

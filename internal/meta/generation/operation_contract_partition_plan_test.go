@@ -55,13 +55,13 @@ func TestNativeContractAdmissionFollowsEachPlannedConsumer(t *testing.T) {
 		}
 		admitted, err := loadOperationInputContractFS(files)
 		if consumer.Name == "single" {
-			if change.State != "CHANGED" || len(change.LostIDs) != 12 || err == nil || !reflect.DeepEqual(admitted, operationInputContract{}) {
+			if change.State != "CHANGED" || len(change.LostIDs) != 15 || err == nil || !reflect.DeepEqual(admitted, operationInputContract{}) {
 				t.Fatal("incomplete native contract was accepted", change, err)
 			}
 			continue
 		}
-		if err != nil || change.State != "PRESERVED" || len(admitted.SourceOrigins.Declarations) != 22 ||
-			len(admitted.Bindings) != 4 || len(admitted.ObligationFacts) != 6 || len(admitted.PolicyFacts) != 2 ||
+		if err != nil || change.State != "PRESERVED" || len(admitted.SourceOrigins.Declarations) != 26 ||
+			len(admitted.Bindings) != 4 || len(admitted.ObligationFacts) != 9 || len(admitted.PolicyFacts) != 2 ||
 			!reflect.DeepEqual(original.Bindings, admitted.Bindings) ||
 			!reflect.DeepEqual(original.ObligationFacts, admitted.ObligationFacts) ||
 			!reflect.DeepEqual(original.PolicyFacts, admitted.PolicyFacts) {

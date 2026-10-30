@@ -11,6 +11,7 @@ entity FreeBindingsObligation id "gooo://meta-operation-input-contract/entity/fr
 entity CalleeEffectsObligation id "gooo://meta-operation-input-contract/entity/callee-effects-obligation"
 entity RenderedCapacityObligation id "gooo://meta-operation-input-contract/entity/rendered-capacity-obligation"
 entity ProjectedConformanceObligation id "gooo://meta-operation-input-contract/entity/projected-conformance-obligation"
+entity DirectoryCapacityObligation id "gooo://meta-operation-input-contract/entity/directory-capacity-obligation"
 
 activity CollapseAssignReturn(FunctionSource) -> OperationResult
 activity SplitGoDeclarations(FileInput) -> OperationResult
@@ -24,3 +25,9 @@ activity ProveFreeBindings(ControlFlowObligation) -> FreeBindingsObligation
 activity ProveCalleeEffects(FreeBindingsObligation) -> CalleeEffectsObligation
 activity ProveRenderedCapacity(CalleeEffectsObligation) -> RenderedCapacityObligation
 activity ProveProjectedConformance(RenderedCapacityObligation) -> ProjectedConformanceObligation
+activity ProveGoSplitRenderedCapacity(FileInput) -> RenderedCapacityObligation
+    id "gooo://meta-operation-input-contract/activity/go-split-rendered-capacity"
+activity ProveGoSplitDirectoryCapacity(RenderedCapacityObligation) -> DirectoryCapacityObligation
+    id "gooo://meta-operation-input-contract/activity/go-split-directory-capacity"
+activity ProveGoSplitProjectedConformance(DirectoryCapacityObligation) -> ProjectedConformanceObligation
+    id "gooo://meta-operation-input-contract/activity/go-split-projected-conformance"

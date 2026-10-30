@@ -19,6 +19,7 @@ var nativeContractEntities = [...]struct{ Role, ID string }{
 	{"CalleeEffectsObligation", "gooo://meta-operation-input-contract/entity/callee-effects-obligation"},
 	{"RenderedCapacityObligation", "gooo://meta-operation-input-contract/entity/rendered-capacity-obligation"},
 	{"ProjectedConformanceObligation", "gooo://meta-operation-input-contract/entity/projected-conformance-obligation"},
+	{"DirectoryCapacityObligation", "gooo://meta-operation-input-contract/entity/directory-capacity-obligation"},
 }
 
 type contractEntityReference struct{ ID, Name string }

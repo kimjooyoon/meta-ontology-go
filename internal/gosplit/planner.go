@@ -26,9 +26,10 @@ type DeclarationOrder struct {
 }
 
 type Plan struct {
-	Directory string
-	Mode      os.FileMode
-	Parts     []Part
+	Directory    string
+	Mode         os.FileMode
+	Parts        []Part
+	SourceSHA256 string
 }
 
 // ImportNormalizer is supplied by the Gooo operation-contract adapter. Keeping
