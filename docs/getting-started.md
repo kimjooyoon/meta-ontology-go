@@ -15,21 +15,21 @@ diagnostic tool and reuses it on new inputs. It needs no model or API key.
 
 Use **Go 1.27.3** for native execution, matching your Gooo executable's operating
 system and architecture. Check with `go version`. The compiler below is the
-experimental [v0.6.38-dev release](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.38-dev).
+experimental [v0.6.39-dev release](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.6.39-dev).
 The release is pinned so these instructions do not silently select later changes.
 
 On macOS or Linux, start in a new working directory and install locally:
 
 ```sh
 GOBIN="$PWD/.gooo-bin" GOWORK=off GOTOOLCHAIN=go1.27.3 \
-  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.38-dev
+  go install github.com/kimjooyoon/meta-ontology-go/cmd/gooo@v0.6.39-dev
 export PATH="$PWD/.gooo-bin:$PATH"
 gooo version --build --json
 ```
 
-The version output includes `version: "0.6.38-dev"`. Module and VCS fields depend
+The version output includes `version: "0.6.39-dev"`. Module and VCS fields depend
 on the installation method; the release manifest binds the public archives to
-source `32ac61006761f8759468436e7cdd91883cf24431`, which pins SDK `v0.2.51-experimental`.
+source `4bfb81640fcf485a022abc3b0484b2fd7bcb9f65`, which pins SDK `v0.2.51-experimental`.
 Native archives report `source_status: "CLEAN_VCS"` and that source commit.
 A versioned module installation reports `module.version` and `module.sum`; its
 VCS fields remain `UNOBSERVED_VCS`. Archive module versions can be pre-tag
@@ -41,15 +41,15 @@ on its `PATH`.
 Alternatively, download and extract the matching archive, then add its directory
 to `PATH` (or invoke the extracted `gooo` / `gooo.exe` by its full path):
 
-| Platform | v0.6.38-dev archive |
+| Platform | v0.6.39-dev archive |
 | --- | --- |
-| macOS Apple Silicon | [darwin-arm64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.38-dev/gooo-darwin-arm64.tar.gz) |
-| macOS Intel | [darwin-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.38-dev/gooo-darwin-amd64.tar.gz) |
-| Linux x86-64 | [linux-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.38-dev/gooo-linux-amd64.tar.gz) |
-| Windows x86-64 | [windows-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.38-dev/gooo-windows-amd64.zip) |
+| macOS Apple Silicon | [darwin-arm64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.39-dev/gooo-darwin-arm64.tar.gz) |
+| macOS Intel | [darwin-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.39-dev/gooo-darwin-amd64.tar.gz) |
+| Linux x86-64 | [linux-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.39-dev/gooo-linux-amd64.tar.gz) |
+| Windows x86-64 | [windows-amd64](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.39-dev/gooo-windows-amd64.zip) |
 
 Compare the archive's SHA-256 with the published
-[SHA256SUMS](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.38-dev/SHA256SUMS).
+[SHA256SUMS](https://github.com/kimjooyoon/meta-ontology-go/releases/download/v0.6.39-dev/SHA256SUMS).
 These archives contain the compiler; native execution still needs Go 1.27.3.
 When Go is elsewhere, add `--go /path/to/go1.27.3` to each execute/replay command.
 On Windows, run the commands below in **Command Prompt (`cmd.exe`)**, using
@@ -179,11 +179,11 @@ compatibility change with its own cases.
 
 ### Read a digest with its full field path
 
-Gooo exposes several source representations. Read each field in the command
-result or plan that contains it; the same digest prefix does not imply the
-same input bytes:
+Gooo exposes several source and artifact representations. Read each field in the
+command result, plan or release record that contains it; the same digest prefix
+does not imply the same input bytes:
 
-| Receipt field | What it describes |
+| Field and owning record | What it describes |
 | --- | --- |
 | `manifest_digest`, `inputs_digest`, `cases_digest` | The bytes of the corresponding supplied file, when that input mode is present. |
 | `gooo package resolve --json`: `result.image.packages[].sources[].source_digest` | SHA-256 of `json.Marshal(source.Content)`, where `Content` is the source string loaded from the file. |
@@ -194,6 +194,17 @@ same input bytes:
 | `result.composition.steps[].generation.report.body_fill.original_source_digest` or `.body_search.original_source_digest` | SHA-256 of the raw Gooo bytes supplied to that fill or search operation, before its own choice is applied. “Original” is relative to that operation. |
 | `result.execution_source_sha256` | The combined, lowered Gooo source after applying body fills, passed to composition execution. If fills changed it, it differs from the initial `result.program.lowered_gooo_source`. |
 | `ir-search` plan input: `external_training_feedback.source_digest` | SHA-256 of the raw Gooo source bytes supplied to that search invocation. In direct file mode these are the file bytes; a composed caller may supply a selected source checkpoint. |
+| `release-manifest.json`: `version_source_digest` | Raw bytes of `internal/meta/releaseidentity/version.gooo`. The publication contract's `identity_source` also names the path and stable activity ID. |
+| `release-manifest.json`: `release_report_digest` | The report's own `report_digest`: SHA-256 of Go's typed Report JSON with its `report_digest` field set to an empty string. |
+| `release-manifest.json`: `assets[name="release-report.json"].digest` | Raw bytes of the complete published report file, including formatting and its populated `report_digest`. The corresponding `SHA256SUMS` entry uses these same bytes. |
+| `release-manifest.json`: `publication_contract_digest` | Raw bytes of `contract.json` retained by the original publication workflow artifact. |
+
+For a downloaded release file, compare its raw-file checksum with the matching
+`assets[].digest` or `SHA256SUMS` entry. The existing
+[report validator](../internal/meta/languagereadiness/toolchainrelease/validate.go)
+recomputes the separate typed-report digest. Both values were checked for the
+[0.6.39 release](releases/0.6.39-dev.md); a wrong-representation comparison refused
+in the private reader before its field interpretation was corrected.
 
 Match the source entry by package path and filename. Use the existing replay
 command to validate a saved program against its current sources; do not replace

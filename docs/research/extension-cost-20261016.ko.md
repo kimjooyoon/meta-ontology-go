@@ -305,7 +305,34 @@ Go 투영·실행 경계에서 이를 보존한다. 이 첫 구현에서 필요�
 ## 소스 구성 배지
 
 README의 두 배지는 기존 `scripts/line-metrics` CI 집계에서 프로젝트 루트의
-`go_lines`, `gooo_lines`를 읽은 스냅샷이다. 기준은 검증된 `main`
+`go_lines`, `gooo_lines`를 읽은 스냅샷이다. 현재 기준은 공개된 `0.6.39-dev`의
+소스 [`4bfb816`](https://github.com/kimjooyoon/meta-ontology-go/commit/4bfb81640fcf485a022abc3b0484b2fd7bcb9f65)다.
+
+| 집계 | 파일 | 물리적 행 |
+| --- | ---: | ---: |
+| Go (`.go`) | 9,074 | 619,112 |
+| Gooo (`.gooo`) | 191 | 9,236 |
+| 두 언어 합계 | 9,265 | 628,348 |
+
+Gooo 비중은 `9,236 / 628,348 × 100 = 1.469886…%`를 소수 둘째 자리로
+표시한 **1.47%**다. 주석·빈 행·테스트·생성 Go를 포함한다. 집계에서
+`directories`의 `path="."`, `subject_kind="PROJECT_ROOT"` 행을 읽었으며,
+별도의 변환 저장소를 나타내는 `storage_directories`는 사용하지 않았다.
+파일별 행 수 합계와 루트 합계가 일치하고, Go/Gooo 파일 수는 해당 커밋의 Git 트리와도 일치했다.
+
+원본은 [CI run 41049546849, attempt 1](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/41049546849)의
+[producer artifact 12974783787](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/41049546849/artifacts/12974783787)에
+담긴 `source-metrics.json`이다. ZIP SHA256은
+`b0e21109ae7734c0ba1e04e80f4c68b6f521f8695ab3a2debb0f82a0288d2cb4`,
+멤버 SHA256은 `24e2dd46ee30c3f65e129c3017d6abde25bfb6026887c1ab872113fe694254cc`다.
+소스 SHA는 산출물 메타데이터와 보고서의 `commit_sha`에서 함께 확인했다.
+이번 확인에서는 592,697바이트의 원본 ZIP만 보관하고,
+38,865,625바이트의 확장 JSON 사본을 디스크에 추가로 저장하지 않았다.
+이 수치는 소스 구성의 관찰값이며, 원문 의미 소유와 수작업 확장 비용은 앞 절의 기준으로 따로 읽는다.
+
+### 이전 스냅샷: 2026-10-16
+
+당시 README의 배지는 검증된 `main`
 [`eaa3abdf432538abf850c3de0e5772383fa6d80b`](https://github.com/kimjooyoon/meta-ontology-go/commit/eaa3abdf432538abf850c3de0e5772383fa6d80b)이다.
 
 | 집계 | 파일 | 물리적 행 |
