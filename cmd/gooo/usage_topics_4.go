@@ -49,9 +49,10 @@ Example:
 	"version": `Show Gooo version
 
 Usage:
-  gooo version [--build] [--json]
+  gooo version [--build] [--json] [--describe-runtime]
 
 Use --build to include compiler build information.
+With --build --json, --describe-runtime adds advisory runtime field meanings.
 `,
 	"commands": `Core commands
 
