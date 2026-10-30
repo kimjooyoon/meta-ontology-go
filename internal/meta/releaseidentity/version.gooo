@@ -1,0 +1,9 @@
+package releaseidentity
+namespace releaseidentity
+
+entity Text id "urn:gooo:type:string"
+
+# The selected development release is source intent. Published tags keep their identity.
+activity CurrentVersion() -> Text id "release://activity/current-version" computes `
+ return "0.6.39-dev"
+`

@@ -78,7 +78,7 @@ requires a separate source-backed change and measured before/after cost.
 ### Append-only history projection
 
 The Gooo `GenerateDenominatorAdmission` and `GenerateDenominatorSelection`
-activities declare `syntax.history.append:v1` and
+activities declare `syntax.history.append:v2` and
 `syntax.selection.append:v1`. Their native projections read every existing
 version-to-syntax-target and capability-to-denominator case before proposing a
 new one. An exact historical version is unchanged; a contradictory target or
@@ -97,6 +97,30 @@ the old full normalization changed all five. The current repository keeps its
 history helpers in one physical file, so this is a smaller edit within that
 file rather than a reduction in the nine-file registration proposal. No CI
 runtime improvement is inferred from the source edit count.
+
+The V2 admission projection also reads the complete digest and header membership
+from their original Go predicates. Both inventories must name the same ordered
+versions. It normalizes them into 16-case helpers and appends only to the terminal
+helper's physical owner. A full helper gains one successor. Historical JSON,
+digest constants, version/target links and earlier helpers keep their identities.
+Unsupported predicates, duplicate versions, inconsistent inventories, ambiguous
+owners and malformed continuations return without adding partial edits. The
+decoder and header roots retain their declared parameter bindings; local digest
+shadowing and guard initializers are refused before predicates move into helpers.
+
+The current normalization retains all 91 digest and 91 header memberships from
+the V111 source at `5ea307130f08b2d299d007c1f111def66e19f2b8`. A frozen copy in
+`testdata/admission-v111.go.fixture` supplies the original predicates to a native
+Go oracle alongside the projected helpers. Changed and unknown values are also
+compared. Separate append tests retain every prior row through 25 additions and
+check terminal physical owners through 22 additions.
+
+For this source file the maximum line width changes from 6,887 to 117 columns;
+its size changes from 18,988 to 20,236 bytes. Each generated admission helper is
+at most 40 physical lines and 120 columns in these cases. The nine artifact roles
+and ordinary nine-member registration remain. These are source-structure counts;
+execution time and allocation effects have not been measured. The normalization
+projection itself adds no capability or historical denominator version.
 
 ## Caller path
 

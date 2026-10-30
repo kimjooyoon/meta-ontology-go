@@ -29,6 +29,10 @@ func prepareCompositionGraphForEntry(ctx context.Context, filename string, sourc
 	if err != nil {
 		return graph, err
 	}
+	entry, err = compositionEntryName(model, entry)
+	if err != nil {
+		return graph, err
+	}
 	typed, err := compileCompositionEntry(document, model, entry)
 	if err != nil {
 		return graph, err

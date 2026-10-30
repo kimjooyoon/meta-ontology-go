@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -71,10 +72,6 @@ func runBodyComposeContext(ctx context.Context, args []string, stdout, stderr io
 		fmt.Fprintln(stderr, bodyComposeUsage)
 		return exitUsage
 	}
-	if flags["--entry"] != "" && (flags["--composition"] != "" || flags["--resume-composition"] != "") {
-		fmt.Fprintln(stderr, bodyComposeUsage)
-		return exitUsage
-	}
 	return executeBodyComposition(ctx, flags, stdout, stderr)
 }
 
@@ -107,6 +104,9 @@ func executeBodyComposition(ctx context.Context, flags map[string]string, stdout
 	}
 	output := bodyCompositionOutput{InputSchema: suites[0].Schema, GeneratedNow: flags["--composition"] == "", CaseSeries: series}
 	output.Composition, err = buildOrReadBodyComposition(ctx, flags, source, suites[0])
+	if errors.Is(err, errSavedCompositionEntry) {
+		return fail(err)
+	}
 	if err == nil && series != nil && (flags["--composition"] != "" || flags["--resume-composition"] != "") {
 		err = bodyexecution.ValidateCompositionSuitesForEntry(ctx, flags["--source"], source, suites, output.Composition.Plan.EntryActivity)
 	}

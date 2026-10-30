@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	packageResolveUsage       = "usage: gooo package <resolve|interface|inspect|origins|rename-activity|split-source|generate|execute|replay|resume|construct> ..."
+	packageResolveUsage       = "usage: gooo package <resolve|interface|inspect|origins|rename-activity|split-source|generate|execute|replay|resume|construct|session> ..."
 	workspaceSchema           = workspaceinput.Schema
 	workspaceMaxSourceCount   = workspaceinput.MaxSourceCount
 	workspaceMaxSourceBytes   = workspaceinput.MaxSourceBytes

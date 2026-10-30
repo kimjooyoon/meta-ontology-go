@@ -83,6 +83,7 @@ This offers a small interoperability path from a Gooo metaprogram to RDF tools.
 | Trace values carried between collection iterations | [Loop-carried values](examples/loop-carried-values/README.md) |
 | Query a collection and the expression that selects its element | [Indexed record values](examples/indexed-record-values/README.md) |
 | Follow selected fields through authored lists, copies and branches | [Constructed record values](examples/constructed-record-values/README.md) |
+| Assess declared test intent against captured named Go events | [Declared test observations](examples/ci-strategy/declared-test-observation/README.md) |
 | Assemble a bounded collection summary | [Length-aware summary](examples/length-aware-summary/README.md), [three-field assembly](examples/assembled-length-summary/README.md) |
 
 These links describe development source. Each example reports its finite cases
@@ -376,6 +377,11 @@ The generated README explains the six project files, finite checks and optional
 local model. Replay runs the saved program on new rows with zero new inference.
 Native execution uses Go 1.27.3; pass `--go /path/to/go1.27.3` when needed.
 See [project starters](docs/language/project-starters.md) for the complete flow.
+
+The development CLI also offers [`gooo package session`](docs/language/workspace-sessions.md)
+for callers that inspect a receipt before choosing the next input. It retains
+one executable owner while each request reads current sources and inputs and
+performs two fresh native runs.
 
 Gooo 0.6.17 also supports `gooo package construct`: caller examples
 can reconsider assembly choices in imported libraries. The

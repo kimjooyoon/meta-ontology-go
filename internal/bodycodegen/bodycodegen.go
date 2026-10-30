@@ -79,8 +79,9 @@ type Report struct {
 	TypecheckPassed        bool                     `json:"typecheck_passed"`
 	DeterministicReplay    bool                     `json:"deterministic_replay"`
 	RepositoryWrites       int                      `json:"repository_writes"`
-	UnsupportedConstructs  string                   `json:"unsupported_constructs"`
-	CompletenessReceipt    *CompletenessReceipt     `json:"completeness_receipt,omitempty"`
+	// UnsupportedConstructs gives examples of excluded forms, not an exhaustive capability registry.
+	UnsupportedConstructs string               `json:"unsupported_constructs"`
+	CompletenessReceipt   *CompletenessReceipt `json:"completeness_receipt,omitempty"`
 }
 
 // RouteSelectionReceipt makes an optional weighted route draw replayable without
@@ -97,7 +98,7 @@ type RouteSelectionReceipt struct {
 
 // Generate compiles one .gooo activity body into a marked Go source region.
 // The accepted body subset is local declarations/assignments, conditionals,
-// and returns over scalar or declared record values, with fixed pure callees.
+// bounded iteration and returns over scalar or declared record values, with fixed pure callees.
 // Recursive, indirect and external calls are outside this profile.
 func Generate(filename string, source []byte, activityName string) (Result, error) {
 	return GenerateWithPlanner(context.Background(), filename, source, activityName, "", "")

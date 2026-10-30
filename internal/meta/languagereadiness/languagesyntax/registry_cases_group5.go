@@ -77,5 +77,7 @@ func expectedSyntaxCaseGroup5Part1Part1() []CaseDefinition {
 		{ID: "indexed-record-source-values", Path: "examples/indexed-record-values/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 
 		{ID: "constructed-record-source-values", Path: "examples/constructed-record-values/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
+
+		{ID: "declared-test-observation", Path: "examples/ci-strategy/declared-test-observation/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: false, ImplicitActivityPorts: false, OrderedCollections: false, EntityFieldsProfile: "gooo.entityfields.go-projection.v7"},
 	}
 }

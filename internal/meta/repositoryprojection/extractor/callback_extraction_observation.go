@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"slices"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/testevents"
 )
 
 type CallbackPackageTestEvent struct {
@@ -254,36 +254,17 @@ func callbackPackageFailureFrontier(run CallbackPackageRun) CallbackExtractionCl
 }
 
 func callbackPackageTestEvents(raw []byte, requiredTest string) ([]CallbackPackageTestEvent, error) {
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	events := []CallbackPackageTestEvent{}
-	seen, requiredPassed := map[string]bool{}, false
-	for {
-		var event struct{ Action, Test string }
-		if err := decoder.Decode(&event); err == io.EOF {
-			break
-		} else if err != nil {
-			// A damaged suffix cannot erase a previously decoded counterexample.
-			return events, fmt.Errorf("package test event decoding: %w", err)
-		}
-		if event.Test == "" {
-			continue
-		}
-		switch event.Action {
-		case "run", "output", "pause", "cont", "bench":
-			continue
-		case "pass", "fail", "skip":
-		default:
-			return events, fmt.Errorf("unknown package test action %q", event.Action)
-		}
-		if seen[event.Test] {
-			if event.Action == "fail" {
-				events = append(events, CallbackPackageTestEvent{Name: event.Test, Action: event.Action})
-			}
-			return events, fmt.Errorf("duplicate terminal test event for %s", event.Test)
-		}
-		seen[event.Test] = true
-		events = append(events, CallbackPackageTestEvent{Name: event.Test, Action: event.Action})
-		requiredPassed = requiredPassed || event.Test == requiredTest && event.Action == "pass"
+	decoded, err := testevents.Decode(raw)
+	events := make([]CallbackPackageTestEvent, 0, len(decoded))
+	for _, event := range decoded {
+		events = append(events, CallbackPackageTestEvent(event))
+	}
+	if err != nil {
+		return events, err
+	}
+	requiredPassed := false
+	for _, event := range events {
+		requiredPassed = requiredPassed || event.Name == requiredTest && event.Action == "pass"
 	}
 	if !requiredPassed {
 		return events, fmt.Errorf("required source test %s did not pass", requiredTest)

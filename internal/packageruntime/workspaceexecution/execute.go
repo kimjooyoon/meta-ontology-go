@@ -43,6 +43,7 @@ type ExecuteOptions struct {
 	BodyFillOptions   bodycodegen.IRBodyFillOptions
 	LayaEndpoint      string
 	LayaAPIKey        string
+	nativeExecutor    *bodyexecution.Executor
 }
 
 // ExecuteWorkspace generates every activity body in the bound workspace graph,
@@ -80,7 +81,7 @@ func ExecuteWorkspaceWithOptions(ctx context.Context, manifest packageruntime.Ma
 	if err != nil {
 		return Result{}, fmt.Errorf("generate workspace activity bodies: %w", err)
 	}
-	runtime, err := bodyexecution.ExecuteComposition(ctx, "workspace.gooo", current, composition, translated, options.GoBinary)
+	runtime, err := executeWorkspaceNative(ctx, current, composition, translated, options.GoBinary, options.nativeExecutor)
 	bindWorkspaceConditionSources(program, &runtime, fills)
 	bindWorkspaceLocalFileSources(program, &runtime, composition, fills)
 	result := Result{Schema: "gooo/workspace-body-execution/v1", Program: program, BodyFills: fills,
