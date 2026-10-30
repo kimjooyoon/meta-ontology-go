@@ -30,7 +30,11 @@ func TestVersionRuntimeDescriptionsAreAnExplicitJSONView(t *testing.T) {
 	}
 	want := map[string]string{"runtime_suite_sha256": "CASE_CONTENT_DIGEST", "artifact.key_sha256": "ARTIFACT_REUSE_IDENTITY",
 		"executable_sha256": "EXECUTABLE_BYTE_DIGEST", "artifact.source_build_sha256": "HISTORICAL_BUILD_BINDING_DIGEST",
-		"build": "CURRENT_BUILD_OBSERVATION", "runs": "CURRENT_RUN_OBSERVATIONS"}
+		"build": "CURRENT_BUILD_OBSERVATION", "runs": "CURRENT_RUN_OBSERVATIONS",
+		"toolchain": "CURRENT_TOOLCHAIN_OBSERVATION", "toolchain_reference.source_check": "ORIGINAL_TOOLCHAIN_OBSERVATION",
+		"toolchain_reference.source_check_sha256": "ORIGINAL_TOOLCHAIN_BINDING_DIGEST",
+		"toolchain_reference.reused":              "TOOLCHAIN_REFERENCE_REUSE_OBSERVATION",
+		"artifact.source_build":                   "ORIGINAL_BUILD_OBSERVATION", "artifact.reused": "EXECUTABLE_REUSE_OBSERVATION"}
 	if view.TargetSchema != "gooo/body-composition-runtime/v2" || view.ActivityID != "urn:gooo:runtime-identity:describe" || len(view.Entries) != len(want) {
 		t.Fatalf("runtime field descriptions=%+v", view)
 	}

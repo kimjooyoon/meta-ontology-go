@@ -21,6 +21,32 @@ The published 0.6.39 binary predates this query modifier.
 | `artifact.source_build_sha256` | Digest binding the retained artifact key, executable digest and original build observation. |
 | `build` | This invocation's build observation. Inspect `started` and `completed` before interpreting exit data. |
 | `runs` | This invocation's native process observations. Retain their current start/completion/cancellation and result data. |
+| `toolchain` | This invocation's Go version process observation. A reused reference can leave it empty. |
+| `toolchain_reference.source_check` | The owned reference's original version-check observation. |
+| `toolchain_reference.source_check_sha256` | Digest binding the original reference key, tool digest, version, source check and byte output. |
+| `toolchain_reference.reused` | Reuse of the retained version reference in this invocation. |
+| `artifact.source_build` | The original build observation retained by this artifact. |
+| `artifact.reused` | Reuse of that verified executable in this invocation. |
+
+On first use, `toolchain` and `toolchain_reference.source_check` can describe the
+same version process. A later request can retain that original check while its
+current `toolchain` observation is empty. The first compilation can likewise
+appear in both `build` and `artifact.source_build`; later artifact reuse can
+retain the original build while current `build` is empty. These roles allow the
+same activity on first use and preserve the absence of current work on reuse.
+
+The two reuse flags describe separate choices. A retained toolchain reference
+can support a new compilation after a source change. An original successful
+check or build describes its recorded activity. Read current process flags and
+the current native runs for what happened in the new request. An empty current
+observation retains its null exit code; the view does not invent a process.
+
+The source-check binding uses Go JSON encoding of the ordered tuple
+`[key_sha256, go_tool_sha256, go_version, source_check, source_output]` from
+`toolchain_reference`. The producer encodes `source_output` as Go `[]byte`, hence
+a base64 JSON string. The typed process object's field order and optional fields
+belong to that producer's contract. This is a content binding whose equality can
+persist across requests; the current process observations describe occurrences.
 
 For example, executing a case suite and then replaying it with identical cases
 can produce the same suite digest while starting new native processes. A consumer
