@@ -10,7 +10,7 @@ on:
       - 'docs/external/gooo-release-publication-v3.md'
       - 'docs/external/gooo-release-publication-v4.md'
       - 'internal/meta/releaseidentity/**'
-      - 'scripts/release-version/**'
+      - 'scripts/library-projection/**'
       - 'examples/gooo-release-publication/**'
       - 'internal/verify/scope_gooo_experimental_release.go'
       - '.github/ci-governance.json'
@@ -82,7 +82,7 @@ jobs:
           output="$RUNNER_TEMP/gooo-release-publication-contract"
           mkdir -p "$output"
           test "$(git rev-parse HEAD)" = "$EXACT_SHA"
-          go run ./scripts/release-version -mode check
+          go run ./scripts/library-projection -mode check
           go run ./cmd/gooo check "$source" > "$output/check.stdout"
           version_json="$(go run ./cmd/gooo version --json)"
           version="$(jq -er .version <<< "$version_json")"

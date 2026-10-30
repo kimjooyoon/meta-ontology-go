@@ -1,0 +1,46 @@
+package runtimeidentity
+namespace runtimeidentity
+
+entity FieldMeaning id "urn:gooo:runtime-identity:field-meaning" fields {
+    field path id "urn:gooo:runtime-identity:field-meaning:path" type string required one
+    field role id "urn:gooo:runtime-identity:field-meaning:role" type string required one
+    field input_domain id "urn:gooo:runtime-identity:field-meaning:input-domain" type string required one
+    field meaning id "urn:gooo:runtime-identity:field-meaning:meaning" type string required one
+}
+
+entity Descriptions id "urn:gooo:runtime-identity:descriptions" fields {
+    field target_schema id "urn:gooo:runtime-identity:descriptions:schema" type string required one
+    field declaration_path id "urn:gooo:runtime-identity:descriptions:source" type string required one
+    field activity_id id "urn:gooo:runtime-identity:descriptions:activity" type string required one
+    field scope id "urn:gooo:runtime-identity:descriptions:scope" type string required one
+    field entries id "urn:gooo:runtime-identity:descriptions:entries" type FieldMeaning required many
+}
+
+activity Describe() -> Descriptions id "urn:gooo:runtime-identity:describe" computes `
+return Descriptions{
+    target_schema: "gooo/body-composition-runtime/v2",
+    declaration_path: "internal/meta/runtimeidentity/fields.gooo",
+    activity_id: "urn:gooo:runtime-identity:describe",
+    scope: "Advisory field meanings; current observations and producer origins remain separate.",
+    entries: []FieldMeaning{
+        FieldMeaning{path: "runtime_suite_sha256", role: "CASE_CONTENT_DIGEST",
+            input_domain: "Go JSON encoding of the current CompositionCases value",
+            meaning: "Equal case contents can retain this hash across separately executed requests."},
+        FieldMeaning{path: "artifact.key_sha256", role: "ARTIFACT_REUSE_IDENTITY",
+            input_domain: "Compiled program and bound source, tool and environment identity",
+            meaning: "A reusable executable can serve new caller values; current inputs are checked separately."},
+        FieldMeaning{path: "executable_sha256", role: "EXECUTABLE_BYTE_DIGEST",
+            input_domain: "Compiled executable file bytes",
+            meaning: "Byte identity can remain equal across builds or runs."},
+        FieldMeaning{path: "artifact.source_build_sha256", role: "HISTORICAL_BUILD_BINDING_DIGEST",
+            input_domain: "Go JSON encoding of [artifact.key_sha256, executable_sha256, artifact.source_build]",
+            meaning: "Names the artifact's original build while current build and runs keep their own observations."},
+        FieldMeaning{path: "build", role: "CURRENT_BUILD_OBSERVATION",
+            input_domain: "This invocation's build process observation",
+            meaning: "started=false can accompany artifact reuse; inspect observation flags before exit codes."},
+        FieldMeaning{path: "runs", role: "CURRENT_RUN_OBSERVATIONS",
+            input_domain: "This invocation's native process observations",
+            meaning: "Inspect current started, completed, cancellation and result data separately from content hashes."},
+    },
+}
+`

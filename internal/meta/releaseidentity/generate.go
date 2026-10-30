@@ -1,3 +1,3 @@
 package releaseidentity
 
-//go:generate go run ../../../scripts/release-version -root ../../.. -mode write
+//go:generate go run ../../../scripts/library-projection -root ../../.. -mode write
