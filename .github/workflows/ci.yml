@@ -52,6 +52,9 @@ env:
 jobs:
   work-domain:
     name: Work domain preparation
+    # PR edits also arrive after merge; only open PRs admit source work.
+    if: >-
+      ${{ github.event_name != 'pull_request' || github.event.pull_request.state == 'open' }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -498,7 +501,9 @@ jobs:
   policy:
     name: CI policy
     needs: [work-domain]
-    if: ${{ !cancelled() }}
+    if: >-
+      ${{ !cancelled() &&
+          (github.event_name != 'pull_request' || github.event.pull_request.state == 'open') }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -861,7 +866,11 @@ jobs:
   evidence:
     name: CI evidence
     needs: [format, vet, test, race, semantic, policy]
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: >-
+      ${{ !cancelled() &&
+          (github.event_name != 'pull_request' || github.event.pull_request.state == 'open') &&
+          (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' ||
+           github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -1034,7 +1043,11 @@ jobs:
   proof:
     name: CI proof bundle
     needs: [format, vet, test, race, semantic, policy, evidence, feedback-predecessor]
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    if: >-
+      ${{ !cancelled() &&
+          (github.event_name != 'pull_request' || github.event.pull_request.state == 'open') &&
+          (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' ||
+           github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -1392,6 +1405,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy, proof]
     if: >-
       ${{ !cancelled() &&
+          (github.event_name != 'pull_request' || github.event.pull_request.state == 'open') &&
           (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' ||
            github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
           !(needs.format.result == 'success' && needs.vet.result == 'success' &&
