@@ -1,11 +1,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/gosplit"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/exactsha"
 )
 
@@ -20,25 +20,11 @@ func verifyRepositorySHA(root, expected string) error {
 	return exactsha.Verify(root, expected)
 }
 
-var errSplitBlocked = errors.New("split blocked")
+var errSplitBlocked = gosplit.ErrBlocked
 
-type splitPart struct {
-	Path             string
-	Subject          string
-	Data             []byte
-	DeclarationOrder []declarationOrder
-}
-
-type declarationOrder struct {
-	Ordinal int    `json:"ordinal"`
-	Digest  string `json:"digest"`
-}
-
-type splitPlan struct {
-	Directory string
-	Mode      os.FileMode
-	Parts     []splitPart
-}
+type splitPart = gosplit.Part
+type declarationOrder = gosplit.DeclarationOrder
+type splitPlan = gosplit.Plan
 
 type splitTempCreator func(string, string) (*os.File, error)
 

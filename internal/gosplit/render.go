@@ -1,4 +1,4 @@
-package main
+package gosplit
 
 import (
 	"bytes"
@@ -10,8 +10,8 @@ import (
 	"os"
 )
 
-func renderPart(fset *token.FileSet, file *ast.File, declarations []ast.Decl) ([]byte, error) {
-	importDecls, imports, err := importsFor(file, declarations)
+func (planner Planner) RenderPart(fset *token.FileSet, file *ast.File, declarations []ast.Decl) ([]byte, error) {
+	importDecls, imports, err := planner.importsFor(file, declarations)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func renderPart(fset *token.FileSet, file *ast.File, declarations []ast.Decl) ([
 	return output.Bytes(), nil
 }
 
-func physicalLines(data []byte) int {
+func PhysicalLines(data []byte) int {
 	if len(data) == 0 {
 		return 0
 	}

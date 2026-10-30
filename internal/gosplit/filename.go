@@ -1,4 +1,4 @@
-package main
+package gosplit
 
 import (
 	"fmt"
@@ -37,7 +37,7 @@ func secureSourcePath(root, subject string) (string, error) {
 	return target, nil
 }
 
-func splitPartPath(subject string, index int) (string, error) {
+func PartPath(subject string, index int) (string, error) {
 	if index == 1 {
 		return subject, nil
 	}

@@ -29,11 +29,8 @@ func run(args []string) error {
 	if !metricevidence.Contains(indicators, cfg.subject) {
 		return fmt.Errorf("subject %q is not an actionable split indicator", cfg.subject)
 	}
-	plan, err := planSource(cfg.root, cfg.subject, report.Meta.Policy.MaxFileLines)
+	plan, err := prepareSource(cfg.root, cfg.subject, report)
 	if err != nil {
-		return err
-	}
-	if err := validateTopology(report, plan); err != nil {
 		return err
 	}
 	if cfg.evidenceJSON {

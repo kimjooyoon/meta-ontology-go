@@ -1,4 +1,4 @@
-package main
+package gosplit
 
 import (
 	"go/ast"
@@ -6,11 +6,9 @@ import (
 	pathpkg "path"
 	"strconv"
 	"strings"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
-func importsFor(file *ast.File, declarations []ast.Decl) ([]ast.Decl, []*ast.ImportSpec, error) {
+func (planner Planner) importsFor(file *ast.File, declarations []ast.Decl) ([]ast.Decl, []*ast.ImportSpec, error) {
 	used := selectorNames(declarations)
 	importDecls := make([]ast.Decl, 0)
 	imports := make([]*ast.ImportSpec, 0)
@@ -29,7 +27,7 @@ func importsFor(file *ast.File, declarations []ast.Decl) ([]ast.Decl, []*ast.Imp
 			}
 		}
 		if len(copyOf.Specs) != 0 {
-			normalized, eligible, err := generation.NormalizeImportHeaderGroup(file, general, importSpecs(copyOf.Specs), generation.ImportHeaderNormalizationNamedAlias)
+			normalized, eligible, err := planner.normalize(file, general, importSpecs(copyOf.Specs))
 			if err != nil {
 				return nil, nil, err
 			}
