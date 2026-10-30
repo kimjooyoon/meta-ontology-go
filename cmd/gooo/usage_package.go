@@ -15,6 +15,10 @@ Inspect gooo version --build --json for package_receipt_transport byte limits.
 The original JSON digest and partial observation state remain unchanged.
 See docs/language/project-starters.md for the practice checks and source editing.
 
+Keep a caller-owned native artifact across execute and replay requests:
+  gooo package session
+Read gooo help package session for its JSON-line protocol and cleanup rules.
+
 Read recorded candidate paths:
   gooo package origins --receipt execution.json [--candidate <id>] [--json]
 See gooo help package origins for source scope and limits.

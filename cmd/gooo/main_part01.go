@@ -138,6 +138,9 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		printUsage(stderr)
 		return exitUsage
 	}
+	if len(args) >= 2 && args[0] == "package" && args[1] == "session" {
+		return runPackageSession(args[2:], input, OSFileReader{}, stdout, stderr)
+	}
 	if result, handled := runWithInputCommandsOne(args, stdout, stderr); handled {
 		return result
 	}
