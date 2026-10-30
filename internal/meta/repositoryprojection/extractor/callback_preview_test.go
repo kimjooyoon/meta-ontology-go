@@ -256,21 +256,17 @@ func typeCheckCallbackPreviewCandidate(t *testing.T, root, logical, source strin
 func runCallbackPreviewFixtureSuite(t *testing.T, root, logical, candidateSource string) {
 	t.Helper()
 	tempRoot := t.TempDir()
-	for _, relative := range []string{"go.mod", "go.sum", "cmd/language-readiness-witness/predecessor-selection", "internal", "examples/causal-ci-selection/pagination-fixtures.json"} {
-		if err := copyCallbackPreviewPath(root, tempRoot, relative); err != nil {
-			t.Fatalf("copy callback preview fixture tree: %v", err)
-		}
-	}
-	if candidateSource != "" {
-		path := filepath.Join(tempRoot, filepath.FromSlash(logical))
-		if err := os.WriteFile(path, []byte(candidateSource), 0o644); err != nil {
-			t.Fatalf("write generated callback preview: %v", err)
-		}
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
+	if err := copyCallbackPreviewModuleInputs(ctx, root, tempRoot, logical, candidateSource); err != nil {
+		t.Fatalf("copy callback preview module inputs: %v", err)
+	}
+	if err := copyCallbackPreviewPath(root, tempRoot, "examples/causal-ci-selection/pagination-fixtures.json"); err != nil {
+		t.Fatalf("copy declared pagination data: %v", err)
+	}
 	command := exec.CommandContext(ctx, "go", "test", "-mod=readonly", "./cmd/language-readiness-witness/predecessor-selection", "-run", "^TestPaginationFixturesExecuteParserAndHTTPClient$")
 	command.Dir = tempRoot
+	command.Env = callbackObservationEnvironment()
 	output, err := command.CombinedOutput()
 	if err != nil {
 		t.Fatalf("callback preview fixture suite candidate=%t: %v\n%s", candidateSource != "", err, output)

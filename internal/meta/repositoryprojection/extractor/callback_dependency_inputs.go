@@ -45,7 +45,7 @@ type callbackListedModule struct {
 }
 
 type callbackListedPackage struct {
-	Dir, ImportPath, ForTest                                    string
+	Dir, ImportPath, ForTest, Name                              string
 	Goroot, Incomplete                                          bool
 	Module                                                      *callbackListedModule
 	GoFiles, CgoFiles, TestGoFiles, XTestGoFiles                []string
@@ -106,10 +106,7 @@ func callbackDependencyInputManifest(ctx context.Context, raw []byte) (CallbackD
 			return inputs, err
 		}
 		// Go's test variants already merge active test files and embeds into GoFiles/EmbedFiles.
-		groups := [][]string{listed.GoFiles, listed.CgoFiles,
-			listed.CFiles, listed.CXXFiles, listed.MFiles, listed.HFiles, listed.FFiles, listed.SFiles,
-			listed.SwigFiles, listed.SwigCXXFiles, listed.SysoFiles, listed.EmbedFiles}
-		for _, files := range groups {
+		for _, files := range callbackDependencySourceGroups(listed) {
 			for _, name := range files {
 				if _, exists := item.Files[name]; exists {
 					continue
@@ -151,6 +148,12 @@ func callbackDependencyInputManifest(ctx context.Context, raw []byte) (CallbackD
 	}
 	inputs.Digest = proofDigest(payload)
 	return inputs, nil
+}
+
+func callbackDependencySourceGroups(listed callbackListedPackage) [][]string {
+	return [][]string{listed.GoFiles, listed.CgoFiles,
+		listed.CFiles, listed.CXXFiles, listed.MFiles, listed.HFiles, listed.FFiles, listed.SFiles,
+		listed.SwigFiles, listed.SwigCXXFiles, listed.SysoFiles, listed.EmbedFiles}
 }
 
 func callbackDependencyModuleIdentity(module *callbackListedModule, depth int) (CallbackDependencyModule, error) {
