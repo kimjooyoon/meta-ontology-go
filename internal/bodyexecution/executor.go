@@ -14,24 +14,12 @@ import (
 	"github.com/kimjooyoon/gooo-decision-runtime/pathplan"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodycodegen"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
+	"github.com/kimjooyoon/meta-ontology-go/nativeobservation"
 )
 
 const driverContract = "gooo/stdlib-int64-array-driver/v1"
 
 var ErrExecutorClosed = errors.New("native executor is closed")
-
-// ArtifactObservation refers to a real build owned by this executor. Build in
-// the enclosing observation describes only work performed by the current call.
-type ArtifactObservation struct {
-	Schema             string             `json:"schema"`
-	KeySHA256          string             `json:"key_sha256"`
-	Reused             bool               `json:"reused"`
-	ExecutableVerified bool               `json:"executable_verified"`
-	SourceBuild        ProcessObservation `json:"source_build"`
-	SourceBuildSHA256  string             `json:"source_build_sha256"`
-	MissReason         string             `json:"miss_reason,omitempty"`
-	WaitNS             int64              `json:"wait_ns"`
-}
 
 type compiledArtifact struct {
 	key, root, executable, digest string
@@ -242,6 +230,6 @@ func executableFor(ctx context.Context, prior bodycodegen.Result, goBinary strin
 }
 
 func bindSourceBuild(r *Observation) {
-	b, _ := json.Marshal([]any{r.Artifact.KeySHA256, r.ExecutableSHA256, r.Artifact.SourceBuild})
-	r.Artifact.SourceBuildSHA256 = digest(b)
+	r.Artifact.SourceBuildSHA256 = nativeobservation.SourceBuildBindingDigest(
+		r.Artifact.KeySHA256, r.ExecutableSHA256, r.Artifact.SourceBuild)
 }

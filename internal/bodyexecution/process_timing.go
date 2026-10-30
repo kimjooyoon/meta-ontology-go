@@ -7,16 +7,6 @@ import (
 	"time"
 )
 
-// ProcessTiming separates the host's Start call from Wait, including pipe I/O.
-// Neither interval is a measurement of when generated user code began running.
-type ProcessTiming struct {
-	StartNS              int64  `json:"start_ns"`
-	WaitNS               int64  `json:"wait_ns"`
-	WaitLimitNS          int64  `json:"wait_limit_ns,omitempty"`
-	DeadlineRemainingNS  *int64 `json:"deadline_remaining_ns,omitempty"`
-	ContextAtStartReturn string `json:"context_at_start_return"`
-}
-
 func timedProcessCalls(ctx context.Context, startProcess, waitProcess func() error,
 	waitLimit time.Duration, cancel context.CancelCauseFunc) (ProcessTiming, int64, string, error) {
 	var timing ProcessTiming

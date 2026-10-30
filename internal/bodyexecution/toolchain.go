@@ -8,23 +8,9 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-)
 
-// ToolchainObservation keeps the original version process separate from work
-// in this call. Reuse is available only for a native cmd/go executable whose
-// embedded release and platform agree with the first actual version response.
-type ToolchainObservation struct {
-	Schema            string             `json:"schema"`
-	KeySHA256         string             `json:"key_sha256"`
-	GoToolSHA256      string             `json:"go_tool_sha256"`
-	GoVersion         string             `json:"go_version"`
-	Reused            bool               `json:"reused"`
-	BytesVerified     bool               `json:"bytes_verified"`
-	BuildInfoVerified bool               `json:"build_info_verified"`
-	SourceCheck       ProcessObservation `json:"source_check"`
-	SourceOutput      []byte             `json:"source_output"`
-	SourceCheckSHA256 string             `json:"source_check_sha256"`
-}
+	"github.com/kimjooyoon/meta-ontology-go/nativeobservation"
+)
 
 type ownedToolchain struct {
 	key         string
@@ -67,8 +53,7 @@ func cloneToolchain(o ToolchainObservation) ToolchainObservation {
 }
 
 func bindToolchain(o *ToolchainObservation) {
-	raw, _ := json.Marshal([]any{o.KeySHA256, o.GoToolSHA256, o.GoVersion, o.SourceCheck, o.SourceOutput})
-	o.SourceCheckSHA256 = digest(raw)
+	o.SourceCheckSHA256 = nativeobservation.SourceCheckBindingDigest(*o)
 }
 
 func observeToolchain(ctx context.Context, goBinary string, r *Observation, owner *Executor) error {
