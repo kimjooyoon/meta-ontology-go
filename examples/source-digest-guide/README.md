@@ -49,6 +49,12 @@ path performs no additional work for this example. Its finite query cases check
 the guide's behavior; existing producer regressions independently check the
 workspace encodings and wrong-representation refusal.
 
+The producer meanings here follow the published 0.6.39 compiler,
+[source `4bfb816`](https://github.com/kimjooyoon/meta-ontology-go/tree/4bfb81640fcf485a022abc3b0484b2fd7bcb9f65).
+`known=true` means the owner/path pair is in this catalogue. Read the producing
+version's contract for later revisions, and hash the source pinned by that
+producer's record rather than whichever checkout happens to be current.
+
 The ordinary package receipt retains `Explain`'s stable activity ID and the
 original `main.gooo` file digest. The output's `owner` is the caller's spelling;
 the receipt's source origins identify the program that supplied the explanation.
