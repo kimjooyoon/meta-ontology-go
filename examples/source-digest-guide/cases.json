@@ -1,0 +1,221 @@
+{
+  "schema": "gooo/body-composition-cases/v1",
+  "cases": [
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package resolve",
+          "path": "result.image.packages[].sources[].source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package resolve",
+          "path": "result.image.packages[].sources[].source_digest",
+          "known": true,
+          "byte_domain": "GO_JSON_STRING",
+          "source_scope": "COMPLETE_WORKSPACE_SOURCE",
+          "hash_recipe": "sha256(json.Marshal(source.Content))"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute",
+          "path": "result.program.workspace_image.packages[].sources[].source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute",
+          "path": "result.program.workspace_image.packages[].sources[].source_digest",
+          "known": true,
+          "byte_domain": "GO_JSON_STRING",
+          "source_scope": "COMPLETE_WORKSPACE_SOURCE",
+          "hash_recipe": "sha256(json.Marshal(source.Content))"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute",
+          "path": "result.program.activity_origins[].input_source.source_sha256"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute",
+          "path": "result.program.activity_origins[].input_source.source_sha256",
+          "known": true,
+          "byte_domain": "RAW_UTF8",
+          "source_scope": "COMPLETE_WORKSPACE_SOURCE",
+          "hash_recipe": "sha256(original_file_bytes)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "body-codegen",
+          "path": "report.source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "body-codegen",
+          "path": "report.source_digest",
+          "known": true,
+          "byte_domain": "RAW_UTF8",
+          "source_scope": "GENERATION_INPUT_CHECKPOINT",
+          "hash_recipe": "sha256(generation_input_bytes)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute",
+          "path": "result.composition.steps[].generation.report.source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute",
+          "path": "result.composition.steps[].generation.report.source_digest",
+          "known": true,
+          "byte_domain": "RAW_UTF8",
+          "source_scope": "GENERATION_INPUT_CHECKPOINT",
+          "hash_recipe": "sha256(generation_input_bytes)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "release-manifest.json",
+          "path": "release_report_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "release-manifest.json",
+          "path": "release_report_digest",
+          "known": true,
+          "byte_domain": "GO_TYPED_REPORT_JSON",
+          "source_scope": "RELEASE_REPORT_WITH_EMPTY_DIGEST",
+          "hash_recipe": "sha256(json.Marshal(Report{report_digest: empty}))"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "release-manifest.json",
+          "path": "assets[name=\"release-report.json\"].digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "release-manifest.json",
+          "path": "assets[name=\"release-report.json\"].digest",
+          "known": true,
+          "byte_domain": "RAW_FILE_BYTES",
+          "source_scope": "COMPLETE_PUBLISHED_REPORT_FILE",
+          "hash_recipe": "sha256(published_file_bytes)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "release-manifest.json",
+          "path": "version_source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "release-manifest.json",
+          "path": "version_source_digest",
+          "known": true,
+          "byte_domain": "RAW_UTF8",
+          "source_scope": "RELEASE_VERSION_GOOO_SOURCE",
+          "hash_recipe": "sha256(internal/meta/releaseidentity/version.gooo bytes)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute",
+          "path": "source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute",
+          "path": "source_digest",
+          "known": false,
+          "byte_domain": "UNKNOWN",
+          "source_scope": "UNRESOLVED",
+          "hash_recipe": "READ_PRODUCER_CONTRACT"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package resolve",
+          "path": "result.program.workspace_image.packages[].sources[].source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package resolve",
+          "path": "result.program.workspace_image.packages[].sources[].source_digest",
+          "known": false,
+          "byte_domain": "UNKNOWN",
+          "source_scope": "UNRESOLVED",
+          "hash_recipe": "READ_PRODUCER_CONTRACT"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute ",
+          "path": "result.program.workspace_image.packages[].sources[].source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "package execute ",
+          "path": "result.program.workspace_image.packages[].sources[].source_digest",
+          "known": false,
+          "byte_domain": "UNKNOWN",
+          "source_scope": "UNRESOLVED",
+          "hash_recipe": "READ_PRODUCER_CONTRACT"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "example/source-digest-guide:Explain": {
+          "owner": "패키지 실행",
+          "path": "result.program.workspace_image.packages[].sources[].source_digest"
+        }
+      },
+      "expected": {
+        "example/source-digest-guide:Explain": {
+          "owner": "패키지 실행",
+          "path": "result.program.workspace_image.packages[].sources[].source_digest",
+          "known": false,
+          "byte_domain": "UNKNOWN",
+          "source_scope": "UNRESOLVED",
+          "hash_recipe": "READ_PRODUCER_CONTRACT"
+        }
+      }
+    }
+  ]
+}

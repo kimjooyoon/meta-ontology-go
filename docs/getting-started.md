@@ -220,6 +220,11 @@ raw-byte value as a package image's `source_digest` is rejected as stale type
 evidence; it does not prove that the file changed. The normal package path
 still computes only its existing image digest.
 
+The runnable [Gooo digest guide](../examples/source-digest-guide/README.md) accepts
+an owning command/document and an exact field path, then explains eight known
+byte domains. Unknown combinations stay unresolved. It uses the existing package
+runner and adds no hashing or receipt authority to ordinary execution.
+
 ### Read values through the runtime trace
 
 For application results, read `result.runtime.traces[].deliveries[]`: each row
