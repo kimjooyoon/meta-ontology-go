@@ -55,11 +55,16 @@ const (
 )
 
 type moduleDependencyFailure struct {
-	code moduleDependencyCauseCode
+	code        moduleDependencyCauseCode
+	diagnostics string
 }
 
 func (failure *moduleDependencyFailure) Error() string {
-	return "module dependency could not be resolved safely (" + string(failure.code) + ")"
+	message := "module dependency could not be resolved safely (" + string(failure.code) + ")"
+	if failure.diagnostics != "" {
+		message += ": " + failure.diagnostics
+	}
+	return message
 }
 
 func (failure *moduleDependencyFailure) Unwrap() error { return errModuleDependency }
@@ -319,6 +324,9 @@ func (imports *moduleImporter) runGoList(args []string) ([]byte, error) {
 		return nil, moduleFailure(moduleCauseOutputCap)
 	}
 	if failure := moduleListCommandFailure(runErr, ctx.Err(), stdout.exceeded, stderr.exceeded); failure != nil {
+		if observed, ok := errors.AsType[*moduleDependencyFailure](failure); ok {
+			observed.diagnostics = strings.TrimSpace(string(stderr.Bytes()))
+		}
 		return nil, failure
 	}
 	return stdout.Bytes(), nil

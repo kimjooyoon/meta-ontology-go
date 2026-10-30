@@ -28,8 +28,9 @@ func TestUnresolvedImportRetainsOwningModuleAndObservationCause(t *testing.T) {
 	if !slices.Equal(failure.BlockedBy, []string{"example.test/dependency"}) ||
 		!slices.Contains(failure.Diagnostics, "module=example.test/nested") ||
 		!slices.Contains(failure.Diagnostics, "logical=nested/source.go") ||
-		!strings.Contains(strings.Join(failure.Diagnostics, "\n"), "GO_LIST_SUBPROCESS_FAILURE") {
-		t.Fatalf("owning source or Go observation cause lost: %+v", failure)
+		!strings.Contains(strings.Join(failure.Diagnostics, "\n"), "GO_LIST_SUBPROCESS_FAILURE") ||
+		!strings.Contains(strings.Join(failure.Diagnostics, "\n"), "import lookup disabled by -mod=readonly") {
+		t.Fatalf("owning source or Go observation cause lost: %v / %v", failure, failure.Diagnostics)
 	}
 	restoreDeclaredImportFixture(t, root)
 	if err := ValidateSourceImports(root, "nested/source.go", source); err != nil {
