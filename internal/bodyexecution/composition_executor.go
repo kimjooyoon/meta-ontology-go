@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bodytiming"
+	"github.com/kimjooyoon/meta-ontology-go/nativeobservation"
 )
 
 // ExecuteComposition retains one compiled graph in this executor. Each call
@@ -155,6 +156,6 @@ func timedCompositionLocalEvidence(ctx context.Context, prior Composition) (comp
 }
 
 func bindCompositionBuild(r *CompositionRuntime) {
-	raw, _ := json.Marshal([]any{r.Artifact.KeySHA256, r.ExecutableSHA256, r.Artifact.SourceBuild})
-	r.Artifact.SourceBuildSHA256 = digest(raw)
+	r.Artifact.SourceBuildSHA256 = nativeobservation.SourceBuildBindingDigest(
+		r.Artifact.KeySHA256, r.ExecutableSHA256, r.Artifact.SourceBuild)
 }
