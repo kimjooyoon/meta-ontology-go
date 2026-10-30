@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/releaseidentity"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
+var goooVersion = releaseidentity.Evaluate()
+
 const (
-	goooVersion   = "0.6.38-dev"
 	versionSchema = "gooo-version/v1"
 	versionStatus = "development"
 	versionUsage  = "usage: gooo version [--build] [--json]"

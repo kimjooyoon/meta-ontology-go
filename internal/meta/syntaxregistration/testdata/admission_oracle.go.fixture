@@ -1,0 +1,35 @@
+package verticalsliceclosureshadow
+
+import (
+ "fmt"
+ "testing"
+)
+
+func TestBoundedAdmissionOracle(t *testing.T) {
+ if !legacyAdmissionWithLocalShadow(DenominatorMigrationV111Digest) ||
+  !acceptedDenominatorDigestChunk0(DenominatorMigrationV111Digest) {
+  t.Fatal("local-shadow control did not distinguish original binding from package binding")
+ }
+ for _, original := range []string{DIGEST_VALUES} {
+  for _, digest := range []string{original, "changed:" + original, "", original + "\x00"} {
+   old := LEGACY_DIGEST
+   current := !acceptedDenominatorDigestChunk0(digest)
+   if old != current { t.Fatalf("digest rejection changed: %q: %v != %v", digest, old, current) }
+  }
+ }
+ for _, version := range []int{HEADER_VERSIONS, -1, 0, 20, 1048576} {
+  expected := fmt.Sprintf("gooo.denominator.capability.vertical-slice-closure.v%d", version)
+  for _, identity := range []string{expected, expected + "changed", "", expected + "\x00",
+   fmt.Sprintf("gooo.denominator.capability.vertical-slice-closure.v%d", version + 1)} {
+   value := denominator{Version: version, DenominatorID: identity}
+   old := LEGACY_HEADER
+   current := acceptedDenominatorHeaderChunk0(value)
+   if old != current { t.Fatalf("header admission changed: %d/%q: %v != %v", version, identity, old, current) }
+  }
+ }
+}
+
+func legacyAdmissionWithLocalShadow(digest string) bool {
+ const DenominatorMigrationV111Digest = DenominatorMigrationV110Digest
+ return LEGACY_DIGEST
+}

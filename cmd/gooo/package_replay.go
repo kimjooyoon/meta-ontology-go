@@ -110,6 +110,11 @@ func executePackageReplay(ctx context.Context, reader SourceReader, manifestPath
 }
 
 func executePackageSaved(ctx context.Context, reader SourceReader, manifestPath string, flags map[string]string, resume bool) (packageExecutionReceipt, error) {
+	return executePackageSavedWithExecutor(ctx, reader, manifestPath, flags, resume, nil)
+}
+
+func executePackageSavedWithExecutor(ctx context.Context, reader SourceReader, manifestPath string,
+	flags map[string]string, resume bool, owner *workspaceexecution.Executor) (packageExecutionReceipt, error) {
 	receipt := packageExecutionReceipt{Schema: "gooo/workspace-body-execution-receipt/v1", Manifest: filepath.ToSlash(manifestPath)}
 	manifestBytes, err := readSource(reader, manifestPath)
 	if err != nil {
@@ -151,7 +156,12 @@ func executePackageSaved(ctx context.Context, reader SourceReader, manifestPath 
 	if err != nil {
 		return receipt, err
 	}
-	result, err := runSavedWorkspace(ctx, reader, runtimeManifest, *saved.Result, suite, flags, resume)
+	var result workspaceexecution.Result
+	if owner != nil && !resume {
+		result, err = owner.Replay(ctx, runtimeManifest, *saved.Result, suite, flags["--go"])
+	} else {
+		result, err = runSavedWorkspace(ctx, reader, runtimeManifest, *saved.Result, suite, flags, resume)
+	}
 	receipt.Result = &result
 	if errors.Is(err, workspaceexecution.ErrReplaySourceMismatch) {
 		receipt.Failure = &packageruntime.Failure{Code: "REPLAY_SOURCE_MISMATCH", Detail: err.Error()}
