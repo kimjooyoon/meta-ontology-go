@@ -23,9 +23,8 @@ func currentStrategySchemaFixture(t *testing.T) projectionextractor.StrategyEvid
 	if err != nil {
 		t.Fatal(err)
 	}
-	if evidence.ContractSemanticDigest != contract.SemanticDigest {
-		t.Fatal("contract meaning changed; review the decoder fixture's shape before adapting it")
-	}
+	assertHistoricalExtractionShape(t, evidence, contract)
+	evidence.ContractSemanticDigest = contract.SemanticDigest
 	evidence.ContractSourceDigest = contract.SourceDigest
 	evidence.ContractInputEntity, evidence.ContractInputEntityID = contract.InputEntity, contract.InputEntityID
 	evidence.ContractOutputEntity, evidence.ContractOutputEntityID = contract.OutputEntity, contract.OutputEntityID
@@ -45,9 +44,16 @@ func TestHistoricalStrategyIdentityIsNotCurrentAdmission(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if evidence.ContractSourceDigest == contract.SourceDigest || evidence.ContractSemanticDigest != contract.SemanticDigest {
-		t.Fatal("fixture must isolate the changed source identity with unchanged semantics")
+	if evidence.ContractSourceDigest == contract.SourceDigest {
+		t.Fatal("historical fixture acquired the current source identity")
 	}
+	assertHistoricalExtractionShape(t, evidence, contract)
+	assertHistoricalReportRejected(t, evidence)
+}
+
+func TestPreviousSourceWithCurrentShapeRetainsActionableMismatch(t *testing.T) {
+	evidence := currentStrategySchemaFixture(t)
+	evidence.ContractSourceDigest = historicalStrategyEvidenceFixture(t).ContractSourceDigest
 	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence})
 	payload, err := json.Marshal(report)
 	if err != nil {
@@ -62,6 +68,40 @@ func TestHistoricalStrategyIdentityIsNotCurrentAdmission(t *testing.T) {
 		t.Fatalf("historical source did not retain the actionable contract mismatch: %v", err)
 	}
 	assertContractMismatchReachesDrivers(t, root, "historical-report.json")
+}
+
+func assertHistoricalReportRejected(t *testing.T, evidence projectionextractor.StrategyEvidence) {
+	t.Helper()
+	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence})
+	path := writeMapConstructionConsumerReport(t, t.TempDir(), report)
+	if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+		t.Fatal("historical contract was admitted as current execution evidence")
+	}
+}
+
+// Compare the extraction subgraph to the retained original fixture before
+// constructing decoder-only current identities. The added Go split subgraph
+// changes the whole contract digest; these six extraction stages retain shape.
+func assertHistoricalExtractionShape(t *testing.T, old projectionextractor.StrategyEvidence,
+	current generation.OperationInputContractEvidence) {
+	t.Helper()
+	if old.ContractActivity != current.Activity || old.ContractInputSubjectKind != string(current.InputSubjectKind) ||
+		len(old.ContractObligations) != 6 || len(current.Obligations) != 6 || len(old.ProofStages) != 6 ||
+		current.InputEntityID != "gooo://meta-operation-input-contract/entity/function-input" ||
+		current.OutputEntityID != "gooo://meta-operation-input-contract/entity/result" {
+		t.Fatal("current extraction shape differs from the retained six-stage fixture")
+	}
+	roles := []string{"function-input", "return-shape-obligation", "control-flow-obligation", "free-bindings-obligation",
+		"callee-effects-obligation", "rendered-capacity-obligation", "projected-conformance-obligation"}
+	for index, expected := range old.ContractObligations {
+		got := current.Obligations[index]
+		if got.Name != expected.Name || got.Activity != expected.Activity || !got.UsedInputFact || !got.GeneratedOutputFact ||
+			!expected.UsedInputFact || !expected.GeneratedOutputFact ||
+			got.InputEntityID != "gooo://meta-operation-input-contract/entity/"+roles[index] ||
+			got.OutputEntityID != "gooo://meta-operation-input-contract/entity/"+roles[index+1] {
+			t.Fatalf("extraction stage %d differs from the historical shape", index)
+		}
+	}
 }
 
 func TestPreparationProgressRequiresCurrentEntityIdentity(t *testing.T) {
