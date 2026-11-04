@@ -1491,7 +1491,6 @@
     "internal/meta/entityfields/entity-fields-meta.gooo",
     "examples/public-trust-surface/main.gooo",
     "internal/meta/generation/operation-input-contract.gooo",
-    "internal/meta/generation/go-split-selection.gooo",
     "internal/meta/generation/callback-preview-contract.gooo",
     "internal/meta/generation/callback-extraction-contract.gooo",
     "internal/meta/generation/self_improvement_outcome_contract.gooo",
@@ -1524,7 +1523,8 @@
     "internal/meta/executioncontinuation/policy/source_recovery.gooo",
     "examples/runtime-package-surface/contract.gooo",
     "examples/runtime-package-surface/inspect.gooo",
-    "internal/meta/cyclecontext/policy.gooo"
+    "internal/meta/cyclecontext/policy.gooo",
+    "internal/meta/generation/go-split-selection.gooo"
   ],
   "case_sources": [
     {
