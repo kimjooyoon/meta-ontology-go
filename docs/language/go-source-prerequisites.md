@@ -44,8 +44,22 @@ compiler process or model inference. The ordinary projection test compares the
 committed library to its authored Gooo source. Regenerate it with
 `go generate ./internal/meta/generation` after changing that source.
 
-This is an internal source development API. Automatic candidate filtering,
-execution-time source revalidation and physical successor handling still need
-their consumer connections. [Issue #1782](https://github.com/kimjooyoon/meta-ontology-go/issues/1782)
-tracks that complete operation; its remaining obligations retain their original
-scope and denominator.
+The existing `scripts/refactor-metrics -plan` entry point uses these observations
+before assigning an independence group to a Go split. An unmet or unknown first
+candidate leaves room for a later prepared candidate in that group. The plan
+retains the original indicators, deferred repairs, file hashes and policy hash;
+a shortfall remains unresolved. Ordinary metric collection starts no planner.
+The CLI checks the repository revision and supplied metric policy. Its existing
+minimum of two independent operations still applies.
+
+The executor checks selected input bytes inside its disposable workspace before
+the Git snapshot and native process. Changed bytes stop that operation. Other
+operation inputs can still prevent execution; their failures retain the inspected
+candidate population. Optional preparation fields leave legacy plans on their
+existing validation path.
+
+These connections are source development tooling. Readonly preparation still
+leaves projected conformance unobserved. Physical successor handling and complete
+operation verification remain in
+[issue #1782](https://github.com/kimjooyoon/meta-ontology-go/issues/1782), with their
+original scope and denominator.
