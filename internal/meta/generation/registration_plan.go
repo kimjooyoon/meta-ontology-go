@@ -27,13 +27,23 @@ func BuildWithRegistrationInputs(baseSHA, headSHA string, report sourcepolicy.Re
 }
 
 func BuildWithOperationInputs(baseSHA, headSHA string, report sourcepolicy.Report, inputs OperationInputs) Plan {
-	plan := buildWithoutRegistrationInputs(baseSHA, headSHA, report)
+	return buildOperationInputs(baseSHA, headSHA, report, inputs, nil)
+}
+
+func buildOperationInputs(baseSHA, headSHA string, report sourcepolicy.Report,
+	inputs OperationInputs, resolve splitPrerequisiteResolver) Plan {
+	plan := buildWithPrerequisiteResolver(baseSHA, headSHA, report, resolve)
 	registrationFailures := registrationInputFailures(report.Indicators, inputs.Registrations)
 	operationFailures := workspaceSplitInputFailures(report.Indicators, inputs.WorkspaceSplits)
 	failures := append(append([]OperationInputFailure{}, registrationFailures...), operationFailures...)
 	sortOperationInputFailures(failures)
 	if len(failures) != 0 {
 		plan.Decision, plan.Reason = DecisionUnknown, ReasonRegistrationInput
+		if len(plan.GoSplitPreparations) != 0 {
+			for _, action := range plan.Selected {
+				plan.UnselectedIndicatorIDs = append(plan.UnselectedIndicatorIDs, action.IndicatorID)
+			}
+		}
 		plan.Selected = []Action{}
 		plan.IndicatorDecisionLedger = nil
 		plan.RegistrationInputFailures, plan.OperationInputFailures = registrationFailures, operationFailures
@@ -49,6 +59,9 @@ func BuildWithOperationInputs(baseSHA, headSHA string, report sourcepolicy.Repor
 			}
 		}
 		sort.Strings(plan.UnknownIndicatorIDs)
+		if len(plan.GoSplitPreparations) != 0 {
+			return attachPlanIndicatorDecisionLedger(plan, normalizeIndicators(report.Indicators))
+		}
 		return finish(plan)
 	}
 	changed := false

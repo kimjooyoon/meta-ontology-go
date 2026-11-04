@@ -322,6 +322,9 @@ func materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath string, 
 	if err != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
 	}
+	if failure := validatePreparedSplitSource(temporary, plan, action); failure != nil {
+		return operationMaterialization{}, failure
+	}
 	snapshot, snapshotErr := readOnlyGitSnapshot(gitDir, plan.HeadSHA)
 	if snapshotErr != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context")

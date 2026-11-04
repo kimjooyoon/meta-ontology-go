@@ -8,14 +8,16 @@ import (
 )
 
 type canonicalInput struct {
-	SchemaVersion      string                   `json:"schema_version"`
-	BaseSHA            string                   `json:"base_sha"`
-	HeadSHA            string                   `json:"head_sha"`
-	Policy             sourcepolicy.Policy      `json:"policy"`
-	Indicators         []sourcepolicy.Indicator `json:"indicators"`
-	Registry           []Binding                `json:"registry"`
-	RequestedK         uint32                   `json:"requested_k"`
-	MinimumIndependent uint32                   `json:"minimum_independent"`
+	SchemaVersion       string                   `json:"schema_version"`
+	BaseSHA             string                   `json:"base_sha"`
+	HeadSHA             string                   `json:"head_sha"`
+	Policy              sourcepolicy.Policy      `json:"policy"`
+	Indicators          []sourcepolicy.Indicator `json:"indicators"`
+	Registry            []Binding                `json:"registry"`
+	RequestedK          uint32                   `json:"requested_k"`
+	MinimumIndependent  uint32                   `json:"minimum_independent"`
+	GoSplitPreparations []GoSplitObservation     `json:"go_split_preparations,omitempty"`
+	GoSplitPolicySHA256 string                   `json:"go_split_policy_sha256,omitempty"`
 }
 
 func finish(plan Plan) Plan {
@@ -48,6 +50,9 @@ func finish(plan Plan) Plan {
 		return plan.Counterexamples[left].ID < plan.Counterexamples[right].ID
 	})
 	sort.Strings(plan.Shortfall)
+	sort.Slice(plan.GoSplitPreparations, func(i, j int) bool {
+		return plan.GoSplitPreparations[i].IndicatorID < plan.GoSplitPreparations[j].IndicatorID
+	})
 	unsigned := plan
 	unsigned.PlanDigest, unsigned.ReplayDigest = "", ""
 	plan.PlanDigest = digestJSON(unsigned)

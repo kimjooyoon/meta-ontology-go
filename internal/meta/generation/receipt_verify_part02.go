@@ -12,6 +12,9 @@ func receiptPlanKnown(plan Plan) bool {
 	if validatePlanRefutedEvidence(plan) != nil {
 		return false
 	}
+	if validateGoSplitObservations(plan) != nil {
+		return false
+	}
 	unsigned := plan
 	unsigned.PlanDigest, unsigned.ReplayDigest = "", ""
 	if !validDigest(plan.PlanDigest) ||

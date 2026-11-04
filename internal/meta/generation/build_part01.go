@@ -3,6 +3,10 @@ package generation
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
 func buildWithoutRegistrationInputs(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
+	return buildWithPrerequisiteResolver(baseSHA, headSHA, report, nil)
+}
+
+func buildWithPrerequisiteResolver(baseSHA, headSHA string, report sourcepolicy.Report, resolve splitPrerequisiteResolver) Plan {
 	indicators := normalizeIndicators(report.Indicators)
 	registry := normalizeRegistry(DefaultRegistry())
 	floors := blockingIndicators(indicators)
@@ -46,7 +50,13 @@ func buildWithoutRegistrationInputs(baseSHA, headSHA string, report sourcepolicy
 		plan.UnknownIndicatorIDs = unknown
 		return finish(plan)
 	}
-	return attachPlanIndicatorDecisionLedger(selectActions(plan, actionable, registry), indicators)
+	plan = selectActionsWithPrerequisites(plan, actionable, registry, resolve)
+	if len(plan.GoSplitPreparations) != 0 {
+		plan.GoSplitPolicySHA256 = goSplitSelectionSourceOrigin().SHA256
+		input.GoSplitPreparations, input.GoSplitPolicySHA256 = plan.GoSplitPreparations, plan.GoSplitPolicySHA256
+		plan.InputDigest = digestJSON(input)
+	}
+	return attachPlanIndicatorDecisionLedger(plan, indicators)
 }
 
 func blockingIndicators(indicators []sourcepolicy.Indicator) []sourcepolicy.Indicator {

@@ -5,7 +5,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/exactsha"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/workspacesplit"
 )
@@ -34,7 +36,10 @@ func emitGenerationPlan(opts options, report sourcepolicy.Report) error {
 			return err
 		}
 	}
-	plan := generation.BuildWithOperationInputs(opts.baseSHA, opts.sha, report, inputs)
+	plan, err := buildSourcePlan(opts, report, inputs)
+	if err != nil {
+		return err
+	}
 	payload, err := generation.Encode(plan)
 	if err != nil {
 		return fmt.Errorf("encode generation plan: %w", err)
@@ -43,6 +48,10 @@ func emitGenerationPlan(opts options, report sourcepolicy.Report) error {
 		return fmt.Errorf("write generation plan: %w", err)
 	}
 	fmt.Printf("self-improvement: decision=%s reason=%s selected=%d replay=%s\n", plan.Decision, plan.Reason, len(plan.Selected), plan.ReplayDigest)
+	for _, observed := range plan.GoSplitPreparations {
+		fmt.Printf("self-improvement-prerequisite: indicator=%s states=%v next=%s\n",
+			observed.IndicatorID, observed.States, observed.NextStep().F_next_operation)
+	}
 	if plan.Decision != generation.DecisionPlan && plan.Decision != generation.DecisionFixedPoint {
 		fmt.Printf("self-improvement-diagnostic: stage=selection step=independent-pressure shortfall=%v unknown=%v unselected=%v\n", plan.Shortfall, plan.UnknownIndicatorIDs, plan.UnselectedIndicatorIDs)
 		for _, indicator := range report.Actionable() {
@@ -51,4 +60,21 @@ func emitGenerationPlan(opts options, report sourcepolicy.Report) error {
 		return fmt.Errorf("self-improvement generation failed closed: %s/%s", plan.Decision, plan.Reason)
 	}
 	return nil
+}
+
+func buildSourcePlan(opts options, report sourcepolicy.Report, inputs generation.OperationInputs) (generation.Plan, error) {
+	for _, indicator := range report.Actionable() {
+		if indicator.Operation != sourcepolicy.OperationSplitGo {
+			continue
+		}
+		if err := exactsha.Verify(opts.root, opts.sha); err != nil {
+			return generation.Plan{}, err
+		}
+		topology, err := metricevidence.Load(opts.metrics, opts.sha)
+		if err != nil {
+			return generation.Plan{}, err
+		}
+		return generation.BuildWithSourcePrerequisites(opts.root, opts.baseSHA, opts.sha, report, topology, inputs)
+	}
+	return generation.BuildWithOperationInputs(opts.baseSHA, opts.sha, report, inputs), nil
 }

@@ -99,6 +99,8 @@ type Plan struct {
 
 	RegistrationInputFailures []RegistrationInputFailure `json:"registration_input_failures,omitempty"`
 	OperationInputFailures    []OperationInputFailure    `json:"operation_input_failures,omitempty"`
+	GoSplitPreparations       []GoSplitObservation       `json:"go_split_preparations,omitempty"`
+	GoSplitPolicySHA256       string                     `json:"go_split_policy_sha256,omitempty"`
 }
 
 // PromotionAuthorizedByPlan is always false: CI remains the authority.
