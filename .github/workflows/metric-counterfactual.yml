@@ -60,7 +60,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Generate, replay, and independently constrain the counterfactual
@@ -127,7 +127,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
       - name: Bind the declared Go 1.27 toolchain
-        uses: actions/setup-go@v7.0.0
+        uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
           cache: false
@@ -204,7 +204,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Compile the plan into dimensions and constrain every residual
@@ -274,7 +274,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Download exact intervention evidence
@@ -382,7 +382,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Verify predecessor continuity independently
@@ -452,7 +452,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Go 1.27
-        uses: actions/setup-go@v7.0.0
+        uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Assert causal workflows use the selected setup-go release
@@ -725,7 +725,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Download exact metric strategy evidence
@@ -890,7 +890,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
       - name: Prepare read-only observation workspace
@@ -1074,7 +1074,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
       - name: Bind the declared Go 1.27 toolchain
-        uses: actions/setup-go@v7.0.0
+        uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
           cache: false

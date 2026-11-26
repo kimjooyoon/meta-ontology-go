@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         with:
           go-version-file: go.mod
           check-latest: true
